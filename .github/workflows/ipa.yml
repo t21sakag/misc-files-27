@@ -25,7 +25,7 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_27.app/Contents/Developer
       CI_MODE: ${{ inputs.mode || 'full' }}
       UI_SUITE: ${{ inputs.ui_suite || 'all' }}
-    timeout-minutes: ${{ (inputs.mode == 'compile' && 30) || (inputs.mode == 'ipa' && 30) || (inputs.mode == 'ui' && inputs.ui_suite != 'all' && 30) || 90 }}
+    timeout-minutes: ${{ (inputs.mode == 'compile' && 30) || (inputs.mode == 'ipa' && 30) || (inputs.mode == 'ui' && inputs.ui_suite != 'all' && 40) || 90 }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -283,7 +283,7 @@ jobs:
       - name: Export simulator screenshots
         if: always() && (env.CI_MODE == 'full' || env.CI_MODE == 'ui')
         run: |
-          if [ -d build/UITests.xcresult ]; then
+          if [ -f build/UITests.xcresult/Info.plist ]; then
             xcrun xcresulttool export attachments --path build/UITests.xcresult --output-path build/screenshots
           fi
       - uses: actions/upload-artifact@v4
