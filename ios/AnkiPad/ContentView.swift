@@ -30,6 +30,7 @@ struct ContentView: View {
     @State private var filteredDeck: FilteredDeckRequest?
     @State private var deckDescription: DeckDescriptionRequest?
     @State private var deckName = ""
+    @State private var deckSearch = ""
     @State private var namingDeck = false
     @State private var renamingDeck: Deck?
     @State private var deletingDeck: Deck?
@@ -357,7 +358,7 @@ struct ContentView: View {
     private var deckList: some View {
         List {
             Section {
-                ForEach(model.decks) { deck in
+                ForEach(model.decks.filter { deckSearch.isEmpty || $0.name.localizedStandardContains(deckSearch) }) { deck in
                     Button { model.select(deck) } label: {
                         HStack {
                             Text(deck.name).foregroundStyle(.primary).padding(.leading, CGFloat(deck.level) * 16)
@@ -397,6 +398,7 @@ struct ContentView: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
         }
+        .searchable(text: $deckSearch, prompt: "デッキを検索")
     }
     @ViewBuilder private var reviewer: some View {
         if let card = model.card {
