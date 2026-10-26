@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, all]
 permissions:
   contents: read
 concurrency:
@@ -233,7 +233,7 @@ jobs:
         id: ui-prepare
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
         run: |
-          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = all ]; then
+          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = all ]; then
             SYNC_USER1='fixture@example.test:fixture-password' SYNC_HOST=127.0.0.1 SYNC_PORT=18891 SYNC_BASE="$RUNNER_TEMP/ankipad-ui-sync-server" build/native/host/sync_test_server > build/ui-sync-server.log 2>&1 &
             echo $! > build/ui-sync-server.pid
             python3 tests/seed_ui_sync.py build/native/host/libankipad_bridge.dylib build/fixture.apkg
