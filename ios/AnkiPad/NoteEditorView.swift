@@ -30,9 +30,12 @@ struct NoteEditorView: View {
     @State private var isOcclusion = false
     @State private var fieldWarning: String?
     @State private var changingType: BackendPageRequest?
+    @State private var changingEditorFontSize = false
+    @State private var fontSizeDraft = ""
     @State private var expanded: Set<Int> = []
     @AppStorage("visualNoteEditor") private var visualEditor = false
     @AppStorage("capitalizeNoteEditor") private var capitalizeEditor = true
+    @AppStorage("noteEditorFontSize") private var editorFontSize = 0
     @AppStorage("closeAfterAdd") private var closeAfterAdd = false
     var body: some View { NavigationStack { loadedContent } }
     private var editorForm: some View {
@@ -66,16 +69,27 @@ struct NoteEditorView: View {
                     }
                     Toggle("ビジュアル編集", isOn: $visualEditor)
                     Toggle("文頭を自動で大文字にする", isOn: $capitalizeEditor)
+                    Button("編集時の文字サイズ: " + (editorFontSize > 0 ? String(editorFontSize) : "既定")) {
+                        fontSizeDraft = editorFontSize > 0 ? String(editorFontSize) : ""
+                        changingEditorFontSize = true
+                    }
+                    .alert("編集時の文字サイズ", isPresented: $changingEditorFontSize) {
+                        TextField("1〜99", text: $fontSizeDraft).keyboardType(.numberPad)
+                        Button("適用") { if let size = Int(fontSizeDraft), (1...99).contains(size) { editorFontSize = size } }
+                            .disabled(Int(fontSizeDraft).map { !(1...99).contains($0) } ?? true)
+                        Button("既定に戻す") { editorFontSize = 0 }
+                        Button("キャンセル", role: .cancel) {}
+                    }
                     ForEach(current.fields.indices, id: \.self) { index in
                         Section {
                             DisclosureGroup(isExpanded: Binding(get: { expanded.contains(index) }, set: { value in if value { expanded.insert(index) } else { expanded.remove(index) } })) {
                             if visualEditor {
-                                RichFieldEditor(text: Binding(get: { document?.fields[index] ?? "" }, set: { document?.fields[index] = $0; dirty = true }), media: model.engine.media, label: "note-field-\(index)", fontName: current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", fontSize: current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontSize"] as? Int ?? 20 : 20, rtl: current.fieldConfigs.indices.contains(index) && current.fieldConfigs[index]["rtl"] as? Bool == true, capitalize: capitalizeEditor)
+                                RichFieldEditor(text: Binding(get: { document?.fields[index] ?? "" }, set: { document?.fields[index] = $0; dirty = true }), media: model.engine.media, label: "note-field-\(index)", fontName: current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", fontSize: editorFontSize > 0 ? editorFontSize : (current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontSize"] as? Int ?? 20 : 20), rtl: current.fieldConfigs.indices.contains(index) && current.fieldConfigs[index]["rtl"] as? Bool == true, capitalize: capitalizeEditor)
                             } else {
                             TextEditor(text: Binding(get: { document?.fields[index] ?? "" }, set: { document?.fields[index] = $0; dirty = true }))
                                 .frame(minHeight: 110).accessibilityIdentifier("note-field-\(index)")
                                 .autocorrectionDisabled().textInputAutocapitalization(capitalizeEditor ? .sentences : .never)
-                                .font(.custom(current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", size: CGFloat(current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontSize"] as? Int ?? 20 : 20)))
+                                .font(.custom(current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", size: CGFloat(editorFontSize > 0 ? editorFontSize : (current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontSize"] as? Int ?? 20 : 20))))
                                 .environment(\.layoutDirection, current.fieldConfigs.indices.contains(index) && current.fieldConfigs[index]["rtl"] as? Bool == true ? .rightToLeft : .leftToRight)
                             }
                             Menu("添付", systemImage: "paperclip") {
