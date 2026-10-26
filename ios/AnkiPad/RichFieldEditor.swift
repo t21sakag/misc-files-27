@@ -15,6 +15,7 @@ struct RichFieldEditor: View {
     var fontName = "Arial"
     var fontSize = 20
     var rtl = false
+    var capitalize = true
     @StateObject private var commands = RichFieldCommands()
     @State private var linking = false
     @State private var link = ""
@@ -36,7 +37,7 @@ struct RichFieldEditor: View {
                     formatButton("やり直す", icon: "arrow.uturn.forward", command: "redo")
                 }.buttonStyle(.borderless)
             }
-            RichFieldWebView(text: $text, media: media, label: label, fontName: fontName, fontSize: fontSize, rtl: rtl, commands: commands).frame(minHeight: 160)
+            RichFieldWebView(text: $text, media: media, label: label, fontName: fontName, fontSize: fontSize, rtl: rtl, capitalize: capitalize, commands: commands).frame(minHeight: 160)
         }
         .alert("リンクを挿入", isPresented: $linking) {
             TextField("https://…", text: $link).textInputAutocapitalization(.never).autocorrectionDisabled()
@@ -55,6 +56,7 @@ private struct RichFieldWebView: UIViewRepresentable {
     let fontName: String
     let fontSize: Int
     let rtl: Bool
+    let capitalize: Bool
     let commands: RichFieldCommands
     func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
     func makeUIView(context: Context) -> WKWebView {
@@ -72,6 +74,7 @@ private struct RichFieldWebView: UIViewRepresentable {
         context.coordinator.fontName = fontName
         context.coordinator.fontSize = fontSize
         context.coordinator.rtl = rtl
+        context.coordinator.capitalize = capitalize
         commands.webView = view
         // Note HTML is data: CSP prevents its script/event handlers from running.
         view.loadHTMLString("""
@@ -81,9 +84,14 @@ private struct RichFieldWebView: UIViewRepresentable {
     }
     func updateUIView(_ view: WKWebView, context: Context) {
         context.coordinator.text = $text
-        guard text != context.coordinator.value else { return }
+        let needsUpdate = text != context.coordinator.value || label != context.coordinator.label || fontName != context.coordinator.fontName || fontSize != context.coordinator.fontSize || rtl != context.coordinator.rtl || capitalize != context.coordinator.capitalize
         context.coordinator.value = text
-        context.coordinator.apply(view)
+        context.coordinator.label = label
+        context.coordinator.fontName = fontName
+        context.coordinator.fontSize = fontSize
+        context.coordinator.rtl = rtl
+        context.coordinator.capitalize = capitalize
+        if needsUpdate { context.coordinator.apply(view) }
     }
     static func dismantleUIView(_ view: WKWebView, coordinator: Coordinator) {
         view.configuration.userContentController.removeScriptMessageHandler(forName: "fieldChanged")
@@ -96,10 +104,11 @@ private struct RichFieldWebView: UIViewRepresentable {
         var fontName = "Arial"
         var fontSize = 20
         var rtl = false
+        var capitalize = true
         init(text: Binding<String>) { self.text = text }
         func apply(_ view: WKWebView) {
-            guard let data = try? JSONSerialization.data(withJSONObject: [value, label, fontName, fontSize, rtl]), let args = String(data: data, encoding: .utf8) else { return }
-            view.evaluateJavaScript("(()=>{const [html,label,font,size,rtl]=\(args);const field=document.getElementById('field');if(field.innerHTML!==html)field.innerHTML=html;field.setAttribute('aria-label',label);field.style.fontFamily=font;field.style.fontSize=size+'px';field.dir=rtl?'rtl':'ltr';})();", completionHandler: nil)
+            guard let data = try? JSONSerialization.data(withJSONObject: [value, label, fontName, fontSize, rtl, capitalize]), let args = String(data: data, encoding: .utf8) else { return }
+            view.evaluateJavaScript("(()=>{const [html,label,font,size,rtl,capitalize]=\(args);const field=document.getElementById('field');if(field.innerHTML!==html)field.innerHTML=html;field.setAttribute('aria-label',label);field.setAttribute('autocapitalize',capitalize?'sentences':'off');field.style.fontFamily=font;field.style.fontSize=size+'px';field.dir=rtl?'rtl':'ltr';})();", completionHandler: nil)
         }
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { apply(webView) }
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {

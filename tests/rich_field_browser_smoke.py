@@ -16,8 +16,8 @@ with chromium() as browser:
     # which are distinct from scripts/event handlers contained in note HTML.
     browser.evaluate("window.fieldReports=[];window.webkit={messageHandlers:{fieldChanged:{postMessage:value=>fieldReports.push(value)}}}")
     browser.evaluate(report)
-    def set_field(value, rtl=False):
-        browser.evaluate(apply.replace(r'\(args)', json.dumps([value, 'fixture-field', 'Arial', 28, rtl], ensure_ascii=False)))
+    def set_field(value, rtl=False, capitalize=True):
+        browser.evaluate(apply.replace(r'\(args)', json.dumps([value, 'fixture-field', 'Arial', 28, rtl, capitalize], ensure_ascii=False)))
     def perform(name, value=''):
         browser.evaluate(command.replace(r'\(args)', json.dumps([name, value], ensure_ascii=False)))
     def select_all():
@@ -27,6 +27,9 @@ with chromium() as browser:
     assert browser.evaluate("document.getElementById('field').dir") == 'rtl'
     assert browser.evaluate("document.getElementById('field').getAttribute('aria-label')") == 'fixture-field'
     assert browser.evaluate("document.getElementById('field').style.fontSize") == '28px'
+    assert browser.evaluate("document.getElementById('field').getAttribute('autocapitalize')") == 'sentences'
+    set_field('初期<b>太字</b>', capitalize=False)
+    assert browser.evaluate("document.getElementById('field').getAttribute('autocapitalize')") == 'off'
     browser.evaluate("(()=>{const f=document.getElementById('field');f.focus();getSelection().selectAllChildren(f);getSelection().collapseToEnd()})()")
     browser.call('Input.insertText', {'text': ' 追記🙂 & < >'})
     assert browser.evaluate("document.getElementById('field').textContent") == '初期太字 追記🙂 & < >'
@@ -53,6 +56,6 @@ with chromium() as browser:
     assert browser.evaluate("typeof window.noteEventExecuted") == 'undefined'
     assert browser.evaluate("document.getElementById('field').textContent") == '保持する文字'
     print(json.dumps({'result': 'PASS', 'browser': browser.call('Browser.getVersion')['product'],
-        'checks': ['actual template/JS extraction', 'font/label/RTL application', 'trusted Unicode insertion and HTML reporting',
+        'checks': ['actual template/JS extraction', 'font/label/RTL/capitalization application', 'trusted Unicode insertion and HTML reporting',
                    'bold/undo/redo', 'link value/reporting', 'unordered list', 'note event-handler blocked by CSP'],
         'limitations': ['Chromium, not iPad WebKit', 'Swift bindings/native toolbar focus and actual collection save not exercised']}, ensure_ascii=False))
