@@ -1,0 +1,65 @@
+name: AnkiPad
+options:
+  bundleIdPrefix: com.localtools
+  deploymentTarget:
+    iOS: '18.0'
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    TARGETED_DEVICE_FAMILY: '2'
+    CODE_SIGNING_ALLOWED: NO
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_OBJC_BRIDGING_HEADER: AnkiPad/Bridge.h
+    LIBRARY_SEARCH_PATHS: ['$(inherited)', '$(PROJECT_DIR)/../build/native/$(PLATFORM_NAME)']
+    OTHER_LDFLAGS: ['$(inherited)', '-lankipad_bridge', '-lc++', '-lz', '-liconv', '-lresolv', '-framework', 'Security', '-framework', 'SystemConfiguration']
+    GENERATE_INFOPLIST_FILE: YES
+    INFOPLIST_KEY_CFBundleDisplayName: AnkiPad
+    INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
+    INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+    INFOPLIST_KEY_UILaunchScreen_Generation: YES
+    INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: 'UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight'
+    MARKETING_VERSION: '0.2.0'
+    ANKIPAD_SOURCE_COMMIT: development
+    CURRENT_PROJECT_VERSION: '2'
+targets:
+  AnkiPad:
+    type: application
+    platform: iOS
+    info:
+      path: ../build/AnkiPad-Info.plist
+      properties:
+        AnkiPadSourceCommit: $(ANKIPAD_SOURCE_COMMIT)
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSAllowsArbitraryLoadsInWebContent: true
+        NSCameraUsageDescription: カードのフィールドに挿入する写真を撮影します。
+        NSSpeechRecognitionUsageDescription: カードの音声入力を文字に変換します。
+        NSMicrophoneUsageDescription: 学習中の発音練習、カードへの音声入力、フィールドに挿入する音声の録音にマイクを使います。
+        NSLocalNetworkUsageDescription: 独自の同期サーバーやアプリ内の画面に接続します。
+    sources:
+      - path: AnkiPad
+        excludes: [Resources]
+      - path: AnkiPad/Resources
+        excludes: [backend]
+        buildPhase: resources
+      - path: AnkiPad/Resources/backend
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.localtools.studyclient
+        TARGETED_DEVICE_FAMILY: '2'
+        'CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]': Simulator.entitlements
+    scheme:
+      testTargets: [AnkiPadUITests]
+  AnkiPadUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [AnkiPadUITests]
+    dependencies:
+      - target: AnkiPad
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.localtools.studyclient.uitests
+        SWIFT_OBJC_BRIDGING_HEADER: ''
+        OTHER_LDFLAGS: ['$(inherited)']

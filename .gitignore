@@ -1,0 +1,10 @@
+/target/
+/native/target/
+/build/
+.DS_Store
+*.xcuserstate
+xcuserdata/
+__pycache__/
+
+/ios/AnkiPad/Resources/fixture.apkg
+/ios/AnkiPad.xcodeproj/

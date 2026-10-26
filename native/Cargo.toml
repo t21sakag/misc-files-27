@@ -1,0 +1,33 @@
+[package]
+name = "ankipad_bridge"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+
+[features]
+test-server = []
+
+[[bin]]
+name = "sync_test_server"
+path = "src/bin/sync_test_server.rs"
+required-features = ["test-server"]
+
+[lib]
+crate-type = ["staticlib", "cdylib"]
+
+[dependencies]
+anki = { path = "../vendor/anki/rslib", features = ["rustls"] }
+prost = "0.13"
+data-encoding = "2.11"
+prost-reflect = { version = "0.14.7", features = ["serde"] }
+serde_json = "1"
+
+[build-dependencies]
+anki_proto = { path = "../vendor/anki/rslib/proto" }
+anki_proto_gen = { path = "../vendor/anki/rslib/proto_gen" }
+prost-reflect = "0.14.7"
+serde_json = "1"
+
+[profile.release]
+debug = 0
+strip = "debuginfo"

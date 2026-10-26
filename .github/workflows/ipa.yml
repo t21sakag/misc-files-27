@@ -1,0 +1,306 @@
+name: Misc checks
+run-name: "Check ${{ inputs.mode || 'full' }}"
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'compile: コンパイルだけ / ui: 操作検証 / ipa: 配布用IPAだけ / full: 全検証'
+        type: choice
+        default: compile
+        options: [compile, ui, ipa, full]
+      ui_suite:
+        description: 'uiモードで実行する操作テスト'
+        type: choice
+        default: changed
+        options: [milestone, changed, profiles, shared, reviewer, all]
+permissions:
+  contents: read
+concurrency:
+  group: ipad-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: xcode-27
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.app/Contents/Developer
+      CI_MODE: ${{ inputs.mode || 'full' }}
+      UI_SUITE: ${{ inputs.ui_suite || 'all' }}
+    timeout-minutes: ${{ (inputs.mode == 'compile' && 30) || (inputs.mode == 'ipa' && 30) || (inputs.mode == 'ui' && inputs.ui_suite != 'all' && 30) || 90 }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Validate selected CI scope
+        run: |
+          case "$CI_MODE" in compile|ui|ipa|full) ;; *) exit 2 ;; esac
+          mkdir -p build
+          python3 scripts/select-ui-tests.py "$UI_SUITE" "$CI_MODE" > build/ui-test-arguments.txt
+      - name: Test actual loopback routing for bundled interfaces
+        run: |
+          mkdir -p build
+          swiftc -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/StaticAssetServer.swift tests/asset_server_smoke.swift -o build/asset-server-smoke
+          build/asset-server-smoke
+      - name: Test card touch bridge cancellation and control exclusions
+        run: node tests/review_touch_bridge_smoke.js
+      - name: Test persistent reviewer gesture configuration
+        run: |
+          swiftc -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/ReviewGestureConfiguration.swift ios/AnkiPad/ReviewKeyboardConfiguration.swift ios/AnkiPad/ReviewGamepadConfiguration.swift ios/AnkiPad/ReviewTouchConfiguration.swift ios/AnkiPad/ReviewToolbarConfiguration.swift tests/gesture_configuration_smoke.swift -o build/gesture-configuration-smoke
+          build/gesture-configuration-smoke
+      - name: Test profile registry preservation and deletion rollback
+        run: |
+          swiftc -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/ProfileRegistry.swift tests/profile_registry_smoke.swift -o build/profile-registry-smoke
+          build/profile-registry-smoke
+      - name: Test local image source parsing and exact HTML replacement
+        run: |
+          swiftc -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/FieldImageReferences.swift tests/field_image_references_smoke.swift -o build/field-image-references-smoke
+          build/field-image-references-smoke
+      - name: Record actual Apple toolchain and runtimes
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks
+          xcrun simctl list runtimes
+      - name: Identify exact native engine/toolchain
+        id: native-version
+        run: |
+          echo "anki=$(git rev-parse HEAD:vendor/anki)" >> "$GITHUB_OUTPUT"
+          echo "xcode=$(xcodebuild -version | shasum -a 256 | cut -c 1-16)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache/restore@v4
+        id: native-host
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
+        with:
+          path: build/native/host
+          key: bridge-host-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.anki }}-${{ steps.native-version.outputs.xcode }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml') }}
+      - uses: actions/cache/restore@v4
+        id: native-device
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ipa'
+        with:
+          path: build/native/iphoneos
+          key: bridge-device-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.anki }}-${{ steps.native-version.outputs.xcode }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml') }}
+      - uses: actions/cache/restore@v4
+        id: native-simulator
+        if: env.CI_MODE != 'ipa'
+        with:
+          path: build/native/iphonesimulator
+          key: bridge-simulator-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.anki }}-${{ steps.native-version.outputs.xcode }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml') }}
+      - name: Determine missing native outputs
+        id: native-plan
+        env:
+          NEED_HOST: ${{ (env.CI_MODE == 'full' || env.CI_MODE == 'ui') && steps.native-host.outputs.cache-hit != 'true' }}
+          NEED_DEVICE: ${{ (env.CI_MODE == 'full' || env.CI_MODE == 'ipa') && steps.native-device.outputs.cache-hit != 'true' }}
+          NEED_SIMULATOR: ${{ env.CI_MODE != 'ipa' && steps.native-simulator.outputs.cache-hit != 'true' }}
+        run: |
+          if [ "$NEED_HOST" = true ] || [ "$NEED_DEVICE" = true ] || [ "$NEED_SIMULATOR" = true ]; then
+            echo 'build=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'build=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install app build tool
+        run: |
+          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+      - name: Get pinned dependencies
+        if: steps.native-plan.outputs.build == 'true'
+        run: |
+          git submodule update --init --depth 1 vendor/anki
+          git -C vendor/anki submodule update --init --depth 1 ftl/core-repo ftl/qt-repo
+      - name: Install native build tools only on cache miss
+        if: steps.native-plan.outputs.build == 'true'
+        run: |
+          if ! command -v protoc >/dev/null; then brew install protobuf; fi
+          toolchain=$(python3 -c 'import tomllib; print(tomllib.load(open("rust-toolchain.toml", "rb"))["toolchain"]["channel"])')
+          rustup toolchain install "$toolchain" --profile minimal
+      - uses: actions/cache@v4
+        if: steps.native-plan.outputs.build == 'true'
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native/target
+          key: native-xcode27-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', '.gitmodules') }}
+          restore-keys: |
+            native-xcode27-${{ runner.os }}-${{ runner.arch }}-
+            native-${{ runner.os }}-${{ runner.arch }}-
+      - name: Build native host engine
+        if: (env.CI_MODE == 'full' || env.CI_MODE == 'ui') && steps.native-host.outputs.cache-hit != 'true'
+        run: bash scripts/build-native.sh host
+      - name: Save completed native host outputs before app/UI checks
+        uses: actions/cache/save@v4
+        if: (env.CI_MODE == 'full' || env.CI_MODE == 'ui') && steps.native-host.outputs.cache-hit != 'true'
+        with:
+          path: build/native/host
+          key: ${{ steps.native-host.outputs.cache-primary-key }}
+      - name: Test real package import, rendering, scheduling, undo and persistence
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
+        run: python3 tests/engine_smoke.py build/native/host/libankipad_bridge.dylib build/fixture.apkg
+      - name: Test collection editing, search and card actions
+        if: env.CI_MODE == 'full'
+        run: python3 tests/collection_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test bundled web interfaces
+        if: env.CI_MODE == 'full'
+        run: python3 tests/web_bridge_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test backups, collection restore, preferences and CSV import
+        if: env.CI_MODE == 'full'
+        run: python3 tests/maintenance_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test reviewer typing, audio, custom scheduler and deck options
+        if: env.CI_MODE == 'full'
+        run: python3 tests/reviewer_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test note types, field migration, templates and preview
+        if: env.CI_MODE == 'full'
+        run: python3 tests/notetype_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test browser modes, columns and complete selection
+        if: env.CI_MODE == 'full'
+        run: python3 tests/browser_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test image occlusion creation, masks and editing
+        if: env.CI_MODE == 'full'
+        run: python3 tests/occlusion_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test filtered decks and custom study
+        if: env.CI_MODE == 'full'
+        run: python3 tests/custom_study_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test selected find-replace and package/text export
+        if: env.CI_MODE == 'full'
+        run: python3 tests/browser_edit_export_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test history calculation
+        if: env.CI_MODE == 'full'
+        run: python3 tests/eta_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test authenticated data and media sync
+        if: env.CI_MODE == 'full'
+        run: python3 tests/sync_smoke.py build/native/host/libankipad_bridge.dylib build/native/host/sync_test_server
+      - name: Build iPad ARM64 engine
+        if: (env.CI_MODE == 'full' || env.CI_MODE == 'ipa') && steps.native-device.outputs.cache-hit != 'true'
+        run: bash scripts/build-native.sh device
+      - name: Save completed native device outputs before app/UI checks
+        uses: actions/cache/save@v4
+        if: (env.CI_MODE == 'full' || env.CI_MODE == 'ipa') && steps.native-device.outputs.cache-hit != 'true'
+        with:
+          path: build/native/iphoneos
+          key: ${{ steps.native-device.outputs.cache-primary-key }}
+      - name: Build unsigned app
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ipa'
+        run: |
+          cd ios
+          xcodegen generate
+          xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath ../build/xcode CODE_SIGNING_ALLOWED=NO ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" build
+      - name: Package unsigned IPA for SideStore signing
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ipa'
+        run: |
+          mkdir -p build/package/Payload
+          cp -R build/xcode/Build/Products/Release-iphoneos/AnkiPad.app build/package/Payload/
+          cp native/Cargo.lock build/Cargo.lock
+          cd build/package
+          zip -qr ../AnkiPad-unsigned.ipa Payload
+          cd ..
+          shasum -a 256 AnkiPad-unsigned.ipa > SHA256SUMS
+      - name: Verify actual IPA architecture, provenance and absence of fixture decks
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ipa'
+        run: python3 scripts/verify-ipa.py build/AnkiPad-unsigned.ipa --source "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v4
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ipa'
+        with:
+          name: build-output
+          path: |
+            build/AnkiPad-unsigned.ipa
+            build/SHA256SUMS
+            build/Cargo.lock
+          retention-days: 14
+      - name: Build iPad simulator engine
+        if: env.CI_MODE != 'ipa' && steps.native-simulator.outputs.cache-hit != 'true'
+        run: bash scripts/build-native.sh simulator
+      - name: Save completed native simulator outputs before app/UI checks
+        uses: actions/cache/save@v4
+        if: env.CI_MODE != 'ipa' && steps.native-simulator.outputs.cache-hit != 'true'
+        with:
+          path: build/native/iphonesimulator
+          key: ${{ steps.native-simulator.outputs.cache-primary-key }}
+      - name: Restore Xcode simulator build intermediates
+        uses: actions/cache/restore@v4
+        id: xcode-simulator
+        if: env.CI_MODE != 'ipa'
+        with:
+          path: |
+            build/simulator/Build
+            build/simulator/ModuleCache.noindex
+            build/simulator/SDKStatCaches.noindex
+          key: xcode-simulator-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.anki }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml', 'ios/project.yml', '.github/workflows/ipa.yml') }}-${{ env.CI_MODE == 'compile' && 'unsigned' || 'adhoc' }}-${{ github.sha }}
+          restore-keys: xcode-simulator-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.anki }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml', 'ios/project.yml', '.github/workflows/ipa.yml') }}-${{ env.CI_MODE == 'compile' && 'unsigned' || 'adhoc' }}-
+      - name: Compile app and test targets without executing tests
+        id: compile-app
+        if: env.CI_MODE == 'compile'
+        run: |
+          cd ios
+          xcodegen generate
+          simulator_id=$(xcrun simctl list devices available -j | python3 ../scripts/select-ipad-simulator.py)
+          xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator -destination "id=$simulator_id" -derivedDataPath ../build/simulator CODE_SIGNING_ALLOWED=NO ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" build-for-testing
+      - name: Prepare UI fixtures and start simulator boot
+        id: ui-prepare
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
+        run: |
+          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = all ]; then
+            SYNC_USER1='fixture@example.test:fixture-password' SYNC_HOST=127.0.0.1 SYNC_PORT=18891 SYNC_BASE="$RUNNER_TEMP/ankipad-ui-sync-server" build/native/host/sync_test_server > build/ui-sync-server.log 2>&1 &
+            echo $! > build/ui-sync-server.pid
+            python3 tests/seed_ui_sync.py build/native/host/libankipad_bridge.dylib build/fixture.apkg
+          fi
+          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = shared ] || [ "$UI_SUITE" = all ]; then
+            python3 tests/shared_deck_fixture.py build/native/host/libankipad_bridge.dylib build/shared-fixture.apkg > build/shared-deck-server.log 2>&1 &
+          fi
+          cp build/fixture.apkg ios/AnkiPad/Resources/fixture.apkg
+          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = all ]; then
+            python3 tests/make_occlusion_image.py build/occlusion-fixture.png
+          fi
+          cd ios
+          xcodegen generate
+          simulator_id=$(xcrun simctl list devices available -j | python3 ../scripts/select-ipad-simulator.py)
+          echo "simulator=$simulator_id" >> "$GITHUB_OUTPUT"
+          xcrun simctl bootstatus "$simulator_id" -b > ../build/simulator-boot.log 2>&1 &
+      - name: Build signed simulator app and UI test targets
+        id: ui-build
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
+        env:
+          SIMULATOR_ID: ${{ steps.ui-prepare.outputs.simulator }}
+        run: |
+          cd ios
+          xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator -destination "id=$SIMULATOR_ID" -derivedDataPath ../build/simulator CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" build-for-testing
+      - name: Save completed Xcode build before UI execution
+        uses: actions/cache/save@v4
+        if: (steps.compile-app.outcome == 'success' || steps.ui-build.outcome == 'success') && steps.xcode-simulator.outputs.cache-hit != 'true'
+        with:
+          path: |
+            build/simulator/Build
+            build/simulator/ModuleCache.noindex
+            build/simulator/SDKStatCaches.noindex
+          key: ${{ steps.xcode-simulator.outputs.cache-primary-key }}
+      - name: Execute selected UI cases without rebuilding
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
+        env:
+          SIMULATOR_ID: ${{ steps.ui-prepare.outputs.simulator }}
+        run: |
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          if [ -f build/occlusion-fixture.png ]; then xcrun simctl addmedia "$SIMULATOR_ID" build/occlusion-fixture.png; fi
+          cd ios
+          ui_test_args=()
+          while IFS= read -r selection; do
+            if [ -n "$selection" ]; then ui_test_args+=("$selection"); fi
+          done < ../build/ui-test-arguments.txt
+          xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator "${ui_test_args[@]}" -destination "id=$SIMULATOR_ID" -derivedDataPath ../build/simulator -resultBundlePath ../build/UITests.xcresult CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" test-without-building
+      - name: Export simulator screenshots
+        if: always() && (env.CI_MODE == 'full' || env.CI_MODE == 'ui')
+        run: |
+          if [ -d build/UITests.xcresult ]; then
+            xcrun xcresulttool export attachments --path build/UITests.xcresult --output-path build/screenshots
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always() && (env.CI_MODE == 'full' || env.CI_MODE == 'ui')
+        with:
+          name: test-results
+          path: |
+            build/UITests.xcresult
+            build/screenshots
+            build/shared-deck-server.log
+            build/simulator-boot.log
+          if-no-files-found: ignore
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always() && (env.CI_MODE == 'full' || env.CI_MODE == 'ui')
+        with:
+          name: screenshots
+          path: build/screenshots/*.png
+          if-no-files-found: ignore
+          retention-days: 7
