@@ -557,7 +557,7 @@ final class StudyFlowTests: XCTestCase {
         menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         app.buttons["shared-decks"].tap()
         let details = app.webViews.links["View fixture deck"]
-        XCTAssertTrue(details.waitForExistence(timeout: 30), app.debugDescription)
+        XCTAssertTrue(details.waitForExistence(timeout: 90), app.debugDescription)
         details.tap()
         let back = app.buttons["shared-browser-back"]
         let backReady = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: back)

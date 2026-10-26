@@ -19,7 +19,9 @@ struct SharedDeckBrowserView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 SharedDeckWebView(url: startURL, state: controls, downloaded: { clearPending(); pending = $0; confirmImport = true }, failed: { error = $0 })
-                if controls.downloading || importing { ProgressView(importing ? "デッキを取り込んでいます…" : "ダウンロードしています…").padding() }
+                if controls.downloading || importing || controls.loading {
+                    ProgressView(importing ? "デッキを取り込んでいます…" : controls.downloading ? "ダウンロードしています…" : "ページを読み込んでいます…").padding()
+                }
             }
             .navigationTitle("共有デッキ").navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -64,6 +66,7 @@ struct SharedDeckBrowserView: View {
 @MainActor final class SharedDeckBrowserState: ObservableObject {
     @Published var canGoBack = false
     @Published var downloading = false
+    @Published var loading = false
     weak var webView: WKWebView?
     var cancel: () -> Void = {}
 }
@@ -103,14 +106,14 @@ struct SharedDeckWebView: UIViewRepresentable {
         init(state: SharedDeckBrowserState, downloaded: @escaping (URL) -> Void, failed: @escaping (String) -> Void) { self.state = state; self.downloaded = downloaded; self.failed = failed }
         func cancel() {
             let download = active
-            active = nil; state.downloading = false
+            active = nil; state.downloading = false; state.loading = false
             if let destination { try? FileManager.default.removeItem(at: destination.deletingLastPathComponent()) }
             destination = nil
             download?.cancel { _ in }
         }
         private func attach(_ download: WKDownload) {
             guard active == nil else { download.cancel { _ in }; return }
-            active = download; state.downloading = true; download.delegate = self
+            active = download; state.downloading = true; state.loading = false; download.delegate = self
         }
         func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) { attach(download) }
         func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) { attach(download) }
@@ -152,8 +155,16 @@ struct SharedDeckWebView: UIViewRepresentable {
         func webView(_ webView: WKWebView, decidePolicyFor response: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
             decisionHandler(response.canShowMIMEType ? .allow : .download)
         }
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { state.canGoBack = webView.canGoBack }
-        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { if (error as NSError).code != NSURLErrorCancelled { failed(error.localizedDescription) } }
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) { state.loading = true }
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { state.loading = false; state.canGoBack = webView.canGoBack }
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            state.loading = false
+            if (error as NSError).code != NSURLErrorCancelled { failed(error.localizedDescription) }
+        }
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            state.loading = false
+            if (error as NSError).code != NSURLErrorCancelled { failed(error.localizedDescription) }
+        }
         func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? { if action.targetFrame == nil { webView.load(action.request) }; return nil }
         func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) { dialogs.webView(webView, runJavaScriptAlertPanelWithMessage: message, initiatedByFrame: frame, completionHandler: completionHandler) }
         func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) { dialogs.webView(webView, runJavaScriptConfirmPanelWithMessage: message, initiatedByFrame: frame, completionHandler: completionHandler) }
