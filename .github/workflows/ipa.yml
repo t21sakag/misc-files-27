@@ -56,6 +56,8 @@ jobs:
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/DeckTree.swift tests/deck_tree_smoke.swift -o build/deck-tree-smoke
           build/deck-tree-smoke
+      - name: Test cache input selection
+        run: python3 tests/cache_input_hashes_smoke.py
       - name: Test compiler input timestamp restoration
         run: python3 tests/xcode_input_mtimes_smoke.py
       - name: Test isolated test-case storage and relaunch persistence
@@ -97,6 +99,7 @@ jobs:
       - name: Identify exact native engine/toolchain
         id: native-version
         run: |
+          python3 scripts/cache-input-hashes.py >> "$GITHUB_OUTPUT"
           echo "anki=$(git rev-parse HEAD:vendor/anki)" >> "$GITHUB_OUTPUT"
           echo "xcode=$(xcodebuild -version | shasum -a 256 | cut -c 1-16)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache/restore@v4
@@ -104,19 +107,19 @@ jobs:
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
         with:
           path: build/native/host
-          key: bridge-host-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.anki }}-${{ steps.native-version.outputs.xcode }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml') }}
+          key: bridge-host-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.anki }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.bridge }}
       - uses: actions/cache/restore@v4
         id: native-device
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ipa'
         with:
           path: build/native/iphoneos
-          key: bridge-device-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.anki }}-${{ steps.native-version.outputs.xcode }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml') }}
+          key: bridge-device-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.anki }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.bridge }}
       - uses: actions/cache/restore@v4
         id: native-simulator
         if: env.CI_MODE != 'ipa'
         with:
           path: build/native/iphonesimulator
-          key: bridge-simulator-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.anki }}-${{ steps.native-version.outputs.xcode }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml') }}
+          key: bridge-simulator-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.anki }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.bridge }}
       - name: Determine missing native outputs
         id: native-plan
         env:
@@ -150,7 +153,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             native/target
-          key: native-xcode27-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', '.gitmodules') }}
+          key: native-xcode27-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.cargo }}
           restore-keys: |
             native-xcode27-${{ runner.os }}-${{ runner.arch }}-
             native-${{ runner.os }}-${{ runner.arch }}-
@@ -274,8 +277,8 @@ jobs:
             build/simulator/ModuleCache.noindex
             build/simulator/SDKStatCaches.noindex
             build/simulator/input-mtimes.json
-          key: xcode-simulator-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.anki }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml', 'ios/project.yml') }}-adhoc-${{ github.sha }}
-          restore-keys: xcode-simulator-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.anki }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml', 'ios/project.yml') }}-adhoc-
+          key: xcode-simulator-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.anki }}-${{ steps.native-version.outputs.simulator }}-adhoc-${{ github.sha }}
+          restore-keys: xcode-simulator-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.anki }}-${{ steps.native-version.outputs.simulator }}-adhoc-
       - name: Compile app and test targets without executing tests
         id: compile-app
         if: env.CI_MODE == 'compile'
