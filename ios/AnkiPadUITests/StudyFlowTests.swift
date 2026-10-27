@@ -528,7 +528,7 @@ final class StudyFlowTests: XCTestCase {
         addUnsyncedNote(app, frontText: "Backup newer")
         openMaintenance(app)
         app.buttons["backup-restore-" + original].tap()
-        let restore = app.buttons["復元"].firstMatch
+        let restore = app.buttons["backup-confirm-restore"]
         XCTAssertTrue(restore.waitForExistence(timeout: 20))
         restore.tap()
         XCTAssertTrue(app.staticTexts["バックアップを復元しました"].waitForExistence(timeout: 40), app.debugDescription)
@@ -541,7 +541,7 @@ final class StudyFlowTests: XCTestCase {
         assertBrowserContains(app, text: "Backup newer", exists: false)
         openMaintenance(app)
         app.buttons[recoveryID].tap()
-        app.buttons["復元"].firstMatch.tap()
+        app.buttons["backup-confirm-restore"].tap()
         XCTAssertTrue(app.staticTexts["バックアップを復元しました"].waitForExistence(timeout: 40), app.debugDescription)
         app.buttons["maintenance-close"].tap()
         waitForSyncIdle(app)

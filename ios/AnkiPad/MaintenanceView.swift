@@ -66,7 +66,7 @@ struct MaintenanceView: View {
             }
             .confirmationDialog("このバックアップに戻しますか？", isPresented: Binding(get: { restoring != nil }, set: { if !$0 { restoring = nil } })) {
                 if let backup = restoring {
-                    Button("復元", role: .destructive) { run { try await model.engine.restoreCollection(backup.url); restoring = nil; report = "バックアップを復元しました"; backups = try await model.engine.backups(); model.refreshAfterEditing() } }
+                    Button("復元", role: .destructive) { run { try await model.engine.restoreCollection(backup.url); restoring = nil; report = "バックアップを復元しました"; backups = try await model.engine.backups(); model.refreshAfterEditing() } }.accessibilityIdentifier("backup-confirm-restore")
                 }
             } message: { Text("現在のコレクションを置き換えます。復元前のバックアップも保存します。") }
             .confirmationDialog("未使用の画像・音声をゴミ箱に移しますか？", isPresented: $confirmTrash) {
@@ -87,6 +87,7 @@ struct MaintenanceView: View {
     }
     private func run(_ operation: @escaping () async throws -> Void) {
         guard !busy, !model.busy else { return }
+        report = ""
         busy = true
         Task { defer { busy = false }; do { try await operation() } catch { self.error = error.localizedDescription } }
     }
