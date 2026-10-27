@@ -237,16 +237,19 @@ jobs:
             build/simulator/Build
             build/simulator/ModuleCache.noindex
             build/simulator/SDKStatCaches.noindex
-          key: xcode-simulator-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.anki }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml', 'ios/project.yml', '.github/workflows/ipa.yml') }}-${{ env.CI_MODE == 'compile' && 'unsigned' || 'adhoc' }}-${{ github.sha }}
-          restore-keys: xcode-simulator-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.anki }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml', 'ios/project.yml', '.github/workflows/ipa.yml') }}-${{ env.CI_MODE == 'compile' && 'unsigned' || 'adhoc' }}-
+            build/simulator/input-mtimes.json
+          key: xcode-simulator-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.anki }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml', 'ios/project.yml') }}-adhoc-${{ github.sha }}
+          restore-keys: xcode-simulator-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.xcode }}-${{ steps.native-version.outputs.anki }}-${{ hashFiles('native/src/**', 'native/Cargo.lock', 'native/Cargo.toml', 'native/build.rs', 'scripts/build-native.sh', 'rust-toolchain.toml', 'ios/project.yml') }}-adhoc-
       - name: Compile app and test targets without executing tests
         id: compile-app
         if: env.CI_MODE == 'compile'
         run: |
+          cp build/fixture.apkg ios/AnkiPad/Resources/fixture.apkg
           cd ios
           xcodegen generate
+          python3 ../scripts/xcode-input-mtimes.py restore --root .. --manifest ../build/simulator/input-mtimes.json
           simulator_id=$(xcrun simctl list devices available -j | python3 ../scripts/select-ipad-simulator.py)
-          xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator -destination "id=$simulator_id" -derivedDataPath ../build/simulator CODE_SIGNING_ALLOWED=NO ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" build-for-testing
+          python3 ../scripts/xcode-build-metrics.py ../build/simulator-build.json xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator -destination "id=$simulator_id" -derivedDataPath ../build/simulator CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" 'OTHER_SWIFT_FLAGS=$(inherited) -driver-show-incremental' -showBuildTimingSummary build-for-testing
       - name: Prepare UI fixtures and start simulator boot
         id: ui-prepare
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
@@ -269,6 +272,9 @@ jobs:
           simulator_id=$(xcrun simctl list devices available -j | python3 ../scripts/select-ipad-simulator.py)
           echo "simulator=$simulator_id" >> "$GITHUB_OUTPUT"
           xcrun simctl bootstatus "$simulator_id" -b > ../build/simulator-boot.log 2>&1 &
+      - name: Restore identical generated project and fixture timestamps
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
+        run: python3 scripts/xcode-input-mtimes.py restore
       - name: Build signed simulator app and UI test targets
         id: ui-build
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
@@ -276,7 +282,10 @@ jobs:
           SIMULATOR_ID: ${{ steps.ui-prepare.outputs.simulator }}
         run: |
           cd ios
-          xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator -destination "id=$SIMULATOR_ID" -derivedDataPath ../build/simulator CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" build-for-testing
+          python3 ../scripts/xcode-build-metrics.py ../build/simulator-build.json xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator -destination "id=$SIMULATOR_ID" -derivedDataPath ../build/simulator CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" 'OTHER_SWIFT_FLAGS=$(inherited) -driver-show-incremental' -showBuildTimingSummary build-for-testing
+      - name: Save input timestamps for completed simulator build
+        if: steps.compile-app.outcome == 'success' || steps.ui-build.outcome == 'success'
+        run: python3 scripts/xcode-input-mtimes.py save
       - name: Save completed Xcode build before UI execution
         uses: actions/cache/save@v4
         if: (steps.compile-app.outcome == 'success' || steps.ui-build.outcome == 'success') && steps.xcode-simulator.outputs.cache-hit != 'true'
@@ -285,6 +294,7 @@ jobs:
             build/simulator/Build
             build/simulator/ModuleCache.noindex
             build/simulator/SDKStatCaches.noindex
+            build/simulator/input-mtimes.json
           key: ${{ steps.xcode-simulator.outputs.cache-primary-key }}
       - name: Execute selected UI cases without rebuilding
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
@@ -325,3 +335,12 @@ jobs:
           path: build/screenshots/*.png
           if-no-files-found: ignore
           retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CI_MODE != 'ipa'
+        with:
+          name: compile-metrics
+          path: |
+            build/simulator-build.json
+            build/simulator-build.log
+          if-no-files-found: ignore
+          retention-days: 14
