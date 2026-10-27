@@ -55,7 +55,7 @@ targets:
   AnkiPadUITests:
     type: bundle.ui-testing
     platform: iOS
-    sources: [AnkiPadUITests]
+    sources: [AnkiPadUITests, AnkiPad/NoteImageRendering.swift]
     dependencies:
       - target: AnkiPad
     settings:

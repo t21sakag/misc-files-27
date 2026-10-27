@@ -101,16 +101,9 @@ struct NoteImageEditorView: View {
         }
     }
     private func normalized() -> UIImage {
-        let size = CGSize(width: image.size.width * image.scale, height: image.size.height * image.scale)
-        let format = UIGraphicsImageRendererFormat(); format.scale = 1
-        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
-            let bounds = CGRect(origin: .zero, size: size)
-            image.draw(in: bounds)
-            if !drawing.strokes.isEmpty, canvasSize.width > 0, canvasSize.height > 0 {
-                drawing.image(from: CGRect(origin: .zero, size: canvasSize), scale: size.width / canvasSize.width).draw(in: bounds)
-            }
-        }
+        NoteImageRendering.normalized(image, drawing: drawing, canvasSize: canvasSize)
     }
+
     private func resizeDrawing(to next: CGSize) {
         guard next.width > 0, next.height > 0 else { return }
         if canvasSize.width > 0, canvasSize.height > 0, !drawing.strokes.isEmpty {
@@ -120,14 +113,7 @@ struct NoteImageEditorView: View {
     }
     private func transform(rotate: Bool) {
         let source = normalized()
-        let size = rotate ? CGSize(width: source.size.height, height: source.size.width) : source.size
-        let format = UIGraphicsImageRendererFormat(); format.scale = 1
-        image = UIGraphicsImageRenderer(size: size, format: format).image { context in
-            context.cgContext.translateBy(x: size.width / 2, y: size.height / 2)
-            if rotate { context.cgContext.rotate(by: .pi / 2) }
-            else { context.cgContext.scaleBy(x: -1, y: 1) }
-            source.draw(in: CGRect(x: -source.size.width / 2, y: -source.size.height / 2, width: source.size.width, height: source.size.height))
-        }
+        image = NoteImageRendering.transformed(source, rotate: rotate)
         crop = nil
         drawing = PKDrawing()
         changed = true
@@ -135,13 +121,10 @@ struct NoteImageEditorView: View {
     private func applyCrop() {
         guard let crop else { return }
         let source = normalized()
-        let rect = CGRect(x: crop.minX * source.size.width, y: crop.minY * source.size.height,
-                          width: crop.width * source.size.width, height: crop.height * source.size.height).integral
-            .intersection(CGRect(origin: .zero, size: source.size))
-        guard rect.width >= 1, rect.height >= 1, let result = source.cgImage?.cropping(to: rect) else {
+        guard let result = NoteImageRendering.cropped(source, unitRect: crop) else {
             error = "切り抜く範囲を広げてください。"; return
         }
-        image = UIImage(cgImage: result)
+        image = result
         self.crop = nil
         drawing = PKDrawing()
         changed = true
