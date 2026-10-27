@@ -25,7 +25,7 @@ final class ControlFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(touchLink.waitForExistence(timeout: 20)); touchLink.tap()
         enable("touch-enabled")
         let zone = app.buttons["touch-zone-8"]
-        for _ in 0..<12 { if zone.exists && zone.isHittable { break }; app.collectionViews.firstMatch.swipeUp() }
+        for _ in 0..<12 { if zone.exists && zone.isHittable { break }; app.collectionViews["touch-settings-form"].swipeUp() }
         waitUntilHittable(zone); zone.tap()
         let show = app.buttons["解答を表示"].firstMatch
         XCTAssertTrue(show.waitForExistence(timeout: 20)); show.tap()

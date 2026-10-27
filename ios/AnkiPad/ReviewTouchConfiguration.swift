@@ -41,7 +41,7 @@ struct ReviewTouchSettingsView: View {
                 Text("リンクや入力欄、ボタンのタップ、文字選択、手書き中は領域操作を行いません。3回タップと区別するため少し待ってから実行します。")
                 Button("初期設定に戻す") { configuration = ReviewTouchConfiguration() }
             }
-        }.navigationTitle("タッチ領域の割り当て")
+        }.accessibilityIdentifier("touch-settings-form").navigationTitle("タッチ領域の割り当て")
     }
 }
 
