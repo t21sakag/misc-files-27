@@ -58,7 +58,17 @@ final class MediaFlowTests: StudyFlowTestSupport {
         XCTAssertEqual(XCTWaiter.wait(for: [cropped], timeout: 20), .completed)
         let savedSize = dimensions()
         let drawing = app.switches["image-editor-drawing"]
-        drawing.tap()
+        func setDrawing(_ enabled: Bool) {
+            let desired = enabled ? "1" : "0"
+            if drawing.value as? String != desired {
+                let native = drawing.switches.firstMatch
+                if native.exists { native.tap() }
+                else { drawing.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap() }
+            }
+            let updated = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", desired), object: drawing)
+            XCTAssertEqual(XCTWaiter.wait(for: [updated], timeout: 10), .completed, app.debugDescription)
+        }
+        setDrawing(true)
         let canvas = app.descendants(matching: .any).matching(identifier: "whiteboard").firstMatch
         XCTAssertTrue(canvas.waitForExistence(timeout: 20), app.debugDescription)
         canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.5)).press(forDuration: 0.1,
@@ -68,7 +78,7 @@ final class MediaFlowTests: StudyFlowTestSupport {
             return (value.components(separatedBy: CharacterSet.decimalDigits.inverted).compactMap(Int.init).first ?? 0) > 0
         }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [ink], timeout: 20), .completed, app.debugDescription)
-        drawing.tap()
+        setDrawing(false)
         app.buttons["image-editor-insert"].tap()
         XCTAssertTrue(image.waitForNonExistence(timeout: 30))
         XCTAssertTrue(front.waitForExistence(timeout: 20))
