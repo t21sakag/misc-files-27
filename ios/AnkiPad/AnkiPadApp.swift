@@ -155,6 +155,7 @@ import PencilKit
         card = nil
         syncStatus = "コレクションを同期中…"
         let decision = try await engine.sync(account)
+        guard !syncCancelled else { throw CancellationError() }
         if let endpoint = decision.endpoint {
             var updated = account
             updated.endpoint = endpoint
@@ -194,6 +195,7 @@ import PencilKit
     private func finishMediaSync() async throws {
         syncStatus = "画像・音声を同期中…"
         while true {
+            guard !syncCancelled else { throw CancellationError() }
             let status = try await engine.mediaSyncStatus()
             if let progress = status["progress"] as? [String: Any] {
                 syncStatus = [progress["checked"], progress["added"], progress["removed"]].compactMap { $0 as? String }.joined(separator: " · ")
@@ -201,6 +203,7 @@ import PencilKit
             if status["active"] as? Bool != true { break }
             try await Task.sleep(nanoseconds: 300_000_000)
         }
+        guard !syncCancelled else { throw CancellationError() }
         decks = try await engine.decks()
         lastSync = Date()
         UserDefaults.standard.set(lastSync, forKey: profilePreferenceKey("lastSync"))

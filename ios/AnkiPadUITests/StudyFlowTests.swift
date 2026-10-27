@@ -63,16 +63,60 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertTrue(app.buttons["login-entry"].waitForExistence(timeout: 20))
     }
 
-    func testFullSyncWithLocalDataRequiresTypedUploadConfirmation() {
-        let app = XCUIApplication()
+    private func prepareSyncProfile(_ app: XCUIApplication, name: String) -> String {
+        app.launch()
+        let menu = app.buttons["collection-menu"]
+        XCTAssertTrue(menu.waitForExistence(timeout: 30))
+        menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        app.buttons["profiles-open"].tap()
+        XCTAssertTrue(app.buttons["profile-add"].waitForExistence(timeout: 20))
+        app.buttons["profile-add"].tap()
+        let field = app.alerts.textFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 20))
+        field.tap(); field.typeText(name)
+        app.alerts.buttons.matching(identifier: "profile-save").firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        XCTAssertTrue(app.buttons["login-entry"].waitForExistence(timeout: 30))
+        menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        app.buttons["profiles-open"].tap()
+        let profile = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@", "profile-", name)).firstMatch
+        XCTAssertTrue(profile.waitForExistence(timeout: 20))
+        let id = profile.identifier
+        app.buttons["profiles-close"].tap()
+        app.terminate()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
+        return id
+    }
+
+    private func removeSyncProfile(_ app: XCUIApplication, id: String) {
+        func openProfiles() {
+            let menu = app.buttons["collection-menu"]
+            XCTAssertTrue(menu.waitForExistence(timeout: 30))
+            menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            app.buttons["profiles-open"].tap()
+            XCTAssertTrue(app.buttons["profile-default"].waitForExistence(timeout: 20))
+        }
+        openProfiles()
+        app.buttons["profile-default"].tap()
+        XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
+        openProfiles()
+        app.buttons[id].press(forDuration: 1)
+        app.buttons["削除"].firstMatch.tap()
+        let confirm = app.alerts.buttons["削除"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 20))
+        confirm.tap()
+        let removed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: app.buttons[id])
+        XCTAssertEqual(XCTWaiter.wait(for: [removed], timeout: 20), .completed)
+        app.buttons["profiles-close"].tap()
+    }
+
+    private func loginToSyncFixture(_ app: XCUIApplication, username value: String) {
         let account = app.buttons["ankiweb-account"]
         XCTAssertTrue(account.waitForExistence(timeout: 30))
         account.tap()
         let username = app.textFields["login-username"]
         XCTAssertTrue(username.waitForExistence(timeout: 20))
-        username.tap(); username.typeText("empty@example.test")
+        username.tap(); username.typeText(value)
         app.secureTextFields["login-password"].tap()
         app.secureTextFields["login-password"].typeText("fixture-password")
         app.switches["custom-server-toggle"].switches.firstMatch.tap()
@@ -80,10 +124,32 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertTrue(endpoint.waitForExistence(timeout: 20))
         endpoint.tap(); endpoint.typeText("http://127.0.0.1:18891/")
         app.buttons["login-submit"].tap()
+    }
+
+    func testFullSyncConflictShowsLocalCounts() {
+        let app = XCUIApplication()
+        let profile = prepareSyncProfile(app, name: "Conflict safety check")
+        loginToSyncFixture(app, username: "fixture@example.test")
+        let download = app.buttons["AnkiWebのデータをこのiPadにダウンロード"]
+        XCTAssertTrue(download.waitForExistence(timeout: 60), app.debugDescription)
+        XCTAssertTrue(app.buttons["このiPadのデータをAnkiWebにアップロード"].exists)
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "このiPad: デッキ 1個・カード 1枚")).firstMatch.exists, app.debugDescription)
+        download.tap()
+        let replace = app.alerts.buttons["置き換えて同期"]
+        XCTAssertTrue(replace.waitForExistence(timeout: 20))
+        replace.tap()
+        XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60), app.debugDescription)
+        removeSyncProfile(app, id: profile)
+    }
+
+    func testFullSyncWithLocalDataRequiresTypedUploadConfirmation() {
+        let app = XCUIApplication()
+        let profile = prepareSyncProfile(app, name: "Upload safety check")
+        loginToSyncFixture(app, username: "empty@example.test")
         let replace = app.alerts.buttons["置き換えて同期"]
         XCTAssertTrue(replace.waitForExistence(timeout: 60), app.debugDescription)
         XCTAssertFalse(replace.isEnabled, "Upload requires explicit typed confirmation")
-        XCTAssertTrue(app.alerts.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "このiPad: デッキ")).firstMatch.exists)
+        XCTAssertTrue(app.alerts.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "このiPad: デッキ")).firstMatch.exists)
         let confirmation = app.alerts.textFields.firstMatch
         XCTAssertTrue(confirmation.exists)
         confirmation.tap(); confirmation.typeText("アップロード")
@@ -94,6 +160,7 @@ final class StudyFlowTests: XCTestCase {
         app.buttons["logout"].tap()
         app.buttons["閉じる"].firstMatch.tap()
         XCTAssertTrue(app.buttons["login-entry"].waitForExistence(timeout: 20))
+        removeSyncProfile(app, id: profile)
     }
 
     func testJavaScriptDialogsReturnNativeInputAndDecisions() {
