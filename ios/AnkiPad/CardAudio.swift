@@ -9,11 +9,25 @@ import UniformTypeIdentifiers
     private var videoObserver: NSObjectProtocol?
     private var videoDelegate: VideoDelegate?
     private let speech = AVSpeechSynthesizer()
+    private let speechDelegate = SpeechDelegate()
+    private var currentUtterance: AVSpeechUtterance?
+    private var utteranceGeneration: UUID?
     private var pending: [[String: Any]] = []
     private var media: URL?
     private var delegate: AudioDelegate?
     private var generation = UUID()
     private var completion: (() -> Void)?
+    init() {
+        // Keep the synthesizer delegate alive across stop and media switches.
+        // TextToSpeech may dispatch a cancelled utterance callback later.
+        speechDelegate.finished = { [weak self] utterance in
+            guard let self, self.currentUtterance === utterance,
+                  self.utteranceGeneration == self.generation else { return }
+            self.currentUtterance = nil; self.utteranceGeneration = nil
+            self.advance()
+        }
+        speech.delegate = speechDelegate
+    }
     var isPlaying: Bool { player?.isPlaying == true || speech.isSpeaking || video != nil }
     func append(_ tags: [[String: Any]], media: URL) {
         self.media = media
@@ -23,6 +37,7 @@ import UniformTypeIdentifiers
     func stop() {
         generation = UUID()
         completion = nil
+        currentUtterance = nil; utteranceGeneration = nil
         pending = []; player?.stop(); player = nil; speech.stopSpeaking(at: .immediate)
         finishVideo(continueQueue: false)
     }
@@ -120,19 +135,20 @@ import UniformTypeIdentifiers
             utterance.voice = requested.lazy.compactMap { name in voices.first { $0.identifier == name || $0.name == name } }.first ?? AVSpeechSynthesisVoice(language: tts["lang"] as? String)
             let speed = (tts["speed"] as? Double) ?? 1
             utterance.rate = min(AVSpeechUtteranceMaximumSpeechRate, max(AVSpeechUtteranceMinimumSpeechRate, AVSpeechUtteranceDefaultSpeechRate * Float(speed)))
-            let delegate = AudioDelegate { [weak self] in
-                    guard let self, self.generation == playbackGeneration else { return }
-                    self.advance()
-                }
-            self.delegate = delegate
-            speech.delegate = delegate
+            currentUtterance = utterance
+            utteranceGeneration = playbackGeneration
             speech.speak(utterance)
         } else { advance() }
     }
-    private final class AudioDelegate: NSObject, AVAudioPlayerDelegate, AVSpeechSynthesizerDelegate {
+    private final class SpeechDelegate: NSObject, AVSpeechSynthesizerDelegate {
+        var finished: (@MainActor (AVSpeechUtterance) -> Void)?
+        func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+            Task { @MainActor in self.finished?(utterance) }
+        }
+    }
+    private final class AudioDelegate: NSObject, AVAudioPlayerDelegate {
         let done: @MainActor () -> Void
         init(done: @escaping @MainActor () -> Void) { self.done = done }
         func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) { Task { @MainActor in self.done() } }
-        func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) { Task { @MainActor in self.done() } }
     }
 }
