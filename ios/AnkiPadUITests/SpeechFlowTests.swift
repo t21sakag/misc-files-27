@@ -44,8 +44,8 @@ final class SpeechFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.navigationBars["読み上げ音声"].waitForExistence(timeout: 20), app.debugDescription)
     }
     private func filterEnglishVoices(_ app: XCUIApplication) {
-        let search = app.searchFields["音声・言語を検索"].firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 20)); search.tap(); search.typeText("en-US")
+        let search = app.textFields["speech-search"].firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 20)); search.tap(); search.typeText("en-US\n")
         let hide = app.buttons["Hide keyboard"]
         if hide.exists && hide.isHittable { hide.tap() }
     }
@@ -67,6 +67,7 @@ final class SpeechFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(available.waitForExistence(timeout: 20), "The picker must expose real installed voices")
         let voice = available.identifier
         available.tap()
+        XCTAssertEqual(available.value as? String, "選択中", app.debugDescription)
         let preview = app.buttons["speech-preview"].firstMatch
         XCTAssertTrue(preview.waitForExistence(timeout: 20)); preview.tap()
         let speaking = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "再生中"), object: preview)
@@ -115,7 +116,7 @@ final class SpeechFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.navigationBars["読み上げ音声"].waitForExistence(timeout: 30), "Unconfigured fallback must ask for a voice")
         choose(app, "speech-choice-system")
         XCTAssertTrue(app.buttons["reveal"].waitForExistence(timeout: 20)); tapReady(app.buttons["reveal"])
-        XCTAssertTrue(app.buttons["answer-2"].waitForExistence(timeout: 20)); tapReady(app.buttons["answer-2"])
+        XCTAssertTrue(app.buttons["answer-2"].waitForExistence(timeout: 20), app.debugDescription); tapReady(app.buttons["answer-2"])
         XCTAssertTrue(app.webViews.staticTexts["Automatic speech next card"].waitForExistence(timeout: 30))
         tapReady(app.buttons["reveal"])
         XCTAssertTrue(app.navigationBars["読み上げ音声"].waitForExistence(timeout: 30))

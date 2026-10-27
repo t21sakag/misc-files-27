@@ -6,6 +6,7 @@ struct ReviewSpeechVoiceView: View {
     @State private var choice: ReviewSpeechChoice
     @State private var query = ""
     @State private var error: String?
+    @FocusState private var searchFocused: Bool
     init(model: StudyModel, request: ReviewSpeechRequest) {
         self.model = model; self.request = request
         _choice = State(initialValue: ReviewSpeechPreferences.load(profileID: request.profileID, scope: request.context.scope) ?? .system)
@@ -15,14 +16,20 @@ struct ReviewSpeechVoiceView: View {
             .sorted { ($0.language, $0.name, $0.id) < ($1.language, $1.name, $1.id) }
     }
     private func row(_ value: ReviewSpeechChoice, title: String, id: String) -> some View {
-        Button { model.audio.stop(); choice = value } label: {
+        Button { searchFocused = false; model.audio.stop(); choice = value } label: {
             HStack { Text(title).foregroundStyle(.primary); Spacer(); if value == choice { Image(systemName: "checkmark") } }
                 .frame(maxWidth: .infinity).contentShape(Rectangle())
-        }.accessibilityIdentifier("speech-choice-" + id).accessibilityValue(choice == value ? "選択中" : "")
+        }.buttonStyle(.borderless).accessibilityIdentifier("speech-choice-" + id).accessibilityValue(choice == value ? "選択中" : "")
     }
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    TextField("音声・言語を検索", text: $query)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .focused($searchFocused).submitLabel(.done).onSubmit { searchFocused = false }
+                        .accessibilityIdentifier("speech-search")
+                }
                 Section {
                     row(.system, title: "システムの音声", id: "system")
                     row(.off, title: "自動読み上げをしない", id: "off")
@@ -36,10 +43,8 @@ struct ReviewSpeechVoiceView: View {
                 }
             }
             .accessibilityIdentifier("speech-voices-list")
-            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "音声・言語を検索")
             .navigationTitle("読み上げ音声")
-            .toolbar {
-                ToolbarItem(placement: .bottomBar) {
+            .safeAreaInset(edge: .bottom) {
                     TimelineView(.periodic(from: .now, by: 0.2)) { _ in
                         Button(model.audio.isPlaying ? "試聴を停止" : "試聴", systemImage: model.audio.isPlaying ? "stop.circle" : "play.circle") {
                             do {
@@ -48,8 +53,9 @@ struct ReviewSpeechVoiceView: View {
                             } catch { self.error = error.localizedDescription }
                         }.disabled(choice.mode == .off).accessibilityIdentifier("speech-preview")
                             .accessibilityValue(model.audio.isPlaying ? "再生中" : "停止中")
-                    }
-                }
+                    }.padding().frame(maxWidth: .infinity).background(.bar)
+            }
+            .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { model.speechRequest = nil }.accessibilityIdentifier("speech-cancel") }
                 ToolbarItem(placement: .confirmationAction) { Button("適用") {
                     do { try model.applySpeechChoice(request, choice: choice) } catch { self.error = error.localizedDescription }
