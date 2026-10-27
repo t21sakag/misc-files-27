@@ -6,6 +6,7 @@ struct SettingsView: View {
     @State private var values: [String: Any] = [:]
     @State private var loaded = false
     @State private var automaticSync = true
+    @State private var automaticTTS = false
     @State private var allowCollectionAPI = UserDefaults.standard.bool(forKey: "allowCollectionCardAPI")
     @State private var displayMode = ReviewDisplayMode(rawValue: UserDefaults.standard.integer(forKey: "reviewDisplayMode")) ?? .buttonsAndMenu
     @State private var showTopbar = UserDefaults.standard.object(forKey: "showReviewTopbar") as? Bool ?? true
@@ -40,6 +41,10 @@ struct SettingsView: View {
                         Toggle("学習中は画面を消灯しない", isOn: $keepScreenOn)
                         Toggle("学習枚数を表示", isOn: boolean("reviewing", "showRemainingDueCounts"))
                         Toggle("評価ボタンに次回の間隔を表示", isOn: boolean("reviewing", "showIntervalsOnButtons"))
+                    }
+                    Section("音声") {
+                        Toggle("音声がないカードを読み上げる", isOn: $automaticTTS).accessibilityIdentifier("tts-enabled")
+                        Text("学習画面の「読み上げ音声を選択」から、デッキとカードの面に合わせて音声を選べます。")
                     }
                     Section("学習操作") {
                         Toggle("スワイプで解答・評価", isOn: $swipeReview)
@@ -101,6 +106,7 @@ struct SettingsView: View {
                             model.reviewDisplayMode = displayMode
                             model.showReviewTopbar = showTopbar
                             model.setAutomaticSyncEnabled(automaticSync)
+                            ReviewSpeechPreferences.setEnabled(automaticTTS, profileID: model.currentProfileID)
                             model.refreshAfterEditing()
                             dismiss()
                         }
@@ -111,7 +117,7 @@ struct SettingsView: View {
             .alert("保存できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
                 Button("閉じる", role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
-            .task { do { values = try await model.engine.preferences(); automaticSync = model.automaticSyncEnabled; allowCollectionAPI = UserDefaults.standard.bool(forKey: model.profilePreferenceKey("allowCollectionCardAPI")); loaded = true } catch { self.error = error.localizedDescription } }
+            .task { do { values = try await model.engine.preferences(); automaticSync = model.automaticSyncEnabled; automaticTTS = ReviewSpeechPreferences.enabled(profileID: model.currentProfileID); allowCollectionAPI = UserDefaults.standard.bool(forKey: model.profilePreferenceKey("allowCollectionCardAPI")); loaded = true } catch { self.error = error.localizedDescription } }
         }
     }
     private func boolean(_ group: String, _ key: String) -> Binding<Bool> {

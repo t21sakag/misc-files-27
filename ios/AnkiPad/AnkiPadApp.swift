@@ -29,7 +29,7 @@ import UIKit
     @Published var profilesReady = false
     @Published var showingProfiles = false
     private var deferredProfileImport: URL?
-    private let audio = CardAudio()
+    let audio = CardAudio()
     let cardSpeech = CardScriptSpeech()
     let cardRecognition = CardScriptRecognition()
     @Published var cardScriptEvents: [CardScriptEvent] = []
@@ -57,7 +57,7 @@ import UIKit
     private var interactionPauseStarted: Date?
     private var pausedReviewSeconds: TimeInterval = 0
     private var pendingQuestionAudio = false
-    @Published private var reviewSceneActive = true
+    @Published private(set) var reviewSceneActive = true
     @Published var busy = false
     @Published var cardDialogPresented = false
     @Published var error: String?
@@ -70,6 +70,14 @@ import UIKit
     @Published var showingNavigationDrawer = false
     @Published var showingReviewerOptions = false
     @Published var showingTemplateActions = false
+    @Published var speechRequest: ReviewSpeechRequest?
+    @Published var speechPreparing = false
+    var speechGeneration = UUID()
+    var speechTask: Task<Void, Never>?
+    var speechResume: (() -> Void)?
+    var speechChoiceApplied = false
+    @Published var speechContexts: [ReviewSpeechScope.Side: ReviewSpeechContext] = [:]
+    var voiceContextTask: Task<Void, Never>?
     @Published var showingReviewVoice = false
     let reviewVoice = NoteAudioRecorder()
     var pendingNavigationChoice: AppNavigationChoice?
@@ -150,6 +158,7 @@ import UIKit
             || showingMaintenance || showingNoteTypes || showingNavigationDrawer || showingReviewerOptions
             || showingReviewVoice || showingTemplateActions || editorRequest != nil || backendPage != nil
             || cardActionRequest != nil || exportURL != nil || error != nil || cardDialogPresented || collectionPresentationActive
+            || speechPreparing || speechRequest != nil
         guard automaticSyncPolicy.take(profileID: currentProfileID, enabled: automaticSyncEnabled,
             hasAccount: account != nil, canStart: !busy && !modal,
             uptime: ProcessInfo.processInfo.systemUptime) != nil else { return }
@@ -371,9 +380,12 @@ import UIKit
         }
     }
     var reviewingInteractionBlocked: Bool {
+        nonSpeechPresentationBlocked || showingReviewVoice || speechPreparing || speechRequest != nil
+    }
+    var nonSpeechPresentationBlocked: Bool {
         !reviewSceneActive || cardDialogPresented || showingAccount || showingBrowser || showingSharedDecks || showingProfiles || showingSettings || showingMaintenance || showingNoteTypes
-        || showingNavigationDrawer || showingReviewerOptions || showingTemplateActions || showingReviewVoice || editorRequest != nil || backendPage != nil
-        || cardActionRequest != nil || exportURL != nil || error != nil
+        || showingNavigationDrawer || showingReviewerOptions || showingTemplateActions || editorRequest != nil || backendPage != nil
+        || cardActionRequest != nil || exportURL != nil || error != nil || collectionPresentationActive
     }
     func pauseReviewInteraction() {
         autoTask?.cancel()
@@ -384,7 +396,7 @@ import UIKit
         if let paused = interactionPauseStarted { pausedReviewSeconds += Date().timeIntervalSince(paused); interactionPauseStarted = nil }
         if pendingQuestionAudio, !revealed, let card {
             pendingQuestionAudio = false
-            if card.options.autoplay { audio.play(card.questionAV, media: engine.media) }
+            if card.options.autoplay { playReviewSides([.question]) }
         }
         scheduleAutoAdvance()
     }
@@ -395,8 +407,23 @@ import UIKit
         stopCardAudioForRecognition()
         cardRecognition.cancel()
         showingReviewVoice = true
+        prepareVoiceSpeechContexts()
     }
-    var reviewVoiceHasReference: Bool { !reviewVoiceReferenceTags.isEmpty }
+    var reviewVoiceHasReference: Bool {
+        guard let card else { return false }
+        let current = revealed ? card.answerAV : card.questionAV
+        if !ReviewSpeechPreferences.enabled(profileID: currentProfileID) || !current.isEmpty { return !reviewVoiceReferenceTags.isEmpty }
+        let sides: [ReviewSpeechScope.Side] = revealed ? (card.options.replayQuestion ? [.question, .answer] : [.answer]) : [.question]
+        for side in sides {
+            guard let context = speechContexts[side] else { continue }
+            let choice = ReviewSpeechPreferences.load(profileID: currentProfileID, scope: context.scope)
+            switch ReviewSpeechPlan.prepare(context.snippets, choice: choice, voices: installedSpeechVoices) {
+            case .needsChoice: return true
+            case .ready(let values): if !values.isEmpty { return true }
+            }
+        }
+        return false
+    }
     private var reviewVoiceReferenceTags: [[String: Any]] {
         guard let card else { return [] }
         return revealed ? ((card.options.replayQuestion ? card.questionAV : []) + card.answerAV) : card.questionAV
@@ -418,13 +445,15 @@ import UIKit
         guard card != nil, !busy, reviewSceneActive else { return }
         if !showingReviewVoice { openReviewVoice() }
         stopCardAudioForRecognition()
+        prepareVoiceSpeechContexts()
         reviewVoice.togglePreview()
     }
     func playReviewVoiceReference() {
         guard showingReviewVoice, card != nil, !reviewVoice.recording, reviewSceneActive else { return }
         reviewVoice.finish()
         cardSpeech.stop()
-        audio.play(reviewVoiceReferenceTags, media: engine.media)
+        let sides: [ReviewSpeechScope.Side] = revealed ? (card?.options.replayQuestion == true ? [.question, .answer] : [.answer]) : [.question]
+        playReviewSides(sides)
     }
     func compareReviewVoice() {
         guard showingReviewVoice, let card, reviewVoice.file != nil,
@@ -432,12 +461,13 @@ import UIKit
         reviewVoice.finish()
         cardSpeech.stop()
         let key = card.mutationKey
-        audio.play(reviewVoiceReferenceTags, media: engine.media) { [weak self] in
+        let sides: [ReviewSpeechScope.Side] = revealed ? (card.options.replayQuestion ? [.question, .answer] : [.answer]) : [.question]
+        playReviewSides(sides) { [weak self] in
             guard let self, self.card?.mutationKey == key, self.showingReviewVoice, self.reviewSceneActive else { return }
             self.reviewVoice.preview()
         }
     }
-    func stopCardAudioForRecognition() { audio.stop(); cardSpeech.stop() }
+    func stopCardAudioForRecognition() { cancelSpeechPlayback(); cardSpeech.stop() }
     func showCardToast(_ text: String, short: Bool) {
         toastTask?.cancel()
         cardToast = text
@@ -495,6 +525,8 @@ import UIKit
         }
     }
     private func loadNext() async throws {
+        cancelSpeechPlayback()
+        speechContexts = [:]
         reviewVoice.finish()
         reviewVoice.discard()
         cardSpeech.stop()
@@ -517,7 +549,7 @@ import UIKit
         finished = card == nil
         if let card {
             if reviewingInteractionBlocked { pendingQuestionAudio = card.options.autoplay }
-            else if card.options.autoplay { audio.play(card.questionAV, media: engine.media) }
+            else if card.options.autoplay { playReviewSides([.question]) }
             scheduleAutoAdvance()
         }
     }
@@ -528,14 +560,14 @@ import UIKit
             self.revealed = true
             if card.options.stopTimerOnAnswer { self.stoppedAt = Date() }
             if card.options.interruptAudio { self.audio.stop() }
-            if card.options.autoplay { self.audio.append(card.answerAV, media: self.engine.media) }
+            if card.options.autoplay { self.playReviewSides([.answer], append: true) }
             self.scheduleAutoAdvance()
         }
     }
     func replay() {
         guard let card else { return }
-        let tags = revealed ? ((card.options.replayQuestion ? card.questionAV : []) + card.answerAV) : card.questionAV
-        audio.play(tags, media: engine.media)
+        let sides: [ReviewSpeechScope.Side] = revealed ? (card.options.replayQuestion ? [.question, .answer] : [.answer]) : [.question]
+        playReviewSides(sides)
     }
     func answer(_ rating: Int) {
         guard revealed, !reviewingInteractionBlocked, schedulerReady, let card else { return }
@@ -592,6 +624,7 @@ import UIKit
         guard let card else { return }
         let tags = answer ? card.answerAV : card.questionAV
         guard tags.indices.contains(index) else { return }
+        cancelSpeechPlayback()
         audio.play([tags[index]], media: engine.media)
     }
     func schedulingRequest(_ method: String, input: String, key: String) async throws -> String {
@@ -644,8 +677,10 @@ import UIKit
             } catch {}
         }
     }
-    func replayStop() { reviewVoice.finish(); pauseReviewScene(); cardRecognition.cancel(); cardSpeech.stop(); audio.stop(); autoTask?.cancel(); UIApplication.shared.isIdleTimerDisabled = false }
+    func replayStop() { cancelSpeechPlayback(); reviewVoice.finish(); pauseReviewScene(); cardRecognition.cancel(); cardSpeech.stop(); audio.stop(); autoTask?.cancel(); UIApplication.shared.isIdleTimerDisabled = false }
     func leave() {
+        cancelSpeechPlayback()
+        speechContexts = [:]
         showingReviewVoice = false
         reviewVoice.finish()
         reviewVoice.discard()

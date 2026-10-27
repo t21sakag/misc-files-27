@@ -187,7 +187,7 @@ struct ReviewVoiceView: View {
                         case .replay: model.playReviewVoiceReference()
                         default: break
                         }
-                    }.keyboardShortcut(key.shortcut).disabled(recorder.requestingPermission)
+                    }.keyboardShortcut(key.shortcut).disabled(recorder.requestingPermission || model.speechPreparing || model.speechRequest != nil)
                 }
             }
         }.frame(width: 0, height: 0).clipped().opacity(0).accessibilityHidden(true)
@@ -223,16 +223,20 @@ struct ReviewVoiceView: View {
                     Button("カードの音声を再生", systemImage: "speaker.wave.2") { model.playReviewVoiceReference() }
                         .disabled(!model.reviewVoiceHasReference).accessibilityIdentifier("voice-reference")
                 }
-                Text("録音は一時的に保持し、次のカードに進むと削除します。ノートには追加しません。")
+                Text("録音はこのカードの練習用に一時保存します。次のカードに進むと削除します。")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             .padding()
             .navigationTitle("自分の声")
             .overlay { keyboardCommands }
+            .sheet(item: model.speechRequestBinding(inVoice: true), onDismiss: model.finishSpeechChoice) { request in
+                ReviewSpeechVoiceView(model: model, request: request)
+            }
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("閉じる") { dismiss() } } }
-            .onDisappear { model.stopCardAudioForRecognition(); recorder.finish() }
+            .onDisappear { recorder.finish() }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .background { model.stopCardAudioForRecognition(); recorder.finish() }
+                else if phase == .active { model.prepareVoiceSpeechContexts() }
             }
             .alert("録音できませんでした", isPresented: Binding(get: { recorder.error != nil }, set: { if !$0 { recorder.error = nil } })) {
                 Button("閉じる", role: .cancel) { recorder.error = nil }

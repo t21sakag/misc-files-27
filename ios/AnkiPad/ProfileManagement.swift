@@ -77,6 +77,7 @@ extension StudyModel {
             }
         }.value
         ReviewReminderStore.delete(profileID: profile.id)
+        ReviewSpeechPreferences.remove(profileID: profile.id)
         SyncActivityStore().clear(profileID: profile.id)
         for key in ["lastSync", "lastBrowserSearch", "allowCollectionCardAPI", "automaticSync", "syncMediaPending", "syncCleanStamp"] {
             UserDefaults.standard.removeObject(forKey: profilePreferenceKey(key, profileID: profile.id))

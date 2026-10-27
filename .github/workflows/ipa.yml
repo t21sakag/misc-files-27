@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, all]
 permissions:
   contents: read
 concurrency:
@@ -58,7 +58,7 @@ jobs:
           xcrun clang -Wall -Wextra -I"$sdk_root/usr/include/libxml2" -c ios/AnkiPad/SpeechHTML.c -o build/SpeechHTML.o
           xcrun clang -dynamiclib -I"$sdk_root/usr/include/libxml2" ios/AnkiPad/SpeechHTML.c -lxml2 -o build/libspeechhtml.dylib
           python3 tests/speech_html_smoke.py build/libspeechhtml.dylib
-          swiftc -swift-version 5 -parse-as-library -import-objc-header ios/AnkiPad/SpeechHTML.h ios/AnkiPad/LegacySpeechText.swift ios/AnkiPad/ReviewSpeechPreferences.swift tests/review_speech_smoke.swift build/SpeechHTML.o -lxml2 -o build/review-speech-smoke
+          swiftc -swift-version 5 -parse-as-library -import-objc-header ios/AnkiPad/SpeechHTML.h ios/AnkiPad/LegacySpeechText.swift ios/AnkiPad/ReviewSpeechPreferences.swift ios/AnkiPad/ReviewSpeechPlan.swift tests/review_speech_smoke.swift build/SpeechHTML.o -lxml2 -o build/review-speech-smoke
           build/review-speech-smoke
       - name: Test reminder configuration validity and persistence
         run: |

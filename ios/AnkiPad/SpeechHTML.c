@@ -53,7 +53,7 @@ static int collect(const xmlNode *node, APSpeechSegmentCallback callback, void *
     }
     return 1;
 }
-int ap_speech_parse_html(const char *html, APSpeechSegmentCallback callback, void *context) {
+static int parse_html(const char *html, APSpeechSegmentCallback callback, void *context, int localized) {
     if (!html || !callback) return 0;
     size_t length = strlen(html);
     if (length > INT_MAX) return 0;
@@ -64,11 +64,19 @@ int ap_speech_parse_html(const char *html, APSpeechSegmentCallback callback, voi
         HTML_PARSE_NONET | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING | HTML_PARSE_RECOVER);
     if (!document) return 0;
     xmlNode *root = xmlDocGetRootElement(document);
+    if (!root) { xmlFreeDoc(document); callback("", "", context); return 1; }
     const xmlNode *body = root;
     if (root) for (const xmlNode *child = root->children; child; child = child->next) if (named(child, "body")) { body = child; break; }
     int count = 0;
-    int ok = body && collect(body, callback, context, &count);
+    int ok = body && (!localized || collect(body, callback, context, &count));
     if (ok && !count) ok = emit(body, "", callback, context);
     xmlFreeDoc(document);
     return ok;
+}
+
+int ap_speech_parse_html(const char *html, APSpeechSegmentCallback callback, void *context) {
+    return parse_html(html, callback, context, 1);
+}
+int ap_speech_plain_html(const char *html, APSpeechSegmentCallback callback, void *context) {
+    return parse_html(html, callback, context, 0);
 }

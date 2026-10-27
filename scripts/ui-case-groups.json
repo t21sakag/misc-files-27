@@ -61,5 +61,10 @@
   "AudioFlowTests": [
     "testCardAudioQueueCompletesOnceAndCancellationDoesNotReplay",
     "testReviewRecordingReferenceComparisonAndTemporaryCleanup"
+  ],
+  "SpeechFlowTests": [
+    "testInstalledVoiceSelectionPersistsAndQuestionAnswerChoicesAreSeparate",
+    "testAutomaticSpeechChoiceAndNestedReferencePickerCanCancelAndResume",
+    "testNativeSpeechSynthesisQueueCompletes"
   ]
 }

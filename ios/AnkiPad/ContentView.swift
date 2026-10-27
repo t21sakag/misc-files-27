@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 import PencilKit
 
 private enum ReviewerPanelAction: String, CaseIterable, Identifiable {
-    case edit, add, tags, due, reset, info, mark, suspend, suspendNote, bury, buryNote, undo, redo, replay, voice, whiteboard
+    case edit, add, tags, due, reset, info, mark, suspend, suspendNote, bury, buryNote, undo, redo, replay, voice, speech, whiteboard
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -11,7 +11,7 @@ private enum ReviewerPanelAction: String, CaseIterable, Identifiable {
         case .due: "期日を変更"; case .reset: "新規カードに戻す"; case .info: "カード情報"
         case .mark: "マークを切り替え"; case .suspend: "カードを保留"; case .suspendNote: "関連カードを保留"
         case .bury: "カードを今日は表示しない"; case .buryNote: "関連カードを今日は表示しない"
-        case .undo: "取り消す"; case .redo: "やり直す"; case .replay: "音声を再生"; case .voice: "自分の声を録音・再生"; case .whiteboard: "手書きを切り替え"
+        case .undo: "取り消す"; case .redo: "やり直す"; case .replay: "音声を再生"; case .voice: "自分の声を録音・再生"; case .speech: "読み上げ音声を選択"; case .whiteboard: "手書きを切り替え"
         }
     }
 }
@@ -124,7 +124,7 @@ struct ContentView: View {
         }
         ToolbarItemGroup(placement: .topBarTrailing) {
             if model.selected != nil {
-                Button(action: model.replay) { Image(systemName: "speaker.wave.2") }.accessibilityLabel("音声を再生")
+                Button(action: model.replay) { Image(systemName: "speaker.wave.2") }.accessibilityLabel("音声を再生").accessibilityIdentifier("review-replay-audio")
                 Button { whiteboard.toggle() } label: { Image(systemName: whiteboard ? "pencil.tip.crop.circle.fill" : "pencil.tip.crop.circle") }.accessibilityLabel("手書きボード").accessibilityIdentifier("whiteboard-toggle")
                 if whiteboard { Button { drawing = PKDrawing() } label: { Image(systemName: "trash") }.accessibilityLabel("手書きを消す") }
                 Button("取り消す", action: model.undo).disabled(model.busy || !model.profilesReady).accessibilityIdentifier("review-undo")
@@ -133,6 +133,7 @@ struct ContentView: View {
                     Button("自分の声を録音・再生", systemImage: "mic") {
                         model.openReviewVoice()
                     }.disabled(model.card == nil || model.busy)
+                    Button("読み上げ音声を選択") { model.openSpeechVoicePicker() }.accessibilityIdentifier("review-speech-choice")
                     Button("ノートを追加") { model.editorRequest = EditorRequest(deckID: model.selected?.id ?? "0") }
                     if whiteboard {
                         Toggle("消しゴム", isOn: $eraser)
@@ -229,6 +230,7 @@ struct ContentView: View {
         case .redo: model.redo()
         case .replay: model.replay()
         case .voice: model.openReviewVoice()
+        case .speech: model.openSpeechVoicePicker()
         case .whiteboard: whiteboard.toggle()
         }
     }
@@ -252,7 +254,12 @@ struct ContentView: View {
     private var sheetContent: some View {
         navigationContent
         .sheet(isPresented: $model.showingNavigationDrawer, onDismiss: model.finishNavigationSelection) { AppNavigationDrawerView(model: model) }
-        .sheet(isPresented: $model.showingReviewVoice) { ReviewVoiceView(model: model, recorder: model.reviewVoice) }
+        .sheet(isPresented: $model.showingReviewVoice, onDismiss: {
+            model.stopCardAudioForRecognition(); model.reviewVoice.finish()
+        }) { ReviewVoiceView(model: model, recorder: model.reviewVoice) }
+        .sheet(item: model.speechRequestBinding(inVoice: false), onDismiss: model.finishSpeechChoice) { request in
+            ReviewSpeechVoiceView(model: model, request: request)
+        }
         .sheet(isPresented: $model.showingTemplateActions, onDismiss: finishTemplateAction) { templateActionPicker }
         .sheet(isPresented: $model.showingReviewerOptions, onDismiss: finishReviewerPanelAction) { reviewerOptionsPanel }
         .sheet(isPresented: $model.showingNoteTypes) { NoteTypeManagerView(model: model) }
@@ -540,6 +547,7 @@ private extension ContentView {
         case .recordVoice: model.recordReviewVoice()
         case .replayVoice: model.replayReviewVoice()
         case .saveVoice: model.saveReviewRecording()
+        case .selectTTS: model.openSpeechVoicePicker()
         case .undo: model.undo()
         case .redo: model.redo()
         case .mark: model.toggleCurrentMark()

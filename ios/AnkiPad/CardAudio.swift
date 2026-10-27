@@ -112,6 +112,8 @@ import UniformTypeIdentifiers
                 if !audio.play() { advance() }
             } catch { advance() }
         } else if let tts = tag["tts"] as? [String: Any], let text = tts["fieldText"] as? String {
+            do { try AVAudioSession.sharedInstance().setCategory(.playback) }
+            catch { advance(); return }
             let utterance = AVSpeechUtterance(string: text)
             let requested = tts["voices"] as? [String] ?? []
             let voices = AVSpeechSynthesisVoice.speechVoices()

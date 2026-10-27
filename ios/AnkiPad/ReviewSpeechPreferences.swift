@@ -1,7 +1,7 @@
 import Foundation
 
 struct ReviewSpeechScope: Codable, Equatable {
-    enum Side: String, Codable { case question, answer }
+    enum Side: String, Codable, Hashable { case question, answer }
     let deckID: String
     let template: Int
     let side: Side
@@ -37,5 +37,12 @@ enum ReviewSpeechPreferences {
         values[scope.key] = choice
         defaults.set(try JSONEncoder().encode(values), forKey: key(profileID))
     }
-    static func remove(profileID: String, defaults: UserDefaults = .standard) { defaults.removeObject(forKey: key(profileID)) }
+    private static func enabledKey(_ profileID: String) -> String {
+        profileID == "default" ? "ttsEnabled" : "profile." + profileID + ".ttsEnabled"
+    }
+    static func enabled(profileID: String, defaults: UserDefaults = .standard) -> Bool { defaults.bool(forKey: enabledKey(profileID)) }
+    static func setEnabled(_ enabled: Bool, profileID: String, defaults: UserDefaults = .standard) { defaults.set(enabled, forKey: enabledKey(profileID)) }
+    static func remove(profileID: String, defaults: UserDefaults = .standard) {
+        defaults.removeObject(forKey: key(profileID)); defaults.removeObject(forKey: enabledKey(profileID))
+    }
 }

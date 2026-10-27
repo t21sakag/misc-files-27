@@ -34,6 +34,25 @@ import Foundation
         ReviewSpeechPreferences.remove(profileID: "second", defaults: defaults)
         precondition(ReviewSpeechPreferences.load(profileID: "second", scope: question, defaults: defaults) == nil)
         precondition(ReviewSpeechPreferences.load(profileID: "default", scope: question, defaults: defaults) == voice)
+        let voices = [InstalledSpeechVoice(id: "en", name: "English", language: "en-US"), InstalledSpeechVoice(id: "ja", name: "Japanese", language: "ja-JP")]
+        let plain = [SpeechSnippet(text: "words", locale: "")]
+        precondition(ReviewSpeechPlan.prepare(plain, choice: nil, voices: voices) == .needsChoice)
+        precondition(ReviewSpeechPlan.prepare(plain, choice: .off, voices: voices) == .ready([]))
+        precondition(ReviewSpeechPlan.prepare(plain, choice: .system, voices: voices) == .ready([ResolvedSpeechSnippet(text: "words", language: "", voiceID: nil)]))
+        precondition(ReviewSpeechPlan.prepare(plain, choice: ReviewSpeechChoice(mode: .voice, voiceID: "ja"), voices: voices) == .ready([ResolvedSpeechSnippet(text: "words", language: "ja-JP", voiceID: "ja")]))
+        let specified = [SpeechSnippet(text: "hello", locale: "en-US")]
+        precondition(ReviewSpeechPlan.prepare(specified, choice: .off, voices: voices) == .ready([ResolvedSpeechSnippet(text: "hello", language: "en-US", voiceID: nil)]))
+        precondition(ReviewSpeechPlan.prepare(plain, choice: ReviewSpeechChoice(mode: .voice, voiceID: "deleted"), voices: voices) == .needsChoice)
+        let fallback = [SpeechSnippet(text: "regional", locale: "en-AU")]
+        precondition(ReviewSpeechPlan.prepare(fallback, choice: .off, voices: voices) == .ready([ResolvedSpeechSnippet(text: "regional", language: "en-US", voiceID: nil)]))
+        let iso = [SpeechSnippet(text: "three letter", locale: "eng")]
+        precondition(ReviewSpeechPlan.prepare(iso, choice: .off, voices: voices) == .ready([ResolvedSpeechSnippet(text: "three letter", language: "en-US", voiceID: nil)]))
+        let whole = try LegacySpeechText.parse("<tts service=android>inside</tts> outside", localized: false)
+        precondition(whole == [SpeechSnippet(text: "inside outside", locale: "")])
+        ReviewSpeechPreferences.setEnabled(true, profileID: "default", defaults: defaults)
+        precondition(!ReviewSpeechPreferences.enabled(profileID: "second", defaults: defaults))
+        let media = try LegacySpeechText.parse("hello [anki:play:q:0] [sound:file.wav] world")
+        precondition(media == [SpeechSnippet(text: "hello world", locale: "")])
         print("PASS: actual inert HTML/C bridge; cloze blank/pure answer; persisted profile/deck/template/side isolation; filtered scope")
     }
 }

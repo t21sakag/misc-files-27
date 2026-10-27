@@ -7,12 +7,15 @@ callback_type = ctypes.CFUNCTYPE(None, ctypes.c_char_p, ctypes.c_char_p, ctypes.
 lib.ap_speech_parse_html.argtypes = [ctypes.c_char_p, callback_type, ctypes.c_void_p]
 lib.ap_speech_parse_html.restype = ctypes.c_int
 
-def parse(html):
+lib.ap_speech_plain_html.argtypes = lib.ap_speech_parse_html.argtypes
+lib.ap_speech_plain_html.restype = ctypes.c_int
+
+def parse(html, localized=True):
     result = []
     def receive(text, locale, context):
         result.append((' '.join((text or b'').decode().split()), locale.decode()))
     callback = callback_type(receive)
-    assert lib.ap_speech_parse_html(html.encode(), callback, None) == 1
+    assert (lib.ap_speech_parse_html if localized else lib.ap_speech_plain_html)(html.encode(), callback, None) == 1
     return result
 
 assert parse('<p>one <b>two</b></p><div>three<br>four</div>') == [('one two three four', '')]
@@ -22,6 +25,8 @@ assert parse('<tts SERVICE="ANDROID" voice="en_US">Hello <b>world</b></tts><tts 
 assert parse('<tts service=android voice=fr><tts service=android voice=de>inner</tts> outer</tts>') == [('inner outer', 'fr')]
 assert parse('<tts service=other>whole</tts>') == [('whole', '')]
 assert parse('<tts service=android voice=en><b>unclosed') == [('unclosed', 'en')]
+assert parse('<tts service=android>selected</tts> outside', localized=False) == [('selected outside', '')]
+assert parse('<!-- silent -->') == [('', '')]
 assert parse('') == [('', '')]
 assert parse(' \n \t') == [('', '')]
 print('PASS: localized legacy TTS segments; nested ownership; malformed HTML; whitespace/entities; inert script/style; UTF-8')
