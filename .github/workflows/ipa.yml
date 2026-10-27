@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, all]
 permissions:
   contents: read
 concurrency:
@@ -52,6 +52,14 @@ jobs:
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BackupExport.swift tests/backup_export_smoke.swift -o build/backup-export-smoke
           build/backup-export-smoke
+      - name: Test inert speech parsing and scoped selection persistence
+        run: |
+          sdk_root=$(xcrun --sdk macosx --show-sdk-path)
+          xcrun clang -Wall -Wextra -I"$sdk_root/usr/include/libxml2" -c ios/AnkiPad/SpeechHTML.c -o build/SpeechHTML.o
+          xcrun clang -dynamiclib -I"$sdk_root/usr/include/libxml2" ios/AnkiPad/SpeechHTML.c -lxml2 -o build/libspeechhtml.dylib
+          python3 tests/speech_html_smoke.py build/libspeechhtml.dylib
+          swiftc -swift-version 5 -parse-as-library -import-objc-header ios/AnkiPad/SpeechHTML.h ios/AnkiPad/LegacySpeechText.swift ios/AnkiPad/ReviewSpeechPreferences.swift tests/review_speech_smoke.swift build/SpeechHTML.o -lxml2 -o build/review-speech-smoke
+          build/review-speech-smoke
       - name: Test reminder configuration validity and persistence
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/ReviewReminderConfiguration.swift tests/reminder_configuration_smoke.swift -o build/reminder-configuration-smoke

@@ -252,7 +252,7 @@ struct ContentView: View {
     private var sheetContent: some View {
         navigationContent
         .sheet(isPresented: $model.showingNavigationDrawer, onDismiss: model.finishNavigationSelection) { AppNavigationDrawerView(model: model) }
-        .sheet(isPresented: $model.showingReviewVoice) { ReviewVoiceView(recorder: model.reviewVoice) }
+        .sheet(isPresented: $model.showingReviewVoice) { ReviewVoiceView(model: model, recorder: model.reviewVoice) }
         .sheet(isPresented: $model.showingTemplateActions, onDismiss: finishTemplateAction) { templateActionPicker }
         .sheet(isPresented: $model.showingReviewerOptions, onDismiss: finishReviewerPanelAction) { reviewerOptionsPanel }
         .sheet(isPresented: $model.showingNoteTypes) { NoteTypeManagerView(model: model) }
@@ -537,7 +537,9 @@ private extension ContentView {
         case .good: model.answer(2)
         case .easy: model.answer(3)
         case .replay: model.replay()
-        case .recordVoice: model.openReviewVoice()
+        case .recordVoice: model.recordReviewVoice()
+        case .replayVoice: model.replayReviewVoice()
+        case .saveVoice: model.saveReviewRecording()
         case .undo: model.undo()
         case .redo: model.redo()
         case .mark: model.toggleCurrentMark()

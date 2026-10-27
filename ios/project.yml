@@ -6,12 +6,13 @@ options:
 settings:
   base:
     SWIFT_VERSION: '5.0'
+    HEADER_SEARCH_PATHS: ['$(inherited)', '$(SDKROOT)/usr/include/libxml2']
     TARGETED_DEVICE_FAMILY: '2'
     CODE_SIGNING_ALLOWED: NO
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     SWIFT_OBJC_BRIDGING_HEADER: AnkiPad/Bridge.h
     LIBRARY_SEARCH_PATHS: ['$(inherited)', '$(PROJECT_DIR)/../build/native/$(PLATFORM_NAME)']
-    OTHER_LDFLAGS: ['$(inherited)', '-lankipad_bridge', '-lc++', '-lz', '-liconv', '-lresolv', '-framework', 'Security', '-framework', 'SystemConfiguration']
+    OTHER_LDFLAGS: ['$(inherited)', '-lankipad_bridge', '-lc++', '-lz', '-liconv', '-lresolv', '-lxml2', '-framework', 'Security', '-framework', 'SystemConfiguration']
     GENERATE_INFOPLIST_FILE: YES
     INFOPLIST_KEY_CFBundleDisplayName: AnkiPad
     INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
@@ -55,7 +56,7 @@ targets:
   AnkiPadUITests:
     type: bundle.ui-testing
     platform: iOS
-    sources: [AnkiPadUITests, AnkiPad/NoteImageRendering.swift]
+    sources: [AnkiPadUITests, AnkiPad/NoteImageRendering.swift, AnkiPad/CardAudio.swift]
     dependencies:
       - target: AnkiPad
     settings:

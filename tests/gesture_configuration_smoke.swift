@@ -28,6 +28,9 @@ import Foundation
         precondition(keyboard.action(for: .space) == .flipOrGood)
         precondition(keyboard.action(for: .four) == .easy)
         precondition(keyboard.action(for: .control7) == .flag7)
+        precondition(keyboard.action(for: .v) == .replayVoice)
+        precondition(keyboard.action(for: .shiftV) == .recordVoice)
+        precondition(keyboard.action(for: .shiftS) == .saveVoice)
         keyboard.actions[ReviewKey.space.rawValue] = ReviewGestureAction.none
         keyboard.actions[ReviewKey.r.rawValue] = .user9
         let restoredKeyboard = ReviewKeyboardConfiguration.load(try JSONEncoder().encode(keyboard))

@@ -57,5 +57,9 @@
   ],
   "ControlFlowTests": [
     "testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions"
+  ],
+  "AudioFlowTests": [
+    "testCardAudioQueueCompletesOnceAndCancellationDoesNotReplay",
+    "testReviewRecordingReferenceComparisonAndTemporaryCleanup"
   ]
 }

@@ -4,14 +4,14 @@ import SwiftUI
 #endif
 
 enum ReviewKey: String, CaseIterable, Identifiable {
-    case space, enter, one, two, three, four, r, e, a, t, z, shiftZ, w, v, star
+    case space, enter, one, two, three, four, r, e, a, t, z, shiftZ, w, v, shiftV, shiftS, star
     case control1, control2, control3, control4, control5, control6, control7
     var id: String { rawValue }
     var title: String {
         switch self {
         case .space: "Space"; case .enter: "Return"
         case .one: "1"; case .two: "2"; case .three: "3"; case .four: "4"
-        case .shiftZ: "Shift＋Z"; case .star: "*"
+        case .shiftZ: "Shift＋Z"; case .shiftV: "Shift＋V"; case .shiftS: "Shift＋S"; case .star: "*"
         default: rawValue.hasPrefix("control") ? "Ctrl＋" + String(rawValue.suffix(1)) : rawValue.uppercased()
         }
     }
@@ -25,6 +25,8 @@ enum ReviewKey: String, CaseIterable, Identifiable {
         case .three: KeyboardShortcut("3", modifiers: [])
         case .four: KeyboardShortcut("4", modifiers: [])
         case .shiftZ: KeyboardShortcut("z", modifiers: .shift)
+        case .shiftV: KeyboardShortcut("v", modifiers: .shift)
+        case .shiftS: KeyboardShortcut("s", modifiers: .shift)
         case .star: KeyboardShortcut("*", modifiers: [])
         default: KeyboardShortcut(KeyEquivalent(Character(String(rawValue.suffix(1)))), modifiers: rawValue.hasPrefix("control") ? .control : [])
         }
@@ -35,7 +37,7 @@ enum ReviewKey: String, CaseIterable, Identifiable {
         case .space, .enter: .flipOrGood
         case .one: .again; case .two: .hard; case .three: .good; case .four: .easy
         case .r: .replay; case .e: .edit; case .a: .add; case .t: .tags
-        case .z: .undo; case .shiftZ: .redo; case .w: .whiteboard; case .v: .recordVoice; case .star: .mark
+        case .z: .undo; case .shiftZ: .redo; case .w: .whiteboard; case .v: .replayVoice; case .shiftV: .recordVoice; case .shiftS: .saveVoice; case .star: .mark
         case .control1: .flag1; case .control2: .flag2; case .control3: .flag3; case .control4: .flag4
         case .control5: .flag5; case .control6: .flag6; case .control7: .flag7
         }

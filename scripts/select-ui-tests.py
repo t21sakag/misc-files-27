@@ -20,6 +20,7 @@ suites = {
     'images': ['testImageEditsPreserveExpectedPhysicalPixels', 'testImageAnnotationIsCompositedAtCanvasScale', 'testPhotoEditsAndDrawingPersistWhenReeditingNote'],
     'controls': ['testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions'],
     'p1-next': ['testPhotoEditsAndDrawingPersistWhenReeditingNote', 'testZZZProfilesKeepCollectionsAndAccountsSeparate'],
+    'voice': ['testCardAudioQueueCompletesOnceAndCancellationDoesNotReplay', 'testReviewRecordingReferenceComparisonAndTemporaryCleanup'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

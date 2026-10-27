@@ -5,7 +5,7 @@ import SwiftUI
 
 enum ReviewGestureAction: String, Codable, CaseIterable, Identifiable {
     case none, flipOrGood, flipOrAgain, showAnswer, again, hard, good, easy
-    case replay, recordVoice, undo, redo, mark, edit, add, tags, bury, suspend
+    case replay, recordVoice, replayVoice, saveVoice, undo, redo, mark, edit, add, tags, bury, suspend
     case whiteboard, eraser, clearWhiteboard, autoAdvance, hint, allHints
     case flag0, flag1, flag2, flag3, flag4, flag5, flag6, flag7
     case user1, user2, user3, user4, user5, user6, user7, user8, user9
@@ -15,7 +15,7 @@ enum ReviewGestureAction: String, Codable, CaseIterable, Identifiable {
         if rawValue.hasPrefix("flag") { return rawValue == "flag0" ? "フラグを外す" : "フラグ " + String(rawValue.dropFirst(4)) }
         return ["none": "何もしない", "flipOrGood": "解答表示 / 普通", "flipOrAgain": "解答表示 / もう一度",
             "showAnswer": "解答を表示", "again": "もう一度", "hard": "難しい", "good": "普通", "easy": "簡単",
-            "replay": "音声を再生", "recordVoice": "自分の声を録音・再生", "undo": "取り消す", "redo": "やり直す", "mark": "マークを切り替え",
+            "replay": "音声を再生", "recordVoice": "自分の声を録音", "replayVoice": "自分の声を再生・一時停止", "saveVoice": "録音を停止して保持", "undo": "取り消す", "redo": "やり直す", "mark": "マークを切り替え",
             "edit": "ノートを編集", "add": "ノートを追加", "tags": "タグを編集", "bury": "今日は表示しない", "suspend": "保留",
             "whiteboard": "手書きを切り替え", "eraser": "消しゴムを切り替え", "clearWhiteboard": "手書きを消去",
             "autoAdvance": "自動進行を切り替え", "hint": "次のヒントを表示", "allHints": "すべてのヒントを表示"][rawValue] ?? rawValue

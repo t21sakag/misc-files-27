@@ -396,6 +396,47 @@ import UIKit
         cardRecognition.cancel()
         showingReviewVoice = true
     }
+    var reviewVoiceHasReference: Bool { !reviewVoiceReferenceTags.isEmpty }
+    private var reviewVoiceReferenceTags: [[String: Any]] {
+        guard let card else { return [] }
+        return revealed ? ((card.options.replayQuestion ? card.questionAV : []) + card.answerAV) : card.questionAV
+    }
+    func recordReviewVoice() {
+        guard let card, !busy, reviewSceneActive else { return }
+        let key = card.mutationKey
+        openReviewVoice()
+        Task {
+            guard showingReviewVoice, self.card?.mutationKey == key, reviewSceneActive else { return }
+            await reviewVoice.start()
+        }
+    }
+    func saveReviewRecording() {
+        guard showingReviewVoice, card != nil, reviewVoice.recording else { return }
+        reviewVoice.stop()
+    }
+    func replayReviewVoice() {
+        guard card != nil, !busy, reviewSceneActive else { return }
+        if !showingReviewVoice { openReviewVoice() }
+        stopCardAudioForRecognition()
+        reviewVoice.togglePreview()
+    }
+    func playReviewVoiceReference() {
+        guard showingReviewVoice, card != nil, !reviewVoice.recording, reviewSceneActive else { return }
+        reviewVoice.finish()
+        cardSpeech.stop()
+        audio.play(reviewVoiceReferenceTags, media: engine.media)
+    }
+    func compareReviewVoice() {
+        guard showingReviewVoice, let card, reviewVoice.file != nil,
+              !reviewVoice.recording, reviewSceneActive, reviewVoiceHasReference else { return }
+        reviewVoice.finish()
+        cardSpeech.stop()
+        let key = card.mutationKey
+        audio.play(reviewVoiceReferenceTags, media: engine.media) { [weak self] in
+            guard let self, self.card?.mutationKey == key, self.showingReviewVoice, self.reviewSceneActive else { return }
+            self.reviewVoice.preview()
+        }
+    }
     func stopCardAudioForRecognition() { audio.stop(); cardSpeech.stop() }
     func showCardToast(_ text: String, short: Bool) {
         toastTask?.cancel()
