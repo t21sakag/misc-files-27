@@ -504,7 +504,7 @@ final class StudyFlowTests: XCTestCase {
         openMaintenance(app)
         let filename = createStoredBackup(app)
         app.buttons["backup-share-" + filename].tap()
-        let save = app.buttons["Save to Files"]
+        let save = app.cells["Save to Files"].firstMatch
         if !save.waitForExistence(timeout: 10) { app.swipeUp() }
         XCTAssertTrue(save.waitForExistence(timeout: 20), app.debugDescription)
         let close = app.buttons["Close"].firstMatch
@@ -528,9 +528,9 @@ final class StudyFlowTests: XCTestCase {
         addUnsyncedNote(app, frontText: "Backup newer")
         openMaintenance(app)
         app.buttons["backup-restore-" + original].tap()
-        let restore = app.buttons["backup-confirm-restore"]
+        let restore = app.buttons["backup-confirm-restore"].firstMatch
         XCTAssertTrue(restore.waitForExistence(timeout: 20))
-        restore.tap()
+        restore.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(app.staticTexts["バックアップを復元しました"].waitForExistence(timeout: 40), app.debugDescription)
         let recovery = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND identifier != %@", "backup-restore-", "backup-restore-" + original)).firstMatch
         XCTAssertTrue(recovery.waitForExistence(timeout: 20), "Restoring must preserve the pre-restore collection")
@@ -541,7 +541,7 @@ final class StudyFlowTests: XCTestCase {
         assertBrowserContains(app, text: "Backup newer", exists: false)
         openMaintenance(app)
         app.buttons[recoveryID].tap()
-        app.buttons["backup-confirm-restore"].tap()
+        app.buttons["backup-confirm-restore"].firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(app.staticTexts["バックアップを復元しました"].waitForExistence(timeout: 40), app.debugDescription)
         app.buttons["maintenance-close"].tap()
         waitForSyncIdle(app)
