@@ -4,7 +4,8 @@ struct CollectionBackup: Identifiable {
     let url: URL
     let date: Date
     let size: Int64
-    var id: String { url.lastPathComponent }
+    var fileName: String { url.lastPathComponent }
+    var id: String { fileName }
 }
 extension Engine {
     func preferences() throws -> [String: Any] { try call("ConfigService.GetPreferences") }
