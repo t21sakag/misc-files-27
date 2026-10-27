@@ -40,6 +40,7 @@ struct ProfileManagerView: View {
                         .disabled(model.busy || !model.profilesReady).accessibilityIdentifier("profile-add")
                 }
             }
+            .interactiveDismissDisabled(model.busy)
             .alert(renaming == nil ? "プロファイルを追加" : "名前を変更", isPresented: $editingName) {
                 TextField("名前", text: $name).autocorrectionDisabled().textInputAutocapitalization(.never).accessibilityIdentifier("profile-name")
                 Button("保存") {
@@ -49,7 +50,7 @@ struct ProfileManagerView: View {
                 Button("キャンセル", role: .cancel) {}
             }
             .alert("プロファイルを削除しますか？", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), presenting: deleting) { profile in
-                Button("削除", role: .destructive) { perform { try model.deleteProfile(profile) } }
+                Button("削除", role: .destructive) { deleting = nil; perform { try await model.deleteProfile(profile) } }.accessibilityIdentifier("profile-delete-confirm")
                 Button("キャンセル", role: .cancel) {}
             } message: { profile in Text("「\(profile.name)」のデッキ・メディア・バックアップ・ログイン情報を削除します。") }
             .alert("プロファイルを変更できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {

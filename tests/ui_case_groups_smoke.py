@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import tempfile
 
 root = Path(__file__).resolve().parents[1]
 groups = json.loads((root / 'scripts/ui-case-groups.json').read_text())
@@ -23,4 +24,11 @@ for suite in ['milestone', 'changed', 'profiles', 'shared', 'backups', 'automati
     for item in selected:
         group, method = item.split('/')[-2:]
         assert actual[method] == group, item
+with tempfile.TemporaryDirectory() as directory:
+    selected_file = Path(directory) / 'selections.txt'
+    for suite, workers in [('profiles', 1), ('backups', 1), ('automatic', 2), ('reviewer', 2), ('all', 2)]:
+        result = subprocess.check_output(['python3', str(root / 'scripts/select-ui-tests.py'), suite, 'ui'], text=True)
+        selected_file.write_text(result)
+        actual_workers = subprocess.check_output(['python3', str(root / 'scripts/select-ui-workers.py'), str(selected_file)], text=True).strip()
+        assert actual_workers == str(workers), (suite, actual_workers)
 print(f'PASS: {len(actual)} original cases occur once; all selected suites address their actual XCTest classes')

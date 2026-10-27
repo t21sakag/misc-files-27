@@ -57,15 +57,25 @@ extension StudyModel {
             throw error
         }
     }
-    func deleteProfile(_ profile: StudyProfile) throws {
+    func deleteProfile(_ profile: StudyProfile) async throws {
         guard profilesReady, !busy, profile.id != currentProfileID,
               profileRegistry.profiles.contains(where: { $0.id == profile.id }) else { throw ProfileRegistryError(message: "使用中のプロファイルは削除できません。") }
         busy = true
         defer { busy = false }
-        let credentials = try AccountStore.load(profileID: profile.id)
-        try AccountStore.delete(profileID: profile.id)
-        do { profileRegistry = try profileStore.deletingInactive(profile.id, in: profileRegistry) }
-        catch { if let credentials { try? AccountStore.save(credentials, profileID: profile.id) }; throw error }
+        let store = profileStore
+        let registry = profileRegistry
+        let id = profile.id
+        // Keychain and filesystem calls can block. Keep the mutation gate held
+        // while the UI remains responsive and publish only the committed result.
+        profileRegistry = try await Task.detached {
+            let credentials = try AccountStore.load(profileID: id)
+            try AccountStore.delete(profileID: id)
+            do { return try store.deletingInactive(id, in: registry) }
+            catch {
+                if let credentials { try? AccountStore.save(credentials, profileID: id) }
+                throw error
+            }
+        }.value
         ReviewReminderStore.delete(profileID: profile.id)
         SyncActivityStore().clear(profileID: profile.id)
         for key in ["lastSync", "lastBrowserSearch", "allowCollectionCardAPI", "automaticSync", "syncMediaPending", "syncCleanStamp"] {

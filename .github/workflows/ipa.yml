@@ -340,12 +340,28 @@ jobs:
         run: |
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
           if [ -f build/occlusion-fixture.png ]; then xcrun simctl addmedia "$SIMULATOR_ID" build/occlusion-fixture.png; fi
+          ui_workers=$(python3 scripts/select-ui-workers.py build/ui-test-arguments.txt)
+          parallel_ui=NO
+          if [ "$ui_workers" -gt 1 ]; then
+            parallel_ui=YES
+            xcrun simctl shutdown "$SIMULATOR_ID"
+          fi
+          xcrun simctl list devices booted -j > build/booted-before-tests.json
           cd ios
           ui_test_args=()
           while IFS= read -r selection; do
             if [ -n "$selection" ]; then ui_test_args+=("$selection"); fi
           done < ../build/ui-test-arguments.txt
-          xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator "${ui_test_args[@]}" -parallel-testing-enabled YES -parallel-testing-worker-count 2 -maximum-concurrent-test-simulator-destinations 2 -destination "id=$SIMULATOR_ID" ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -derivedDataPath ../build/simulator -resultBundlePath ../build/UITests.xcresult CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" test-without-building
+          xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator "${ui_test_args[@]}" -parallel-testing-enabled "$parallel_ui" -parallel-testing-worker-count "$ui_workers" -maximum-concurrent-test-simulator-destinations 2 -destination "id=$SIMULATOR_ID" ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -derivedDataPath ../build/simulator -resultBundlePath ../build/UITests.xcresult CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" test-without-building
+      - name: Export structured UI failures and timing
+        if: always() && (env.CI_MODE == 'full' || env.CI_MODE == 'ui')
+        run: |
+          if [ -d build/UITests.xcresult ]; then
+            xcrun xcresulttool get test-results summary --path build/UITests.xcresult > build/test-summary.json
+            xcrun xcresulttool get test-results tests --path build/UITests.xcresult > build/test-tree.json
+            python3 scripts/summarize-ui-results.py build/test-summary.json
+          fi
+          xcrun simctl list devices booted -j > build/booted-after-tests.json
       - name: Export simulator screenshots
         if: always() && (env.CI_MODE == 'full' || env.CI_MODE == 'ui')
         run: |
@@ -372,6 +388,20 @@ jobs:
         with:
           name: screenshots
           path: build/screenshots/*.png
+          if-no-files-found: ignore
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always() && (env.CI_MODE == 'full' || env.CI_MODE == 'ui')
+        with:
+          name: ui-diagnostics
+          path: |
+            build/test-summary.json
+            build/test-tree.json
+            build/UITests.xcresult/database.sqlite3
+            build/booted-before-tests.json
+            build/booted-after-tests.json
+            build/screenshots/manifest.json
+            build/screenshots/*.txt
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v4
