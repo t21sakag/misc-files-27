@@ -107,9 +107,14 @@ final class StudyFlowTests: XCTestCase {
         app.buttons["削除"].firstMatch.tap()
         let confirm = app.alerts.buttons["削除"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 20))
-        confirm.tap()
-        let removed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: app.buttons[id])
-        XCTAssertEqual(XCTWaiter.wait(for: [removed], timeout: 20), .completed)
+        confirm.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        // Reopen from persisted state: a dismissed iPad popover can retain a
+        // stale accessibility snapshot after its underlying row was removed.
+        app.terminate()
+        app.launchArguments = []
+        app.launch()
+        openProfiles()
+        XCTAssertFalse(app.buttons[id].exists, app.debugDescription)
         app.buttons["profiles-close"].tap()
     }
 
@@ -480,7 +485,7 @@ final class StudyFlowTests: XCTestCase {
     private func assertBrowserContains(_ app: XCUIApplication, text: String, exists: Bool) {
         app.buttons["collection-menu"].tap()
         app.buttons["browser-open"].tap()
-        let search = app.searchFields.firstMatch
+        let search = app.searchFields.matching(NSPredicate(format: "placeholderValue BEGINSWITH %@", "検索（")).firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 20))
         search.tap()
         let clear = search.buttons["Clear text"]

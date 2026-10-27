@@ -234,6 +234,13 @@ jobs:
         with:
           path: build/native/iphonesimulator
           key: ${{ steps.native-simulator.outputs.cache-primary-key }}
+      - name: Restore compiled SDK modules
+        uses: actions/cache/restore@v4
+        id: xcode-sdk-modules
+        if: env.CI_MODE != 'ipa'
+        with:
+          path: build/simulator/SDKExplicitPrecompiledModules
+          key: xcode-sdk-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-version.outputs.xcode }}
       - name: Restore Xcode simulator build intermediates
         uses: actions/cache/restore@v4
         id: xcode-simulator
@@ -289,6 +296,12 @@ jobs:
         run: |
           cd ios
           python3 ../scripts/xcode-build-metrics.py ../build/simulator-build.json xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator -destination "id=$SIMULATOR_ID" -derivedDataPath ../build/simulator CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" 'OTHER_SWIFT_FLAGS=$(inherited) -driver-show-incremental' -showBuildTimingSummary build-for-testing
+      - name: Save compiled SDK modules after successful build
+        uses: actions/cache/save@v4
+        if: (steps.compile-app.outcome == 'success' || steps.ui-build.outcome == 'success') && steps.xcode-sdk-modules.outputs.cache-hit != 'true'
+        with:
+          path: build/simulator/SDKExplicitPrecompiledModules
+          key: ${{ steps.xcode-sdk-modules.outputs.cache-primary-key }}
       - name: Save input timestamps for completed simulator build
         if: steps.compile-app.outcome == 'success' || steps.ui-build.outcome == 'success'
         run: python3 scripts/xcode-input-mtimes.py save
