@@ -64,7 +64,7 @@ final class TagFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.staticTexts["tag-name-Target::Branch::Leaf"].waitForExistence(timeout: 20))
         app.buttons["tag-actions-Target"].tap()
         app.buttons["タグを削除"].tap()
-        let confirm = app.buttons["tag-delete-confirm"]
+        let confirm = app.buttons["tag-delete-confirm"].firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 20))
         confirm.tap()
         XCTAssertTrue(app.staticTexts["tag-name-Target"].waitForNonExistence(timeout: 20))

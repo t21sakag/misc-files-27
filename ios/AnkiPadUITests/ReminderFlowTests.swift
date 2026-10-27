@@ -35,7 +35,8 @@ final class ReminderFlowTests: StudyFlowTestSupport {
             let item = control(id)
             waitUntilHittable(item)
             if item.value as? String != (enabled ? "1" : "0") { item.tap() }
-            XCTAssertEqual(item.value as? String, enabled ? "1" : "0")
+            let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", enabled ? "1" : "0"), object: control(id))
+            XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 10), .completed, id + " " + app.debugDescription)
         }
         func save(authorize: Bool = false) {
             let button = app.buttons["reminder-save"]
