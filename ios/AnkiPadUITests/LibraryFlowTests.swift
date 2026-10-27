@@ -18,8 +18,9 @@ final class LibraryFlowTests: StudyFlowTestSupport {
         if toggle.exists { toggle.tap() }
         let child = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'deck-' AND label BEGINSWITH 'Nested Child,'")).firstMatch
         XCTAssertTrue(child.waitForExistence(timeout: 20))
+        let childID = String(child.identifier.dropFirst("deck-".count))
         child.press(forDuration: 1)
-        app.buttons["ノートを追加"].tap()
+        app.buttons["deck-add-note-" + childID].tap()
         let front = app.textViews["note-field-0"]
         XCTAssertTrue(front.waitForExistence(timeout: 20))
         front.tap(); front.typeText("Nested review question")

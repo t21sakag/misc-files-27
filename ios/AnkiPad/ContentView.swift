@@ -404,7 +404,7 @@ struct ContentView: View {
                             Button("デッキオプション") { model.backendPage = BackendPageRequest(path: "deck-options/" + deck.id, title: "デッキオプション") }
                             Button("統計") { model.run { try await model.engine.select(deck.id); model.backendPage = BackendPageRequest(path: "graphs", title: "統計") } }
                             Button("名前を変更") { renamingDeck = deck; deckName = deck.name; namingDeck = true }
-                            Button("ノートを追加") { model.editorRequest = EditorRequest(deckID: deck.id) }
+                            Button("ノートを追加") { model.editorRequest = EditorRequest(deckID: deck.id) }.accessibilityIdentifier("deck-add-note-\(deck.id)")
                             Button("削除", role: .destructive) { deletingDeck = deck }
                         }
                     }.padding(.leading, CGFloat(deck.level) * 16)
