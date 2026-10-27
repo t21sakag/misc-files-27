@@ -392,6 +392,11 @@ struct ContentView: View {
                 if let account = model.account {
                     Text(account.username).font(.subheadline)
                     if let date = model.lastSync { Text("最終同期: \(date.formatted())").font(.caption).foregroundStyle(.secondary) }
+                    #if DEBUG
+                    if ProcessInfo.processInfo.arguments.contains("--uitest-sync-timing"), let date = model.lastSync {
+                        Text(String(date.timeIntervalSince1970)).accessibilityIdentifier("sync-completed-at")
+                    }
+                    #endif
                     if !model.syncStatus.isEmpty { Text(model.syncStatus).font(.caption).foregroundStyle(.secondary) }
                 } else {
                     Button("AnkiWebにログイン") { model.showingAccount = true }.accessibilityIdentifier("login-entry")

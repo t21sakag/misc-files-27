@@ -24,7 +24,7 @@ class Handler(BaseHTTPRequestHandler):
                 if self.path.rstrip('/').endswith('/download'):
                     self.wfile.write(data[:1]); self.wfile.flush()
                     print('download response paused', flush=True)
-                    time.sleep(8)
+                    time.sleep(12)
                     self.wfile.write(data[1:])
                 else:
                     self.wfile.write(data)

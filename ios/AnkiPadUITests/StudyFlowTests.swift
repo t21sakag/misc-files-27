@@ -166,15 +166,21 @@ final class StudyFlowTests: XCTestCase {
 
     func testSyncFinishesInBackground() {
         let app = XCUIApplication()
-        let profile = prepareSyncProfile(app, name: "Background completion check", withFixture: false)
+        let profile = prepareSyncProfile(app, name: "Background completion check", withFixture: false,
+            extraArguments: ["--uitest-sync-timing"])
         loginToSyncFixture(app, username: "fixture@example.test", server: "http://127.0.0.1:18893/")
         XCTAssertTrue(app.staticTexts.matching(identifier: "空のコレクションにAnkiWebからダウンロード中…").firstMatch.waitForExistence(timeout: 60), app.debugDescription)
         XCUIDevice.shared.press(.home)
-        // The proxy holds the response for eight seconds. Let it finish while
+        // The proxy holds the response for twelve seconds. Let it finish while
         // the app is backgrounded, then inspect the foreground result.
-        Thread.sleep(forTimeInterval: 10)
+        Thread.sleep(forTimeInterval: 20)
+        let beforeActivation = Date().timeIntervalSince1970
         app.activate()
         XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60), app.debugDescription)
+        let completedAt = app.staticTexts["sync-completed-at"]
+        XCTAssertTrue(completedAt.exists)
+        XCTAssertLessThanOrEqual(Double(completedAt.label) ?? .infinity, beforeActivation,
+            "Sync must complete before activation, rather than merely resume after it")
         XCTAssertFalse(app.alerts.firstMatch.exists)
         removeSyncProfile(app, id: profile)
     }
