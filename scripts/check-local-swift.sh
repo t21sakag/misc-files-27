@@ -15,3 +15,6 @@ build/local-swift/field-image-references-smoke
 build/local-swift/gesture-configuration-smoke
 "$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/ReviewReminderConfiguration.swift tests/reminder_configuration_smoke.swift -o build/local-swift/reminder-configuration-smoke
 build/local-swift/reminder-configuration-smoke
+
+"$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/AutomaticSyncPolicy.swift tests/automatic_sync_policy_smoke.swift -o build/local-swift/automatic-sync-policy-smoke
+build/local-swift/automatic-sync-policy-smoke

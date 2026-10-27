@@ -286,7 +286,7 @@ struct ContentView: View {
     }
     private var syncDialogContent: some View {
         deckDialogContent
-        .confirmationDialog("同期するデータを選択", isPresented: Binding(get: { model.chooseFullSync && !model.busy }, set: { model.chooseFullSync = $0 }), titleVisibility: .visible) {
+        .confirmationDialog("同期するデータを選択", isPresented: Binding(get: { model.chooseFullSync && !model.busy && phase == .active }, set: { model.chooseFullSync = $0 }), titleVisibility: .visible) {
             if let decision = model.syncDecision {
                 if decision.canDownload { Button("AnkiWebのデータをこのiPadにダウンロード", role: .destructive) { model.confirmDirection = false } }
                 if decision.canUpload { Button("このiPadのデータをAnkiWebにアップロード", role: .destructive) { uploadConfirmation = ""; model.confirmDirection = true } }
@@ -344,19 +344,28 @@ struct ContentView: View {
     }
     private var observedContent: some View {
         errorContent
-        .task { model.bootstrap(); openPendingReminder() }
+        .task { model.bootstrap(); openPendingReminder(); model.requestAutomaticSync(.foreground) }
+        .onChange(of: model.currentProfileID) { _, _ in model.requestAutomaticSync(.foreground) }
+        .onChange(of: localCollectionPresentationActive) { _, active in
+            model.collectionPresentationActive = active
+            if !active { model.processPendingAutomaticSync() }
+        }
         .onChange(of: notificationRoute.profileID) { _, _ in openPendingReminder() }
         .onChange(of: model.profilesReady) { _, _ in openPendingReminder() }
         .onChange(of: model.busy) { _, busy in if !busy { openPendingReminder() } }
         .onChange(of: phase) { _, value in
             if value == .inactive { model.pauseReviewScene() }
-            if value == .background { model.replayStop() }
-            if value == .active { model.resumeReviewScene(); openPendingReminder() }
+            if value == .background { model.replayStop(); model.requestAutomaticSync(.background) }
+            if value == .active { model.resumeReviewScene(); openPendingReminder(); model.requestAutomaticSync(.foreground) }
         }
         .onChange(of: model.reviewingInteractionBlocked) { _, blocked in
-            if blocked { model.pauseReviewInteraction() } else { model.resumeReviewInteraction(); openPendingReminder() }
+            if blocked { model.pauseReviewInteraction() } else { model.resumeReviewInteraction(); openPendingReminder(); model.processPendingAutomaticSync() }
         }
         .alert("自動進行", isPresented: $model.timedReminder) { Button("閉じる", role: .cancel) {} } message: { Text("カードの表示時間が終了しました。解答または評価を選んでください。") }
+    }
+    private var localCollectionPresentationActive: Bool {
+        importing || addingOcclusion || customStudy != nil || filteredDeck != nil || deckDescription != nil
+            || namingDeck || deletingDeck != nil || model.pendingCollectionImport != nil
     }
     private var deckList: some View {
         List {
@@ -396,10 +405,24 @@ struct ContentView: View {
                     if ProcessInfo.processInfo.arguments.contains("--uitest-sync-timing"), let date = model.lastSync {
                         Text(String(date.timeIntervalSince1970)).accessibilityIdentifier("sync-completed-at")
                     }
+                    if ProcessInfo.processInfo.arguments.contains("--uitest-sync-timing"), let date = model.debugBackgroundSyncCompletedAt {
+                        Text(String(date.timeIntervalSince1970)).accessibilityIdentifier("background-sync-completed-at")
+                    }
                     #endif
-                    if !model.syncStatus.isEmpty { Text(model.syncStatus).font(.caption).foregroundStyle(.secondary) }
                 } else {
                     Button("AnkiWebにログイン") { model.showingAccount = true }.accessibilityIdentifier("login-entry")
+                }
+                if !model.syncStatus.isEmpty { Text(model.syncStatus).font(.caption).foregroundStyle(.secondary) }
+                if model.syncDecision != nil {
+                    Text("同期方向の確認が必要です").accessibilityIdentifier("sync-direction-pending")
+                } else if model.localSyncState?.hasChanges == true {
+                    Label("未同期の変更があります", systemImage: "arrow.triangle.2.circlepath").accessibilityIdentifier("sync-local-changes")
+                } else if model.mediaSyncPending {
+                    Text("同期が完了していません").font(.caption).accessibilityIdentifier("sync-media-pending")
+                } else if model.localSyncState?.neverSynced == true {
+                    Text("まだ同期していません").font(.caption)
+                } else if model.localSyncState == nil && !model.busy {
+                    Text("ローカルの同期状態を確認できませんでした").font(.caption)
                 }
                 Button(".apkgファイルを取り込む", systemImage: "square.and.arrow.down") { importing = true }.disabled(model.busy || !model.profilesReady)
                 Text("AnkiDroidまたはAnkiから書き出したデッキを読み込めます。")

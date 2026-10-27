@@ -29,6 +29,7 @@ def sync(engine, auth, upload=None):
         engine.call('SyncService.FullUploadOrDownload', {
             'auth': auth, 'upload': upload, 'serverUsn': result.get('serverMediaUsn', 0)})
     wait_media(engine)
+    assert engine.call('_droid/local_sync_status') == {'neverSynced': False, 'hasChanges': False}
     return result
 
 
@@ -72,6 +73,7 @@ with tempfile.TemporaryDirectory() as folder:
             assert (b.root / 'collection.media' / 'sync.svg').read_bytes() == (a.root / 'collection.media' / 'sync.svg').read_bytes()
             downloaded['fields'][1] = 'iPad側で編集した答え'
             b.call('NotesService.UpdateNotes', {'notes': [downloaded]})
+            assert b.call('_droid/local_sync_status')['hasChanges'] is True
             sync(b, auth)
             sync(a, auth)
             assert a.call('NotesService.GetNote', {'nid': nid})['fields'][1] == 'iPad側で編集した答え'

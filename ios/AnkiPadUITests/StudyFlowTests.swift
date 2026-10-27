@@ -6,8 +6,14 @@ final class StudyFlowTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testAnkiDroidCardJavaScriptReadsNativeMetadata() {
+    private func makeApplication(automaticSync: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
+        if !automaticSync { app.launchEnvironment["ANKIPAD_UI_TEST_DISABLE_AUTOSYNC"] = "1" }
+        return app
+    }
+
+    func testAnkiDroidCardJavaScriptReadsNativeMetadata() {
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let deck = app.buttons["deck-1"]
@@ -32,7 +38,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testAnkiWebLoginAndTokenSurviveRelaunch() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         let profile = prepareSyncProfile(app, name: "Empty download safety check", withFixture: false)
         let account = app.buttons["ankiweb-account"]
         XCTAssertTrue(account.waitForExistence(timeout: 30))
@@ -128,7 +134,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testFullSyncConflictShowsLocalCounts() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         let profile = prepareSyncProfile(app, name: "Conflict safety check")
         loginToSyncFixture(app, username: "fixture@example.test")
         let download = app.buttons["AnkiWebのデータをこのiPadにダウンロード"]
@@ -144,7 +150,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testFullSyncWithLocalDataRequiresTypedUploadConfirmation() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         let profile = prepareSyncProfile(app, name: "Upload safety check")
         loginToSyncFixture(app, username: "empty@example.test")
         let replace = app.alerts.buttons["置き換えて同期"]
@@ -164,8 +170,113 @@ final class StudyFlowTests: XCTestCase {
         removeSyncProfile(app, id: profile)
     }
 
+    private func addUnsyncedNote(_ app: XCUIApplication) {
+        app.buttons["add-note"].tap()
+        let front = app.textViews["note-field-0"]
+        XCTAssertTrue(front.waitForExistence(timeout: 20), app.debugDescription)
+        front.tap(); front.typeText("Automatic sync verification")
+        app.buttons["note-save"].tap()
+        XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30), app.debugDescription)
+        app.buttons["note-close"].tap()
+        XCTAssertTrue(app.staticTexts["sync-local-changes"].waitForExistence(timeout: 20), app.debugDescription)
+    }
+
+    private func waitForSyncTimestamp(_ app: XCUIApplication, since: TimeInterval) {
+        let timestamp = app.staticTexts["sync-completed-at"]
+        let updated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            timestamp.exists && (Double(timestamp.label) ?? 0) >= since
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [updated], timeout: 60), .completed, app.debugDescription)
+    }
+
+    func testAutomaticSyncRunsAtStartupAndForeground() {
+        let app = makeApplication(automaticSync: true)
+        let profile = prepareSyncProfile(app, name: "Automatic startup check", withFixture: false,
+            extraArguments: ["--uitest-sync-timing"])
+        loginToSyncFixture(app, username: "fixture@example.test")
+        XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60))
+        app.terminate()
+        let launchedAt = Date().timeIntervalSince1970
+        app.launch()
+        waitForSyncTimestamp(app, since: launchedAt)
+        XCUIDevice.shared.press(.home)
+        Thread.sleep(forTimeInterval: 20)
+        let activatedAt = Date().timeIntervalSince1970
+        app.activate()
+        waitForSyncTimestamp(app, since: activatedAt)
+        removeSyncProfile(app, id: profile)
+    }
+
+    func testAutomaticSyncPushesChangesInBackground() {
+        let app = makeApplication(automaticSync: true)
+        let profile = prepareSyncProfile(app, name: "Automatic background check", withFixture: false,
+            extraArguments: ["--uitest-sync-timing"])
+        loginToSyncFixture(app, username: "fixture@example.test")
+        XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60))
+        addUnsyncedNote(app)
+        let startedAt = Date().timeIntervalSince1970
+        XCUIDevice.shared.press(.home)
+        Thread.sleep(forTimeInterval: 20)
+        let beforeActivation = Date().timeIntervalSince1970
+        app.activate()
+        let completedAt = app.staticTexts["background-sync-completed-at"]
+        XCTAssertTrue(completedAt.waitForExistence(timeout: 20), app.debugDescription)
+        let value = Double(completedAt.label) ?? 0
+        XCTAssertGreaterThanOrEqual(value, startedAt)
+        XCTAssertLessThanOrEqual(value, beforeActivation)
+        XCTAssertFalse(app.staticTexts["sync-local-changes"].exists, app.debugDescription)
+        removeSyncProfile(app, id: profile)
+    }
+
+    func testAutomaticSyncCanBeDisabledPersistently() {
+        let app = makeApplication(automaticSync: true)
+        let profile = prepareSyncProfile(app, name: "Automatic disabled check", withFixture: false,
+            extraArguments: ["--uitest-sync-timing"])
+        loginToSyncFixture(app, username: "fixture@example.test")
+        XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60))
+        app.buttons["collection-menu"].tap()
+        app.buttons["設定"].tap()
+        let toggle = app.switches["automatic-sync"].switches.firstMatch
+        XCTAssertTrue(toggle.waitForExistence(timeout: 20))
+        XCTAssertEqual(toggle.value as? String, "1")
+        toggle.tap()
+        app.buttons["settings-save"].tap()
+        addUnsyncedNote(app)
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.staticTexts["sync-local-changes"].waitForExistence(timeout: 30))
+        XCUIDevice.shared.press(.home)
+        Thread.sleep(forTimeInterval: 20)
+        app.activate()
+        XCTAssertTrue(app.staticTexts["sync-local-changes"].exists)
+        app.buttons["collection-menu"].tap()
+        app.buttons["設定"].tap()
+        XCTAssertTrue(toggle.waitForExistence(timeout: 20))
+        XCTAssertEqual(toggle.value as? String, "0")
+        app.buttons["settings-save"].tap()
+        removeSyncProfile(app, id: profile)
+    }
+
+    func testAutomaticFullDownloadRequiresDirectionChoice() {
+        let app = makeApplication(automaticSync: true)
+        let profile = prepareSyncProfile(app, name: "Automatic full download check", withFixture: false)
+        loginToSyncFixture(app, username: "fixture@example.test", server: "http://127.0.0.1:18893/")
+        XCTAssertTrue(app.staticTexts.matching(identifier: "空のコレクションにAnkiWebからダウンロード中…").firstMatch.waitForExistence(timeout: 60))
+        app.terminate(); app.launch()
+        let interrupted = app.alerts.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "前回の同期が中断されました")).firstMatch
+        XCTAssertTrue(interrupted.waitForExistence(timeout: 30), app.debugDescription)
+        app.alerts.buttons["閉じる"].tap()
+        let download = app.buttons["AnkiWebのデータをこのiPadにダウンロード"]
+        XCTAssertTrue(download.waitForExistence(timeout: 60), app.debugDescription)
+        XCTAssertFalse(app.buttons["このiPadのデータをAnkiWebにアップロード"].exists)
+        XCTAssertFalse(app.staticTexts["同期しました"].exists)
+        download.tap()
+        app.alerts.buttons["置き換えて同期"].tap()
+        XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60))
+        removeSyncProfile(app, id: profile)
+    }
+
     func testSyncFinishesInBackground() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         let profile = prepareSyncProfile(app, name: "Background completion check", withFixture: false,
             extraArguments: ["--uitest-sync-timing"])
         loginToSyncFixture(app, username: "fixture@example.test", server: "http://127.0.0.1:18893/")
@@ -186,7 +297,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testSyncExpirationNotifiesAndRetriesFullDownload() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         let profile = prepareSyncProfile(app, name: "Background expiration check", withFixture: false,
             extraArguments: ["--uitest-expire-full-download"])
         loginToSyncFixture(app, username: "fixture@example.test", server: "http://127.0.0.1:18893/")
@@ -206,7 +317,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testSyncInterruptedLaunchWarnsAfterTermination() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         let profile = prepareSyncProfile(app, name: "Interrupted launch check", withFixture: false)
         loginToSyncFixture(app, username: "fixture@example.test", server: "http://127.0.0.1:18893/")
         XCTAssertTrue(app.staticTexts.matching(identifier: "空のコレクションにAnkiWebからダウンロード中…").firstMatch.waitForExistence(timeout: 60), app.debugDescription)
@@ -223,7 +334,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testJavaScriptDialogsReturnNativeInputAndDecisions() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let deck = app.buttons["deck-1"]
@@ -251,7 +362,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testNavigationAndReviewerOptionsAPIOpenNativePanels() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let deck = app.buttons["deck-1"]
@@ -276,7 +387,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testReviewVoicePanelClosesWithoutChangingCard() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let deck = app.buttons["deck-1"]
@@ -308,7 +419,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testNoteCanBeCreatedAndFoundInBrowser() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launch()
         let add = app.buttons["add-note"]
         XCTAssertTrue(add.waitForExistence(timeout: 30))
@@ -359,7 +470,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testUnsafeCollectionAPIRequiresExplicitSetting() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let deck = app.buttons["deck-1"]
@@ -382,7 +493,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testStatisticsUseRealBundledInterface() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launch()
         let menu = app.buttons["collection-menu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 30))
@@ -398,7 +509,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testNoteTypesCanBeCreatedAndRenamed() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launch()
         let menu = app.buttons["collection-menu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 30))
@@ -425,7 +536,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testDeckOptionsUseBundledInterface() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let deck = app.buttons["deck-1"]
@@ -441,7 +552,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testAutoAdvancePausesWhileEditing() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let deck = app.buttons["deck-1"]
@@ -466,7 +577,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testCustomSchedulingChangesAnswerInterval() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let deck = app.buttons["deck-1"]
@@ -500,7 +611,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testFullscreenCanBeRestoredWithTripleTap() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let menu = app.buttons["collection-menu"]
@@ -523,7 +634,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testImportedDeckCanBeReviewedAndUndone() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let deck = app.buttons["deck-1"]
@@ -556,7 +667,7 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertFalse(app.alerts.firstMatch.exists, app.debugDescription)
     }
     func testPreviewCardAPIReadsAndRestoresFlag() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let menu = app.buttons["collection-menu"]
@@ -587,7 +698,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testPreviewFlagPersistsAfterClosing() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launch()
         let menu = app.buttons["collection-menu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 30))
@@ -633,7 +744,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testSwipeCanRevealAndAnswerThenUndo() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let deck = app.buttons["deck-1"]
@@ -661,7 +772,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testZImageOcclusionCanBeCreatedFromPhoto() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
         let deck = app.buttons["deck-1"]
@@ -704,7 +815,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testZZSharedDeckCanBeDownloadedAndImported() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launchArguments = ["--uitest-fixture", "--uitest-shared-decks"]
         app.launch()
         let menu = app.buttons["collection-menu"]
@@ -735,7 +846,7 @@ final class StudyFlowTests: XCTestCase {
     }
 
     func testZZZProfilesKeepCollectionsAndAccountsSeparate() {
-        let app = XCUIApplication()
+        let app = makeApplication()
         app.launch()
         let account = app.buttons["ankiweb-account"]
         XCTAssertTrue(account.waitForExistence(timeout: 30))

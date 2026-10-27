@@ -3,6 +3,7 @@
 //! Keep handles alive until calls finish,
 //! and free each returned string exactly once with ap_string_free.
 mod eta;
+mod local_sync;
 
 use std::{collections::HashMap, ffi::{CStr, CString, c_char, c_void}, panic::{catch_unwind, AssertUnwindSafe}, sync::LazyLock};
 use anki::backend::{Backend, init_backend};
@@ -59,6 +60,9 @@ pub unsafe extern "C" fn ap_call(handle: *mut c_void, method: *const c_char, req
     protected(|| {
         let backend = (handle as *const Backend).as_ref().ok_or("Backend is closed")?;
         let name = string(method)?;
+        if name == "_droid/local_sync_status" {
+            return local_sync::status(backend).map_err(Into::into);
+        }
         if name == "_droid/eta" {
             return eta::estimate(backend, string(request)?).map_err(Into::into);
         }

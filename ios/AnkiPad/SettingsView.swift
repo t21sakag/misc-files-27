@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var values: [String: Any] = [:]
     @State private var loaded = false
+    @State private var automaticSync = true
     @State private var allowCollectionAPI = UserDefaults.standard.bool(forKey: "allowCollectionCardAPI")
     @State private var displayMode = ReviewDisplayMode(rawValue: UserDefaults.standard.integer(forKey: "reviewDisplayMode")) ?? .buttonsAndMenu
     @State private var showTopbar = UserDefaults.standard.object(forKey: "showReviewTopbar") as? Bool ?? true
@@ -25,6 +26,11 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 if loaded {
+                    Section("同期") {
+                        Toggle("自動同期", isOn: $automaticSync).accessibilityIdentifier("automatic-sync")
+                        Text("起動・前面復帰時とバックグラウンド移行時に同期します。全体を置き換える同期には確認が必要です。未保存の編集がある間は待機します。")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                     Section("表示") {
                         Picker("学習画面の操作", selection: $displayMode) { ForEach(ReviewDisplayMode.allCases) { Text($0.title).tag($0) } }.accessibilityIdentifier("review-display-mode")
                         Toggle("学習の上部バーを表示", isOn: $showTopbar)
@@ -94,6 +100,7 @@ struct SettingsView: View {
                             UserDefaults.standard.set(try JSONEncoder().encode(toolbarConfiguration), forKey: "reviewToolbarConfiguration")
                             model.reviewDisplayMode = displayMode
                             model.showReviewTopbar = showTopbar
+                            model.setAutomaticSyncEnabled(automaticSync)
                             model.refreshAfterEditing()
                             dismiss()
                         }
@@ -104,7 +111,7 @@ struct SettingsView: View {
             .alert("保存できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
                 Button("閉じる", role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
-            .task { do { values = try await model.engine.preferences(); allowCollectionAPI = UserDefaults.standard.bool(forKey: model.profilePreferenceKey("allowCollectionCardAPI")); loaded = true } catch { self.error = error.localizedDescription } }
+            .task { do { values = try await model.engine.preferences(); automaticSync = model.automaticSyncEnabled; allowCollectionAPI = UserDefaults.standard.bool(forKey: model.profilePreferenceKey("allowCollectionCardAPI")); loaded = true } catch { self.error = error.localizedDescription } }
         }
     }
     private func boolean(_ group: String, _ key: String) -> Binding<Bool> {

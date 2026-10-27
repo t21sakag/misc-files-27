@@ -76,6 +76,14 @@ import UIKit
     @Published var syncDecision: SyncDecision?
     @Published var confirmDirection: Bool?
     @Published var lastSync: Date?
+    @Published var localSyncState: LocalSyncState?
+    @Published var automaticSyncEnabled = true
+    @Published var mediaSyncPending = false
+    #if DEBUG
+    @Published var debugBackgroundSyncCompletedAt: Date?
+    #endif
+    private var automaticSyncPolicy = AutomaticSyncPolicy()
+    @Published var collectionPresentationActive = false
     private var syncCancelled = false
     private let syncActivity = SyncActivityStore()
     private var syncBackgroundTask: SyncBackgroundTask?
@@ -83,25 +91,61 @@ import UIKit
     private var syncAbortTask: Task<Void, Never>?
     private var started = Date()
 
-    func run(_ operation: @escaping () async throws -> Void) {
+    func run(automatic: Bool = false, _ operation: @escaping () async throws -> Void) {
         guard profilesReady, !busy else { return }
         busy = true
         syncCancelled = false
         Task {
-            defer { busy = false; isSyncing = false; showInterruptedSyncIfNeeded() }
+            defer {
+                busy = false; isSyncing = false
+                showInterruptedSyncIfNeeded()
+                processPendingAutomaticSync()
+            }
             do { try await operation() }
             catch {
                 if let failure = error as? EngineError, failure.kind == 7 {
                     try? AccountStore.delete(profileID: self.currentProfileID)
                     account = nil
-                    showingAccount = true
+                    if !automatic { showingAccount = true }
                 }
-                if !syncCancelled { self.error = error.localizedDescription }
+                if !syncCancelled {
+                    if automatic { syncStatus = "自動同期できませんでした: " + error.localizedDescription }
+                    else { self.error = error.localizedDescription }
+                }
             }
+            localSyncState = try? await engine.localSyncState()
         }
     }
-    private func runSync(_ operation: @escaping () async throws -> Void) {
-        run { try await self.withSyncBackgroundTime(operation) }
+    func requestAutomaticSync(_ event: AutomaticSyncPolicy.Event) {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["ANKIPAD_UI_TEST_DISABLE_AUTOSYNC"] == "1" { return }
+        #endif
+        automaticSyncPolicy.request(event, syncing: isSyncing)
+        processPendingAutomaticSync()
+    }
+    func setAutomaticSyncEnabled(_ enabled: Bool) {
+        automaticSyncEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: profilePreferenceKey("automaticSync"))
+        processPendingAutomaticSync()
+    }
+    func processPendingAutomaticSync() {
+        guard profilesReady else { return }
+        if syncDecision != nil {
+            automaticSyncPolicy.discardPending()
+            if UIApplication.shared.applicationState == .active && !busy && confirmDirection == nil { chooseFullSync = true }
+            return
+        }
+        let modal = showingAccount || showingBrowser || showingSharedDecks || showingProfiles || showingSettings
+            || showingMaintenance || showingNoteTypes || showingNavigationDrawer || showingReviewerOptions
+            || showingReviewVoice || showingTemplateActions || editorRequest != nil || backendPage != nil
+            || cardActionRequest != nil || exportURL != nil || error != nil || cardDialogPresented || collectionPresentationActive
+        guard automaticSyncPolicy.take(profileID: currentProfileID, enabled: automaticSyncEnabled,
+            hasAccount: account != nil, canStart: !busy && !modal,
+            uptime: ProcessInfo.processInfo.systemUptime) != nil else { return }
+        runSync(automatic: true) { try await self.performSync(automatic: true) }
+    }
+    private func runSync(automatic: Bool = false, _ operation: @escaping () async throws -> Void) {
+        run(automatic: automatic) { try await self.withSyncBackgroundTime(operation) }
     }
     private func withSyncBackgroundTime(_ operation: () async throws -> Void) async throws {
         let profileID = currentProfileID
@@ -120,6 +164,7 @@ import UIKit
             syncActivity.finish(profileID: profileID)
         }
         try background.begin()
+        automaticSyncPolicy.recordAttempt(profileID: profileID, uptime: ProcessInfo.processInfo.systemUptime)
         syncActivity.begin(profileID: profileID)
         isSyncing = true
         let result: Result<Void, Error>
@@ -130,6 +175,11 @@ import UIKit
             result = .success(())
         }
         catch { result = .failure(error) }
+        if case .failure = result, syncAbortTask == nil {
+            // A collection failure must not leave its media worker running after
+            // releasing the background assertion. Preserve the original error.
+            try? await engine.abortSync()
+        }
         // Keep the busy/profile gate held until this session's native abort has
         // returned, so it cannot race a new sync or a replacement engine.
         if let abort = syncAbortTask { await abort.value }
@@ -154,6 +204,8 @@ import UIKit
         do { account = try AccountStore.load(profileID: currentProfileID) }
         catch { self.error = error.localizedDescription }
         lastSync = UserDefaults.standard.object(forKey: profilePreferenceKey("lastSync")) as? Date
+        automaticSyncEnabled = UserDefaults.standard.object(forKey: profilePreferenceKey("automaticSync")) as? Bool ?? true
+        mediaSyncPending = UserDefaults.standard.bool(forKey: profilePreferenceKey("syncMediaPending"))
         showInterruptedSyncIfNeeded()
         if let deferredProfileImport { self.deferredProfileImport = nil; importFile(deferredProfileImport); return }
         #if DEBUG
@@ -191,7 +243,7 @@ import UIKit
         guard account != nil else { showingAccount = true; return }
         runSync { try await self.performSync() }
     }
-    private func performSync() async throws {
+    private func performSync(automatic: Bool = false) async throws {
         guard let account else { return }
         isSyncing = true
         audio.stop()
@@ -203,6 +255,8 @@ import UIKit
         pendingQuestionAudio = false
         card = nil
         syncStatus = "コレクションを同期中…"
+        mediaSyncPending = true
+        UserDefaults.standard.set(true, forKey: profilePreferenceKey("syncMediaPending"))
         let decision = try await engine.sync(account)
         guard !syncCancelled else { throw CancellationError() }
         if let endpoint = decision.endpoint {
@@ -213,7 +267,7 @@ import UIKit
         }
         if !decision.message.isEmpty { syncStatus = decision.message }
         if decision.needsFull {
-            if decision.automaticallyDownload {
+            if decision.automaticallyDownload && !automatic {
                 syncStatus = "空のコレクションにAnkiWebからダウンロード中…"
                 #if DEBUG
                 scheduleSyncExpirationForTesting()
@@ -227,7 +281,7 @@ import UIKit
             }
             syncDecision = decision
             syncStatus = "同期するデータを選択してください"
-            if decision.required == "FULL_UPLOAD" { confirmDirection = true }
+            if decision.required == "FULL_UPLOAD" && !automatic { confirmDirection = true }
             else { chooseFullSync = true }
             return
         }
@@ -261,6 +315,11 @@ import UIKit
         guard !syncCancelled else { throw CancellationError() }
         decks = try await engine.decks()
         lastSync = Date()
+        #if DEBUG
+        if UIApplication.shared.applicationState == .background { debugBackgroundSyncCompletedAt = lastSync }
+        #endif
+        mediaSyncPending = false
+        UserDefaults.standard.set(false, forKey: profilePreferenceKey("syncMediaPending"))
         UserDefaults.standard.set(lastSync, forKey: profilePreferenceKey("lastSync"))
         syncStatus = "同期しました"
     }

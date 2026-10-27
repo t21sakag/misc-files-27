@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, all]
 permissions:
   contents: read
 concurrency:
@@ -25,7 +25,7 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_27.app/Contents/Developer
       CI_MODE: ${{ inputs.mode || 'full' }}
       UI_SUITE: ${{ inputs.ui_suite || 'all' }}
-    timeout-minutes: ${{ (inputs.mode == 'compile' && 30) || (inputs.mode == 'ipa' && 30) || (inputs.mode == 'ui' && inputs.ui_suite != 'all' && 40) || 90 }}
+    timeout-minutes: ${{ (inputs.mode == 'compile' && 30) || (inputs.mode == 'ipa' && 30) || (inputs.mode == 'ui' && inputs.ui_suite == 'automatic' && 60) || (inputs.mode == 'ui' && inputs.ui_suite != 'all' && 40) || 90 }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,6 +44,10 @@ jobs:
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/sync-decision-smoke
           build/sync-decision-smoke
+      - name: Test automatic sync scheduling and offline state
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/AutomaticSyncPolicy.swift tests/automatic_sync_policy_smoke.swift -o build/automatic-sync-policy-smoke
+          build/automatic-sync-policy-smoke
       - name: Test interrupted sync marker persistence
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/SyncActivityStore.swift tests/sync_activity_smoke.swift -o build/sync-activity-smoke
@@ -169,11 +173,14 @@ jobs:
       - name: Test history calculation
         if: env.CI_MODE == 'full'
         run: python3 tests/eta_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test offline collection change detection
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
+        run: python3 tests/local_sync_state_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test authenticated data and media sync
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'sync')
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic'))
         run: python3 tests/sync_smoke.py build/native/host/libankipad_bridge.dylib build/native/host/sync_test_server
       - name: Test interrupted download preservation and retry
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'sync')
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic'))
         run: python3 tests/sync_interrupt_smoke.py build/native/host/libankipad_bridge.dylib build/native/host/sync_test_server
       - name: Build iPad ARM64 engine
         if: (env.CI_MODE == 'full' || env.CI_MODE == 'ipa') && steps.native-device.outputs.cache-hit != 'true'
@@ -244,7 +251,7 @@ jobs:
         id: ui-prepare
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
         run: |
-          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = all ]; then
+          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = all ]; then
             SYNC_USER1='fixture@example.test:fixture-password' SYNC_USER2='empty@example.test:fixture-password' SYNC_HOST=127.0.0.1 SYNC_PORT=18891 SYNC_BASE="$RUNNER_TEMP/ankipad-ui-sync-server" build/native/host/sync_test_server > build/ui-sync-server.log 2>&1 &
             echo $! > build/ui-sync-server.pid
             python3 tests/seed_ui_sync.py build/native/host/libankipad_bridge.dylib build/fixture.apkg

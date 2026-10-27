@@ -25,13 +25,14 @@ extension StudyModel {
         guard id != currentProfileID else { showingProfiles = false; return }
         guard profileRegistry.profiles.contains(where: { $0.id == id }) else { throw ProfileRegistryError(message: "プロファイルが見つかりません。") }
         busy = true
-        defer { busy = false; showInterruptedSyncIfNeeded() }
+        defer { busy = false; showInterruptedSyncIfNeeded(); processPendingAutomaticSync() }
         leave() // Stops media/callbacks; its refresh is suppressed by the busy gate.
         typedAnswer = ""; answerOverride = nil; revealed = false; finished = false; timedReminder = false
         let previous = engine
         let replacement = Engine(root: try profileStore.root(for: id))
         do {
             let nextDecks = try await replacement.decks()
+            let nextSyncState = try await replacement.localSyncState()
             let nextAccount = try AccountStore.load(profileID: id)
             try await previous.close()
             let nextRegistry: ProfileRegistry
@@ -40,7 +41,13 @@ extension StudyModel {
             engine = replacement
             profileRegistry = nextRegistry
             decks = nextDecks
+            localSyncState = nextSyncState
+            #if DEBUG
+            debugBackgroundSyncCompletedAt = nil
+            #endif
             account = nextAccount
+            automaticSyncEnabled = UserDefaults.standard.object(forKey: profilePreferenceKey("automaticSync")) as? Bool ?? true
+            mediaSyncPending = UserDefaults.standard.bool(forKey: profilePreferenceKey("syncMediaPending"))
             lastSync = UserDefaults.standard.object(forKey: profilePreferenceKey("lastSync")) as? Date
             browserSearch = ""; syncStatus = ""; syncDecision = nil; chooseFullSync = false; confirmDirection = nil
             pendingCollectionImport = nil; cardAPIDenials = 0
@@ -61,7 +68,7 @@ extension StudyModel {
         catch { if let credentials { try? AccountStore.save(credentials, profileID: profile.id) }; throw error }
         ReviewReminderStore.delete(profileID: profile.id)
         SyncActivityStore().clear(profileID: profile.id)
-        for key in ["lastSync", "lastBrowserSearch", "allowCollectionCardAPI"] {
+        for key in ["lastSync", "lastBrowserSearch", "allowCollectionCardAPI", "automaticSync", "syncMediaPending"] {
             UserDefaults.standard.removeObject(forKey: profilePreferenceKey(key, profileID: profile.id))
         }
     }
