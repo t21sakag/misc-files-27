@@ -55,8 +55,13 @@ final class ReminderFlowTests: StudyFlowTestSupport {
         }
         func snapshot(days: Set<Int>) -> Set<String> {
             let status = app.staticTexts["reminder-native-schedule"]
+            for _ in 0..<10 {
+                if status.exists && status.isHittable { break }
+                app.collectionViews["reminder-form"].swipeUp()
+            }
+            XCTAssertTrue(status.waitForExistence(timeout: 20), app.debugDescription)
             let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-                guard let value = status.value as? String, let data = value.data(using: .utf8),
+                guard status.exists, let value = status.value as? String, let data = value.data(using: .utf8),
                       let result = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
                       let pending = result["pending"] as? [[String: Any]] else { return false }
                 return pending.count == days.count && Set(pending.compactMap { $0["weekday"] as? Int }) == days
@@ -95,7 +100,7 @@ final class ReminderFlowTests: StudyFlowTestSupport {
         let replacement = snapshot(days: [2])
         XCTAssertTrue(replacement.isDisjoint(with: first), "Old batch must be removed when replacing a schedule")
         // Invalid enabled settings preserve the previous OS batch.
-        setSwitch("reminder-weekday-2", false)
+        setSwitch("reminder-weekday-2", false, upward: false)
         let saveButton = app.buttons["reminder-save"]
         for _ in 0..<10 { if saveButton.isHittable { break }; app.collectionViews["reminder-form"].swipeUp() }
         saveButton.tap()
@@ -106,6 +111,10 @@ final class ReminderFlowTests: StudyFlowTestSupport {
         save() // Disabling must work even with no selected weekdays.
         openReminder()
         XCTAssertTrue(snapshot(days: []).isEmpty)
+        for _ in 0..<10 {
+            if control("reminder-enabled").exists && control("reminder-enabled").isHittable { break }
+            app.collectionViews["reminder-form"].swipeDown()
+        }
         XCTAssertEqual(control("reminder-enabled").value as? String, "0")
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }
