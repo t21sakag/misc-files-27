@@ -1,6 +1,52 @@
 import XCTest
 
 final class LibraryFlowTests: StudyFlowTestSupport {
+    func testSubdeckCollapsePersistsAndParentReviewsChildren() {
+        let app = makeApplication()
+        app.launch()
+        let menu = app.buttons["collection-menu"]
+        XCTAssertTrue(menu.waitForExistence(timeout: 30))
+        menu.tap()
+        app.buttons["デッキを作成"].tap()
+        let name = app.alerts.textFields.firstMatch
+        XCTAssertTrue(name.waitForExistence(timeout: 20))
+        name.tap(); name.typeText("Hierarchy Parent::Nested Child")
+        app.alerts.buttons["保存"].tap()
+        let toggle = app.buttons["Hierarchy Parentを展開"]
+        let collapse = app.buttons["Hierarchy Parentを折りたたむ"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 20) || collapse.exists)
+        if toggle.exists { toggle.tap() }
+        let child = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'deck-' AND label BEGINSWITH 'Nested Child,'")).firstMatch
+        XCTAssertTrue(child.waitForExistence(timeout: 20))
+        child.press(forDuration: 1)
+        app.buttons["ノートを追加"].tap()
+        let front = app.textViews["note-field-0"]
+        XCTAssertTrue(front.waitForExistence(timeout: 20))
+        front.tap(); front.typeText("Nested review question")
+        app.buttons["note-save"].tap()
+        XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30))
+        app.buttons["note-close"].tap()
+        XCTAssertTrue(collapse.waitForExistence(timeout: 20))
+        collapse.tap()
+        XCTAssertTrue(child.waitForNonExistence(timeout: 20))
+        app.terminate(); app.launchArguments = []; app.launch()
+        XCTAssertTrue(toggle.waitForExistence(timeout: 30))
+        XCTAssertFalse(child.exists)
+        // Search can find a hidden child without changing persisted disclosure.
+        let search = app.searchFields["デッキを検索"]
+        search.tap(); search.typeText("Nested Child")
+        XCTAssertTrue(child.waitForExistence(timeout: 20))
+        search.buttons.firstMatch.tap()
+        XCTAssertTrue(toggle.waitForExistence(timeout: 20))
+        XCTAssertFalse(child.exists)
+        let parent = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'deck-' AND label BEGINSWITH 'Hierarchy Parent,'")).firstMatch
+        XCTAssertTrue(parent.label.contains("1"), "Parent must count its child's new card")
+        parent.tap()
+        XCTAssertTrue(app.webViews.staticTexts["Nested review question"].waitForExistence(timeout: 30), app.debugDescription)
+        XCTAssertTrue(app.buttons["reveal"].exists)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
+
     func testStoredBackupCanBeSharedToFiles() {
         let app = makeApplication()
         let profile = prepareSyncProfile(app, name: "Backup share check")

@@ -438,6 +438,12 @@ import UIKit
     func createDeck(_ name: String) { run { try await self.engine.createDeck(name); self.decks = try await self.engine.decks() } }
     func renameDeck(_ deck: Deck, name: String) { run { try await self.engine.renameDeck(deck.id, name: name); self.decks = try await self.engine.decks() } }
     func deleteDeck(_ deck: Deck) { run { try await self.engine.backup(); try await self.engine.removeDeck(deck.id); self.decks = try await self.engine.decks() } }
+    func toggleDeckCollapsed(_ deck: Deck) {
+        run {
+            try await self.engine.setDeckCollapsed(deck.id, collapsed: !deck.collapsed)
+            self.decks = try await self.engine.decks()
+        }
+    }
     func refresh() { run { self.decks = try await self.engine.decks() } }
     func select(_ deck: Deck) {
         run {

@@ -370,31 +370,44 @@ struct ContentView: View {
     private var deckList: some View {
         List {
             Section {
-                ForEach(model.decks.filter { deckSearch.isEmpty || $0.name.localizedStandardContains(deckSearch) }) { deck in
-                    Button { model.select(deck) } label: {
-                        HStack {
-                            Text(deck.name).foregroundStyle(.primary).padding(.leading, CGFloat(deck.level) * 16)
-                            Spacer()
-                            Text("\(deck.newCount)").foregroundStyle(.blue).monospacedDigit()
-                            Text("\(deck.learnCount)").foregroundStyle(.orange).monospacedDigit()
-                            Text("\(deck.reviewCount)").foregroundStyle(.green).monospacedDigit()
-                        }.padding(.vertical, 8)
-                    }.disabled(model.busy || !model.profilesReady).accessibilityIdentifier("deck-\(deck.id)")
-                    .contextMenu {
-                        Button("デッキの説明") { deckDescription = DeckDescriptionRequest(deck: deck) }
-                        if deck.filtered {
-                            Button("フィルターデッキを編集") { filteredDeck = FilteredDeckRequest(deckID: deck.id) }
-                            Button("フィルターデッキを再構築") { model.run { _ = try await model.engine.call("SchedulerService.RebuildFilteredDeck", ["did": deck.id]); model.refreshAfterEditing() } }
-                            Button("フィルターデッキを空にする") { model.run { _ = try await model.engine.call("SchedulerService.EmptyFilteredDeck", ["did": deck.id]); model.refreshAfterEditing() } }
-                        } else {
-                            Button("カスタム学習") { customStudy = CustomStudyRequest(deck: deck) }
+                ForEach(Deck.visible(model.decks, search: deckSearch)) { deck in
+                    HStack(spacing: 0) {
+                        if deck.hasChildren {
+                            Button { model.toggleDeckCollapsed(deck) } label: {
+                                Image(systemName: deck.collapsed ? "chevron.right" : "chevron.down")
+                                    .frame(width: 36, height: 44).contentShape(Rectangle())
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel(deck.name + (deck.collapsed ? "を展開" : "を折りたたむ"))
+                            .accessibilityValue(deck.collapsed ? "折りたたみ" : "展開")
+                            .accessibilityIdentifier("deck-collapse-\(deck.id)")
+                            .disabled(model.busy || !model.profilesReady)
+                        } else { Color.clear.frame(width: 36, height: 1).accessibilityHidden(true) }
+                        Button { model.select(deck) } label: {
+                            HStack {
+                                Text(deck.name).foregroundStyle(.primary)
+                                Spacer()
+                                Text("\(deck.newCount)").foregroundStyle(.blue).monospacedDigit()
+                                Text("\(deck.learnCount)").foregroundStyle(.orange).monospacedDigit()
+                                Text("\(deck.reviewCount)").foregroundStyle(.green).monospacedDigit()
+                            }.padding(.vertical, 8).frame(maxWidth: .infinity).contentShape(Rectangle())
+                        }.buttonStyle(.borderless).disabled(model.busy || !model.profilesReady).accessibilityIdentifier("deck-\(deck.id)")
+                        .contextMenu {
+                            Button("デッキの説明") { deckDescription = DeckDescriptionRequest(deck: deck) }
+                            if deck.filtered {
+                                Button("フィルターデッキを編集") { filteredDeck = FilteredDeckRequest(deckID: deck.id) }
+                                Button("フィルターデッキを再構築") { model.run { _ = try await model.engine.call("SchedulerService.RebuildFilteredDeck", ["did": deck.id]); model.refreshAfterEditing() } }
+                                Button("フィルターデッキを空にする") { model.run { _ = try await model.engine.call("SchedulerService.EmptyFilteredDeck", ["did": deck.id]); model.refreshAfterEditing() } }
+                            } else {
+                                Button("カスタム学習") { customStudy = CustomStudyRequest(deck: deck) }
+                            }
+                            Button("デッキオプション") { model.backendPage = BackendPageRequest(path: "deck-options/" + deck.id, title: "デッキオプション") }
+                            Button("統計") { model.run { try await model.engine.select(deck.id); model.backendPage = BackendPageRequest(path: "graphs", title: "統計") } }
+                            Button("名前を変更") { renamingDeck = deck; deckName = deck.name; namingDeck = true }
+                            Button("ノートを追加") { model.editorRequest = EditorRequest(deckID: deck.id) }
+                            Button("削除", role: .destructive) { deletingDeck = deck }
                         }
-                        Button("デッキオプション") { model.backendPage = BackendPageRequest(path: "deck-options/" + deck.id, title: "デッキオプション") }
-                        Button("統計") { model.run { try await model.engine.select(deck.id); model.backendPage = BackendPageRequest(path: "graphs", title: "統計") } }
-                        Button("名前を変更") { renamingDeck = deck; deckName = deck.name; namingDeck = true }
-                        Button("ノートを追加") { model.editorRequest = EditorRequest(deckID: deck.id) }
-                        Button("削除", role: .destructive) { deletingDeck = deck }
-                    }
+                    }.padding(.leading, CGFloat(deck.level) * 16)
                 }
             } header: { Text("デッキ                         新規 · 学習 · 復習") }
             Section {

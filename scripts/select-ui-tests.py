@@ -14,6 +14,7 @@ suites = {
     'sync': ['testAnkiWebLoginAndTokenSurviveRelaunch', 'testFullSyncConflictShowsLocalCounts', 'testFullSyncWithLocalDataRequiresTypedUploadConfirmation', 'testSyncExpirationNotifiesAndRetriesFullDownload', 'testSyncFinishesInBackground', 'testSyncInterruptedLaunchWarnsAfterTermination'],
     'repair': ['testAutoAdvancePausesWhileEditing', 'testAutomaticFullDownloadRequiresDirectionChoice', 'testAutomaticFullUploadRequiresDirectionChoice', 'testAutomaticSyncCanBeDisabledPersistently', 'testAutomaticSyncPushesChangesInBackground', 'testAutomaticSyncRunsAtStartupAndForeground', 'testImportedDeckCanBeReviewedAndUndone', 'testNoteCanBeCreatedAndFoundInBrowser', 'testPreviewCardAPIReadsAndRestoresFlag', 'testPreviewFlagPersistsAfterClosing', 'testReviewVoicePanelClosesWithoutChangingCard', 'testSwipeCanRevealAndAnswerThenUndo', 'testAnkiWebLoginAndTokenSurviveRelaunch', 'testZZZProfilesKeepCollectionsAndAccountsSeparate'],
     'reviewer': ['testPreviewCardAPIReadsAndRestoresFlag', 'testReviewVoicePanelClosesWithoutChangingCard', 'testAnkiDroidCardJavaScriptReadsNativeMetadata', 'testAutoAdvancePausesWhileEditing', 'testCustomSchedulingChangesAnswerInterval', 'testImportedDeckCanBeReviewedAndUndone', 'testJavaScriptDialogsReturnNativeInputAndDecisions', 'testSwipeCanRevealAndAnswerThenUndo'],
+    'collapse': ['testSubdeckCollapsePersistsAndParentReviewsChildren'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

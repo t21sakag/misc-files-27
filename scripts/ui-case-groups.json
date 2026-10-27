@@ -38,7 +38,8 @@
     "testStatisticsUseRealBundledInterface",
     "testNoteTypesCanBeCreatedAndRenamed",
     "testDeckOptionsUseBundledInterface",
-    "testZZSharedDeckCanBeDownloadedAndImported"
+    "testZZSharedDeckCanBeDownloadedAndImported",
+    "testSubdeckCollapsePersistsAndParentReviewsChildren"
   ],
   "MediaFlowTests": [
     "testZImageOcclusionCanBeCreatedFromPhoto"

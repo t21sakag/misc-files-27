@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, all]
 permissions:
   contents: read
 concurrency:
@@ -52,6 +52,10 @@ jobs:
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BackupExport.swift tests/backup_export_smoke.swift -o build/backup-export-smoke
           build/backup-export-smoke
+      - name: Test nested list visibility and aggregate counts
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/DeckTree.swift tests/deck_tree_smoke.swift -o build/deck-tree-smoke
+          build/deck-tree-smoke
       - name: Test compiler input timestamp restoration
         run: python3 tests/xcode_input_mtimes_smoke.py
       - name: Test isolated test-case storage and relaunch persistence
@@ -195,8 +199,11 @@ jobs:
       - name: Test offline collection change detection
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
         run: python3 tests/local_sync_state_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test persisted deck disclosure and parent scheduling
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'collapse')
+        run: python3 tests/deck_collapse_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test authenticated data and media sync
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair'))
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair' || env.UI_SUITE == 'collapse'))
         run: python3 tests/sync_smoke.py build/native/host/libankipad_bridge.dylib build/native/host/sync_test_server
       - name: Test interrupted download preservation and retry
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair'))

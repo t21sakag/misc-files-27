@@ -83,6 +83,21 @@ with tempfile.TemporaryDirectory() as folder:
             sync(b, auth)
             sync(a, auth)
             assert a.call('NotesService.GetNote', {'nid': nid})['fields'][1] == 'iPad側で編集した答え'
+            # Persist the same reviewer field used by the home deck disclosure.
+            deck = a.call('DecksService.NewDeck')
+            deck['name'] = 'Synced parent::Nested child'
+            a.call('DecksService.AddDeck', deck)
+            parent = next(d['id'] for d in a.call('DecksService.GetDeckNames', {'includeFiltered': True})['entries'] if d['name'] == 'Synced parent')
+            browser_before = a.call('DecksService.GetDeck', {'did': parent})['common'].get('browserCollapsed', False)
+            a.call('DecksService.SetDeckCollapsed', {'deckId': parent, 'collapsed': True, 'scope': 'REVIEWER'})
+            sync(a, auth)
+            sync(b, auth)
+            common = b.call('DecksService.GetDeck', {'did': parent})['common']
+            assert common['studyCollapsed'] is True and common.get('browserCollapsed', False) == browser_before, common
+            b.call('DecksService.SetDeckCollapsed', {'deckId': parent, 'collapsed': False, 'scope': 'REVIEWER'})
+            sync(b, auth)
+            sync(a, auth)
+            assert not a.call('DecksService.GetDeck', {'did': parent})['common'].get('studyCollapsed', False)
             c = Engine(root / 'client-c')
             local_note = c.call('NotesService.NewNote', {'ntid': c.call('NotetypesService.GetNotetypeNames')['entries'][0]['id']})
             local_note['fields'] = ['Local conflict fixture', 'Keep both collections until user chooses']
@@ -94,7 +109,7 @@ with tempfile.TemporaryDirectory() as folder:
             c.close()
             a.close()
             b.close()
-            print('PASS: login + rejected password + empty server upload + empty client download + populated conflict + media + bidirectional incremental sync')
+            print('PASS: login + rejected password + empty server upload + empty client download + populated conflict + media + bidirectional incremental sync + reviewer collapse round trip')
         finally:
             server.terminate()
             server.wait(timeout=10)

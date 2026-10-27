@@ -5,15 +5,6 @@ struct EngineError: LocalizedError {
     var kind: Int? = nil
     var errorDescription: String? { message }
 }
-struct Deck: Identifiable {
-    let id: String
-    let name: String
-    let newCount: Int
-    let learnCount: Int
-    let reviewCount: Int
-    let level: Int
-    var filtered = false
-}
 struct StudyCard {
     let id: String
     let noteID: String
@@ -85,16 +76,12 @@ actor Engine {
     }
     func decks() throws -> [Deck] {
         let tree = try call("DecksService.DeckTree", ["now": String(Int64(Date().timeIntervalSince1970))])
-        func flatten(_ nodes: [[String: Any]], _ level: Int) -> [Deck] {
-            nodes.flatMap { node -> [Deck] in
-                let deck = Deck(id: node["deckId"] as? String ?? "0", name: node["name"] as? String ?? "",
-                    newCount: node["newCount"] as? Int ?? 0, learnCount: node["learnCount"] as? Int ?? 0,
-                    reviewCount: node["reviewCount"] as? Int ?? 0, level: level, filtered: node["filtered"] as? Bool ?? false)
-                return [deck] + flatten(node["children"] as? [[String: Any]] ?? [], level + 1)
-            }
-        }
-        return flatten(tree["children"] as? [[String: Any]] ?? [], 0)
+        return Deck.flatten(tree["children"] as? [[String: Any]] ?? [])
     }
+    func setDeckCollapsed(_ id: String, collapsed: Bool) throws {
+        _ = try call("DecksService.SetDeckCollapsed", ["deckId": id, "collapsed": collapsed, "scope": "REVIEWER"])
+    }
+
     func select(_ id: String) throws { _ = try call("DecksService.SetCurrentDeck", ["did": id]) }
     func next() throws -> StudyCard? {
         let queue = try call("SchedulerService.GetQueuedCards", ["fetchLimit": 1])
