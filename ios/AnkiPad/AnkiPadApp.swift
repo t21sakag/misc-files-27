@@ -113,7 +113,7 @@ import UIKit
                     else { self.error = error.localizedDescription }
                 }
             }
-            localSyncState = try? await engine.localSyncState()
+            localSyncState = try? await engine.localSyncState().applyingCleanStamp(UserDefaults.standard.string(forKey: profilePreferenceKey("syncCleanStamp")))
         }
     }
     func requestAutomaticSync(_ event: AutomaticSyncPolicy.Event) {
@@ -314,6 +314,11 @@ import UIKit
         }
         guard !syncCancelled else { throw CancellationError() }
         decks = try await engine.decks()
+        // Full upload can leave mod one millisecond newer than ls in the
+        // upstream engine. Record the exact successful snapshot, never a time
+        // tolerance; any subsequent mutation changes the stamp and stays dirty.
+        let syncedState = try await engine.localSyncState()
+        UserDefaults.standard.set(syncedState.modification, forKey: profilePreferenceKey("syncCleanStamp"))
         lastSync = Date()
         #if DEBUG
         if UIApplication.shared.applicationState == .background { debugBackgroundSyncCompletedAt = lastSync }

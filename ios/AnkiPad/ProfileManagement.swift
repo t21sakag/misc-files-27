@@ -41,7 +41,7 @@ extension StudyModel {
             engine = replacement
             profileRegistry = nextRegistry
             decks = nextDecks
-            localSyncState = nextSyncState
+            localSyncState = nextSyncState.applyingCleanStamp(UserDefaults.standard.string(forKey: profilePreferenceKey("syncCleanStamp")))
             #if DEBUG
             debugBackgroundSyncCompletedAt = nil
             #endif
@@ -68,7 +68,7 @@ extension StudyModel {
         catch { if let credentials { try? AccountStore.save(credentials, profileID: profile.id) }; throw error }
         ReviewReminderStore.delete(profileID: profile.id)
         SyncActivityStore().clear(profileID: profile.id)
-        for key in ["lastSync", "lastBrowserSearch", "allowCollectionCardAPI", "automaticSync", "syncMediaPending"] {
+        for key in ["lastSync", "lastBrowserSearch", "allowCollectionCardAPI", "automaticSync", "syncMediaPending", "syncCleanStamp"] {
             UserDefaults.standard.removeObject(forKey: profilePreferenceKey(key, profileID: profile.id))
         }
     }

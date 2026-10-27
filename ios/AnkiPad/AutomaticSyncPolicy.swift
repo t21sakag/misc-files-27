@@ -22,4 +22,8 @@ struct AutomaticSyncPolicy {
 struct LocalSyncState {
     let neverSynced: Bool
     let hasChanges: Bool
+    let modification: String
+    func applyingCleanStamp(_ stamp: String?) -> LocalSyncState {
+        LocalSyncState(neverSynced: neverSynced, hasChanges: hasChanges && modification != stamp, modification: modification)
+    }
 }

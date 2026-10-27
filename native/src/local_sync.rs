@@ -12,5 +12,5 @@ pub fn status(backend: &Backend) -> Result<Value, String> {
     // A never-synced empty collection cannot know the server state. Report its
     // first-sync status separately, rather than pretending it is synchronized.
     let changes = if never_synced { row[3] != 0 } else { row[0] > row[2] || row[1] > row[2] };
-    Ok(json!({"neverSynced": never_synced, "hasChanges": changes}))
+    Ok(json!({"neverSynced": never_synced, "hasChanges": changes, "modification": row[0].to_string()}))
 }

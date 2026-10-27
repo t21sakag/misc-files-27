@@ -2,6 +2,10 @@ import Foundation
 
 @main struct AutomaticSyncPolicySmoke {
     static func main() {
+        let state = LocalSyncState(neverSynced: false, hasChanges: true, modification: "101")
+        precondition(!state.applyingCleanStamp("101").hasChanges)
+        precondition(state.applyingCleanStamp("100").hasChanges)
+        precondition(state.applyingCleanStamp(nil).hasChanges)
         var policy = AutomaticSyncPolicy()
         policy.request(.foreground, syncing: false)
         precondition(policy.take(profileID: "a", enabled: true, hasAccount: true, canStart: false, uptime: 100) == nil)

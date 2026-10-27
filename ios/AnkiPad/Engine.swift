@@ -196,10 +196,10 @@ actor Engine {
     func beginSyncSession() { syncAbortRequested = false }
     func localSyncState() throws -> LocalSyncState {
         let result = try call("_droid/local_sync_status")
-        guard let neverSynced = result["neverSynced"] as? Bool, let hasChanges = result["hasChanges"] as? Bool else {
+        guard let neverSynced = result["neverSynced"] as? Bool, let hasChanges = result["hasChanges"] as? Bool, let modification = result["modification"] as? String else {
             throw EngineError(message: "ローカルの同期状態を確認できませんでした。")
         }
-        return LocalSyncState(neverSynced: neverSynced, hasChanges: hasChanges)
+        return LocalSyncState(neverSynced: neverSynced, hasChanges: hasChanges, modification: modification)
     }
     func abortSync() async throws {
         syncAbortRequested = true

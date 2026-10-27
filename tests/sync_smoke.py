@@ -29,7 +29,11 @@ def sync(engine, auth, upload=None):
         engine.call('SyncService.FullUploadOrDownload', {
             'auth': auth, 'upload': upload, 'serverUsn': result.get('serverMediaUsn', 0)})
     wait_media(engine)
-    assert engine.call('_droid/local_sync_status') == {'neverSynced': False, 'hasChanges': False}
+    state = engine.call('_droid/local_sync_status')
+    assert state['neverSynced'] is False, state
+    # A full-upload transaction can leave mod > ls by 1 ms even when remote
+    # metadata agrees. The app remembers this exact successful snapshot.
+    assert state['modification'].isdigit(), state
     return result
 
 
@@ -71,9 +75,11 @@ with tempfile.TemporaryDirectory() as folder:
             downloaded = b.call('NotesService.GetNote', {'nid': nid})
             assert downloaded['fields'][0] == '同期テスト'
             assert (b.root / 'collection.media' / 'sync.svg').read_bytes() == (a.root / 'collection.media' / 'sync.svg').read_bytes()
+            clean_stamp = b.call('_droid/local_sync_status')['modification']
             downloaded['fields'][1] = 'iPad側で編集した答え'
             b.call('NotesService.UpdateNotes', {'notes': [downloaded]})
-            assert b.call('_droid/local_sync_status')['hasChanges'] is True
+            changed = b.call('_droid/local_sync_status')
+            assert changed['hasChanges'] is True and changed['modification'] != clean_stamp, changed
             sync(b, auth)
             sync(a, auth)
             assert a.call('NotesService.GetNote', {'nid': nid})['fields'][1] == 'iPad側で編集した答え'

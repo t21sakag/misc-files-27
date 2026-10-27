@@ -170,6 +170,12 @@ final class StudyFlowTests: XCTestCase {
         removeSyncProfile(app, id: profile)
     }
 
+    private func waitForSyncIdle(_ app: XCUIApplication) {
+        let sync = app.buttons["sync"]
+        let idle = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND enabled == true"), object: sync)
+        XCTAssertEqual(XCTWaiter.wait(for: [idle], timeout: 30), .completed, app.debugDescription)
+    }
+
     private func addUnsyncedNote(_ app: XCUIApplication) {
         app.buttons["add-note"].tap()
         let front = app.textViews["note-field-0"]
@@ -195,6 +201,7 @@ final class StudyFlowTests: XCTestCase {
             extraArguments: ["--uitest-sync-timing"])
         loginToSyncFixture(app, username: "fixture@example.test")
         XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60))
+        waitForSyncIdle(app)
         app.terminate()
         let launchedAt = Date().timeIntervalSince1970
         app.launch()
@@ -213,6 +220,7 @@ final class StudyFlowTests: XCTestCase {
             extraArguments: ["--uitest-sync-timing"])
         loginToSyncFixture(app, username: "fixture@example.test")
         XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60))
+        waitForSyncIdle(app)
         addUnsyncedNote(app)
         let startedAt = Date().timeIntervalSince1970
         XCUIDevice.shared.press(.home)
@@ -241,6 +249,7 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertEqual(toggle.value as? String, "1")
         toggle.tap()
         app.buttons["settings-save"].tap()
+        waitForSyncIdle(app)
         addUnsyncedNote(app)
         app.terminate(); app.launch()
         XCTAssertTrue(app.staticTexts["sync-local-changes"].waitForExistence(timeout: 30))
@@ -253,6 +262,27 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertTrue(toggle.waitForExistence(timeout: 20))
         XCTAssertEqual(toggle.value as? String, "0")
         app.buttons["settings-save"].tap()
+        removeSyncProfile(app, id: profile)
+    }
+
+    func testAutomaticFullUploadRequiresDirectionChoice() {
+        let app = makeApplication(automaticSync: true)
+        let profile = prepareSyncProfile(app, name: "Automatic upload choice check")
+        loginToSyncFixture(app, username: "empty@example.test")
+        let replace = app.alerts.buttons["置き換えて同期"]
+        XCTAssertTrue(replace.waitForExistence(timeout: 60), app.debugDescription)
+        XCTAssertFalse(replace.isEnabled)
+        app.alerts.buttons["キャンセル"].tap()
+        // Avoid a background transition here: relaunch must initiate this check.
+        app.terminate(); app.launchArguments = []; app.launch()
+        let upload = app.buttons["このiPadのデータをAnkiWebにアップロード"]
+        XCTAssertTrue(upload.waitForExistence(timeout: 60), app.debugDescription)
+        XCTAssertFalse(app.alerts.textFields.firstMatch.exists)
+        XCTAssertFalse(app.staticTexts["同期しました"].exists)
+        upload.tap()
+        XCTAssertTrue(replace.waitForExistence(timeout: 20))
+        XCTAssertFalse(replace.isEnabled)
+        app.alerts.buttons["キャンセル"].tap()
         removeSyncProfile(app, id: profile)
     }
 
