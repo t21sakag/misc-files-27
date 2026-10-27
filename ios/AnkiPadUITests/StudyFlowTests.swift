@@ -189,11 +189,11 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [idle], timeout: 30), .completed, app.debugDescription)
     }
 
-    private func addUnsyncedNote(_ app: XCUIApplication) {
+    private func addUnsyncedNote(_ app: XCUIApplication, frontText: String = "Automatic sync verification") {
         app.buttons["add-note"].tap()
         let front = app.textViews["note-field-0"]
         XCTAssertTrue(front.waitForExistence(timeout: 20), app.debugDescription)
-        front.tap(); front.typeText("Automatic sync verification")
+        front.tap(); front.typeText(frontText)
         app.buttons["note-save"].tap()
         XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30), app.debugDescription)
         app.buttons["note-close"].tap()
@@ -459,6 +459,94 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertTrue(app.buttons["reveal"].exists)
         XCTAssertTrue(web.staticTexts["AnkiDroid API metadata verified"].exists)
         XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
+
+    private func openMaintenance(_ app: XCUIApplication) {
+        let menu = app.buttons["collection-menu"]
+        XCTAssertTrue(menu.waitForExistence(timeout: 30))
+        menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        app.buttons["バックアップとチェック"].tap()
+        XCTAssertTrue(app.buttons["backup-create"].waitForExistence(timeout: 20))
+    }
+
+    private func createStoredBackup(_ app: XCUIApplication) -> String {
+        app.buttons["backup-create"].tap()
+        XCTAssertTrue(app.staticTexts["バックアップを作成しました"].waitForExistence(timeout: 30), app.debugDescription)
+        let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "backup-restore-")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 20), app.debugDescription)
+        return String(row.identifier.dropFirst("backup-restore-".count))
+    }
+
+    private func assertBrowserContains(_ app: XCUIApplication, text: String, exists: Bool) {
+        app.buttons["collection-menu"].tap()
+        app.buttons["browser-open"].tap()
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 20))
+        search.tap()
+        let clear = search.buttons["Clear text"]
+        if clear.exists { clear.tap(); search.tap() }
+        search.typeText(text)
+        let results = app.staticTexts["browser-results"]
+        let completed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", text), object: results)
+        XCTAssertEqual(XCTWaiter.wait(for: [completed], timeout: 20), .completed, app.debugDescription)
+        let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browser-card-")).firstMatch
+        if exists { XCTAssertTrue(row.waitForExistence(timeout: 20), app.debugDescription) }
+        else {
+            let absent = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: row)
+            XCTAssertEqual(XCTWaiter.wait(for: [absent], timeout: 20), .completed, app.debugDescription)
+        }
+        app.buttons["閉じる"].firstMatch.tap()
+    }
+
+    func testStoredBackupCanBeSharedToFiles() {
+        let app = makeApplication()
+        let profile = prepareSyncProfile(app, name: "Backup share check")
+        openMaintenance(app)
+        let filename = createStoredBackup(app)
+        app.buttons["backup-share-" + filename].tap()
+        let save = app.buttons["Save to Files"]
+        if !save.waitForExistence(timeout: 10) { app.swipeUp() }
+        XCTAssertTrue(save.waitForExistence(timeout: 20), app.debugDescription)
+        let close = app.buttons["Close"].firstMatch
+        XCTAssertTrue(close.waitForExistence(timeout: 20), app.debugDescription)
+        close.tap()
+        XCTAssertTrue(app.buttons["backup-share-" + filename].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.buttons["backup-restore-" + filename].exists)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+        app.buttons["maintenance-close"].tap()
+        removeSyncProfile(app, id: profile)
+    }
+
+    func testStoredBackupRestoresAndPreservesCurrentCollection() {
+        let app = makeApplication()
+        let profile = prepareSyncProfile(app, name: "Backup restore check", withFixture: false)
+        addUnsyncedNote(app, frontText: "Backup original")
+        openMaintenance(app)
+        let original = createStoredBackup(app)
+        app.buttons["maintenance-close"].tap()
+        waitForSyncIdle(app)
+        addUnsyncedNote(app, frontText: "Backup newer")
+        openMaintenance(app)
+        app.buttons["backup-restore-" + original].tap()
+        let restore = app.buttons["復元"].firstMatch
+        XCTAssertTrue(restore.waitForExistence(timeout: 20))
+        restore.tap()
+        XCTAssertTrue(app.staticTexts["バックアップを復元しました"].waitForExistence(timeout: 40), app.debugDescription)
+        let recovery = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND identifier != %@", "backup-restore-", "backup-restore-" + original)).firstMatch
+        XCTAssertTrue(recovery.waitForExistence(timeout: 20), "Restoring must preserve the pre-restore collection")
+        let recoveryID = recovery.identifier
+        app.buttons["maintenance-close"].tap()
+        waitForSyncIdle(app)
+        assertBrowserContains(app, text: "Backup original", exists: true)
+        assertBrowserContains(app, text: "Backup newer", exists: false)
+        openMaintenance(app)
+        app.buttons[recoveryID].tap()
+        app.buttons["復元"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["バックアップを復元しました"].waitForExistence(timeout: 40), app.debugDescription)
+        app.buttons["maintenance-close"].tap()
+        waitForSyncIdle(app)
+        assertBrowserContains(app, text: "Backup newer", exists: true)
+        removeSyncProfile(app, id: profile)
     }
 
     func testNoteCanBeCreatedAndFoundInBrowser() {

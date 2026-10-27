@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, all]
 permissions:
   contents: read
 concurrency:
@@ -48,6 +48,12 @@ jobs:
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/AutomaticSyncPolicy.swift tests/automatic_sync_policy_smoke.swift -o build/automatic-sync-policy-smoke
           build/automatic-sync-policy-smoke
+      - name: Test stored backup share snapshot preservation
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BackupExport.swift tests/backup_export_smoke.swift -o build/backup-export-smoke
+          build/backup-export-smoke
+      - name: Test compiler input timestamp restoration
+        run: python3 tests/xcode_input_mtimes_smoke.py
       - name: Test interrupted sync marker persistence
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/SyncActivityStore.swift tests/sync_activity_smoke.swift -o build/sync-activity-smoke
@@ -150,7 +156,7 @@ jobs:
         if: env.CI_MODE == 'full'
         run: python3 tests/web_bridge_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test backups, collection restore, preferences and CSV import
-        if: env.CI_MODE == 'full'
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'backups')
         run: python3 tests/maintenance_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test reviewer typing, audio, custom scheduler and deck options
         if: env.CI_MODE == 'full'

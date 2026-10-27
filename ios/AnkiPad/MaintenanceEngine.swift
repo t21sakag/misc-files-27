@@ -18,6 +18,9 @@ extension Engine {
             return CollectionBackup(url: url, date: values?.contentModificationDate ?? .distantPast, size: Int64(values?.fileSize ?? 0))
         }.sorted { $0.date > $1.date }
     }
+    func exportBackup(_ backup: CollectionBackup) throws -> BackupExport {
+        try BackupExport.prepare(backup.url, backupFolder: root.appendingPathComponent("backups", isDirectory: true))
+    }
     func checkDatabase() async throws -> [String] {
         try backup()
         return try await longCall("CollectionService.CheckDatabase", [:])["problems"] as? [String] ?? []

@@ -18,3 +18,6 @@ build/local-swift/reminder-configuration-smoke
 
 "$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/AutomaticSyncPolicy.swift tests/automatic_sync_policy_smoke.swift -o build/local-swift/automatic-sync-policy-smoke
 build/local-swift/automatic-sync-policy-smoke
+
+"$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/BackupExport.swift tests/backup_export_smoke.swift -o build/local-swift/backup-export-smoke
+build/local-swift/backup-export-smoke

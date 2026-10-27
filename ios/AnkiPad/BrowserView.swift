@@ -9,6 +9,7 @@ struct BrowserView: View {
     @State private var tags: [String] = []
     @State private var types: [NamedID] = []
     @State private var loaded = false
+    @State private var completedQuery = ""
     @State private var ids: [String] = []
     @State private var rows: [BrowserCard] = []
     @State private var selected: Set<String> = []
@@ -62,7 +63,7 @@ struct BrowserView: View {
                     }
                 }
                 if rows.count < ids.count { Button("さらに表示（\(rows.count) / \(ids.count)）", action: loadMore).disabled(busy) }
-            } header: { Text("\(ids.count)\(config.notesMode ? "ノート" : "枚") · \(selected.count)件選択中") }
+            } header: { Text("\(ids.count)\(config.notesMode ? "ノート" : "枚") · \(selected.count)件選択中").accessibilityIdentifier("browser-results").accessibilityValue(completedQuery) }
             if busy { ProgressView() }
         }
         .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "検索（deck:、tag:、is:due など）")
@@ -244,7 +245,7 @@ struct BrowserView: View {
             try Task.checkCancellation()
             let cards = try await model.engine.browserRows(Array(result.prefix(100)), config: config)
             try Task.checkCancellation()
-            ids = result; rows = cards; selected.formIntersection(Set(ids))
+            ids = result; rows = cards; selected.formIntersection(Set(ids)); completedQuery = query
         } catch is CancellationError {} catch { self.error = error.localizedDescription }
     }
     private func edit(_ row: BrowserCard) { editor = config.notesMode ? EditorRequest(noteID: row.noteID, deckID: row.deckID) : EditorRequest(cardID: row.id, deckID: row.deckID) }
