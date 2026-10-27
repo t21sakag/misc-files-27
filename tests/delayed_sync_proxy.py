@@ -1,11 +1,16 @@
 """Loopback-only delay fixture for simulator background-sync checks."""
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from sync_proxy_body import read_body
-import sys
+import argparse
 import time
 import urllib.request
 
-upstream = 'http://127.0.0.1:18891'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--port', type=int, default=18893)
+parser.add_argument('--upstream-port', type=int, default=18891)
+args = parser.parse_args()
+assert 1024 <= args.port <= 65535 and 1024 <= args.upstream_port <= 65535
+upstream = f'http://127.0.0.1:{args.upstream_port}'
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -33,7 +38,7 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *_):
         pass
 
-server = ThreadingHTTPServer(('127.0.0.1', 18893), Handler)
+server = ThreadingHTTPServer(('127.0.0.1', args.port), Handler)
 server.daemon_threads = True
 print('delayed loopback fixture ready', flush=True)
 server.serve_forever()

@@ -6,6 +6,12 @@ import UIKit
 @main struct AnkiPadApp: App {
     @UIApplicationDelegateAdaptor(ReviewNotificationAppDelegate.self) private var notificationDelegate
     @AppStorage("appearance") private var appearance = "system"
+    init() {
+        #if DEBUG
+        do { try UITestIsolation.prepare() }
+        catch { fatalError("Could not initialize isolated UI test storage: \(error)") }
+        #endif
+    }
     var body: some Scene {
         WindowGroup { ContentView().preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil) }
     }
@@ -13,7 +19,12 @@ import UIKit
 
 @MainActor final class StudyModel: ObservableObject {
     @Published var engine = Engine()
-    let profileStore = ProfileRegistryStore()
+    let profileStore: ProfileRegistryStore = {
+        #if DEBUG
+        if let support = UITestIsolation.support() { return ProfileRegistryStore(support: support) }
+        #endif
+        return ProfileRegistryStore()
+    }()
     @Published var profileRegistry = ProfileRegistry.initial
     @Published var profilesReady = false
     @Published var showingProfiles = false

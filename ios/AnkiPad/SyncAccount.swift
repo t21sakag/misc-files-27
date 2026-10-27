@@ -15,8 +15,12 @@ struct SyncCredentials: Codable {
 enum AccountStore {
     private static let service = "com.localtools.studyclient.ankiweb"
     private static func query(profileID: String) -> [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword,
-         kSecAttrService as String: service, kSecAttrAccount as String: profileID == "default" ? "sync" : "sync." + profileID]
+        var scopedService = service
+        #if DEBUG
+        if let namespace = UITestIsolation.namespace() { scopedService += ".uitest." + namespace }
+        #endif
+        return [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: scopedService, kSecAttrAccount as String: profileID == "default" ? "sync" : "sync." + profileID]
     }
     static func load(profileID: String = "default") throws -> SyncCredentials? {
         var lookup = query(profileID: profileID)

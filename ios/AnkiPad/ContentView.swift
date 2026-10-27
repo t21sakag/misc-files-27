@@ -127,7 +127,7 @@ struct ContentView: View {
                 Button(action: model.replay) { Image(systemName: "speaker.wave.2") }.accessibilityLabel("音声を再生")
                 Button { whiteboard.toggle() } label: { Image(systemName: whiteboard ? "pencil.tip.crop.circle.fill" : "pencil.tip.crop.circle") }.accessibilityLabel("手書きボード").accessibilityIdentifier("whiteboard-toggle")
                 if whiteboard { Button { drawing = PKDrawing() } label: { Image(systemName: "trash") }.accessibilityLabel("手書きを消す") }
-                Button("取り消す", action: model.undo).disabled(model.busy || !model.profilesReady)
+                Button("取り消す", action: model.undo).disabled(model.busy || !model.profilesReady).accessibilityIdentifier("review-undo")
                 Menu {
                     Button("やり直す") { model.redo() }
                     Button("自分の声を録音・再生", systemImage: "mic") {
@@ -150,7 +150,7 @@ struct ContentView: View {
                         }.disabled(drawing.strokes.isEmpty)
                     }
                     Button(model.card?.marked == true ? "マークを外す" : "マークを付ける", systemImage: model.card?.marked == true ? "star.fill" : "star") { model.toggleCurrentMark() }
-                    Button("ノートを編集") { if let card = model.card { model.editorRequest = EditorRequest(cardID: card.id, deckID: card.deckID) } }
+                    Button("ノートを編集") { if let card = model.card { model.editorRequest = EditorRequest(cardID: card.id, deckID: card.deckID) } }.accessibilityIdentifier("review-edit-note")
                     Toggle("自動進行", isOn: $model.autoAdvance).accessibilityIdentifier("auto-advance-toggle").onChange(of: model.autoAdvance) { _, _ in model.scheduleAutoAdvance() }
                     Button("ユーザー操作") {
                         templateActionKey = model.card?.mutationKey

@@ -5,7 +5,9 @@ from pathlib import Path
 import time
 import urllib.request
 
-endpoint = 'http://127.0.0.1:18891/'
+port = int(sys.argv[3]) if len(sys.argv) > 3 else 18891
+assert 1024 <= port <= 65535
+endpoint = f'http://127.0.0.1:{port}/'
 for attempt in range(100):
     try:
         urllib.request.urlopen(endpoint + 'health', timeout=1).close()

@@ -1,0 +1,46 @@
+{
+  "StudyFlowTests": [
+    "testAnkiWebLoginAndTokenSurviveRelaunch",
+    "testFullSyncConflictShowsLocalCounts",
+    "testFullSyncWithLocalDataRequiresTypedUploadConfirmation",
+    "testSyncFinishesInBackground",
+    "testSyncExpirationNotifiesAndRetriesFullDownload",
+    "testSyncInterruptedLaunchWarnsAfterTermination",
+    "testZZZProfilesKeepCollectionsAndAccountsSeparate"
+  ],
+  "AutomaticSyncTests": [
+    "testAutomaticSyncRunsAtStartupAndForeground",
+    "testAutomaticSyncPushesChangesInBackground",
+    "testAutomaticSyncCanBeDisabledPersistently",
+    "testAutomaticFullUploadRequiresDirectionChoice",
+    "testAutomaticFullDownloadRequiresDirectionChoice"
+  ],
+  "ReviewerFlowTests": [
+    "testReviewVoicePanelClosesWithoutChangingCard",
+    "testAutoAdvancePausesWhileEditing",
+    "testCustomSchedulingChangesAnswerInterval",
+    "testFullscreenCanBeRestoredWithTripleTap",
+    "testImportedDeckCanBeReviewedAndUndone",
+    "testSwipeCanRevealAndAnswerThenUndo"
+  ],
+  "CardAPIFlowTests": [
+    "testAnkiDroidCardJavaScriptReadsNativeMetadata",
+    "testJavaScriptDialogsReturnNativeInputAndDecisions",
+    "testNavigationAndReviewerOptionsAPIOpenNativePanels",
+    "testUnsafeCollectionAPIRequiresExplicitSetting",
+    "testPreviewCardAPIReadsAndRestoresFlag",
+    "testPreviewFlagPersistsAfterClosing"
+  ],
+  "LibraryFlowTests": [
+    "testStoredBackupCanBeSharedToFiles",
+    "testStoredBackupRestoresAndPreservesCurrentCollection",
+    "testNoteCanBeCreatedAndFoundInBrowser",
+    "testStatisticsUseRealBundledInterface",
+    "testNoteTypesCanBeCreatedAndRenamed",
+    "testDeckOptionsUseBundledInterface",
+    "testZZSharedDeckCanBeDownloadedAndImported"
+  ],
+  "MediaFlowTests": [
+    "testZImageOcclusionCanBeCreatedFromPhoto"
+  ]
+}

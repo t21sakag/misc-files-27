@@ -21,3 +21,6 @@ build/local-swift/automatic-sync-policy-smoke
 
 "$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/BackupExport.swift tests/backup_export_smoke.swift -o build/local-swift/backup-export-smoke
 build/local-swift/backup-export-smoke
+
+"$ankipad_swiftc" -DDEBUG -swift-version 5 -parse-as-library ios/AnkiPad/UITestIsolation.swift tests/ui_test_isolation_smoke.swift -o build/local-swift/ui-test-isolation-smoke
+build/local-swift/ui-test-isolation-smoke
