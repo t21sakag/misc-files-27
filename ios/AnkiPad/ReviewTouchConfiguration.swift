@@ -23,7 +23,7 @@ struct ReviewTouchSettingsView: View {
     @State private var answer = false
     var body: some View {
         Form {
-            Toggle("タッチ領域を使う", isOn: $configuration.enabled)
+            Toggle("タッチ領域を使う", isOn: $configuration.enabled).accessibilityIdentifier("touch-enabled")
             Picker("カードの面", selection: $answer) { Text("表面").tag(false); Text("裏面").tag(true) }.pickerStyle(.segmented)
             Section("カードを3×3に分けた領域") {
                 ForEach(0..<9, id: \.self) { zone in
@@ -34,7 +34,7 @@ struct ReviewTouchSettingsView: View {
                         else { configuration.question[String(zone)] = value }
                     })) {
                         ForEach(ReviewGestureAction.allCases) { action in Text(action.title).tag(action) }
-                    }
+                    }.accessibilityIdentifier("touch-zone-\(zone)")
                 }
             }
             Section {

@@ -44,8 +44,8 @@ struct SettingsView: View {
                     Section("学習操作") {
                         Toggle("スワイプで解答・評価", isOn: $swipeReview)
                         NavigationLink("スワイプの割り当て") { ReviewGestureSettingsView(configuration: $gestureConfiguration) }
-                        NavigationLink("タッチ領域の割り当て") { ReviewTouchSettingsView(configuration: $touchConfiguration) }
-                        NavigationLink("操作バーの設定") { ReviewToolbarSettingsView(configuration: $toolbarConfiguration) }
+                        NavigationLink("タッチ領域の割り当て") { ReviewTouchSettingsView(configuration: $touchConfiguration) }.accessibilityIdentifier("touch-settings-open")
+                        NavigationLink("操作バーの設定") { ReviewToolbarSettingsView(configuration: $toolbarConfiguration) }.accessibilityIdentifier("toolbar-settings-open")
                         NavigationLink("キーボードの割り当て") { ReviewKeyboardSettingsView(configuration: $keyboardConfiguration) }
                         NavigationLink("ゲームパッドの割り当て") { ReviewGamepadSettingsView(configuration: $gamepadConfiguration) }
                         Toggle("次のカードにも手書きを残す", isOn: $keepWhiteboard)

@@ -23,7 +23,7 @@ struct ReviewToolbarSettingsView: View {
     var body: some View {
         List {
             Section {
-                Toggle("追加の操作バーを表示", isOn: $configuration.enabled)
+                Toggle("追加の操作バーを表示", isOn: $configuration.enabled).accessibilityIdentifier("toolbar-enabled")
             }
             Section("表示する操作と順序") {
                 ForEach($configuration.items) { $item in

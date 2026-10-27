@@ -11,14 +11,19 @@ final class MediaFlowTests: StudyFlowTestSupport {
         front.tap(); front.typeText("Image editing verification")
         let attach = app.buttons["note-attachment-0"]
         func openAttachment() {
+            let hideKeyboard = app.buttons["Hide keyboard"]
+            if hideKeyboard.exists && hideKeyboard.isHittable { hideKeyboard.tap() }
             for _ in 0..<10 {
                 if attach.exists && attach.isHittable { break }
                 app.collectionViews["note-form"].swipeUp()
             }
             waitUntilHittable(attach)
-            attach.tap()
+            attach.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         }
-        openAttachment(); app.buttons["note-photo-0"].tap()
+        openAttachment()
+        let choosePhoto = app.buttons["note-photo-0"].firstMatch
+        XCTAssertTrue(choosePhoto.waitForExistence(timeout: 20), app.debugDescription)
+        choosePhoto.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         let photo = app.images.matching(identifier: "PXGGridLayout-Info").firstMatch
         XCTAssertTrue(photo.waitForExistence(timeout: 30), app.debugDescription)
         photo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
@@ -74,7 +79,10 @@ final class MediaFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(row.waitForExistence(timeout: 20)); row.tap()
         XCTAssertTrue(front.waitForExistence(timeout: 20))
         XCTAssertEqual(front.value as? String, firstHTML)
-        openAttachment(); app.buttons["note-edit-image-0"].tap()
+        openAttachment()
+        let editImage = app.buttons["note-edit-image-0"].firstMatch
+        XCTAssertTrue(editImage.waitForExistence(timeout: 20), app.debugDescription)
+        editImage.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         let existing = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'field-image-'")).firstMatch
         XCTAssertTrue(existing.waitForExistence(timeout: 20)); existing.tap()
         XCTAssertTrue(image.waitForExistence(timeout: 30))

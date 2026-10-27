@@ -183,8 +183,24 @@ final class StudyFlowTests: StudyFlowTestSupport {
         XCTAssertEqual(originalDeck.label, originalLabel, app.debugDescription)
         XCTAssertTrue(app.staticTexts["fixture@example.test"].exists, app.debugDescription)
         openProfiles()
-        let secondary = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Secondary")).firstMatch
+        let beforeRename = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Secondary")).firstMatch
+        XCTAssertTrue(beforeRename.waitForExistence(timeout: 20))
+        beforeRename.press(forDuration: 1)
+        app.buttons["名前を変更"].tap()
+        let rename = app.alerts.textFields["profile-name"]
+        XCTAssertTrue(rename.waitForExistence(timeout: 20))
+        rename.tap()
+        rename.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "Secondary".count) + "Renamed Secondary")
+        app.alerts.buttons["profile-save"].firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let secondary = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Renamed Secondary")).firstMatch
         XCTAssertTrue(secondary.waitForExistence(timeout: 20))
+        XCTAssertTrue(beforeRename.waitForNonExistence(timeout: 20))
+        app.buttons["profiles-close"].tap()
+        app.terminate(); app.launchArguments = []; app.launch()
+        XCTAssertTrue(app.staticTexts["fixture@example.test"].waitForExistence(timeout: 30))
+        XCTAssertEqual(originalDeck.label, originalLabel)
+        openProfiles()
+        XCTAssertTrue(secondary.waitForExistence(timeout: 20), "Renamed profile must persist after relaunch")
         secondary.press(forDuration: 1)
         app.buttons["削除"].tap()
         XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 20), app.debugDescription)

@@ -54,5 +54,8 @@
   "ImageRenderingTests": [
     "testImageEditsPreserveExpectedPhysicalPixels",
     "testImageAnnotationIsCompositedAtCanvasScale"
+  ],
+  "ControlFlowTests": [
+    "testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions"
   ]
 }

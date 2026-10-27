@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, all]
 permissions:
   contents: read
 concurrency:
@@ -298,7 +298,7 @@ jobs:
         env:
           SIMULATOR_ID: ${{ steps.ui-simulator.outputs.simulator }}
         run: |
-          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then
+          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then
             sync_ports=(18891)
             if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then sync_ports+=(18901); fi
             for sync_port in "${sync_ports[@]}"; do
@@ -311,7 +311,7 @@ jobs:
             python3 tests/shared_deck_fixture.py build/native/host/libankipad_bridge.dylib build/shared-fixture.apkg > build/shared-deck-server.log 2>&1 &
           fi
           cp build/fixture.apkg ios/AnkiPad/Resources/fixture.apkg
-          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = all ]; then
+          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = images ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = all ]; then
             python3 tests/make_occlusion_image.py build/occlusion-fixture.png
           fi
           cd ios
