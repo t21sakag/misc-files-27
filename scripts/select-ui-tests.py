@@ -19,7 +19,7 @@ suites = {
     'p1': ['testReminderNativeSchedulePersistsReplacesAndCancels', 'testHierarchicalTagsCollapseRenameMoveAndRemoveWithoutDeletingNote'],
     'images': ['testImageEditsPreserveExpectedPhysicalPixels', 'testImageAnnotationIsCompositedAtCanvasScale', 'testPhotoEditsAndDrawingPersistWhenReeditingNote'],
     'controls': ['testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions'],
-    'p1-next': ['testImageEditsPreserveExpectedPhysicalPixels', 'testImageAnnotationIsCompositedAtCanvasScale', 'testPhotoEditsAndDrawingPersistWhenReeditingNote', 'testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions', 'testZZZProfilesKeepCollectionsAndAccountsSeparate'],
+    'p1-next': ['testPhotoEditsAndDrawingPersistWhenReeditingNote', 'testZZZProfilesKeepCollectionsAndAccountsSeparate'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

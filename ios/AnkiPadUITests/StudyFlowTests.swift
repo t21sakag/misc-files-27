@@ -187,8 +187,8 @@ final class StudyFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(beforeRename.waitForExistence(timeout: 20))
         beforeRename.press(forDuration: 1)
         app.buttons["名前を変更"].tap()
-        let rename = app.alerts.textFields["profile-name"]
-        XCTAssertTrue(rename.waitForExistence(timeout: 20))
+        let rename = app.alerts["名前を変更"].textFields.firstMatch
+        XCTAssertTrue(rename.waitForExistence(timeout: 20), app.debugDescription)
         rename.tap()
         rename.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "Secondary".count) + "Renamed Secondary")
         app.alerts.buttons["profile-save"].firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()

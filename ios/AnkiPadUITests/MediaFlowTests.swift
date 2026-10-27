@@ -13,11 +13,13 @@ final class MediaFlowTests: StudyFlowTestSupport {
         func openAttachment() {
             let hideKeyboard = app.buttons["Hide keyboard"]
             if hideKeyboard.exists && hideKeyboard.isHittable { hideKeyboard.tap() }
+            let form = app.collectionViews["note-form"]
             for _ in 0..<10 {
-                if attach.exists && attach.isHittable { break }
-                app.collectionViews["note-form"].swipeUp()
+                if attach.exists && attach.isHittable && form.frame.insetBy(dx: 0, dy: 24).contains(attach.frame) { break }
+                form.swipeUp()
             }
             waitUntilHittable(attach)
+            XCTAssertTrue(form.frame.insetBy(dx: 0, dy: 24).contains(attach.frame), app.debugDescription)
             attach.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         }
         openAttachment()
