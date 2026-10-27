@@ -26,7 +26,7 @@ for suite in ['milestone', 'changed', 'profiles', 'shared', 'backups', 'automati
         assert actual[method] == group, item
 with tempfile.TemporaryDirectory() as directory:
     selected_file = Path(directory) / 'selections.txt'
-    for suite, workers in [('profiles', 1), ('backups', 1), ('automatic', 2), ('reviewer', 2), ('all', 2)]:
+    for suite, workers in [('profiles', 1), ('backups', 1), ('automatic', 1), ('reviewer', 1), ('all', 1)]:
         result = subprocess.check_output(['python3', str(root / 'scripts/select-ui-tests.py'), suite, 'ui'], text=True)
         selected_file.write_text(result)
         actual_workers = subprocess.check_output(['python3', str(root / 'scripts/select-ui-workers.py'), str(selected_file)], text=True).strip()

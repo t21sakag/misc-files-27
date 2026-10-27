@@ -190,7 +190,7 @@ final class StudyFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 20), app.debugDescription)
         app.alerts.buttons["profile-delete-confirm"].firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         let removed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: secondary)
-        XCTAssertEqual(XCTWaiter.wait(for: [removed], timeout: 20), .completed, app.debugDescription)
+        XCTAssertEqual(XCTWaiter.wait(for: [removed], timeout: 60), .completed, app.debugDescription)
         app.buttons["profiles-close"].tap()
         XCTAssertTrue(originalDeck.waitForExistence(timeout: 20))
         XCTAssertEqual(originalDeck.label, originalLabel, app.debugDescription)

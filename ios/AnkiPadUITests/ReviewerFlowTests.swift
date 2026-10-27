@@ -70,6 +70,7 @@ final class ReviewerFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(web.waitForExistence(timeout: 30))
         let custom = web.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "カスタムスケジューリング")).firstMatch
         for _ in 0..<15 { if custom.exists && custom.isHittable { break }; web.swipeUp() }
+        waitUntilHittable(custom)
         XCTAssertTrue(custom.exists, app.debugDescription)
         custom.tap()
         let code = web.textViews.firstMatch

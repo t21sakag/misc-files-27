@@ -14,4 +14,7 @@ if selections:
         classes.add(test_class)
 else:
     classes = set(json.loads(Path(__file__).with_name('ui-case-groups.json').read_text()))
-print(min(2, len(classes)))
+# Establish a reliable serial baseline: full-run failures include blank WebKit
+# pages and accessibility snapshot timeouts that did not reproduce in focused
+# runs. Keep the case partition/independent fixtures for later comparison.
+print(1)

@@ -35,6 +35,7 @@ final class CardAPIFlowTests: StudyFlowTestSupport {
         deck.tap()
         let button = app.webViews.buttons["API dialogs"]
         XCTAssertTrue(button.waitForExistence(timeout: 30))
+        waitUntilHittable(button)
         button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         let input = app.alerts.textFields["card-js-prompt-input"]
         XCTAssertTrue(input.waitForExistence(timeout: 20), app.debugDescription)
@@ -45,6 +46,7 @@ final class CardAPIFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.alerts.staticTexts["Template alert"].waitForExistence(timeout: 20), app.debugDescription)
         app.alerts.buttons["OK"].tap()
         XCTAssertTrue(app.webViews.staticTexts["Template dialogs verified"].waitForExistence(timeout: 20), app.debugDescription)
+        waitUntilHittable(button)
         button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(input.waitForExistence(timeout: 20), app.debugDescription)
         app.alerts.buttons["キャンセル"].tap()
@@ -69,8 +71,12 @@ final class CardAPIFlowTests: StudyFlowTestSupport {
         info.tap()
         let bar = app.navigationBars["カード情報"]
         XCTAssertTrue(bar.waitForExistence(timeout: 30), app.debugDescription)
-        bar.buttons["閉じる"].tap()
+        let close = bar.buttons["閉じる"]
+        waitUntilHittable(close)
+        close.tap()
+        XCTAssertTrue(bar.waitForNonExistence(timeout: 30), "Card information must dismiss before using the underlying card")
         XCTAssertTrue(web.buttons["API navigation"].waitForExistence(timeout: 20))
+        waitUntilHittable(web.buttons["API navigation"])
         web.buttons["API navigation"].tap()
         let decks = app.buttons["destination-decks"]
         XCTAssertTrue(decks.waitForExistence(timeout: 20), app.debugDescription)

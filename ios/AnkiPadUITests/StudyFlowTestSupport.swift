@@ -6,6 +6,20 @@ class StudyFlowTestSupport: XCTestCase {
         continueAfterFailure = false
     }
 
+    private var launchedApplications: [XCUIApplication] = []
+
+    override func tearDownWithError() throws {
+        // Release WebKit/audio/keyboard activity before the next case starts.
+        for app in launchedApplications where app.state != .notRunning { app.terminate() }
+        launchedApplications.removeAll()
+        try super.tearDownWithError()
+    }
+
+    func waitUntilHittable(_ element: XCUIElement, timeout: TimeInterval = 30) {
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND hittable == true"), object: element)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: timeout), .completed)
+    }
+
     var syncFixturePort: Int { 18891 }
     func syncEndpoint(delayed: Bool = false) -> String {
         "http://127.0.0.1:\(syncFixturePort + (delayed ? 2 : 0))/"
@@ -13,6 +27,7 @@ class StudyFlowTestSupport: XCTestCase {
 
     func makeApplication(automaticSync: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
+        launchedApplications.append(app)
         app.launchEnvironment["ANKIPAD_UI_TEST_NAMESPACE"] = UUID().uuidString
         app.launchArguments = ["--uitest-fixture"]
         if !automaticSync { app.launchEnvironment["ANKIPAD_UI_TEST_DISABLE_AUTOSYNC"] = "1" }
