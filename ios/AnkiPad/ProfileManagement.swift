@@ -25,7 +25,7 @@ extension StudyModel {
         guard id != currentProfileID else { showingProfiles = false; return }
         guard profileRegistry.profiles.contains(where: { $0.id == id }) else { throw ProfileRegistryError(message: "プロファイルが見つかりません。") }
         busy = true
-        defer { busy = false }
+        defer { busy = false; showInterruptedSyncIfNeeded() }
         leave() // Stops media/callbacks; its refresh is suppressed by the busy gate.
         typedAnswer = ""; answerOverride = nil; revealed = false; finished = false; timedReminder = false
         let previous = engine
@@ -60,6 +60,7 @@ extension StudyModel {
         do { profileRegistry = try profileStore.deletingInactive(profile.id, in: profileRegistry) }
         catch { if let credentials { try? AccountStore.save(credentials, profileID: profile.id) }; throw error }
         ReviewReminderStore.delete(profileID: profile.id)
+        SyncActivityStore().clear(profileID: profile.id)
         for key in ["lastSync", "lastBrowserSearch", "allowCollectionCardAPI"] {
             UserDefaults.standard.removeObject(forKey: profilePreferenceKey(key, profileID: profile.id))
         }

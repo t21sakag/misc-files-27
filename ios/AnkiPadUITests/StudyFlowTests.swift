@@ -64,7 +64,7 @@ final class StudyFlowTests: XCTestCase {
         removeSyncProfile(app, id: profile)
     }
 
-    private func prepareSyncProfile(_ app: XCUIApplication, name: String, withFixture: Bool = true) -> String {
+    private func prepareSyncProfile(_ app: XCUIApplication, name: String, withFixture: Bool = true, extraArguments: [String] = []) -> String {
         app.launch()
         let menu = app.buttons["collection-menu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 30))
@@ -84,7 +84,7 @@ final class StudyFlowTests: XCTestCase {
         let id = profile.identifier
         app.buttons["profiles-close"].tap()
         app.terminate()
-        app.launchArguments = withFixture ? ["--uitest-fixture"] : []
+        app.launchArguments = (withFixture ? ["--uitest-fixture"] : []) + extraArguments
         app.launch()
         return id
     }
@@ -111,7 +111,7 @@ final class StudyFlowTests: XCTestCase {
         app.buttons["profiles-close"].tap()
     }
 
-    private func loginToSyncFixture(_ app: XCUIApplication, username value: String) {
+    private func loginToSyncFixture(_ app: XCUIApplication, username value: String, server: String = "http://127.0.0.1:18891/") {
         let account = app.buttons["ankiweb-account"]
         XCTAssertTrue(account.waitForExistence(timeout: 30))
         account.tap()
@@ -123,7 +123,7 @@ final class StudyFlowTests: XCTestCase {
         app.switches["custom-server-toggle"].switches.firstMatch.tap()
         let endpoint = app.textFields["custom-server-endpoint"]
         XCTAssertTrue(endpoint.waitForExistence(timeout: 20))
-        endpoint.tap(); endpoint.typeText("http://127.0.0.1:18891/")
+        endpoint.tap(); endpoint.typeText(server)
         app.buttons["login-submit"].tap()
     }
 
@@ -161,6 +161,58 @@ final class StudyFlowTests: XCTestCase {
         app.buttons["logout"].tap()
         app.buttons["閉じる"].firstMatch.tap()
         XCTAssertTrue(app.buttons["login-entry"].waitForExistence(timeout: 20))
+        removeSyncProfile(app, id: profile)
+    }
+
+    func testSyncFinishesInBackground() {
+        let app = XCUIApplication()
+        let profile = prepareSyncProfile(app, name: "Background completion check", withFixture: false)
+        loginToSyncFixture(app, username: "fixture@example.test", server: "http://127.0.0.1:18893/")
+        XCTAssertTrue(app.staticTexts.matching(identifier: "空のコレクションにAnkiWebからダウンロード中…").firstMatch.waitForExistence(timeout: 60), app.debugDescription)
+        XCUIDevice.shared.press(.home)
+        // The proxy holds the response for eight seconds. Let it finish while
+        // the app is backgrounded, then inspect the foreground result.
+        Thread.sleep(forTimeInterval: 10)
+        app.activate()
+        XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60), app.debugDescription)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+        removeSyncProfile(app, id: profile)
+    }
+
+    func testSyncExpirationNotifiesAndRetriesFullDownload() {
+        let app = XCUIApplication()
+        let profile = prepareSyncProfile(app, name: "Background expiration check", withFixture: false,
+            extraArguments: ["--uitest-expire-full-download"])
+        loginToSyncFixture(app, username: "fixture@example.test", server: "http://127.0.0.1:18893/")
+        let interrupted = app.alerts.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "前回の同期が中断されました")).firstMatch
+        XCTAssertTrue(interrupted.waitForExistence(timeout: 60), app.debugDescription)
+        app.alerts.buttons["閉じる"].tap()
+        XCTAssertTrue(app.buttons["deck-1"].waitForExistence(timeout: 30))
+        app.terminate()
+        app.launchArguments = []
+        app.launch()
+        let sync = app.buttons["sync"]
+        XCTAssertTrue(sync.waitForExistence(timeout: 30))
+        sync.tap()
+        XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60), app.debugDescription)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+        removeSyncProfile(app, id: profile)
+    }
+
+    func testSyncInterruptedLaunchWarnsAfterTermination() {
+        let app = XCUIApplication()
+        let profile = prepareSyncProfile(app, name: "Interrupted launch check", withFixture: false)
+        loginToSyncFixture(app, username: "fixture@example.test", server: "http://127.0.0.1:18893/")
+        XCTAssertTrue(app.staticTexts.matching(identifier: "空のコレクションにAnkiWebからダウンロード中…").firstMatch.waitForExistence(timeout: 60), app.debugDescription)
+        app.terminate()
+        app.launchArguments = []
+        app.launch()
+        let interrupted = app.alerts.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "前回の同期が中断されました")).firstMatch
+        XCTAssertTrue(interrupted.waitForExistence(timeout: 60), app.debugDescription)
+        app.alerts.buttons["閉じる"].tap()
+        app.buttons["sync"].tap()
+        XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60), app.debugDescription)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
         removeSyncProfile(app, id: profile)
     }
 

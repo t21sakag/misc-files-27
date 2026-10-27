@@ -1,6 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import PencilKit
+import UIKit
 
 @main struct AnkiPadApp: App {
     @UIApplicationDelegateAdaptor(ReviewNotificationAppDelegate.self) private var notificationDelegate
@@ -76,6 +77,10 @@ import PencilKit
     @Published var confirmDirection: Bool?
     @Published var lastSync: Date?
     private var syncCancelled = false
+    private let syncActivity = SyncActivityStore()
+    private var syncBackgroundTask: SyncBackgroundTask?
+    private var syncSessionID: UUID?
+    private var syncAbortTask: Task<Void, Never>?
     private var started = Date()
 
     func run(_ operation: @escaping () async throws -> Void) {
@@ -83,7 +88,7 @@ import PencilKit
         busy = true
         syncCancelled = false
         Task {
-            defer { busy = false; isSyncing = false }
+            defer { busy = false; isSyncing = false; showInterruptedSyncIfNeeded() }
             do { try await operation() }
             catch {
                 if let failure = error as? EngineError, failure.kind == 7 {
@@ -94,6 +99,49 @@ import PencilKit
                 if !syncCancelled { self.error = error.localizedDescription }
             }
         }
+    }
+    private func runSync(_ operation: @escaping () async throws -> Void) {
+        run { try await self.withSyncBackgroundTime(operation) }
+    }
+    private func withSyncBackgroundTime(_ operation: () async throws -> Void) async throws {
+        let profileID = currentProfileID
+        let sessionID = UUID()
+        let background = SyncBackgroundTask { [weak self] in
+            guard let self, self.syncSessionID == sessionID else { return }
+            self.syncActivity.interrupt(profileID: profileID)
+            self.requestSyncAbort(status: "同期が中断されました。前面に戻して再同期してください。")
+        }
+        syncSessionID = sessionID
+        syncBackgroundTask = background
+        defer {
+            background.end()
+            syncBackgroundTask = nil
+            syncSessionID = nil
+            syncActivity.finish(profileID: profileID)
+        }
+        try background.begin()
+        syncActivity.begin(profileID: profileID)
+        isSyncing = true
+        let result: Result<Void, Error>
+        do {
+            await engine.beginSyncSession()
+            guard !syncCancelled else { throw CancellationError() }
+            try await operation()
+            result = .success(())
+        }
+        catch { result = .failure(error) }
+        // Keep the busy/profile gate held until this session's native abort has
+        // returned, so it cannot race a new sync or a replacement engine.
+        if let abort = syncAbortTask { await abort.value }
+        syncAbortTask = nil
+        try result.get()
+    }
+    func showInterruptedSyncIfNeeded() {
+        guard profilesReady, !busy, !isSyncing, error == nil,
+              UIApplication.shared.applicationState == .active,
+              syncActivity.consumeInterruption(profileID: currentProfileID) else { return }
+        syncStatus = "前回の同期が中断されました"
+        error = "前回の同期が中断されました。アプリを前面に開いたまま、もう一度同期してください。"
     }
     func bootstrap() {
         guard !profilesReady else { return }
@@ -106,6 +154,7 @@ import PencilKit
         do { account = try AccountStore.load(profileID: currentProfileID) }
         catch { self.error = error.localizedDescription }
         lastSync = UserDefaults.standard.object(forKey: profilePreferenceKey("lastSync")) as? Date
+        showInterruptedSyncIfNeeded()
         if let deferredProfileImport { self.deferredProfileImport = nil; importFile(deferredProfileImport); return }
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--uitest-fixture"),
@@ -117,7 +166,7 @@ import PencilKit
         refresh()
     }
     func login(username: String, password: String, endpoint: String?) {
-        run {
+        runSync {
             self.isSyncing = true
             self.syncStatus = "AnkiWebにログイン中…"
             let credentials = try await self.engine.login(username: username, password: password, endpoint: endpoint)
@@ -140,7 +189,7 @@ import PencilKit
     }
     func synchronize() {
         guard account != nil else { showingAccount = true; return }
-        run { try await self.performSync() }
+        runSync { try await self.performSync() }
     }
     private func performSync() async throws {
         guard let account else { return }
@@ -166,6 +215,9 @@ import PencilKit
         if decision.needsFull {
             if decision.automaticallyDownload {
                 syncStatus = "空のコレクションにAnkiWebからダウンロード中…"
+                #if DEBUG
+                scheduleSyncExpirationForTesting()
+                #endif
                 try await engine.fullSync(self.account ?? account, upload: false, serverUSN: decision.serverUSN)
                 try await finishMediaSync()
                 return
@@ -184,10 +236,13 @@ import PencilKit
     func fullSync(upload: Bool) {
         guard let decision = syncDecision, let account,
               upload ? decision.canUpload : decision.canDownload else { return }
-        run {
+        runSync {
             self.isSyncing = true
             self.syncStatus = upload ? "AnkiWebにアップロード中…" : "AnkiWebからダウンロード中…"
             self.syncDecision = nil
+            #if DEBUG
+            if !upload { self.scheduleSyncExpirationForTesting() }
+            #endif
             try await self.engine.fullSync(account, upload: upload, serverUSN: decision.serverUSN)
             try await self.finishMediaSync()
         }
@@ -210,13 +265,30 @@ import PencilKit
         syncStatus = "同期しました"
     }
     func cancelSync() {
+        requestSyncAbort(status: "同期を中止しました")
+    }
+    private func requestSyncAbort(status: String) {
         guard isSyncing else { return }
         syncCancelled = true
-        Task {
-            do { try await engine.abortSync(); syncStatus = "同期を中止しました" }
+        syncStatus = status
+        guard syncAbortTask == nil else { return }
+        let syncingEngine = engine
+        syncAbortTask = Task {
+            do { try await syncingEngine.abortSync() }
             catch { self.error = error.localizedDescription }
         }
     }
+    #if DEBUG
+    private func scheduleSyncExpirationForTesting() {
+        guard ProcessInfo.processInfo.arguments.contains("--uitest-expire-full-download") else { return }
+        let sessionID = syncSessionID
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            guard let self, self.syncSessionID == sessionID else { return }
+            self.syncBackgroundTask?.simulateExpiration()
+        }
+    }
+    #endif
     func refreshAfterEditing() {
         run {
             self.decks = try await self.engine.decks()
@@ -242,7 +314,7 @@ import PencilKit
         scheduleAutoAdvance()
     }
     func pauseReviewScene() { reviewSceneActive = false; pauseReviewInteraction() }
-    func resumeReviewScene() { reviewSceneActive = true; resumeReviewInteraction() }
+    func resumeReviewScene() { reviewSceneActive = true; resumeReviewInteraction(); showInterruptedSyncIfNeeded() }
     func openReviewVoice() {
         guard card != nil, !busy else { return }
         stopCardAudioForRecognition()

@@ -7,7 +7,7 @@ suites = {
     'changed': ['testSwipeCanRevealAndAnswerThenUndo', 'testZZSharedDeckCanBeDownloadedAndImported', 'testZZZProfilesKeepCollectionsAndAccountsSeparate'],
     'profiles': ['testZZZProfilesKeepCollectionsAndAccountsSeparate'],
     'shared': ['testZZSharedDeckCanBeDownloadedAndImported'],
-    'sync': ['testAnkiWebLoginAndTokenSurviveRelaunch', 'testFullSyncConflictShowsLocalCounts', 'testFullSyncWithLocalDataRequiresTypedUploadConfirmation'],
+    'sync': ['testAnkiWebLoginAndTokenSurviveRelaunch', 'testFullSyncConflictShowsLocalCounts', 'testFullSyncWithLocalDataRequiresTypedUploadConfirmation', 'testSyncExpirationNotifiesAndRetriesFullDownload', 'testSyncFinishesInBackground', 'testSyncInterruptedLaunchWarnsAfterTermination'],
     'reviewer': ['testPreviewCardAPIReadsAndRestoresFlag', 'testReviewVoicePanelClosesWithoutChangingCard', 'testAnkiDroidCardJavaScriptReadsNativeMetadata', 'testAutoAdvancePausesWhileEditing', 'testCustomSchedulingChangesAnswerInterval', 'testImportedDeckCanBeReviewedAndUndone', 'testJavaScriptDialogsReturnNativeInputAndDecisions', 'testSwipeCanRevealAndAnswerThenUndo'],
     'all': [],
 }

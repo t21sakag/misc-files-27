@@ -4,6 +4,8 @@ ankipad_swiftc=${1:-swiftc}
 mkdir -p build/local-swift
 python3 scripts/check-swift-syntax.py --swiftc "$ankipad_swiftc"
 "$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/local-swift/sync-decision-smoke
+"$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/SyncActivityStore.swift tests/sync_activity_smoke.swift -o build/local-swift/sync-activity-smoke
+build/local-swift/sync-activity-smoke
 build/local-swift/sync-decision-smoke
 "$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/ProfileRegistry.swift tests/profile_registry_smoke.swift -o build/local-swift/profile-registry-smoke
 build/local-swift/profile-registry-smoke

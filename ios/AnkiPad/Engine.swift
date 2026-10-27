@@ -39,6 +39,8 @@ struct StudyCard {
 actor Engine {
     private var transport: BackendTransport?
     private var opened = false
+    private var syncAbortRequested = false
+    private var activeSyncCall: UUID?
     var stickyFieldValues: [String: [String: String]] = [:]
     nonisolated let root: URL
     nonisolated var media: URL { root.appendingPathComponent("collection.media", isDirectory: true) }
@@ -69,6 +71,11 @@ actor Engine {
     }
     func longCall(_ method: String, _ args: [String: Any]) async throws -> [String: Any] {
         try start()
+        let isSyncCall = method.hasPrefix("SyncService.")
+        if isSyncCall && syncAbortRequested { throw CancellationError() }
+        let callID = UUID()
+        if isSyncCall { activeSyncCall = callID }
+        defer { if activeSyncCall == callID { activeSyncCall = nil } }
         let transport = self.transport!
         return try await Task.detached(priority: .userInitiated) { try transport.call(method, args) }.value
     }
@@ -186,9 +193,21 @@ actor Engine {
         _ = try await longCall("SyncService.FullUploadOrDownload", ["auth": credentials.request, "upload": upload, "serverUsn": serverUSN])
     }
     func mediaSyncStatus() throws -> [String: Any] { try raw("SyncService.MediaSyncStatus") }
-    func abortSync() throws {
-        _ = try raw("SyncService.AbortSync")
-        _ = try raw("SyncService.AbortMediaSync")
+    func beginSyncSession() { syncAbortRequested = false }
+    func abortSync() async throws {
+        syncAbortRequested = true
+        guard transport != nil else { return }
+        while true {
+            _ = try raw("SyncService.AbortSync")
+            _ = try raw("SyncService.AbortMediaSync")
+            let mediaActive: Bool
+            do { mediaActive = try raw("SyncService.MediaSyncStatus")["active"] as? Bool == true }
+            catch let failure as EngineError where failure.kind == 2 { mediaActive = false }
+            if activeSyncCall == nil && !mediaActive { return }
+            // A detached network call may not have registered its Rust abort
+            // handle yet. Keep cancellation latched until it has unwound.
+            try await Task.sleep(nanoseconds: 30_000_000)
+        }
     }
     func backup(force: Bool = true) throws {
         try start()
