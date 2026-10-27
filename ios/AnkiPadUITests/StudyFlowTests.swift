@@ -33,7 +33,7 @@ final class StudyFlowTests: XCTestCase {
 
     func testAnkiWebLoginAndTokenSurviveRelaunch() {
         let app = XCUIApplication()
-        app.launch()
+        let profile = prepareSyncProfile(app, name: "Empty download safety check", withFixture: false)
         let account = app.buttons["ankiweb-account"]
         XCTAssertTrue(account.waitForExistence(timeout: 30))
         account.tap()
@@ -61,9 +61,10 @@ final class StudyFlowTests: XCTestCase {
         app.buttons["logout"].tap()
         app.buttons["閉じる"].firstMatch.tap()
         XCTAssertTrue(app.buttons["login-entry"].waitForExistence(timeout: 20))
+        removeSyncProfile(app, id: profile)
     }
 
-    private func prepareSyncProfile(_ app: XCUIApplication, name: String) -> String {
+    private func prepareSyncProfile(_ app: XCUIApplication, name: String, withFixture: Bool = true) -> String {
         app.launch()
         let menu = app.buttons["collection-menu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 30))
@@ -83,7 +84,7 @@ final class StudyFlowTests: XCTestCase {
         let id = profile.identifier
         app.buttons["profiles-close"].tap()
         app.terminate()
-        app.launchArguments = ["--uitest-fixture"]
+        app.launchArguments = withFixture ? ["--uitest-fixture"] : []
         app.launch()
         return id
     }
