@@ -59,15 +59,17 @@ struct TagManagerView: View {
                             Button { setCollapsed(entry) } label: {
                                 Image(systemName: entry.collapsed && search.isEmpty ? "chevron.right" : "chevron.down")
                             }.buttonStyle(.borderless).accessibilityLabel(entry.name + (entry.collapsed ? "を展開" : "を折りたたむ"))
+                                .accessibilityIdentifier("tag-collapse-" + entry.name)
+                                .accessibilityValue(entry.collapsed ? "折りたたみ" : "展開")
                                 .disabled(!search.isEmpty)
                         }
-                        Text(search.isEmpty ? entry.label : entry.name)
+                        Text(search.isEmpty ? entry.label : entry.name).accessibilityIdentifier("tag-name-" + entry.name)
                         Spacer()
                         Menu {
                             Button("名前を変更") { editing = TagEditRequest(tag: entry.name, moving: false) }
                             Button("別の親タグへ移動") { editing = TagEditRequest(tag: entry.name, moving: true) }
                             Button("タグを削除", role: .destructive) { removing = entry.name }
-                        } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel(entry.name + "の操作")
+                        } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel(entry.name + "の操作").accessibilityIdentifier("tag-actions-" + entry.name)
                     }.padding(.leading, search.isEmpty ? CGFloat(entry.depth) * 14 : 0)
                 }
                 if tree.isEmpty && !busy { Text("タグがありません").foregroundStyle(.secondary) }
@@ -101,7 +103,7 @@ struct TagManagerView: View {
                 }
             }
             .confirmationDialog("タグを削除しますか？", isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }), titleVisibility: .visible) {
-                if let tag = removing { Button("タグと子タグを削除", role: .destructive) { run("TagsService.RemoveTags", ["val": tag]); removing = nil } }
+                if let tag = removing { Button("タグと子タグを削除", role: .destructive) { run("TagsService.RemoveTags", ["val": tag]); removing = nil }.accessibilityIdentifier("tag-delete-confirm") }
                 Button("キャンセル", role: .cancel) { removing = nil }
             } message: { Text("「\(removing ?? "")」と子タグをすべてのノートから外します。ノートやカードは削除しません。") }
             .alert("タグを変更できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
@@ -156,7 +158,7 @@ private struct TagEditForm: View {
             Form {
                 Text(request.tag)
                 TextField(request.moving ? "移動先の親タグ（空欄で最上位）" : "新しいタグ名", text: $value)
-                    .autocorrectionDisabled().textInputAutocapitalization(.never)
+                    .autocorrectionDisabled().textInputAutocapitalization(.never).accessibilityIdentifier("tag-edit-name")
                 Text("子タグとノートに付いているタグも変更します。")
                 if busy { ProgressView() }
             }.disabled(busy)
@@ -175,7 +177,7 @@ private struct TagEditForm: View {
                         do { try await save(cleaned); dismiss() }
                         catch { self.error = error.localizedDescription }
                     }
-                }.disabled(busy) }
+                }.disabled(busy).accessibilityIdentifier("tag-edit-apply") }
             }
             .interactiveDismissDisabled(busy)
             .alert("タグを変更できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {

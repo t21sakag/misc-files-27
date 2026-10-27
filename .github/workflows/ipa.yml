@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, all]
 permissions:
   contents: read
 concurrency:
@@ -52,6 +52,10 @@ jobs:
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BackupExport.swift tests/backup_export_smoke.swift -o build/backup-export-smoke
           build/backup-export-smoke
+      - name: Test reminder configuration validity and persistence
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/ReviewReminderConfiguration.swift tests/reminder_configuration_smoke.swift -o build/reminder-configuration-smoke
+          build/reminder-configuration-smoke
       - name: Test nested list visibility and aggregate counts
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/DeckTree.swift tests/deck_tree_smoke.swift -o build/deck-tree-smoke

@@ -67,7 +67,7 @@ struct SettingsView: View {
                         Toggle("画像をPNGで取り込む", isOn: boolean("editing", "pasteImagesAsPng"))
                     }
                     Section { NavigationLink("ライセンスとソース") { OpenSourceLicensesView() } }
-                    Section { NavigationLink("学習リマインダー") { ReviewReminderSettingsView(profile: model.currentProfile) } }
+                    Section { NavigationLink("学習リマインダー") { ReviewReminderSettingsView(profile: model.currentProfile) }.accessibilityIdentifier("reminder-open") }
                     Section("カードのJavaScript権限") {
                         Toggle("全ノートの読み取り・タグ変更を許可", isOn: $allowCollectionAPI).accessibilityIdentifier("allow-collection-card-api")
                         Text("有効にすると、カード内のJavaScriptが現在のカード以外のノートの内容も読み取り、タグを変更できます。").font(.caption).foregroundStyle(.secondary)

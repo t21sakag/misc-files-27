@@ -43,5 +43,11 @@
   ],
   "MediaFlowTests": [
     "testZImageOcclusionCanBeCreatedFromPhoto"
+  ],
+  "ReminderFlowTests": [
+    "testReminderNativeSchedulePersistsReplacesAndCancels"
+  ],
+  "TagFlowTests": [
+    "testHierarchicalTagsCollapseRenameMoveAndRemoveWithoutDeletingNote"
   ]
 }

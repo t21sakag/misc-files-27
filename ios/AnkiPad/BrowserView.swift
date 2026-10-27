@@ -130,7 +130,7 @@ struct BrowserView: View {
             }
             Button("取り消す") { mutate { try await model.engine.undo() } }
             Button("やり直す") { mutate { _ = try await model.engine.call("CollectionService.Redo") } }
-        } label: { Image(systemName: "line.3.horizontal.decrease.circle") }.disabled(busy)
+        } label: { Image(systemName: "line.3.horizontal.decrease.circle") }.disabled(busy).accessibilityIdentifier("browser-filter-menu")
     }
     private var actionsMenu: some View {
         Menu {
