@@ -9,9 +9,15 @@ import tempfile
 import time
 import urllib.request
 from engine_smoke import Engine
+from unittest.mock import patch
+from delayed_sync_proxy import LoopbackHTTPServer, Handler
 
 bridge, binary, fixture = map(lambda value: str(Path(value).resolve()), sys.argv[1:4])
 scripts = Path(__file__).resolve().parent
+
+with patch('socket.getfqdn', side_effect=AssertionError('Loopback fixture must not perform DNS discovery')):
+    with LoopbackHTTPServer(('127.0.0.1', 0), Handler) as fixture_server:
+        assert fixture_server.server_name == 'localhost' and fixture_server.server_port > 0
 
 def port():
     with socket.socket() as sock:
@@ -56,13 +62,13 @@ with tempfile.TemporaryDirectory(prefix='parallel-sync-fixtures-') as temporary:
             child = subprocess.Popen([sys.executable, str(scripts / 'delayed_sync_proxy.py'), '--port', str(proxy),
                 '--upstream-port', str(upstream)], stdout=log, stderr=log)
             processes.append(child)
-            deadline = time.monotonic() + 10
+            deadline = time.monotonic() + 60
             while True:
                 assert child.poll() is None, proxy_log.read_text()
                 try:
                     with socket.create_connection(('127.0.0.1', proxy), timeout=1): break
                 except OSError:
-                    assert time.monotonic() < deadline, 'Proxy failed to listen'
+                    assert time.monotonic() < deadline, ('Proxy failed to listen', proxy_log.read_text())
                     time.sleep(.05)
             endpoints.append(f'http://127.0.0.1:{proxy}/')
         def download(index):

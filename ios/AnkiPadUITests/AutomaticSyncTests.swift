@@ -108,7 +108,11 @@ final class AutomaticSyncTests: StudyFlowTestSupport {
         XCTAssertFalse(app.buttons["このiPadのデータをAnkiWebにアップロード"].exists)
         XCTAssertFalse(app.staticTexts["同期しました"].exists)
         download.tap()
-        app.alerts.buttons["置き換えて同期"].tap()
+        let replace = app.alerts.buttons["置き換えて同期"].firstMatch
+        XCTAssertTrue(replace.waitForExistence(timeout: 20), app.debugDescription)
+        let actionable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true AND enabled == true"), object: replace)
+        XCTAssertEqual(XCTWaiter.wait(for: [actionable], timeout: 20), .completed, app.debugDescription)
+        replace.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60), app.debugDescription)
         removeSyncProfile(app, id: profile)
     }
