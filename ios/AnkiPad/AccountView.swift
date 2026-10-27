@@ -51,6 +51,8 @@ struct AccountView: View {
                     }
                 }
             }
+            .accessibilityIdentifier("account-form")
+            .scrollDismissesKeyboard(.interactively)
             .disabled(model.busy)
             .navigationTitle("AnkiWeb")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button(model.busy ? "中止" : "閉じる") { password = ""; if model.busy { model.cancelSync() } else { dismiss() } } } }

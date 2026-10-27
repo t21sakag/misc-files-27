@@ -50,11 +50,7 @@ final class StudyFlowTests: XCTestCase {
         let password = app.secureTextFields["login-password"]
         password.tap()
         password.typeText("fixture-password")
-        app.switches["custom-server-toggle"].switches.firstMatch.tap()
-        let endpoint = app.textFields["custom-server-endpoint"]
-        XCTAssertTrue(endpoint.waitForExistence(timeout: 15), app.debugDescription)
-        endpoint.tap()
-        endpoint.typeText("http://127.0.0.1:18891/")
+        configureSyncEndpoint(app, server: "http://127.0.0.1:18891/")
         app.buttons["login-submit"].tap()
         // An empty local collection must download without offering upload.
         XCTAssertFalse(app.buttons["このiPadのデータをAnkiWebにアップロード"].exists)
@@ -117,6 +113,26 @@ final class StudyFlowTests: XCTestCase {
         app.buttons["profiles-close"].tap()
     }
 
+    private func configureSyncEndpoint(_ app: XCUIApplication, server: String) {
+        let control = app.switches["custom-server-toggle"].switches.firstMatch
+        for _ in 0..<4 {
+            if control.exists && control.isHittable { break }
+            app.collectionViews["account-form"].swipeUp()
+        }
+        XCTAssertTrue(control.waitForExistence(timeout: 15), app.debugDescription)
+        for _ in 0..<2 {
+            if control.value as? String == "1" { break }
+            control.tap()
+            let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '1'"), object: control)
+            if XCTWaiter.wait(for: [enabled], timeout: 3) == .completed { break }
+            app.collectionViews["account-form"].swipeUp()
+        }
+        XCTAssertEqual(control.value as? String, "1", app.debugDescription)
+        let endpoint = app.textFields["custom-server-endpoint"]
+        XCTAssertTrue(endpoint.waitForExistence(timeout: 20), app.debugDescription)
+        endpoint.tap(); endpoint.typeText(server)
+    }
+
     private func loginToSyncFixture(_ app: XCUIApplication, username value: String, server: String = "http://127.0.0.1:18891/") {
         let account = app.buttons["ankiweb-account"]
         XCTAssertTrue(account.waitForExistence(timeout: 30))
@@ -126,10 +142,7 @@ final class StudyFlowTests: XCTestCase {
         username.tap(); username.typeText(value)
         app.secureTextFields["login-password"].tap()
         app.secureTextFields["login-password"].typeText("fixture-password")
-        app.switches["custom-server-toggle"].switches.firstMatch.tap()
-        let endpoint = app.textFields["custom-server-endpoint"]
-        XCTAssertTrue(endpoint.waitForExistence(timeout: 20))
-        endpoint.tap(); endpoint.typeText(server)
+        configureSyncEndpoint(app, server: server)
         app.buttons["login-submit"].tap()
     }
 
