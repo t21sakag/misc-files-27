@@ -1,6 +1,99 @@
 import XCTest
 
 final class MediaFlowTests: StudyFlowTestSupport {
+    func testPhotoEditsAndDrawingPersistWhenReeditingNote() {
+        let app = makeApplication()
+        app.launch()
+        XCTAssertTrue(app.buttons["add-note"].waitForExistence(timeout: 30))
+        app.buttons["add-note"].tap()
+        let front = app.textViews["note-field-0"]
+        XCTAssertTrue(front.waitForExistence(timeout: 20))
+        front.tap(); front.typeText("Image editing verification")
+        let attach = app.buttons["note-attachment-0"]
+        func openAttachment() {
+            for _ in 0..<10 {
+                if attach.exists && attach.isHittable { break }
+                app.collectionViews["note-form"].swipeUp()
+            }
+            waitUntilHittable(attach)
+            attach.tap()
+        }
+        openAttachment(); app.buttons["note-photo-0"].tap()
+        let photo = app.images.matching(identifier: "PXGGridLayout-Info").firstMatch
+        XCTAssertTrue(photo.waitForExistence(timeout: 30), app.debugDescription)
+        photo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let image = app.images["image-editor-image"]
+        XCTAssertTrue(image.waitForExistence(timeout: 30), app.debugDescription)
+        func dimensions() -> [Int] {
+            (image.value as? String ?? "").components(separatedBy: CharacterSet.decimalDigits.inverted).compactMap(Int.init)
+        }
+        XCTAssertEqual(dimensions(), [512, 384])
+        app.buttons["image-editor-rotate"].tap()
+        let rotated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in image.exists && dimensions() == [384, 512] }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [rotated], timeout: 20), .completed)
+        app.buttons["image-editor-mirror"].tap()
+        XCTAssertEqual(dimensions(), [384, 512])
+        image.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.2)).press(forDuration: 0.1,
+            thenDragTo: image.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.7)))
+        let crop = app.buttons["image-editor-crop"]
+        let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: crop)
+        XCTAssertEqual(XCTWaiter.wait(for: [selected], timeout: 20), .completed)
+        crop.tap()
+        let cropped = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            let size = dimensions(); return size.count == 2 && size[0] > 10 && size[0] < 384 && size[1] > 10 && size[1] < 512
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [cropped], timeout: 20), .completed)
+        let savedSize = dimensions()
+        let drawing = app.switches["image-editor-drawing"]
+        drawing.tap()
+        let canvas = app.descendants(matching: .any).matching(identifier: "whiteboard").firstMatch
+        XCTAssertTrue(canvas.waitForExistence(timeout: 20), app.debugDescription)
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.5)).press(forDuration: 0.1,
+            thenDragTo: canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.65, dy: 0.5)))
+        let ink = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            guard canvas.exists, let value = canvas.value as? String else { return false }
+            return (value.components(separatedBy: CharacterSet.decimalDigits.inverted).compactMap(Int.init).first ?? 0) > 0
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [ink], timeout: 20), .completed, app.debugDescription)
+        drawing.tap()
+        app.buttons["image-editor-insert"].tap()
+        XCTAssertTrue(image.waitForNonExistence(timeout: 30))
+        XCTAssertTrue(front.waitForExistence(timeout: 20))
+        let firstHTML = front.value as? String ?? ""
+        XCTAssertEqual(firstHTML.components(separatedBy: "<img ").count - 1, 1)
+        app.buttons["note-save"].tap()
+        XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30))
+        app.buttons["note-close"].tap()
+        app.terminate(); app.launchArguments = []; app.launch()
+        XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
+        app.buttons["collection-menu"].tap(); app.buttons["browser-open"].tap()
+        let search = app.searchFields.matching(NSPredicate(format: "placeholderValue BEGINSWITH %@", "検索（")).firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 20))
+        search.tap(); search.typeText("Image editing verification")
+        let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'browser-card-' AND label CONTAINS 'Image editing verification'")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 20)); row.tap()
+        XCTAssertTrue(front.waitForExistence(timeout: 20))
+        XCTAssertEqual(front.value as? String, firstHTML)
+        openAttachment(); app.buttons["note-edit-image-0"].tap()
+        let existing = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'field-image-'")).firstMatch
+        XCTAssertTrue(existing.waitForExistence(timeout: 20)); existing.tap()
+        XCTAssertTrue(image.waitForExistence(timeout: 30))
+        XCTAssertEqual(dimensions(), savedSize, "Read the saved media file, not a retained draft image")
+        app.buttons["image-editor-mirror"].tap()
+        app.buttons["image-editor-insert"].tap()
+        XCTAssertTrue(image.waitForNonExistence(timeout: 30))
+        let replacement = front.value as? String ?? ""
+        XCTAssertTrue(replacement.hasPrefix("Image editing verification"))
+        XCTAssertNotEqual(replacement, firstHTML, "Existing image source must be replaced with the new media file")
+        XCTAssertEqual(replacement.components(separatedBy: "<img ").count - 1, 1, "Editing must not append a second image")
+        app.buttons["note-save"].tap()
+        XCTAssertTrue(front.waitForNonExistence(timeout: 30))
+        XCTAssertTrue(row.waitForExistence(timeout: 20)); row.tap()
+        XCTAssertTrue(front.waitForExistence(timeout: 20))
+        XCTAssertEqual(front.value as? String, replacement, "The replacement must persist in the existing note")
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
+
     func testZImageOcclusionCanBeCreatedFromPhoto() {
         let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]

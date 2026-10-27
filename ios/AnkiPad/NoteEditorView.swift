@@ -94,14 +94,14 @@ struct NoteEditorView: View {
                             }
                             Menu("添付", systemImage: "paperclip") {
                                 Button("ファイルから画像・音声を追加", systemImage: "folder") { mediaField = index; importingMedia = true }
-                                Button("写真ライブラリから追加", systemImage: "photo.on.rectangle") { mediaField = index; choosingPhoto = true }
+                                Button("写真ライブラリから追加", systemImage: "photo.on.rectangle") { mediaField = index; choosingPhoto = true }.accessibilityIdentifier("note-photo-\(index)")
                                 Button("写真を撮影", systemImage: "camera") { mediaField = index; camera = true }.disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
                                 Button("フィールド内の画像を編集", systemImage: "photo.badge.arrow.down") {
                                     let html = document?.fields[index] ?? ""
                                     selectingImage = FieldImageSelection(field: index, html: html, images: FieldImageReference.extract(html))
-                                }
+                                }.accessibilityIdentifier("note-edit-image-\(index)")
                                 Button("音声を録音", systemImage: "mic") { mediaField = index; recordingAudio = true }
-                            }
+                            }.accessibilityIdentifier("note-attachment-\(index)")
                             if current.fieldConfigs.indices.contains(index), let description = current.fieldConfigs[index]["description"] as? String, !description.isEmpty { Text(description).font(.footnote).foregroundStyle(.secondary) }
                             } label: { Text(index < current.fieldNames.count ? current.fieldNames[index] : "フィールド \(index + 1)") }
                         }
@@ -179,7 +179,7 @@ struct NoteEditorView: View {
             .sheet(item: $selectingImage, onDismiss: presentPendingImage) { selection in
                 NavigationStack {
                     List(selection.images) { image in
-                        Button(image.source) { openFieldImage(image, selection: selection) }
+                        Button(image.source) { openFieldImage(image, selection: selection) }.accessibilityIdentifier("field-image-\(image.id)")
                     }
                     .overlay { if selection.images.isEmpty { ContentUnavailableView("編集できる画像がありません", systemImage: "photo") } }
                     .navigationTitle("画像を選択")

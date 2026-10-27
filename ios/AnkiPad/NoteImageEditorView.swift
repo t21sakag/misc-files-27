@@ -38,6 +38,8 @@ struct NoteImageEditorView: View {
                     let size = CGSize(width: image.size.width * factor, height: image.size.height * factor)
                     ZStack(alignment: .topLeading) {
                         Image(uiImage: image).resizable().frame(width: size.width, height: size.height)
+                            .accessibilityLabel("編集する画像").accessibilityIdentifier("image-editor-image")
+                            .accessibilityValue("\(Int(image.size.width * image.scale)) × \(Int(image.size.height * image.scale)) ピクセル")
                         if drawingMode {
                             WhiteboardCanvas(drawing: $drawing, eraser: eraser)
                                 .frame(width: size.width, height: size.height)
@@ -67,7 +69,7 @@ struct NoteImageEditorView: View {
                     .accessibilityHint(drawingMode ? "指またはApple Pencilで画像に書き込めます。" : "ドラッグして切り抜く範囲を選びます。")
                 }
                 HStack {
-                    Toggle("手書き", isOn: $drawingMode).onChange(of: drawingMode) { _, _ in crop = nil }
+                    Toggle("手書き", isOn: $drawingMode).accessibilityIdentifier("image-editor-drawing").onChange(of: drawingMode) { _, _ in crop = nil }
                     if drawingMode {
                         Toggle("消しゴム", isOn: $eraser)
                         Button("書き込みを消す") { drawing = PKDrawing() }.disabled(drawing.strokes.isEmpty)
@@ -75,9 +77,9 @@ struct NoteImageEditorView: View {
                 }
                 Text(drawingMode ? "画像に書き込めます。色やペンはツールパレットで変更できます。" : "画像をドラッグして切り抜く範囲を選べます。") .font(.footnote).foregroundStyle(.secondary)
                 HStack {
-                    Button("回転", systemImage: "rotate.right") { transform(rotate: true) }.disabled(drawingMode)
-                    Button("左右反転", systemImage: "arrow.left.and.right.righttriangle.left.righttriangle.right") { transform(rotate: false) }.disabled(drawingMode)
-                    Button("切り抜く", systemImage: "crop") { applyCrop() }.disabled(crop == nil)
+                    Button("回転", systemImage: "rotate.right") { transform(rotate: true) }.accessibilityIdentifier("image-editor-rotate").disabled(drawingMode)
+                    Button("左右反転", systemImage: "arrow.left.and.right.righttriangle.left.righttriangle.right") { transform(rotate: false) }.accessibilityIdentifier("image-editor-mirror").disabled(drawingMode)
+                    Button("切り抜く", systemImage: "crop") { applyCrop() }.accessibilityIdentifier("image-editor-crop").disabled(crop == nil)
                     Button("元に戻す") { image = request.image; crop = nil; changed = false; drawing = PKDrawing(); drawingMode = false }
                 }.buttonStyle(.bordered)
             }
@@ -92,7 +94,7 @@ struct NoteImageEditorView: View {
                         do { try await insert(drawing.strokes.isEmpty ? image : normalized(), changed || !drawing.strokes.isEmpty); dismiss() }
                         catch { self.error = error.localizedDescription }
                     }
-                }.disabled(saving) }
+                }.disabled(saving).accessibilityIdentifier("image-editor-insert") }
             }
             .interactiveDismissDisabled(saving)
             .alert("画像を編集できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {

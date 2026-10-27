@@ -42,7 +42,8 @@
     "testSubdeckCollapsePersistsAndParentReviewsChildren"
   ],
   "MediaFlowTests": [
-    "testZImageOcclusionCanBeCreatedFromPhoto"
+    "testZImageOcclusionCanBeCreatedFromPhoto",
+    "testPhotoEditsAndDrawingPersistWhenReeditingNote"
   ],
   "ReminderFlowTests": [
     "testReminderNativeSchedulePersistsReplacesAndCancels"

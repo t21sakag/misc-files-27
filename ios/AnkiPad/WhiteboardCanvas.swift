@@ -17,6 +17,7 @@ struct WhiteboardCanvas: UIViewRepresentable {
         canvas.accessibilityLabel = "手書きキャンバス"
         canvas.accessibilityIdentifier = "whiteboard"
         canvas.drawing = drawing
+        canvas.accessibilityValue = "\(drawing.strokes.count)本の描線"
         context.coordinator.canvas = canvas
         DispatchQueue.main.async {
             let picker = PKToolPicker()
@@ -30,6 +31,7 @@ struct WhiteboardCanvas: UIViewRepresentable {
     func updateUIView(_ canvas: PKCanvasView, context: Context) {
         context.coordinator.drawing = $drawing
         canvas.drawingPolicy = pencilOnly ? .pencilOnly : .anyInput
+        canvas.accessibilityValue = "\(drawing.strokes.count)本の描線"
         if context.coordinator.eraser != eraser {
             if eraser { context.coordinator.previousTool = canvas.tool; canvas.tool = PKEraserTool(.vector) }
             else { canvas.tool = context.coordinator.previousTool ?? PKInkingTool(.pen, color: .systemBlue, width: 3) }

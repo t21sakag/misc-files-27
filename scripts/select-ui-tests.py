@@ -17,7 +17,7 @@ suites = {
     'collapse': ['testSubdeckCollapsePersistsAndParentReviewsChildren'],
     'reminders': ['testReminderNativeSchedulePersistsReplacesAndCancels'],
     'p1': ['testReminderNativeSchedulePersistsReplacesAndCancels', 'testHierarchicalTagsCollapseRenameMoveAndRemoveWithoutDeletingNote'],
-    'images': ['testImageEditsPreserveExpectedPhysicalPixels', 'testImageAnnotationIsCompositedAtCanvasScale'],
+    'images': ['testImageEditsPreserveExpectedPhysicalPixels', 'testImageAnnotationIsCompositedAtCanvasScale', 'testPhotoEditsAndDrawingPersistWhenReeditingNote'],
     'all': [],
 }
 suite, mode = sys.argv[1:]
