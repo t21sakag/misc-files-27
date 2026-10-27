@@ -92,7 +92,7 @@ struct NoteEditorView: View {
                                 .font(.custom(current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", size: CGFloat(editorFontSize > 0 ? editorFontSize : (current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontSize"] as? Int ?? 20 : 20))))
                                 .environment(\.layoutDirection, current.fieldConfigs.indices.contains(index) && current.fieldConfigs[index]["rtl"] as? Bool == true ? .rightToLeft : .leftToRight)
                             }
-                            Menu("添付", systemImage: "paperclip") {
+                            Menu {
                                 Button("ファイルから画像・音声を追加", systemImage: "folder") { mediaField = index; importingMedia = true }
                                 Button("写真ライブラリから追加", systemImage: "photo.on.rectangle") { mediaField = index; choosingPhoto = true }.accessibilityIdentifier("note-photo-\(index)")
                                 Button("写真を撮影", systemImage: "camera") { mediaField = index; camera = true }.disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
@@ -101,7 +101,11 @@ struct NoteEditorView: View {
                                     selectingImage = FieldImageSelection(field: index, html: html, images: FieldImageReference.extract(html))
                                 }.accessibilityIdentifier("note-edit-image-\(index)")
                                 Button("音声を録音", systemImage: "mic") { mediaField = index; recordingAudio = true }
-                            }.accessibilityIdentifier("note-attachment-\(index)")
+                            } label: {
+                                Label("添付", systemImage: "paperclip")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .contentShape(Rectangle())
+                            }.buttonStyle(.borderless).accessibilityIdentifier("note-attachment-\(index)")
                             if current.fieldConfigs.indices.contains(index), let description = current.fieldConfigs[index]["description"] as? String, !description.isEmpty { Text(description).font(.footnote).foregroundStyle(.secondary) }
                             } label: { Text(index < current.fieldNames.count ? current.fieldNames[index] : "フィールド \(index + 1)") }
                         }
