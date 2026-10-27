@@ -11,21 +11,6 @@ struct SyncCredentials: Codable {
         return result
     }
 }
-struct SyncDecision {
-    let required: String
-    let endpoint: String?
-    let message: String
-    let serverUSN: Int
-    init(response: [String: Any]) {
-        required = response["required"] as? String ?? "NO_CHANGES"
-        endpoint = response["newEndpoint"] as? String
-        message = response["serverMessage"] as? String ?? ""
-        serverUSN = response["serverMediaUsn"] as? Int ?? 0
-    }
-    var needsFull: Bool { ["FULL_SYNC", "FULL_DOWNLOAD", "FULL_UPLOAD"].contains(required) }
-    var canUpload: Bool { required != "FULL_DOWNLOAD" }
-    var canDownload: Bool { required != "FULL_UPLOAD" }
-}
 
 enum AccountStore {
     private static let service = "com.localtools.studyclient.ankiweb"

@@ -40,6 +40,10 @@ jobs:
           mkdir -p build
           swiftc -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/StaticAssetServer.swift tests/asset_server_smoke.swift -o build/asset-server-smoke
           build/asset-server-smoke
+      - name: Test full sync direction safety
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/sync-decision-smoke
+          build/sync-decision-smoke
       - name: Test card touch bridge cancellation and control exclusions
         run: node tests/review_touch_bridge_smoke.js
       - name: Test persistent reviewer gesture configuration
@@ -162,7 +166,7 @@ jobs:
         if: env.CI_MODE == 'full'
         run: python3 tests/eta_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test authenticated data and media sync
-        if: env.CI_MODE == 'full'
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'sync')
         run: python3 tests/sync_smoke.py build/native/host/libankipad_bridge.dylib build/native/host/sync_test_server
       - name: Build iPad ARM64 engine
         if: (env.CI_MODE == 'full' || env.CI_MODE == 'ipa') && steps.native-device.outputs.cache-hit != 'true'
@@ -234,7 +238,7 @@ jobs:
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
         run: |
           if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = all ]; then
-            SYNC_USER1='fixture@example.test:fixture-password' SYNC_HOST=127.0.0.1 SYNC_PORT=18891 SYNC_BASE="$RUNNER_TEMP/ankipad-ui-sync-server" build/native/host/sync_test_server > build/ui-sync-server.log 2>&1 &
+            SYNC_USER1='fixture@example.test:fixture-password' SYNC_USER2='empty@example.test:fixture-password' SYNC_HOST=127.0.0.1 SYNC_PORT=18891 SYNC_BASE="$RUNNER_TEMP/ankipad-ui-sync-server" build/native/host/sync_test_server > build/ui-sync-server.log 2>&1 &
             echo $! > build/ui-sync-server.pid
             python3 tests/seed_ui_sync.py build/native/host/libankipad_bridge.dylib build/fixture.apkg
           fi

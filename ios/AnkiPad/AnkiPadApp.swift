@@ -162,7 +162,22 @@ import PencilKit
             self.account = updated
         }
         if !decision.message.isEmpty { syncStatus = decision.message }
-        if decision.needsFull { syncDecision = decision; syncStatus = "同期するデータを選択してください"; chooseFullSync = true; return }
+        if decision.needsFull {
+            if decision.automaticallyDownload {
+                syncStatus = "空のコレクションにAnkiWebからダウンロード中…"
+                try await engine.fullSync(self.account ?? account, upload: false, serverUSN: decision.serverUSN)
+                try await finishMediaSync()
+                return
+            }
+            guard decision.canUpload || decision.canDownload else {
+                throw EngineError(message: "安全な同期方向を確認できませんでした。AnkiWebへのアップロードは行っていません。")
+            }
+            syncDecision = decision
+            syncStatus = "同期するデータを選択してください"
+            if decision.required == "FULL_UPLOAD" { confirmDirection = true }
+            else { chooseFullSync = true }
+            return
+        }
         try await finishMediaSync()
     }
     func fullSync(upload: Bool) {

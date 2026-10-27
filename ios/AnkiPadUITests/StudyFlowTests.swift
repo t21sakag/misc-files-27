@@ -50,17 +50,46 @@ final class StudyFlowTests: XCTestCase {
         endpoint.tap()
         endpoint.typeText("http://127.0.0.1:18891/")
         app.buttons["login-submit"].tap()
-        let download = app.buttons["AnkiWebのデータをこのiPadにダウンロード"]
-        XCTAssertTrue(download.waitForExistence(timeout: 60), app.debugDescription)
-        download.tap()
-        let replace = app.alerts.buttons["置き換えて同期"]
-        XCTAssertTrue(replace.waitForExistence(timeout: 15), app.debugDescription)
-        replace.tap()
+        // An empty local collection must download without offering upload.
+        XCTAssertFalse(app.buttons["このiPadのデータをAnkiWebにアップロード"].exists)
         XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60), app.debugDescription)
         XCTAssertTrue(app.buttons["deck-1"].exists)
         app.terminate()
         app.launch()
         XCTAssertTrue(app.staticTexts["fixture@example.test"].waitForExistence(timeout: 30), app.debugDescription)
+        app.buttons["ankiweb-account"].tap()
+        app.buttons["logout"].tap()
+        app.buttons["閉じる"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["login-entry"].waitForExistence(timeout: 20))
+    }
+
+    func testFullSyncWithLocalDataRequiresTypedUploadConfirmation() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--uitest-fixture"]
+        app.launch()
+        let account = app.buttons["ankiweb-account"]
+        XCTAssertTrue(account.waitForExistence(timeout: 30))
+        account.tap()
+        let username = app.textFields["login-username"]
+        XCTAssertTrue(username.waitForExistence(timeout: 20))
+        username.tap(); username.typeText("empty@example.test")
+        app.secureTextFields["login-password"].tap()
+        app.secureTextFields["login-password"].typeText("fixture-password")
+        app.switches["custom-server-toggle"].switches.firstMatch.tap()
+        let endpoint = app.textFields["custom-server-endpoint"]
+        XCTAssertTrue(endpoint.waitForExistence(timeout: 20))
+        endpoint.tap(); endpoint.typeText("http://127.0.0.1:18891/")
+        app.buttons["login-submit"].tap()
+        let replace = app.alerts.buttons["置き換えて同期"]
+        XCTAssertTrue(replace.waitForExistence(timeout: 60), app.debugDescription)
+        XCTAssertFalse(replace.isEnabled, "Upload requires explicit typed confirmation")
+        XCTAssertTrue(app.alerts.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "このiPad: デッキ")).firstMatch.exists)
+        let confirmation = app.alerts.textFields.firstMatch
+        XCTAssertTrue(confirmation.exists)
+        confirmation.tap(); confirmation.typeText("アップロード")
+        XCTAssertTrue(replace.isEnabled)
+        replace.tap()
+        XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60), app.debugDescription)
         app.buttons["ankiweb-account"].tap()
         app.buttons["logout"].tap()
         app.buttons["閉じる"].firstMatch.tap()
@@ -600,7 +629,8 @@ final class StudyFlowTests: XCTestCase {
         let syncChoice = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in upload.exists || download.exists || app.staticTexts["同期しました"].exists }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [syncChoice], timeout: 60), .completed, app.debugDescription)
         if upload.exists || download.exists {
-            if upload.exists { upload.firstMatch.tap() } else { download.tap() }
+            XCTAssertTrue(download.exists, "The fixture server must not be overwritten by this isolation test")
+            download.tap()
             let replace = app.alerts.buttons["置き換えて同期"]
             XCTAssertTrue(replace.waitForExistence(timeout: 20))
             replace.tap()

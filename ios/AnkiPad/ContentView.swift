@@ -31,6 +31,7 @@ struct ContentView: View {
     @State private var deckDescription: DeckDescriptionRequest?
     @State private var deckName = ""
     @State private var deckSearch = ""
+    @State private var uploadConfirmation = ""
     @State private var namingDeck = false
     @State private var renamingDeck: Deck?
     @State private var deletingDeck: Deck?
@@ -288,19 +289,21 @@ struct ContentView: View {
         .confirmationDialog("同期するデータを選択", isPresented: Binding(get: { model.chooseFullSync && !model.busy }, set: { model.chooseFullSync = $0 }), titleVisibility: .visible) {
             if let decision = model.syncDecision {
                 if decision.canDownload { Button("AnkiWebのデータをこのiPadにダウンロード", role: .destructive) { model.confirmDirection = false } }
-                if decision.canUpload { Button("このiPadのデータをAnkiWebにアップロード", role: .destructive) { model.confirmDirection = true } }
+                if decision.canUpload { Button("このiPadのデータをAnkiWebにアップロード", role: .destructive) { uploadConfirmation = ""; model.confirmDirection = true } }
                 Button("キャンセル", role: .cancel) { model.syncDecision = nil }
             }
-        } message: { Text("一方のコレクション全体を使う必要があります。置き換える側だけの変更は失われます。") }
+        } message: { Text((model.syncDecision?.localSummary ?? "") + "\n一方のコレクション全体を使う必要があります。置き換える側だけの変更は失われます。") }
         .alert("データを置き換えますか？", isPresented: Binding(get: { model.confirmDirection != nil }, set: { if !$0 { model.confirmDirection = nil } })) {
             if let upload = model.confirmDirection {
+                if upload { TextField("アップロード と入力", text: $uploadConfirmation) }
                 Button("置き換えて同期", role: .destructive) {
                     model.fullSync(upload: upload)
                     model.confirmDirection = nil
-                }
+                    uploadConfirmation = ""
+                }.disabled(upload && uploadConfirmation != "アップロード")
             }
-            Button("キャンセル", role: .cancel) { model.confirmDirection = nil; model.syncDecision = nil }
-        } message: { Text(model.confirmDirection == true ? "AnkiWebのコレクションを、このiPadのデータで置き換えます。" : "このiPadのコレクションをAnkiWebのデータで置き換えます。取り込み前のローカルバックアップを保存します。") }
+            Button("キャンセル", role: .cancel) { uploadConfirmation = ""; model.confirmDirection = nil; model.syncDecision = nil }
+        } message: { Text((model.syncDecision?.localSummary ?? "") + "\n" + (model.confirmDirection == true ? "AnkiWebのコレクション全体を、このiPadのデータで置き換えます。AnkiWebだけにある変更は失われます。続ける場合は「アップロード」と入力してください。" : "このiPadのコレクションをAnkiWebのデータで置き換えます。取り込み前のローカルバックアップを保存します。")) }
     }
     private var importExportContent: some View {
         syncDialogContent

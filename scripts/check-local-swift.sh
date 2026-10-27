@@ -3,6 +3,8 @@ set -euo pipefail
 ankipad_swiftc=${1:-swiftc}
 mkdir -p build/local-swift
 python3 scripts/check-swift-syntax.py --swiftc "$ankipad_swiftc"
+"$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/local-swift/sync-decision-smoke
+build/local-swift/sync-decision-smoke
 "$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/ProfileRegistry.swift tests/profile_registry_smoke.swift -o build/local-swift/profile-registry-smoke
 build/local-swift/profile-registry-smoke
 "$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/FieldImageReferences.swift tests/field_image_references_smoke.swift -o build/local-swift/field-image-references-smoke

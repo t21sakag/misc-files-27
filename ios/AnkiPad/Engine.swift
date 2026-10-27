@@ -165,9 +165,23 @@ actor Engine {
     func sync(_ credentials: SyncCredentials) async throws -> SyncDecision {
         try backup(force: false)
         let result = try await longCall("SyncService.SyncCollection", ["auth": credentials.request, "syncMedia": true])
-        return SyncDecision(response: result)
+        var cardCount = 0
+        var deckCount = 0
+        if ["FULL_SYNC", "FULL_DOWNLOAD", "FULL_UPLOAD"].contains(result["required"] as? String ?? "") {
+            // Protobuf omits an empty repeated field; a successful empty search
+            // therefore has no `ids` key. Backend errors still propagate.
+            let ids = try call("SearchService.SearchCards", ["search": ""])["ids"] as? [String] ?? []
+            let entries = try call("DecksService.GetDeckNames", ["includeFiltered": true])["entries"] as? [[String: Any]] ?? []
+            cardCount = ids.count
+            deckCount = entries.count
+        }
+        return SyncDecision(response: result, localCardCount: cardCount, localDeckCount: deckCount)
     }
     func fullSync(_ credentials: SyncCredentials, upload: Bool, serverUSN: Int) async throws {
+        if upload {
+            let ids = try call("SearchService.SearchCards", ["search": ""])["ids"] as? [String] ?? []
+            guard !ids.isEmpty else { throw EngineError(message: "空のコレクションはAnkiWebにアップロードできません。ダウンロードで同期してください。") }
+        }
         try backup()
         _ = try await longCall("SyncService.FullUploadOrDownload", ["auth": credentials.request, "upload": upload, "serverUsn": serverUSN])
     }

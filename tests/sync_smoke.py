@@ -29,6 +29,7 @@ def sync(engine, auth, upload=None):
         engine.call('SyncService.FullUploadOrDownload', {
             'auth': auth, 'upload': upload, 'serverUsn': result.get('serverMediaUsn', 0)})
     wait_media(engine)
+    return result
 
 
 with tempfile.TemporaryDirectory() as folder:
@@ -63,9 +64,9 @@ with tempfile.TemporaryDirectory() as folder:
             note['fields'] = ['同期テスト', '最初の答え <img src="sync.svg">']
             nid = a.call('NotesService.AddNote', {'note': note, 'deckId': '1'})['noteId']
             (a.root / 'collection.media' / 'sync.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>')
-            sync(a, auth, upload=True)
+            assert sync(a, auth, upload=True)['required'] == 'FULL_UPLOAD'
             b = Engine(root / 'client-b')
-            sync(b, auth, upload=False)
+            assert sync(b, auth, upload=False)['required'] == 'FULL_DOWNLOAD'
             downloaded = b.call('NotesService.GetNote', {'nid': nid})
             assert downloaded['fields'][0] == '同期テスト'
             assert (b.root / 'collection.media' / 'sync.svg').read_bytes() == (a.root / 'collection.media' / 'sync.svg').read_bytes()
@@ -74,9 +75,18 @@ with tempfile.TemporaryDirectory() as folder:
             sync(b, auth)
             sync(a, auth)
             assert a.call('NotesService.GetNote', {'nid': nid})['fields'][1] == 'iPad側で編集した答え'
+            c = Engine(root / 'client-c')
+            local_note = c.call('NotesService.NewNote', {'ntid': c.call('NotetypesService.GetNotetypeNames')['entries'][0]['id']})
+            local_note['fields'] = ['Local conflict fixture', 'Keep both collections until user chooses']
+            c.call('NotesService.AddNote', {'note': local_note, 'deckId': '1'})
+            conflict = c.call('SyncService.SyncCollection', {'auth': auth, 'syncMedia': False})
+            assert conflict['required'] == 'FULL_SYNC', conflict
+            assert len(c.call('SearchService.SearchCards', {'search': ''})['ids']) == 1
+            assert len(c.call('DecksService.GetDeckNames', {'includeFiltered': True})['entries']) == 1
+            c.close()
             a.close()
             b.close()
-            print('PASS: login + rejected password + full upload/download + media + bidirectional incremental sync')
+            print('PASS: login + rejected password + empty server upload + empty client download + populated conflict + media + bidirectional incremental sync')
         finally:
             server.terminate()
             server.wait(timeout=10)
