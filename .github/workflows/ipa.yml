@@ -244,7 +244,7 @@ jobs:
         id: compile-app
         if: env.CI_MODE == 'compile'
         run: |
-          cp build/fixture.apkg ios/AnkiPad/Resources/fixture.apkg
+          if [ -f build/fixture.apkg ]; then cp build/fixture.apkg ios/AnkiPad/Resources/fixture.apkg; fi
           cd ios
           xcodegen generate
           python3 ../scripts/xcode-input-mtimes.py restore --root .. --manifest ../build/simulator/input-mtimes.json
