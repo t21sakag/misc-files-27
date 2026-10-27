@@ -15,11 +15,17 @@ final class MediaFlowTests: StudyFlowTestSupport {
             if hideKeyboard.exists && hideKeyboard.isHittable { hideKeyboard.tap() }
             let form = app.collectionViews["note-form"]
             for _ in 0..<10 {
-                if attach.exists && attach.isHittable && form.frame.insetBy(dx: 0, dy: 24).contains(attach.frame) { break }
-                form.swipeUp()
+                let viewport = form.frame.insetBy(dx: 0, dy: 72)
+                if attach.exists && attach.isHittable && viewport.contains(attach.frame) { break }
+                let below = !attach.exists || attach.frame.midY > form.frame.midY
+                // A full swipe can overshoot this short row. Controlled drag,
+                // release at rest, and scroll back down when it is above us.
+                form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55)).press(forDuration: 0.05,
+                    thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: below ? 0.32 : 0.78)),
+                    withVelocity: .slow, thenHoldForDuration: 0.2)
             }
             waitUntilHittable(attach)
-            XCTAssertTrue(form.frame.insetBy(dx: 0, dy: 24).contains(attach.frame), app.debugDescription)
+            XCTAssertTrue(form.frame.insetBy(dx: 0, dy: 72).contains(attach.frame), app.debugDescription)
             attach.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         }
         openAttachment()
