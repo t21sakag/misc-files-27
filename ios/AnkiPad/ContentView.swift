@@ -47,6 +47,10 @@ struct ContentView: View {
     @AppStorage("reviewGamepadConfiguration") private var gamepadConfigurationData = Data()
     @AppStorage("reviewTouchConfiguration") private var touchConfigurationData = Data()
     @AppStorage("reviewToolbarConfiguration") private var toolbarConfigurationData = Data()
+    @AppStorage("answerButtonPosition") private var answerButtonPosition = "bottom"
+    @AppStorage("answerButtonSize") private var answerButtonSize = 100
+    @AppStorage("showLargeAnswerButtons") private var largeAnswerButtons = false
+    @ScaledMetric(relativeTo: .body) private var answerFontSize: CGFloat = 17
     @AppStorage("swipeReview") private var swipeReview = true
     @AppStorage("syncShowStatusBadge") private var showSyncStatusBadge = true
     @Environment(\.scenePhase) private var phase
@@ -474,6 +478,47 @@ struct ContentView: View {
         }
         .searchable(text: $deckSearch, prompt: "デッキを検索")
     }
+    private var effectiveAnswerPosition: AnswerButtonPosition {
+        model.reviewDisplayMode == .allGone ? .none : (AnswerButtonPosition(rawValue: answerButtonPosition) ?? .bottom)
+    }
+    private var answerScale: CGFloat { CGFloat(min(200, max(10, answerButtonSize))) / 100 }
+    private func ratingButton(_ rating: Int, card: StudyCard) -> some View {
+        Button { model.answer(rating) } label: {
+            VStack(spacing: 6 * answerScale) {
+                if card.options.showIntervals && card.intervals.indices.contains(rating) {
+                    Text(card.intervals[rating]).font(.system(size: answerFontSize * 0.75 * answerScale))
+                }
+                Text(ratings[rating].0).fontWeight(.semibold)
+            }.font(.system(size: answerFontSize * answerScale))
+                .frame(maxWidth: .infinity, minHeight: max(44, 44 * answerScale))
+                .padding(.vertical, 6 * answerScale).contentShape(Rectangle())
+        }
+        .buttonStyle(.bordered).tint(ratings[rating].1)
+        .disabled(model.busy || model.reviewingInteractionBlocked || !model.schedulerReady)
+        .accessibilityIdentifier("answer-\(rating)")
+    }
+    @ViewBuilder private func answerControls(_ card: StudyCard) -> some View {
+        Divider()
+        if model.revealed {
+            VStack(spacing: 8) {
+                // Upstream's large layout: Hard/Easy, then Again/Good.
+                ForEach(0..<(largeAnswerButtons ? 2 : 1), id: \.self) { row in
+                    HStack(spacing: 12) {
+                        ForEach(largeAnswerButtons ? (row == 0 ? [1, 3] : [0, 2]) : [0, 1, 2, 3], id: \.self) { rating in
+                            ratingButton(rating, card: card)
+                        }
+                    }
+                }
+            }.padding().accessibilityIdentifier("answer-controls")
+        } else {
+            Button(action: model.reveal) {
+                Text("解答を表示").font(.system(size: answerFontSize * answerScale))
+                    .frame(minHeight: max(44, 44 * answerScale))
+            }.buttonStyle(.borderedProminent).controlSize(.large).padding()
+                .disabled(model.busy || model.reviewingInteractionBlocked || !model.schedulerReady)
+                .accessibilityIdentifier("reveal")
+        }
+    }
     @ViewBuilder private var reviewer: some View {
         if let card = model.card {
             if model.showReviewTopbar && model.reviewDisplayMode != .allGone {
@@ -489,6 +534,7 @@ struct ContentView: View {
             }.font(.subheadline.monospacedDigit()).foregroundStyle(.secondary).padding(12)
             }
             customReviewToolbar
+            if effectiveAnswerPosition == .top { answerControls(card) }
             ZStack {
                 ReviewerWebView(html: model.revealed ? (model.answerOverride ?? card.answer) : card.question, css: card.css,
                 cardID: card.id, ordinal: card.ordinal, typing: card.typing, hideAudioButtons: card.options.hideAudioButtons, typedAnswer: $model.typedAnswer,
@@ -536,27 +582,7 @@ struct ContentView: View {
             .onChange(of: card.id) { _, _ in
                 if !keepWhiteboard { drawing = PKDrawing() }
             }
-            Divider()
-            if model.reviewDisplayMode != .allGone {
-            if model.revealed {
-                HStack(spacing: 12) {
-                    ForEach(0..<4, id: \.self) { rating in
-                        Button { model.answer(rating) } label: {
-                            VStack(spacing: 6) {
-                                if card.options.showIntervals && card.intervals.indices.contains(rating) { Text(card.intervals[rating]).font(.caption) }
-                                Text(ratings[rating].0).fontWeight(.semibold)
-                            }.frame(maxWidth: .infinity).padding(.vertical, 12)
-                        }
-                        .buttonStyle(.bordered).tint(ratings[rating].1).disabled(model.busy || model.reviewingInteractionBlocked || !model.schedulerReady)
-                        .accessibilityIdentifier("answer-\(rating)")
-                    }
-                }.padding()
-            } else {
-                Button("解答を表示", action: model.reveal)
-                    .buttonStyle(.borderedProminent).controlSize(.large).padding().disabled(model.busy || model.reviewingInteractionBlocked || !model.schedulerReady)
-                    .accessibilityIdentifier("reveal")
-            }
-            }
+            if effectiveAnswerPosition == .bottom { answerControls(card) }
         } else if model.finished {
             ContentUnavailableView("このデッキの学習は終了です", systemImage: "checkmark.circle", description: Text("デッキ一覧に戻って、別のデッキを選べます。"))
         } else { Spacer() }

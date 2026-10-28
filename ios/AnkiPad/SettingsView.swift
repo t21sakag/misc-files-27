@@ -12,6 +12,9 @@ struct SettingsView: View {
     @State private var allowCollectionAPI = UserDefaults.standard.bool(forKey: "allowCollectionCardAPI")
     @State private var displayMode = ReviewDisplayMode(rawValue: UserDefaults.standard.integer(forKey: "reviewDisplayMode")) ?? .buttonsAndMenu
     @State private var showTopbar = UserDefaults.standard.object(forKey: "showReviewTopbar") as? Bool ?? true
+    @State private var answerPosition = AnswerButtonPosition(rawValue: UserDefaults.standard.string(forKey: "answerButtonPosition") ?? "bottom") ?? .bottom
+    @State private var answerSize = Double(UserDefaults.standard.object(forKey: "answerButtonSize") as? Int ?? 100)
+    @State private var largeAnswerButtons = UserDefaults.standard.bool(forKey: "showLargeAnswerButtons")
     @State private var busy = false
     @State private var error: String?
     @State private var closeAfterAdd = UserDefaults.standard.object(forKey: "closeAfterAdd") as? Bool ?? false
@@ -59,6 +62,16 @@ struct SettingsView: View {
                         Toggle("学習中は画面を消灯しない", isOn: $keepScreenOn)
                         Toggle("学習枚数を表示", isOn: boolean("reviewing", "showRemainingDueCounts"))
                         Toggle("評価ボタンに次回の間隔を表示", isOn: boolean("reviewing", "showIntervalsOnButtons"))
+                    }
+                    Section("評価ボタン") {
+                        Picker("表示位置", selection: $answerPosition) {
+                            ForEach(AnswerButtonPosition.allCases) { Text($0.title).tag($0) }
+                        }.accessibilityIdentifier("answer-position")
+                        Toggle("大きな評価ボタン（2行）", isOn: $largeAnswerButtons).accessibilityIdentifier("answer-large")
+                        Text("ボタンの大きさ: \(Int(answerSize))%")
+                        Slider(value: $answerSize, in: 10...200, step: 10).accessibilityIdentifier("answer-size")
+                        Text("非表示でも、設定済みのスワイプ・タッチ領域・キーボードで解答できます。")
+                            .font(.caption).foregroundStyle(.secondary)
                     }
                     Section("音声") {
                         Toggle("音声がないカードを読み上げる", isOn: $automaticTTS).accessibilityIdentifier("tts-enabled")
@@ -123,6 +136,9 @@ struct SettingsView: View {
                             UserDefaults.standard.set(try JSONEncoder().encode(toolbarConfiguration), forKey: "reviewToolbarConfiguration")
                             model.reviewDisplayMode = displayMode
                             model.showReviewTopbar = showTopbar
+                            UserDefaults.standard.set(answerPosition.rawValue, forKey: "answerButtonPosition")
+                            UserDefaults.standard.set(Int(answerSize), forKey: "answerButtonSize")
+                            UserDefaults.standard.set(largeAnswerButtons, forKey: "showLargeAnswerButtons")
                             networkPreferences.save()
                             model.setAutomaticSyncEnabled(automaticSync)
                             ReviewSpeechPreferences.setEnabled(automaticTTS, profileID: model.currentProfileID)

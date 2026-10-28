@@ -14,3 +14,12 @@ enum ReviewDisplayMode: Int, CaseIterable, Identifiable {
         }
     }
 }
+
+/// AnkiDroid's answerButtonPosition values.
+enum AnswerButtonPosition: String, CaseIterable, Identifiable {
+    case top, bottom, none
+    var id: String { rawValue }
+    var title: String {
+        switch self { case .top: "上"; case .bottom: "下"; case .none: "表示しない" }
+    }
+}

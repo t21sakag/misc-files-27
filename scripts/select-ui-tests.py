@@ -27,6 +27,7 @@ suites = {
     'preview': ['testPreviewCardAPIReadsAndRestoresFlag', 'testPreviewNativeToastAndTagDialogPersistToPreviewedNote', 'testPreviewFlagPersistsAfterClosing'],
     'network': ['testNetworkSyncSettingsSurviveRelaunchAndCancelDoesNotSave', 'testRequestedOneWaySyncPresentsSafeDirectionChoice'],
     'timebox': ['testTimeboxReportsRealElapsedMinuteAndCanContinueOrFinish'],
+    'appearance': ['testAnswerLayoutPersistsWithTopLargeButtonsAndHiddenMode', 'testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

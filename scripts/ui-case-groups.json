@@ -77,5 +77,8 @@
   ],
   "TimeboxFlowTests": [
     "testTimeboxReportsRealElapsedMinuteAndCanContinueOrFinish"
+  ],
+  "AnswerLayoutFlowTests": [
+    "testAnswerLayoutPersistsWithTopLargeButtonsAndHiddenMode"
   ]
 }
