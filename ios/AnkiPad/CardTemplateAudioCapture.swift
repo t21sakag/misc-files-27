@@ -7,6 +7,9 @@ import WebKit
     static let preferenceKey = "allowTemplateAudioRecording"
     var presentedChanged: ((Bool) -> Void)?
     var isRequestPending: Bool { completion != nil }
+    #if DEBUG
+    private(set) var backgroundStopCount = 0
+    #endif
     private var completion: ((WKPermissionDecision) -> Void)?
     private var alert: UIAlertController?
     private var permissionTask: Task<Void, Never>?
@@ -23,7 +26,7 @@ import WebKit
                     guard let self else { return }
                     if let scene = notification.object as? UIScene, self.webView?.window?.windowScene !== scene { return }
                     #if DEBUG
-                    if UITestIsolation.namespace() != nil { print("Template microphone: background notification received") }
+                    self.backgroundStopCount += 1
                     #endif
                     self.documentChanged()
                 }

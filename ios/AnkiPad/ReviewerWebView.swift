@@ -73,6 +73,11 @@ struct ReviewerWebView: UIViewRepresentable {
         configuration.userContentController.add(context.coordinator, name: "schedulingError")
         configuration.userContentController.addScriptMessageHandler(context.coordinator, contentWorld: .page, name: "scheduler")
         configuration.userContentController.addScriptMessageHandler(context.coordinator, contentWorld: .page, name: "droidAPI")
+        #if DEBUG
+        if UITestIsolation.namespace() != nil {
+            configuration.userContentController.addScriptMessageHandler(context.coordinator, contentWorld: .page, name: "templateCaptureStatus")
+        }
+        #endif
         configuration.userContentController.addUserScript(WKUserScript(source: Self.schedulerBridge, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         configuration.allowsInlineMediaPlayback = true
         configuration.mediaTypesRequiringUserActionForPlayback = []
@@ -158,6 +163,9 @@ struct ReviewerWebView: UIViewRepresentable {
         view.configuration.userContentController.removeScriptMessageHandler(forName: "schedulingError")
         view.configuration.userContentController.removeScriptMessageHandler(forName: "scheduler", contentWorld: .page)
         view.configuration.userContentController.removeScriptMessageHandler(forName: "droidAPI", contentWorld: .page)
+        #if DEBUG
+        view.configuration.userContentController.removeScriptMessageHandler(forName: "templateCaptureStatus", contentWorld: .page)
+        #endif
         coordinator.dialogs.cancel()
         coordinator.timeout?.cancel()
     }
@@ -258,6 +266,19 @@ struct ReviewerWebView: UIViewRepresentable {
         var lastMutationKey: String?
         var timeout: Task<Void, Never>?
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage, replyHandler: @escaping (Any?, String?) -> Void) {
+            #if DEBUG
+            if message.name == "templateCaptureStatus", UITestIsolation.namespace() != nil, message.frameInfo.isMainFrame {
+                let state: String
+                switch webView?.microphoneCaptureState {
+                case .some(.none): state = "none"
+                case .some(.active): state = "active"
+                case .some(.muted): state = "muted"
+                default: state = "unavailable"
+                }
+                replyHandler(["state": state, "backgroundStops": dialogs.audioCapture.backgroundStopCount], nil)
+                return
+            }
+            #endif
             if message.name == "droidAPI" {
                 guard message.frameInfo.isMainFrame, let body = message.body as? [String: Any],
                       let endpoint = body["endpoint"] as? String, let request = body["request"] as? [String: Any], let cardAPI else {
