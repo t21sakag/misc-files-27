@@ -21,7 +21,8 @@
     "testCustomSchedulingChangesAnswerInterval",
     "testFullscreenCanBeRestoredWithTripleTap",
     "testImportedDeckCanBeReviewedAndUndone",
-    "testSwipeCanRevealAndAnswerThenUndo"
+    "testSwipeCanRevealAndAnswerThenUndo",
+    "testWhiteboardUndoesStrokesAndKeepsPerDeckVisibility"
   ],
   "CardAPIFlowTests": [
     "testAnkiDroidCardJavaScriptReadsNativeMetadata",

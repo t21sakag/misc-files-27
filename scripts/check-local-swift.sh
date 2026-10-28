@@ -24,3 +24,6 @@ build/local-swift/backup-export-smoke
 
 "$ankipad_swiftc" -DDEBUG -swift-version 5 -parse-as-library ios/AnkiPad/UITestIsolation.swift tests/ui_test_isolation_smoke.swift -o build/local-swift/ui-test-isolation-smoke
 build/local-swift/ui-test-isolation-smoke
+
+"$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/WhiteboardPreferences.swift tests/whiteboard_preferences_smoke.swift -o build/local-swift/whiteboard-preferences-smoke
+build/local-swift/whiteboard-preferences-smoke

@@ -150,6 +150,66 @@ final class ReviewerFlowTests: StudyFlowTestSupport {
         XCTAssertFalse(app.alerts.firstMatch.exists, app.debugDescription)
     }
 
+    func testWhiteboardUndoesStrokesAndKeepsPerDeckVisibility() {
+        let app = makeApplication()
+        app.launchArguments = ["--uitest-fixture"]
+        app.launch()
+        let deck = app.buttons["deck-1"]
+        XCTAssertTrue(deck.waitForExistence(timeout: 60), app.debugDescription)
+        deck.tap()
+        let reveal = app.buttons["reveal"]
+        XCTAssertTrue(reveal.waitForExistence(timeout: 30), app.debugDescription)
+        app.buttons["whiteboard-toggle"].tap()
+        let board = app.descendants(matching: .any).matching(identifier: "whiteboard").firstMatch
+        XCTAssertTrue(board.waitForExistence(timeout: 20), app.debugDescription)
+        func strokes() -> Int? {
+            guard board.exists, let value = board.value as? String else { return nil }
+            return value.components(separatedBy: CharacterSet.decimalDigits.inverted).compactMap(Int.init).first
+        }
+        func waitForStrokes(_ count: Int) {
+            let done = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in strokes() == count }, object: nil)
+            XCTAssertEqual(XCTWaiter.wait(for: [done], timeout: 20), .completed, app.debugDescription)
+        }
+        board.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.4)).press(forDuration: 0.1,
+            thenDragTo: board.coordinate(withNormalizedOffset: CGVector(dx: 0.6, dy: 0.45)))
+        waitForStrokes(1)
+        board.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.6)).press(forDuration: 0.1,
+            thenDragTo: board.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.65)))
+        waitForStrokes(2)
+        let undo = app.buttons["review-undo"]
+        undo.tap()
+        waitForStrokes(1)
+        undo.tap()
+        waitForStrokes(0)
+        XCTAssertTrue(reveal.exists, "Undoing strokes must not leave the question side")
+
+        let menu = app.buttons["reviewer-menu"]
+        menu.tap()
+        let visibility = app.buttons["whiteboard-visibility"].firstMatch
+        XCTAssertTrue(visibility.waitForExistence(timeout: 10), app.debugDescription)
+        XCTAssertEqual(visibility.label, "手書きを隠す")
+        visibility.tap()
+        XCTAssertTrue(board.waitForNonExistence(timeout: 10), app.debugDescription)
+        XCTAssertTrue(reveal.isHittable)
+
+        app.terminate()
+        app.launchArguments = []
+        app.launch()
+        XCTAssertTrue(deck.waitForExistence(timeout: 60), app.debugDescription)
+        deck.tap()
+        XCTAssertTrue(reveal.waitForExistence(timeout: 30), app.debugDescription)
+        XCTAssertFalse(board.exists, "Hidden whiteboard must stay hidden for this deck after relaunch")
+        menu.tap()
+        XCTAssertTrue(visibility.waitForExistence(timeout: 10), app.debugDescription)
+        XCTAssertEqual(visibility.label, "手書きを表示", "The deck must remember that its whiteboard is enabled")
+        visibility.tap()
+        XCTAssertTrue(board.waitForExistence(timeout: 20), app.debugDescription)
+        app.buttons["whiteboard-toggle"].tap()
+        XCTAssertTrue(board.waitForNonExistence(timeout: 10), app.debugDescription)
+        menu.tap()
+        XCTAssertFalse(app.buttons["whiteboard-visibility"].firstMatch.waitForExistence(timeout: 3), "Disabling removes the visibility option")
+    }
+
     func testSwipeCanRevealAndAnswerThenUndo() {
         let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]

@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, all]
 permissions:
   contents: read
 concurrency:
@@ -68,6 +68,10 @@ jobs:
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/DeckTree.swift tests/deck_tree_smoke.swift -o build/deck-tree-smoke
           build/deck-tree-smoke
+      - name: Test per-list drawing preferences
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/WhiteboardPreferences.swift tests/whiteboard_preferences_smoke.swift -o build/whiteboard-preferences-smoke
+          build/whiteboard-preferences-smoke
       - name: Test cache input selection
         run: python3 tests/cache_input_hashes_smoke.py
       - name: Test compiler input timestamp restoration

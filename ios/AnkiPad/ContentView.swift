@@ -36,10 +36,11 @@ struct ContentView: View {
     @State private var renamingDeck: Deck?
     @State private var deletingDeck: Deck?
     @State private var drawing = PKDrawing()
-    @State private var whiteboard = false
+    @State private var whiteboardPreferences = WhiteboardPreferences()
+    @State private var whiteboardToolPicker = true
     @State private var eraser = false
     @State private var tapSuppressedUntil = Date.distantPast
-    @AppStorage("whiteboardPencilOnly") private var pencilOnly = false
+    @AppStorage("whiteboardPencilOnly") private var legacyPencilOnly = false
     @AppStorage("keepWhiteboard") private var keepWhiteboard = false
     @AppStorage("reviewGestureConfiguration") private var gestureConfigurationData = Data()
     @AppStorage("reviewKeyboardConfiguration") private var keyboardConfigurationData = Data()
@@ -48,9 +49,11 @@ struct ContentView: View {
     @AppStorage("reviewToolbarConfiguration") private var toolbarConfigurationData = Data()
     @AppStorage("swipeReview") private var swipeReview = true
     @Environment(\.scenePhase) private var phase
+    @Environment(\.colorScheme) private var colorScheme
     private let ratings: [(String, Color)] = [("もう一度", .red), ("難しい", .orange), ("普通", .green), ("簡単", .blue)]
     var body: some View {
         NavigationStack { observedContent }
+            .onChange(of: model.selected?.id, initial: true) { _, _ in loadWhiteboard() }
             .background { reviewKeyboardCommands }
             .background { reviewGamepadCommands }
             .overlay(alignment: .bottom) {
@@ -125,9 +128,9 @@ struct ContentView: View {
         ToolbarItemGroup(placement: .topBarTrailing) {
             if model.selected != nil {
                 Button(action: model.replay) { Image(systemName: "speaker.wave.2") }.accessibilityLabel("音声を再生").accessibilityIdentifier("review-replay-audio")
-                Button { whiteboard.toggle() } label: { Image(systemName: whiteboard ? "pencil.tip.crop.circle.fill" : "pencil.tip.crop.circle") }.accessibilityLabel("手書きボード").accessibilityIdentifier("whiteboard-toggle")
+                Button { updateWhiteboard { $0.toggleEnabled() } } label: { Image(systemName: whiteboardPreferences.enabled ? "pencil.tip.crop.circle.fill" : "pencil.tip.crop.circle") }.accessibilityLabel("手書きボード").accessibilityIdentifier("whiteboard-toggle")
                 if whiteboard { Button { drawing = PKDrawing() } label: { Image(systemName: "trash") }.accessibilityLabel("手書きを消す") }
-                Button("取り消す", action: model.undo).disabled(model.busy || !model.profilesReady).accessibilityIdentifier("review-undo")
+                Button("取り消す", action: undoStrokeOrReview).disabled(model.busy || !model.profilesReady).accessibilityIdentifier("review-undo")
                 Menu {
                     Button("やり直す") { model.redo() }
                     Button("自分の声を録音・再生", systemImage: "mic") {
@@ -135,9 +138,16 @@ struct ContentView: View {
                     }.disabled(model.card == nil || model.busy)
                     Button("読み上げ音声を選択") { model.openSpeechVoicePicker() }.accessibilityIdentifier("review-speech-choice")
                     Button("ノートを追加") { model.editorRequest = EditorRequest(deckID: model.selected?.id ?? "0") }
+                    if whiteboardPreferences.enabled {
+                        Button(whiteboardPreferences.visible ? "手書きを隠す" : "手書きを表示") { updateWhiteboard { $0.toggleVisible() } }
+                            .accessibilityIdentifier("whiteboard-visibility")
+                    }
                     if whiteboard {
+                        Button(whiteboardToolPicker ? "ペンの色・道具を隠す" : "ペンの色・道具を表示") { whiteboardToolPicker.toggle() }
+                            .accessibilityIdentifier("whiteboard-pen-palette")
                         Toggle("消しゴム", isOn: $eraser)
-                        Toggle("Apple Pencilのみで描く", isOn: $pencilOnly)
+                        Toggle("Apple Pencilのみで描く", isOn: Binding(get: { whiteboardPreferences.stylusOnly }, set: { value in updateWhiteboard { $0.stylusOnly = value } }))
+                            .accessibilityIdentifier("whiteboard-stylus-only")
                         Button("手書きを画像で保存") {
                             let bounds = drawing.bounds
                             guard !bounds.isEmpty, !bounds.isNull else { return }
@@ -226,12 +236,12 @@ struct ContentView: View {
         case .suspendNote: model.modifyCurrent { _ = try await model.engine.call("SchedulerService.BuryOrSuspendCards", ["noteIds": [$0.noteID], "mode": "SUSPEND"]) }
         case .bury: model.modifyCurrent { try await model.engine.bury([$0.id]) }
         case .buryNote: model.modifyCurrent { try await model.engine.bury([$0.noteID], note: true) }
-        case .undo: model.undo()
+        case .undo: undoStrokeOrReview()
         case .redo: model.redo()
         case .replay: model.replay()
         case .voice: model.openReviewVoice()
         case .speech: model.openSpeechVoicePicker()
-        case .whiteboard: whiteboard.toggle()
+        case .whiteboard: updateWhiteboard { $0.toggleEnabled() }
         }
     }
     private var templateActionPicker: some View {
@@ -490,7 +500,16 @@ struct ContentView: View {
                           model.card?.mutationKey == card.mutationKey, Date() >= tapSuppressedUntil else { return }
                     performGesture(ReviewTouchConfiguration.load(touchConfigurationData).action(x: x, y: y, revealed: model.revealed))
                 })
-                if whiteboard { WhiteboardCanvas(drawing: $drawing, pencilOnly: pencilOnly, eraser: eraser) }
+                if whiteboard {
+                    WhiteboardCanvas(drawing: $drawing, pencilOnly: whiteboardPreferences.stylusOnly, eraser: eraser,
+                                     penColor: whiteboardPreferences.penColor(dark: colorScheme == .dark).map(UIColor.init(whiteboardRGBA:)),
+                                     toolPickerVisible: whiteboardToolPicker,
+                                     penColorChanged: { color in
+                                         let dark = colorScheme == .dark
+                                         guard whiteboardPreferences.penColor(dark: dark) != color.whiteboardRGBA else { return }
+                                         updateWhiteboard { $0.setPenColor(color.whiteboardRGBA, dark: dark) }
+                                     })
+                }
             }
             .overlay(alignment: .topLeading) {
                 #if DEBUG
@@ -533,6 +552,24 @@ struct ContentView: View {
 
 
 private extension ContentView {
+    private var whiteboard: Bool { whiteboardPreferences.showsCanvas }
+    private var whiteboardKey: String? {
+        model.selected.map { model.profilePreferenceKey(WhiteboardPreferences.key(deckID: $0.id)) }
+    }
+    private func loadWhiteboard() {
+        whiteboardPreferences = WhiteboardPreferences.load(whiteboardKey.flatMap { UserDefaults.standard.data(forKey: $0) }, legacyStylusOnly: legacyPencilOnly)
+        whiteboardToolPicker = true
+        eraser = false
+    }
+    private func updateWhiteboard(_ change: (inout WhiteboardPreferences) -> Void) {
+        change(&whiteboardPreferences)
+        if !whiteboard { eraser = false }
+        if let key = whiteboardKey { UserDefaults.standard.set(whiteboardPreferences.encoded(), forKey: key) }
+    }
+    /// Upstream undoes the last whiteboard stroke before undoing a review while the whiteboard is shown.
+    private func undoStrokeOrReview() {
+        if whiteboard, !drawing.strokes.isEmpty { drawing.strokes.removeLast() } else { model.undo() }
+    }
     func performGesture(_ action: ReviewGestureAction) {
         switch action {
         case .none: break
@@ -548,7 +585,7 @@ private extension ContentView {
         case .replayVoice: model.replayReviewVoice()
         case .saveVoice: model.saveReviewRecording()
         case .selectTTS: model.openSpeechVoicePicker()
-        case .undo: model.undo()
+        case .undo: undoStrokeOrReview()
         case .redo: model.redo()
         case .mark: model.toggleCurrentMark()
         case .edit: if let card = model.card { model.editorRequest = EditorRequest(cardID: card.id, deckID: card.deckID) }
@@ -556,9 +593,10 @@ private extension ContentView {
         case .tags: openCardAction(.tags)
         case .bury: model.modifyCurrent { try await model.engine.bury([$0.id]) }
         case .suspend: model.modifyCurrent { try await model.engine.suspend([$0.id]) }
-        case .whiteboard: whiteboard.toggle()
-        case .eraser: eraser.toggle()
+        case .whiteboard: updateWhiteboard { $0.toggleEnabled() }
+        case .eraser: if whiteboard { eraser.toggle() }
         case .clearWhiteboard: drawing = PKDrawing()
+        case .penColor: if whiteboard { whiteboardToolPicker.toggle() }
         case .autoAdvance: model.autoAdvance.toggle(); model.scheduleAutoAdvance()
         case .hint: model.showTemplateHint(all: false)
         case .allHints: model.showTemplateHint(all: true)
