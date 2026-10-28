@@ -14,15 +14,24 @@ import WebKit
     private var generation = UUID()
     private var invalidated = false
     private var declined = false
-    private var backgroundObserver: NSObjectProtocol?
+    private var backgroundObservers: [NSObjectProtocol] = []
 
     init() {
-        backgroundObserver = NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.documentChanged() }
+        for name in [UIApplication.didEnterBackgroundNotification, UIScene.didEnterBackgroundNotification] {
+            backgroundObservers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] notification in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    if let scene = notification.object as? UIScene, self.webView?.window?.windowScene !== scene { return }
+                    #if DEBUG
+                    if UITestIsolation.namespace() != nil { print("Template microphone: background notification received") }
+                    #endif
+                    self.documentChanged()
+                }
+            })
         }
     }
     deinit {
-        if let backgroundObserver { NotificationCenter.default.removeObserver(backgroundObserver) }
+        for observer in backgroundObservers { NotificationCenter.default.removeObserver(observer) }
     }
     func request(in view: WKWebView, type: WKMediaCaptureType, decision: @escaping (WKPermissionDecision) -> Void) {
         // A recording permission never authorizes a camera or a combined request.
@@ -80,7 +89,13 @@ import WebKit
         alert = nil
         finish(.deny)
         dialog?.dismiss(animated: false)
-        webView?.setMicrophoneCaptureState(.none, completionHandler: nil)
+        if let view = webView {
+            view.setMicrophoneCaptureState(.none) { [weak view] in
+                #if DEBUG
+                if UITestIsolation.namespace() != nil { print("Template microphone: native capture state after stop = \(view?.microphoneCaptureState.rawValue ?? -1)") }
+                #endif
+            }
+        }
     }
     func cancel() { invalidated = true; documentChanged() }
 }
