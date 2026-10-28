@@ -4,11 +4,17 @@ import WebKit
 /// Completes every WebKit dialog exactly once, including view teardown.
 @MainActor final class CardScriptDialogs: NSObject, WKUIDelegate {
     var presentedChanged: ((Bool) -> Void)?
+    let audioCapture = CardTemplateAudioCapture()
     private var alert: UIAlertController?
     private var invalidated = false
     private var pending: ((String?, Bool) -> Void)?
+    override init() {
+        super.init()
+        audioCapture.presentedChanged = { [weak self] _ in self?.notifyPresented() }
+    }
+    private func notifyPresented() { presentedChanged?(pending != nil || audioCapture.isRequestPending) }
     private func show(in webView: WKWebView, message: String, defaultText: String? = nil, prompt: Bool = false, confirm: Bool, completion: @escaping (String?, Bool) -> Void) {
-        guard !invalidated, pending == nil, var presenter = webView.window?.rootViewController else { completion(nil, false); return }
+        guard !invalidated, pending == nil, !audioCapture.isRequestPending, var presenter = webView.window?.rootViewController else { completion(nil, false); return }
         while let next = presenter.presentedViewController { presenter = next }
         guard !(presenter is UIAlertController), !presenter.isBeingDismissed else { completion(nil, false); return }
         let dialog = UIAlertController(title: "AnkiPad", message: message, preferredStyle: .alert)
@@ -28,7 +34,7 @@ import WebKit
         if confirm || prompt {
             dialog.addAction(UIAlertAction(title: "キャンセル", style: .cancel) { [weak self] _ in self?.resolve(text: nil, accepted: false) })
         }
-        presentedChanged?(true)
+        notifyPresented()
         presenter.present(dialog, animated: true)
     }
     private func resolve(text: String?, accepted: Bool) {
@@ -38,14 +44,19 @@ import WebKit
     private func finish(text: String?, accepted: Bool) {
         guard let completion = pending else { return }
         pending = nil; alert = nil
-        presentedChanged?(false)
+        notifyPresented()
         completion(text, accepted)
     }
     func cancel() {
         invalidated = true
+        audioCapture.cancel()
         let dialog = alert
         finish(text: nil, accepted: false)
         dialog?.dismiss(animated: false)
+    }
+    func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+        guard !invalidated, pending == nil else { decisionHandler(.deny); return }
+        audioCapture.request(in: webView, type: type, decision: decisionHandler)
     }
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
         show(in: webView, message: message, confirm: false) { _, _ in completionHandler() }

@@ -115,6 +115,7 @@ struct ReviewerWebView: UIViewRepresentable {
         let dark = view.traitCollection.userInterfaceStyle == .dark
         let key = "\(cardID)-\(answer)-\(html)-\(css)-\(dark)-\(hideAudioButtons)-\(imageZoom)-\(centerVertically)-\(autoFocusTypeInAnswer)"
         guard context.coordinator.loaded != key else { context.coordinator.deliverScriptEvent(view); return }
+        context.coordinator.dialogs.audioCapture.documentChanged()
         context.coordinator.loaded = key
         context.coordinator.tapToken = UUID().uuidString
         var content = "<script>window.__ankiPadTapToken='" + context.coordinator.tapToken + "';</script>" + html.replacingOccurrences(of: #"\[anki:play:([qa]):([0-9]+)\]"#, with: #"<a href="ankiplay://$1/$2" aria-label="音声を再生">▶︎</a>"#, options: .regularExpression)

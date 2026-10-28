@@ -38,6 +38,7 @@ suites = {
     'review-header': ['testReviewTitleAndEstimatePersistAndCanBeHidden'],
     'typing-focus': ['testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],
     'card-links': ['testCardAppLinkIsDeniedByDefaultAndOpensAfterSavedPermission'],
+    'template-audio': ['testTemplateMicrophoneConsentCancelCaptureStopAndRevoke'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

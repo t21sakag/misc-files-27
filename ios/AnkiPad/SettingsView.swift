@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 
 struct SettingsView: View {
     @ObservedObject var model: StudyModel
@@ -11,6 +12,7 @@ struct SettingsView: View {
     @State private var automaticTTS = false
     @State private var allowCollectionAPI = UserDefaults.standard.bool(forKey: "allowCollectionCardAPI")
     @State private var allowCardExternalLaunch = UserDefaults.standard.bool(forKey: "allowCardExternalLaunch")
+    @State private var allowTemplateAudioRecording = UserDefaults.standard.bool(forKey: CardTemplateAudioCapture.preferenceKey)
     @State private var displayMode = ReviewDisplayMode(rawValue: UserDefaults.standard.integer(forKey: "reviewDisplayMode")) ?? .buttonsAndMenu
     @State private var showTopbar = UserDefaults.standard.object(forKey: "showReviewTopbar") as? Bool ?? true
     @State private var imageZoom = UserDefaults.standard.object(forKey: "imageZoom") as? Int ?? 100
@@ -117,6 +119,9 @@ struct SettingsView: View {
                     Section { NavigationLink("ライセンスとソース") { OpenSourceLicensesView() } }
                     Section { NavigationLink("学習リマインダー") { ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks) }.accessibilityIdentifier("reminder-open") }
                     Section("カードのJavaScript権限") {
+                        Toggle("テンプレートからマイク録音を許可", isOn: $allowTemplateAudioRecording).accessibilityIdentifier("allow-template-audio-recording")
+                        Text("有効にして保存すると、iPadOSのマイク許可も確認します。カメラへのアクセスは許可しません。")
+                            .font(.caption).foregroundStyle(.secondary)
                         Toggle("カードから外部アプリを開く", isOn: $allowCardExternalLaunch).accessibilityIdentifier("allow-card-external-launch")
                         Text("通常のWebリンクはこの設定に関係なく開けます。別のアプリを起動するリンクは、許可した場合だけ開きます。")
                             .font(.caption).foregroundStyle(.secondary)
@@ -141,10 +146,16 @@ struct SettingsView: View {
                     Task {
                         defer { busy = false }
                         do {
+                            if allowTemplateAudioRecording {
+                                guard await AVAudioApplication.requestRecordPermission() else {
+                                    throw EngineError(message: "マイクの使用が許可されていません。iPadの設定でマイクの許可を確認してください。")
+                                }
+                            }
                             try await model.engine.savePreferences(values)
                             for (key, value) in ["appearance": appearance, "reviewZoom": reviewZoom, "keepScreenOn": keepScreenOn, "swipeReview": swipeReview, "keepWhiteboard": keepWhiteboard, "closeAfterAdd": closeAfterAdd] as [String: Any] { UserDefaults.standard.set(value, forKey: key) }
                             UserDefaults.standard.set(allowCollectionAPI, forKey: model.profilePreferenceKey("allowCollectionCardAPI"))
                             UserDefaults.standard.set(allowCardExternalLaunch, forKey: "allowCardExternalLaunch")
+                            UserDefaults.standard.set(allowTemplateAudioRecording, forKey: CardTemplateAudioCapture.preferenceKey)
                             UserDefaults.standard.set(try JSONEncoder().encode(gestureConfiguration), forKey: "reviewGestureConfiguration")
                             UserDefaults.standard.set(try JSONEncoder().encode(keyboardConfiguration), forKey: "reviewKeyboardConfiguration")
                             UserDefaults.standard.set(try JSONEncoder().encode(gamepadConfiguration), forKey: "reviewGamepadConfiguration")

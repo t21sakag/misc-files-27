@@ -98,5 +98,8 @@
   ],
   "CardExternalLaunchFlowTests": [
     "testCardAppLinkIsDeniedByDefaultAndOpensAfterSavedPermission"
+  ],
+  "TemplateAudioFlowTests": [
+    "testTemplateMicrophoneConsentCancelCaptureStopAndRevoke"
   ]
 }
