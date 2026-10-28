@@ -28,6 +28,7 @@ suites = {
     'network': ['testNetworkSyncSettingsSurviveRelaunchAndCancelDoesNotSave', 'testRequestedOneWaySyncPresentsSafeDirectionChoice'],
     'timebox': ['testTimeboxReportsRealElapsedMinuteAndCanContinueOrFinish'],
     'appearance': ['testAnswerLayoutPersistsWithTopLargeButtonsAndHiddenMode', 'testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions'],
+    'answer-layout': ['testAnswerLayoutPersistsWithTopLargeButtonsAndHiddenMode'],
     'all': [],
 }
 suite, mode = sys.argv[1:]
