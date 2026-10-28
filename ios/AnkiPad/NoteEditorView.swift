@@ -48,9 +48,16 @@ struct NoteEditorView: View {
                         } else {
                             LabeledContent("ノートタイプ", value: types.first(where: { $0.id == current.typeID })?.name ?? "")
                             if isOcclusion {
-                                Button("画像穴埋めのマスクを編集", systemImage: "rectangle.dashed") {
-                                    changingType = BackendPageRequest(path: "image-occlusion/" + current.id, title: "画像穴埋め", noteIDs: [current.id])
-                                }.disabled(dirty).accessibilityIdentifier("occlusion-edit")
+                                Button(dirty ? "保存して画像穴埋めのマスクを編集" : "画像穴埋めのマスクを編集", systemImage: "rectangle.dashed") {
+                                    busy = true
+                                    Task {
+                                        defer { busy = false }
+                                        do {
+                                            if dirty { try await model.engine.saveNote(current, isNew: false); dirty = false }
+                                            changingType = BackendPageRequest(path: "image-occlusion/" + current.id, title: "画像穴埋め", noteIDs: [current.id])
+                                        } catch { self.error = error.localizedDescription }
+                                    }
+                                }.accessibilityIdentifier("occlusion-edit")
                             }
                             Button(dirty ? "保存してノートタイプを変更" : "ノートタイプを変更") {
                                 busy = true
