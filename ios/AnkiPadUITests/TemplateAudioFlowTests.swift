@@ -9,7 +9,7 @@ final class TemplateAudioFlowTests: StudyFlowTestSupport {
         let front = app.textViews["note-field-0"]
         XCTAssertTrue(front.waitForExistence(timeout: 20)); front.tap()
         front.typeText("""
-        <button id="start-capture">Start template microphone</button><button id="stop-capture">Stop template microphone</button><div id="capture-status" aria-live="polite">Capture ready</div><script>(()=>{let stream,recorder,chunks=[];const out=document.getElementById('capture-status');document.getElementById('start-capture').onclick=async()=>{try{stream=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];recorder=new MediaRecorder(stream);recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};recorder.onstop=()=>{const blob=new Blob(chunks);out.textContent=blob.size>0&&stream.getTracks().every(t=>t.readyState==='ended')?'Capture saved and tracks ended':'Capture stop failed';};recorder.start(100);out.textContent=stream.getAudioTracks().some(t=>t.readyState==='live')?'Capture live':'Capture not live';}catch(e){out.textContent='Capture rejected: '+e.name;}};document.getElementById('stop-capture').onclick=()=>{if(recorder?.state==='recording'){recorder.stop();stream.getTracks().forEach(t=>t.stop());}};})();</script>
+        <button id="start-capture">Start template microphone</button><button id="stop-capture">Stop template microphone</button><button id="check-tracks">Check template tracks</button><div id="capture-status" aria-live="polite">Capture ready</div><script>(()=>{let stream,recorder,chunks=[],attempt=0;const out=document.getElementById('capture-status');document.getElementById('start-capture').onclick=async()=>{const current=++attempt;out.textContent='Capture requesting '+current;try{stream=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];recorder=new MediaRecorder(stream);recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};recorder.onstop=()=>{const blob=new Blob(chunks);out.textContent=blob.size>0&&stream.getTracks().every(t=>t.readyState==='ended')?'Capture saved and tracks ended':'Capture stop failed';};recorder.start(100);out.textContent=stream.getAudioTracks().some(t=>t.readyState==='live')?'Capture live':'Capture not live';}catch(e){out.textContent='Capture rejected '+current+': '+e.name;}};document.getElementById('check-tracks').onclick=()=>{out.textContent=stream&&stream.getTracks().every(t=>t.readyState==='ended')?'All tracks ended':'Tracks still live';};document.getElementById('stop-capture').onclick=()=>{if(recorder?.state==='recording'){recorder.stop();stream.getTracks().forEach(t=>t.stop());}};})();</script>
         """)
         app.buttons["note-save"].tap()
         XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30)); app.buttons["note-close"].tap()
@@ -19,10 +19,11 @@ final class TemplateAudioFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(start.waitForExistence(timeout: 30)); start.tap()
         let consent = app.alerts["カードの録音"]
         XCTAssertTrue(consent.waitForExistence(timeout: 20)); consent.buttons["キャンセル"].tap()
-        let rejected = app.webViews.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Capture rejected:'")).firstMatch
+        let rejected = app.webViews.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Capture rejected 1:'")).firstMatch
         XCTAssertTrue(rejected.waitForExistence(timeout: 20), app.debugDescription)
         start.tap()
-        XCTAssertTrue(rejected.waitForExistence(timeout: 20))
+        let secondRejected = app.webViews.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Capture rejected 2:'")).firstMatch
+        XCTAssertTrue(secondRejected.waitForExistence(timeout: 20))
         XCTAssertFalse(consent.exists, "Declining must not cause repeated prompts in this view")
         app.buttons["デッキ"].tap(); XCTAssertTrue(deck.waitForExistence(timeout: 30)); deck.tap()
         XCTAssertTrue(start.waitForExistence(timeout: 30)); start.tap()
@@ -32,6 +33,13 @@ final class TemplateAudioFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.webViews.staticTexts["Capture live"].waitForExistence(timeout: 30), app.debugDescription)
         app.webViews.buttons["Stop template microphone"].tap()
         XCTAssertTrue(app.webViews.staticTexts["Capture saved and tracks ended"].waitForExistence(timeout: 30), app.debugDescription)
+        start.tap()
+        XCTAssertTrue(app.webViews.staticTexts["Capture live"].waitForExistence(timeout: 30))
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        let checkTracks = app.webViews.buttons["Check template tracks"]
+        XCTAssertTrue(checkTracks.waitForExistence(timeout: 30)); checkTracks.tap()
+        XCTAssertTrue(app.webViews.staticTexts["All tracks ended"].waitForExistence(timeout: 20), app.debugDescription)
         app.buttons["デッキ"].tap()
         app.buttons["collection-menu"].tap(); app.buttons["設定"].tap()
         let outer = app.switches["allow-template-audio-recording"]

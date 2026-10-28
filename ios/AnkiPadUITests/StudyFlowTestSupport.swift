@@ -23,7 +23,7 @@ class StudyFlowTestSupport: XCTestCase {
     func revealSettingsControl(_ item: XCUIElement, in app: XCUIApplication) {
         let form = app.collectionViews["settings-form"]
         XCTAssertTrue(form.waitForExistence(timeout: 20))
-        for _ in 0..<24 {
+        for _ in 0..<32 {
             let lower = form.frame.maxY - 80, upper = form.frame.minY + 150
             if item.exists && item.isHittable && item.frame.minY >= upper && item.frame.maxY <= lower { return }
             let upward = !item.exists || item.frame.maxY > lower
