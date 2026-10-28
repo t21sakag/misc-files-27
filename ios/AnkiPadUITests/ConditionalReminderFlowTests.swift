@@ -15,8 +15,8 @@ final class ConditionalReminderFlowTests: StudyFlowTestSupport {
         func reveal(_ item: XCUIElement) {
             let form = app.collectionViews["reminder-form"]
             for _ in 0..<20 {
-                if item.exists && item.isHittable && item.frame.minY > form.frame.minY + 150 && item.frame.maxY < form.frame.maxY - 60 { return }
-                let upward = !item.exists || item.frame.maxY >= form.frame.maxY - 60
+                if item.exists && item.isHittable && item.frame.minY > form.frame.minY + 150 && item.frame.maxY < form.frame.maxY - 8 { return }
+                let upward = !item.exists || item.frame.maxY >= form.frame.maxY - 8
                 form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: upward ? 0.65 : 0.35))
                     .press(forDuration: 0.1, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: upward ? 0.45 : 0.55)), withVelocity: .slow, thenHoldForDuration: 0.2)
             }

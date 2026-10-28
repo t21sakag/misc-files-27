@@ -33,6 +33,7 @@ suites = {
     'card-appearance': ['testImageOnlyZoomAndVerticalCenterSurviveRelaunch'],
     'templates': ['testAnkiDroidCardJavaScriptReadsNativeMetadata', 'testPreviewCardAPIReadsAndRestoresFlag'],
     'conditional-reminders': ['testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode', 'testReminderNativeSchedulePersistsReplacesAndCancels'],
+    'conditional-only': ['testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode'],
     'all': [],
 }
 suite, mode = sys.argv[1:]
