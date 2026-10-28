@@ -61,7 +61,7 @@ extension Engine {
         return try call(config.notesMode ? "SearchService.SearchNotes" : "SearchService.SearchCards", ["search": query,
             "order": ["builtin": ["column": config.sortColumn, "reverse": config.backwards]]])["ids"] as? [String] ?? []
     }
-    func browserRows(_ ids: [String], config: BrowserConfiguration) throws -> [BrowserCard] {
+    func browserRows(_ ids: [String], config: BrowserConfiguration, showMediaFilenames: Bool = false) throws -> [BrowserCard] {
         let current = try call("ConfigService.GetConfigBool", ["key": "BROWSER_TABLE_SHOW_NOTES_MODE"])["val"] as? Bool ?? false
         if current != config.notesMode { _ = try call("ConfigService.SetConfigBool", ["key": "BROWSER_TABLE_SHOW_NOTES_MODE", "value": config.notesMode]) }
         _ = try call("SearchService.SetActiveBrowserColumns", ["vals": config.columns])
@@ -80,10 +80,15 @@ extension Engine {
             let fields = note["fields"] as? [String] ?? []
             func plain(_ index: Int) throws -> String {
                 guard fields.indices.contains(index) else { return "" }
-                return try call("CardRenderingService.StripHtml", ["text": fields[index], "mode": "PRESERVE_MEDIA_FILENAMES"])["val"] as? String ?? ""
+                let text: String
+                if showMediaFilenames { text = fields[index] }
+                else { text = try call("CardRenderingService.StripAvTags", ["val": fields[index]])["val"] as? String ?? "" }
+                return try call("CardRenderingService.HtmlToTextLine", ["text": text, "preserveMediaFilenames": true])["val"] as? String ?? ""
             }
             let row = try call("SearchService.BrowserRowForId", ["val": id])
-            let cells = (row["cells"] as? [[String: Any]] ?? []).map { $0["text"] as? String ?? "" }
+            let cells = (row["cells"] as? [[String: Any]] ?? []).map {
+                BrowserMediaText.display($0["text"] as? String ?? "", showMediaFilenames: showMediaFilenames)
+            }
             return BrowserCard(id: id, noteID: note["id"] as? String ?? "0", front: try plain(0), back: try plain(1), deckID: card["deckId"] as? String ?? "0",
                 suspended: (card["queue"] as? Int ?? 0) == -1, flag: (card["flags"] as? Int ?? 0) & 7, cardIDs: cards,
                 metadata: Dictionary(zip(config.columns, cells), uniquingKeysWith: { first, _ in first }))

@@ -40,6 +40,7 @@ suites = {
     'card-links': ['testCardAppLinkIsDeniedByDefaultAndOpensAfterSavedPermission'],
     'template-audio': ['testTemplateMicrophoneConsentCancelCaptureStopAndRevoke'],
     'script-dialogs': ['testJavaScriptDialogsReturnNativeInputAndDecisions'],
+    'browser-appearance': ['testBrowserFontAndSoundNamesPersistAfterRelaunch'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

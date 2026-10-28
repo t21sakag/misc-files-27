@@ -101,5 +101,8 @@
   ],
   "TemplateAudioFlowTests": [
     "testTemplateMicrophoneConsentCancelCaptureStopAndRevoke"
+  ],
+  "BrowserAppearanceFlowTests": [
+    "testBrowserFontAndSoundNamesPersistAfterRelaunch"
   ]
 }

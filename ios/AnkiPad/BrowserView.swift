@@ -3,6 +3,12 @@ import SwiftUI
 struct BrowserView: View {
     @ObservedObject var model: StudyModel
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("relativeCardBrowserFontSize") private var fontPercent = 100
+    @AppStorage("card_browser_show_media_filenames") private var showMediaFilenames = false
+    @ScaledMetric(relativeTo: .body) private var primarySize: CGFloat = 17
+    @ScaledMetric(relativeTo: .caption) private var secondarySize: CGFloat = 12
+    @ScaledMetric(relativeTo: .caption2) private var metadataSize: CGFloat = 11
+    private var fontScale: CGFloat { CGFloat(max(10, min(200, fontPercent))) / 100 }
     @State private var query: String
     @State private var config = BrowserConfiguration(notesMode: false, columns: ["noteFld", "template", "cardDue", "deck"], sortColumn: "noteFld", backwards: false, savedSearches: [:])
     @State private var columns: [BrowserColumn] = []
@@ -44,7 +50,7 @@ struct BrowserView: View {
             .environment(\.editMode, $editMode)
             .task { await initialize() }
             .onDisappear { UserDefaults.standard.set(query, forKey: model.profilePreferenceKey("lastBrowserSearch")) }
-            .task(id: "\(loaded)-\(query)-\(revision)-\(config.notesMode)") { await search() }
+            .task(id: "\(loaded)-\(query)-\(revision)-\(config.notesMode)-\(showMediaFilenames)") { await search() }
     }
     private var list: some View {
         List(selection: $selected) {
@@ -75,15 +81,17 @@ struct BrowserView: View {
             HStack {
                 if row.suspended { Image(systemName: "pause.circle").foregroundStyle(.orange) }
                 if row.flag > 0 { Image(systemName: "flag.fill").foregroundStyle(flagColor(row.flag)) }
-                Text(row.front.isEmpty ? "（空のフィールド）" : row.front).lineLimit(2).foregroundStyle(.primary)
+                Text(row.front.isEmpty ? "（空のフィールド）" : row.front).font(.system(size: primarySize * fontScale)).lineLimit(2).foregroundStyle(.primary)
+                    .accessibilityIdentifier("browser-front-\(row.id)")
             }
-            Text(row.back).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+            Text(row.back).font(.system(size: secondarySize * fontScale)).foregroundStyle(.secondary).lineLimit(2)
+                .accessibilityIdentifier("browser-back-\(row.id)")
             HStack(alignment: .top, spacing: 14) {
                 ForEach(config.columns.filter { $0 != "noteFld" }, id: \.self) { key in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(columnLabel(key)).foregroundStyle(.tertiary)
                         Text(row.metadata[key] ?? "—").foregroundStyle(.secondary)
-                    }.font(.caption2).lineLimit(1)
+                    }.font(.system(size: metadataSize * fontScale)).lineLimit(1)
                 }
             }
         }.padding(.vertical, 4)
@@ -243,7 +251,7 @@ struct BrowserView: View {
             defer { busy = false }
             let result = try await model.engine.searchBrowserIDs(query, config: config)
             try Task.checkCancellation()
-            let cards = try await model.engine.browserRows(Array(result.prefix(100)), config: config)
+            let cards = try await model.engine.browserRows(Array(result.prefix(100)), config: config, showMediaFilenames: showMediaFilenames)
             try Task.checkCancellation()
             ids = result; rows = cards; selected.formIntersection(Set(ids)); completedQuery = query
         } catch is CancellationError {} catch { self.error = error.localizedDescription }
@@ -265,7 +273,7 @@ struct BrowserView: View {
     }
     private func performCards(_ action: @escaping ([String]) async throws -> Void) { mutate { let cards = try await chosenCards(); try await action(cards) } }
     private func performNotes(_ action: @escaping ([String]) async throws -> Void) { mutate { let notes = try await chosenNotes(); try await action(notes) } }
-    private func loadMore() { mutateOpening { rows += try await model.engine.browserRows(Array(ids.dropFirst(rows.count).prefix(100)), config: config) } }
+    private func loadMore() { mutateOpening { rows += try await model.engine.browserRows(Array(ids.dropFirst(rows.count).prefix(100)), config: config, showMediaFilenames: showMediaFilenames) } }
     private func mutateOpening(_ action: @escaping () async throws -> Void) {
         guard !busy else { return }; busy = true
         Task { defer { busy = false }; do { try await action() } catch { self.error = error.localizedDescription } }

@@ -20,6 +20,8 @@ struct SettingsView: View {
     @State private var showDeckTitle = UserDefaults.standard.bool(forKey: "showDeckTitle")
     @State private var showETA = UserDefaults.standard.bool(forKey: "showETA")
     @State private var autoFocusTypeInAnswer = UserDefaults.standard.object(forKey: "autoFocusTypeInAnswer") as? Bool ?? true
+    @State private var browserFontPercent = UserDefaults.standard.object(forKey: "relativeCardBrowserFontSize") as? Int ?? 100
+    @State private var browserMediaFilenames = UserDefaults.standard.bool(forKey: "card_browser_show_media_filenames")
     @State private var answerPosition = AnswerButtonPosition(rawValue: UserDefaults.standard.string(forKey: "answerButtonPosition") ?? "bottom") ?? .bottom
     @State private var answerSize = Double(UserDefaults.standard.object(forKey: "answerButtonSize") as? Int ?? 100)
     @State private var largeAnswerButtons = UserDefaults.standard.bool(forKey: "showLargeAnswerButtons")
@@ -85,6 +87,11 @@ struct SettingsView: View {
                         Slider(value: $answerSize, in: 10...200, step: 10).accessibilityIdentifier("answer-size")
                         Text("非表示でも、設定済みのスワイプ・タッチ領域・キーボードで解答できます。")
                             .font(.caption).foregroundStyle(.secondary)
+                    }
+                    Section("ブラウザの表示") {
+                        Stepper("文字サイズ: \(browserFontPercent)%", value: $browserFontPercent, in: 10...200, step: 10)
+                            .accessibilityIdentifier("browser-font-size")
+                        Toggle("音声ファイル名を表示", isOn: $browserMediaFilenames).accessibilityIdentifier("browser-media-filenames")
                     }
                     Section("音声") {
                         Toggle("音声がないカードを読み上げる", isOn: $automaticTTS).accessibilityIdentifier("tts-enabled")
@@ -171,6 +178,8 @@ struct SettingsView: View {
                             UserDefaults.standard.set(showDeckTitle, forKey: "showDeckTitle")
                             UserDefaults.standard.set(showETA, forKey: "showETA")
                             UserDefaults.standard.set(autoFocusTypeInAnswer, forKey: "autoFocusTypeInAnswer")
+                            UserDefaults.standard.set(browserFontPercent, forKey: "relativeCardBrowserFontSize")
+                            UserDefaults.standard.set(browserMediaFilenames, forKey: "card_browser_show_media_filenames")
                             networkPreferences.save()
                             model.setAutomaticSyncEnabled(automaticSync)
                             ReviewSpeechPreferences.setEnabled(automaticTTS, profileID: model.currentProfileID)
