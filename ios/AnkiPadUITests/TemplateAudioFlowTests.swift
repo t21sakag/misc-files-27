@@ -17,32 +17,37 @@ final class TemplateAudioFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30)); app.buttons["note-close"].tap()
         let deck = app.buttons["deck-1"]
         XCTAssertTrue(deck.waitForExistence(timeout: 30)); deck.tap()
+        func tapWeb(_ button: XCUIElement) {
+            waitUntilHittable(button)
+            // XCTest's WebKit activation point was 52pt below the actual frame.
+            button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
         let start = app.webViews.buttons["Start template microphone"]
         XCTAssertTrue(start.waitForExistence(timeout: 30))
         XCTAssertTrue(app.webViews.staticTexts["Capture script ready"].waitForExistence(timeout: 30), app.debugDescription)
-        waitUntilHittable(start); start.tap()
+        tapWeb(start)
         let consent = app.alerts["カードの録音"]
         XCTAssertTrue(consent.waitForExistence(timeout: 20), app.debugDescription); consent.buttons["キャンセル"].tap()
         let rejected = app.webViews.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Capture rejected 1:'")).firstMatch
         XCTAssertTrue(rejected.waitForExistence(timeout: 20), app.debugDescription)
-        start.tap()
+        tapWeb(start)
         let secondRejected = app.webViews.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Capture rejected 2:'")).firstMatch
         XCTAssertTrue(secondRejected.waitForExistence(timeout: 20))
         XCTAssertFalse(consent.exists, "Declining must not cause repeated prompts in this view")
         app.buttons["デッキ"].tap(); XCTAssertTrue(deck.waitForExistence(timeout: 30)); deck.tap()
-        XCTAssertTrue(start.waitForExistence(timeout: 30)); start.tap()
+        XCTAssertTrue(start.waitForExistence(timeout: 30)); tapWeb(start)
         XCTAssertTrue(consent.waitForExistence(timeout: 20), app.debugDescription); consent.buttons["許可"].tap()
         let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.buttons.matching(NSPredicate(format: "label IN %@", ["Allow", "許可", "OK"])).firstMatch
         if allow.waitForExistence(timeout: 8) { allow.tap() }
         XCTAssertTrue(app.webViews.staticTexts["Capture live"].waitForExistence(timeout: 30), app.debugDescription)
-        app.webViews.buttons["Stop template microphone"].tap()
+        tapWeb(app.webViews.buttons["Stop template microphone"])
         XCTAssertTrue(app.webViews.staticTexts["Capture saved and tracks ended"].waitForExistence(timeout: 30), app.debugDescription)
-        start.tap()
+        tapWeb(start)
         XCTAssertTrue(app.webViews.staticTexts["Capture live"].waitForExistence(timeout: 30))
         XCUIDevice.shared.press(.home)
         app.activate()
         let checkTracks = app.webViews.buttons["Check template tracks"]
-        XCTAssertTrue(checkTracks.waitForExistence(timeout: 30)); checkTracks.tap()
+        XCTAssertTrue(checkTracks.waitForExistence(timeout: 30)); tapWeb(checkTracks)
         XCTAssertTrue(app.webViews.staticTexts["All tracks ended"].waitForExistence(timeout: 20), app.debugDescription)
         app.buttons["デッキ"].tap()
         app.buttons["collection-menu"].tap(); app.buttons["設定"].tap()
@@ -55,7 +60,7 @@ final class TemplateAudioFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30))
         app.terminate(); app.launch()
         XCTAssertTrue(deck.waitForExistence(timeout: 30)); deck.tap()
-        XCTAssertTrue(start.waitForExistence(timeout: 30)); start.tap()
+        XCTAssertTrue(start.waitForExistence(timeout: 30)); tapWeb(start)
         XCTAssertTrue(consent.waitForExistence(timeout: 20), "Revoking must require consent again")
         consent.buttons["キャンセル"].tap()
         XCTAssertTrue(rejected.waitForExistence(timeout: 20))
