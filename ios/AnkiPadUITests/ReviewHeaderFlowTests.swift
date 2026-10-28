@@ -29,11 +29,11 @@ final class ReviewHeaderFlowTests: StudyFlowTestSupport {
         deck.tap()
         XCTAssertTrue(app.buttons["reveal"].waitForExistence(timeout: 30))
         XCTAssertFalse(app.staticTexts["review-eta"].exists, "ETA defaults to off")
-        XCTAssertFalse(app.navigationBars.staticTexts["Default"].exists, "Deck title defaults to off")
+        XCTAssertFalse(app.navigationBars.staticTexts["既定"].exists, "Deck title defaults to off")
         app.buttons["デッキ"].tap()
         settings(); toggle("show-deck-title", on: true); toggle("show-review-eta", on: true)
         saveAndRelaunch()
-        XCTAssertTrue(app.navigationBars.staticTexts["Default"].exists, app.debugDescription)
+        XCTAssertTrue(app.navigationBars.staticTexts["既定"].exists, app.debugDescription)
         let eta = app.staticTexts["review-eta"]
         XCTAssertTrue(eta.waitForExistence(timeout: 20))
         let calculated = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label MATCHES %@", "残り約[0-9]+分"), object: eta)
@@ -45,7 +45,7 @@ final class ReviewHeaderFlowTests: StudyFlowTestSupport {
         settings(); toggle("show-deck-title", on: false); toggle("show-review-eta", on: false)
         saveAndRelaunch()
         XCTAssertFalse(app.staticTexts["review-eta"].exists)
-        XCTAssertFalse(app.navigationBars.staticTexts["Default"].exists)
+        XCTAssertFalse(app.navigationBars.staticTexts["既定"].exists)
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }
 }
