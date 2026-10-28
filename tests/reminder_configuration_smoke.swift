@@ -27,6 +27,19 @@ import Foundation
         precondition(rejects(config))
         config.hour = 0; config.minute = -1
         precondition(rejects(config))
+        try ReviewReminderRequestBudget.validateStaging(pendingCount: 53, additions: 7)
+        do {
+            try ReviewReminderRequestBudget.validateStaging(pendingCount: 54, additions: 7)
+            preconditionFailure("Cannot stage a new batch while keeping old requests at the app budget")
+        } catch is ReviewReminderConfigurationError {}
+        do {
+            try ReviewReminderRequestBudget.validateStaging(pendingCount: -1, additions: 1)
+            preconditionFailure("Invalid pending counts must not be accepted")
+        } catch is ReviewReminderConfigurationError {}
+        let legacy = Data(#"{"enabled":true,"hour":19,"minute":0,"weekdays":[1,7],"sound":false,"requestIDs":["legacy-first","legacy-second"]}"#.utf8)
+        let oldConfig = try JSONDecoder().decode(ReviewReminderConfiguration.self, from: legacy)
+        try oldConfig.validate()
+        precondition(oldConfig.enabled && oldConfig.weekdays == [1,7] && oldConfig.requestIDs == ["legacy-first","legacy-second"])
         print("PASS: reminder disabling with empty days, enabled-day validation and schedule persistence")
     }
 }

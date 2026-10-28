@@ -2,6 +2,7 @@ import SwiftUI
 import UserNotifications
 
 @MainActor enum ReviewReminderStore {
+    private static var saving = false
     private static func key(_ profileID: String) -> String { "reviewReminder." + profileID }
     private static func prefix(_ profileID: String) -> String {
         var value = "ankipad.review." + profileID + "."
@@ -34,6 +35,9 @@ import UserNotifications
     }
     static func save(_ desired: ReviewReminderConfiguration, profile: StudyProfile) async throws {
         try desired.validate()
+        guard !saving else { throw EngineError(message: "ほかの通知設定を保存中です。少し待ってから、もう一度保存してください。") }
+        saving = true
+        defer { saving = false }
         let old = try load(profileID: profile.id)
         let center = UNUserNotificationCenter.current()
         var next = desired
@@ -41,9 +45,13 @@ import UserNotifications
         if desired.enabled {
             let granted = try await center.requestAuthorization(options: [.alert, .sound])
             guard granted else { throw EngineError(message: "通知が許可されていません。iPadの設定からAnkiPadの通知を許可してください。") }
+            try Task.checkCancellation()
+            let pending = await center.pendingNotificationRequests()
+            try ReviewReminderRequestBudget.validateStaging(pendingCount: Set(pending.map(\.identifier)).count, additions: desired.weekdays.count)
             let batch = UUID().uuidString
             do {
                 for weekday in desired.weekdays.sorted() {
+                    try Task.checkCancellation()
                     let identifier = prefix(profile.id) + batch + "." + String(weekday)
                     let content = UNMutableNotificationContent()
                     content.title = "学習の時間です"
@@ -61,6 +69,7 @@ import UserNotifications
             }
         }
         do {
+            try Task.checkCancellation()
             UserDefaults.standard.set(try JSONEncoder().encode(next), forKey: key(profile.id))
         } catch {
             center.removePendingNotificationRequests(withIdentifiers: next.requestIDs)

@@ -20,3 +20,16 @@ struct ReviewReminderConfiguration: Codable {
     }
 }
 
+
+/// App-wide reservation budget. New requests are staged while old ones remain
+/// installed, so replacements need enough temporary headroom as well.
+enum ReviewReminderRequestBudget {
+    static let maximumPendingRequests = 60
+    static func validateStaging(pendingCount: Int, additions: Int) throws {
+        guard pendingCount >= 0, additions >= 0,
+              additions <= maximumPendingRequests,
+              pendingCount <= maximumPendingRequests - additions else {
+            throw ReviewReminderConfigurationError(message: "通知の予約枠が足りません。既存の予約は変更していません。ほかのプロファイルの通知を減らしてから、もう一度保存してください。")
+        }
+    }
+}
