@@ -39,6 +39,7 @@ suites = {
     'typing-focus': ['testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],
     'card-links': ['testCardAppLinkIsDeniedByDefaultAndOpensAfterSavedPermission'],
     'template-audio': ['testTemplateMicrophoneConsentCancelCaptureStopAndRevoke'],
+    'script-dialogs': ['testJavaScriptDialogsReturnNativeInputAndDecisions'],
     'all': [],
 }
 suite, mode = sys.argv[1:]
