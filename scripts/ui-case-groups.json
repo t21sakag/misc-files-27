@@ -86,5 +86,8 @@
   ],
   "ConditionalReminderFlowTests": [
     "testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode"
+  ],
+  "ConditionalRefreshFlowTests": [
+    "testScopedReminderRecomputesAfterActualReview"
   ]
 }

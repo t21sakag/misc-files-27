@@ -61,6 +61,15 @@ struct ContentView: View {
             .onChange(of: model.selected?.id, initial: true) { _, _ in loadWhiteboard() }
             .background { reviewKeyboardCommands }
             .background { reviewGamepadCommands }
+            .overlay(alignment: .bottomTrailing) {
+                #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--uitest-reminders") {
+                    Text("通知予約の更新").font(.caption2).allowsHitTesting(false)
+                        .accessibilityIdentifier("reminder-refresh-completions")
+                        .accessibilityValue(String(model.reminderRefreshCompletions))
+                }
+                #endif
+            }
             .overlay(alignment: .bottom) {
                 if let toast = model.cardToast {
                     Text(toast).multilineTextAlignment(.center).padding().background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12)).padding()

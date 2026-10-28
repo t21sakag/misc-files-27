@@ -17,7 +17,12 @@ extension StudyModel {
                 let lease = UIApplication.shared.beginBackgroundTask(withName: "Refresh reminders") { Task { @MainActor in if self.reminderRefreshGeneration == generation { self.reminderRefreshTask?.cancel() } } }
                 defer { if lease != .invalid { UIApplication.shared.endBackgroundTask(lease) } }
                 try await ReviewReminderStore.save(config, profile: profile, engine: engine, requestPermission: false)
-                if currentProfileID == profile.id { reminderUpdateError = nil }
+                if currentProfileID == profile.id, reminderRefreshGeneration == generation {
+                    reminderUpdateError = nil
+                    #if DEBUG
+                    reminderRefreshCompletions += 1
+                    #endif
+                }
             } catch is CancellationError {} catch {
                 if currentProfileID == profile.id { reminderUpdateError = "条件付き通知を更新できませんでした。通知設定を確認してください。" }
             }

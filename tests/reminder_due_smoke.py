@@ -45,5 +45,17 @@ with tempfile.TemporaryDirectory() as directory:
     assert find(future, '999999999999999') is None
     assert engine.call('CardsService.GetCard', {'cid': cid}) == original, 'Forecast must not reschedule the real card'
     assert count(engine.call('DecksService.DeckTree', {'now': str(now)})) == 0
+    note = engine.call('NotesService.NewNote', {'ntid': ntid})
+    note['fields'] = ['Answer before checking reminder', 'Synthetic only']
+    engine.call('NotesService.AddNote', {'note': note, 'deckId': child_id})
+    engine.call('DecksService.SetCurrentDeck', {'did': child_id})
+    assert not engine.call('SearchService.SearchCards', {'search': 'rated:1'}).get('ids')
+    queued = engine.call('SchedulerService.GetQueuedCards', {'fetchLimit': 1})['cards'][0]
+    states = queued['states']
+    engine.call('SchedulerService.AnswerCard', {'cardId': queued['card']['id'], 'currentState': states['current'], 'newState': states['good'], 'rating': 2, 'answeredAtMillis': str(int(time.time() * 1000)), 'millisecondsTaken': 1000})
+    search = engine.call('SearchService.BuildSearchString', {'group': {'joiner': 'AND', 'nodes': [{'deck': 'Reminder parent'}, {'parsableText': 'rated:1'}]}})['val']
+    assert engine.call('SearchService.SearchCards', {'search': search})['ids'] == [queued['card']['id']]
+    timing = engine.call('SchedulerService.SchedTimingToday')
+    assert int(timing['nextDayAt']) > int(time.time())
     engine.close()
-print('PASS: future due counts, collapsed subtree scope, no double counting, missing deck, unchanged card')
+print('PASS: future due counts, collapsed subtree scope, no double counting, missing deck, unchanged card, scoped review history and scheduler day boundary')

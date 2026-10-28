@@ -59,6 +59,9 @@ import AVFoundation
     private var pausedReviewSeconds: TimeInterval = 0
     private var pendingQuestionAudio = false
     @Published private(set) var reviewSceneActive = true
+    #if DEBUG
+    @Published var reminderRefreshCompletions = 0
+    #endif
     var reminderRefreshGeneration = UUID()
     var reminderRefreshTask: Task<Void, Never>?
     @Published var reminderUpdateError: String?

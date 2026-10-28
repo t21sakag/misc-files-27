@@ -34,6 +34,7 @@ suites = {
     'templates': ['testAnkiDroidCardJavaScriptReadsNativeMetadata', 'testPreviewCardAPIReadsAndRestoresFlag'],
     'conditional-reminders': ['testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode', 'testReminderNativeSchedulePersistsReplacesAndCancels'],
     'conditional-only': ['testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode'],
+    'reminder-refresh': ['testScopedReminderRecomputesAfterActualReview'],
     'all': [],
 }
 suite, mode = sys.argv[1:]
