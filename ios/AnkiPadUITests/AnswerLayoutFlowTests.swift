@@ -13,12 +13,7 @@ final class AnswerLayoutFlowTests: StudyFlowTestSupport {
         func settings() {
             app.buttons["collection-menu"].tap(); app.buttons["設定"].tap()
             let position = app.buttons["answer-position"]
-            let form = app.collectionViews["settings-form"]
-            for _ in 0..<14 {
-                if position.exists && position.isHittable { break }
-                form.swipeUp()
-            }
-            waitUntilHittable(position)
+            revealSettingsControl(position, in: app)
         }
         settings()
         app.buttons["answer-position"].tap(); app.buttons["上"].firstMatch.tap()
