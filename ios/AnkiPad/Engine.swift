@@ -99,13 +99,15 @@ actor Engine {
         func text(_ key: String, front: String? = nil) throws -> String {
             try TemplateNodeText.render(rendered[key] as? [[String: Any]] ?? [], frontSide: front)
         }
-        let q = try call("CardRenderingService.ExtractAvTags", ["text": try text("questionNodes"), "questionSide": true])
-        let a = try call("CardRenderingService.ExtractAvTags", ["text": try text("answerNodes", front: q["text"] as? String ?? ""), "questionSide": false])
+        let note = try call("NotesService.GetNote", ["nid": card["noteId"] as? String ?? "0"])
+        let type = try noteType(note["notetypeId"] as? String ?? "0")
+        let latexSVG = (type["config"] as? [String: Any])?["latexSvg"] as? Bool ?? false
+        let q = try templateAV(text("questionNodes"), questionSide: true, latexSVG: latexSVG)
+        let a = try templateAV(text("answerNodes", front: q["text"] as? String ?? ""), questionSide: false, latexSVG: latexSVG)
         let descriptions = try call("SchedulerService.DescribeNextStates", states)
         let customScheduling = try call("ConfigService.GetConfigString", ["key": "CARD_STATE_CUSTOMIZER"])["val"] as? String ?? ""
         let options = try reviewOptions(card: card)
         let typing = try typingSpec(question: q["text"] as? String ?? "", noteID: card["noteId"] as? String ?? "0", ordinal: card["templateIdx"] as? Int ?? 0)
-        let note = try call("NotesService.GetNote", ["nid": card["noteId"] as? String ?? "0"])
         return StudyCard(id: id, noteID: card["noteId"] as? String ?? "0", deckID: card["deckId"] as? String ?? "1", ordinal: card["templateIdx"] as? Int ?? 0, flag: (card["flags"] as? Int ?? 0) & 7, marked: (note["tags"] as? [String] ?? []).contains(where: { $0.lowercased() == "marked" }), typing: typing, options: options, question: q["text"] as? String ?? "", answer: a["text"] as? String ?? "",
             css: rendered["css"] as? String ?? "", states: states, intervals: descriptions["vals"] as? [String] ?? [],
             context: queued["context"] as? [String: Any] ?? [:], customScheduling: customScheduling, mutationKey: UUID().uuidString,

@@ -31,8 +31,10 @@ extension Engine {
         func html(_ key: String, front: String? = nil) throws -> String {
             try TemplateNodeText.render(rendered[key] as? [[String: Any]] ?? [], frontSide: front)
         }
-        let question = try call("CardRenderingService.ExtractAvTags", ["text": try html("questionNodes"), "questionSide": true])
-        let answer = try call("CardRenderingService.ExtractAvTags", ["text": try html("answerNodes", front: question["text"] as? String ?? ""), "questionSide": false])
+        let schema = try noteType(note["notetypeId"] as? String ?? "0")
+        let latexSVG = (schema["config"] as? [String: Any])?["latexSvg"] as? Bool ?? false
+        let question = try templateAV(html("questionNodes"), questionSide: true, latexSVG: latexSVG)
+        let answer = try templateAV(html("answerNodes", front: question["text"] as? String ?? ""), questionSide: false, latexSVG: latexSVG)
         let rendering = TemplatePreview(question: question["text"] as? String ?? "", answer: answer["text"] as? String ?? "",
             css: rendered["css"] as? String ?? "", questionAV: question["avTags"] as? [[String: Any]] ?? [], answerAV: answer["avTags"] as? [[String: Any]] ?? [])
         return PreviewCard(id: id, deckID: card["deckId"] as? String ?? "1", noteID: card["noteId"] as? String ?? "0", ordinal: ordinal, flag: (card["flags"] as? Int ?? 0) & 7, marked: (note["tags"] as? [String] ?? []).contains { $0.lowercased() == "marked" }, rendering: rendering,

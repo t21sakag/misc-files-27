@@ -10,6 +10,7 @@ final class CardAPIFlowTests: StudyFlowTestSupport {
         deck.tap()
         XCTAssertTrue(app.webViews.staticTexts["AnkiDroid API metadata verified"].waitForExistence(timeout: 30), app.debugDescription)
         XCTAssertTrue(app.webViews.staticTexts["MathJax typeset verified"].waitForExistence(timeout: 30), app.debugDescription)
+        XCTAssertTrue(app.webViews.staticTexts["Stored LaTeX image verified"].waitForExistence(timeout: 30), app.debugDescription)
         XCTAssertTrue(app.webViews.staticTexts["Embedded frame loaded; native bridge denied"].waitForExistence(timeout: 30), app.debugDescription)
         app.webViews.buttons["API mutations"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(app.webViews.staticTexts["AnkiDroid API mutations verified"].waitForExistence(timeout: 30), app.debugDescription)

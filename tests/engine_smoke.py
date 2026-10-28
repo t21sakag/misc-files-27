@@ -163,7 +163,15 @@ def main():
         (()=>{let tries=0;const check=()=>{const status=document.getElementById('mathjax-status');if(!status)return;
           if(document.querySelector('mjx-container'))status.textContent='MathJax typeset verified';else if(++tries<150)setTimeout(check,100);};check();})();
         </script>'''
-        note['fields'] = ['iPad移植の質問' + math_probe + api_probe, 'Rustエンジンの解答 [sound:test.wav] <img src="test.svg">']
+        latex_input = '[latex]x^2[/latex]'
+        latex_result = source.call('CardRenderingService.ExtractLatex', {'text': latex_input, 'svg': False, 'expandClozes': False})
+        import base64
+        (source.root / 'collection.media' / latex_result['latex'][0]['filename']).write_bytes(base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jwZkAAAAASUVORK5CYII='))
+        latex_probe = r'''<div id="latex-image-status" aria-live="polite"></div><script>
+        (()=>{let tries=0;const check=()=>{const image=document.querySelector('img.latex'),out=document.getElementById('latex-image-status');
+        if(image&&image.complete&&image.naturalWidth>0)out.textContent='Stored LaTeX image verified';else if(tries++<100)setTimeout(check,50);};check();})();
+        </script>'''
+        note['fields'] = ['iPad移植の質問' + math_probe + latex_input + latex_probe + api_probe, 'Rustエンジンの解答 [sound:test.wav] <img src="test.svg">']
         added = source.call('NotesService.AddNote', {'note': note, 'deckId': '1'})
         assert added.get('noteId')
         (source.root / 'collection.media' / 'test.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
