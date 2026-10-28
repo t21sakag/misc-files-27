@@ -92,5 +92,8 @@
   ],
   "ReviewHeaderFlowTests": [
     "testReviewTitleAndEstimatePersistAndCanBeHidden"
+  ],
+  "TypingFocusFlowTests": [
+    "testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks"
   ]
 }

@@ -44,6 +44,7 @@ struct ReviewerWebView: UIViewRepresentable {
     @AppStorage("imageZoom") private var imageZoom = 100
     @AppStorage("centerVertically") private var centerVertically = false
     @AppStorage("reviewZoom") private var reviewZoom = 1.0
+    @AppStorage("autoFocusTypeInAnswer") private var autoFocusTypeInAnswer = true
     @Binding var typedAnswer: String
     let answer: Bool
     let media: URL
@@ -104,6 +105,7 @@ struct ReviewerWebView: UIViewRepresentable {
         context.coordinator.schedulingRequest = schedulingRequest
         context.coordinator.schedulingError = schedulingError
         context.coordinator.isAnswer = answer
+        context.coordinator.shouldFocusTyping = !answer && typing != nil && autoFocusTypeInAnswer
         context.coordinator.cardAPI = cardAPI
         context.coordinator.scriptEventScope = scriptEventScope ?? scheduling?.mutationKey
         context.coordinator.pendingScriptEvents = cardScriptEvents
@@ -111,7 +113,7 @@ struct ReviewerWebView: UIViewRepresentable {
         context.coordinator.scriptEventError = scriptEventError
         context.coordinator.deliveredScriptEvents.formIntersection(Set(cardScriptEvents.map(\.id)))
         let dark = view.traitCollection.userInterfaceStyle == .dark
-        let key = "\(cardID)-\(answer)-\(html)-\(css)-\(dark)-\(hideAudioButtons)-\(imageZoom)-\(centerVertically)"
+        let key = "\(cardID)-\(answer)-\(html)-\(css)-\(dark)-\(hideAudioButtons)-\(imageZoom)-\(centerVertically)-\(autoFocusTypeInAnswer)"
         guard context.coordinator.loaded != key else { context.coordinator.deliverScriptEvent(view); return }
         context.coordinator.loaded = key
         context.coordinator.tapToken = UUID().uuidString
@@ -301,6 +303,9 @@ struct ReviewerWebView: UIViewRepresentable {
             }
         }
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            if shouldFocusTyping {
+                webView.evaluateJavaScript("document.getElementById('typeans')?.focus();")
+            }
             deliverScriptEvent(webView)
             guard !isAnswer, let card = scheduling, !card.customScheduling.isEmpty, card.mutationKey != lastMutationKey else { return }
             lastMutationKey = card.mutationKey
@@ -312,6 +317,7 @@ struct ReviewerWebView: UIViewRepresentable {
             }
         }
         var cardID = ""
+        var shouldFocusTyping = false
         var onTyped: ((String) -> Void)?
         var reveal: (() -> Void)?
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {

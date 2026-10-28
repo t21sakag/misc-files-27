@@ -36,6 +36,7 @@ suites = {
     'conditional-only': ['testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode'],
     'reminder-refresh': ['testScopedReminderRecomputesAfterActualReview'],
     'review-header': ['testReviewTitleAndEstimatePersistAndCanBeHidden'],
+    'typing-focus': ['testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

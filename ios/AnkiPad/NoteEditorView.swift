@@ -44,6 +44,7 @@ struct NoteEditorView: View {
                     Section {
                         if request.isNew {
                             Picker("ノートタイプ", selection: $typeID) { ForEach(types) { Text($0.name).tag($0.id) } }
+                                .accessibilityIdentifier("note-type")
                                 .onChange(of: typeID) { _, next in load(type: next) }
                         } else {
                             LabeledContent("ノートタイプ", value: types.first(where: { $0.id == current.typeID })?.name ?? "")

@@ -16,6 +16,7 @@ struct SettingsView: View {
     @State private var centerVertically = UserDefaults.standard.bool(forKey: "centerVertically")
     @State private var showDeckTitle = UserDefaults.standard.bool(forKey: "showDeckTitle")
     @State private var showETA = UserDefaults.standard.bool(forKey: "showETA")
+    @State private var autoFocusTypeInAnswer = UserDefaults.standard.object(forKey: "autoFocusTypeInAnswer") as? Bool ?? true
     @State private var answerPosition = AnswerButtonPosition(rawValue: UserDefaults.standard.string(forKey: "answerButtonPosition") ?? "bottom") ?? .bottom
     @State private var answerSize = Double(UserDefaults.standard.object(forKey: "answerButtonSize") as? Int ?? 100)
     @State private var largeAnswerButtons = UserDefaults.standard.bool(forKey: "showLargeAnswerButtons")
@@ -87,6 +88,7 @@ struct SettingsView: View {
                         Text("学習画面の「読み上げ音声を選択」から、デッキとカードの面に合わせて音声を選べます。")
                     }
                     Section("学習操作") {
+                        Toggle("入力式カードの解答欄に自動フォーカス", isOn: $autoFocusTypeInAnswer).accessibilityIdentifier("auto-focus-type-answer")
                         Toggle("スワイプで解答・評価", isOn: $swipeReview)
                         NavigationLink("スワイプの割り当て") { ReviewGestureSettingsView(configuration: $gestureConfiguration) }
                         NavigationLink("タッチ領域の割り当て") { ReviewTouchSettingsView(configuration: $touchConfiguration) }.accessibilityIdentifier("touch-settings-open")
@@ -152,6 +154,7 @@ struct SettingsView: View {
                             UserDefaults.standard.set(centerVertically, forKey: "centerVertically")
                             UserDefaults.standard.set(showDeckTitle, forKey: "showDeckTitle")
                             UserDefaults.standard.set(showETA, forKey: "showETA")
+                            UserDefaults.standard.set(autoFocusTypeInAnswer, forKey: "autoFocusTypeInAnswer")
                             networkPreferences.save()
                             model.setAutomaticSyncEnabled(automaticSync)
                             ReviewSpeechPreferences.setEnabled(automaticTTS, profileID: model.currentProfileID)
