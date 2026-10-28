@@ -148,7 +148,7 @@ final class MediaFlowTests: StudyFlowTestSupport {
             web.images.allElementsBoundByIndex.contains { $0.frame.width > 100 && $0.frame.height > 100 }
         }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [imageReady], timeout: 45), .completed, app.debugDescription)
-        guard let image = web.images.allElementsBoundByIndex.max(by: { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height }) else { XCTFail(app.debugDescription); return }
+        guard let image = web.images.allElementsBoundByIndex.max(by: { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height }) else { XCTFail(app.debugDescription); return app }
         image.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.2)).press(forDuration: 0.1, thenDragTo: image.coordinate(withNormalizedOffset: CGVector(dx: 0.55, dy: 0.55)))
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "iPad-image-occlusion-mask"
