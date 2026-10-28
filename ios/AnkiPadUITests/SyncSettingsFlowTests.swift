@@ -30,7 +30,8 @@ final class SyncSettingsFlowTests: StudyFlowTestSupport {
         app.buttons["取得しない"].firstMatch.tap()
         let timeout = app.steppers["sync-timeout"]
         XCTAssertTrue(timeout.waitForExistence(timeout: 20))
-        timeout.buttons.matching(NSPredicate(format: "label IN %@", ["Increment", "増加"])).firstMatch.tap()
+        waitUntilHittable(timeout)
+        timeout.coordinate(withNormalizedOffset: CGVector(dx: 0.96, dy: 0.5)).tap()
         app.buttons["settings-save"].tap()
         app.terminate(); app.launchArguments = []; app.launch()
         openSettings(app)
