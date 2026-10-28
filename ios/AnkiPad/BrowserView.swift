@@ -73,6 +73,7 @@ struct BrowserView: View {
             if busy { ProgressView() }
         }
         .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "検索（deck:、tag:、is:due など）")
+        .studyThemeSurface()
         .navigationTitle(config.notesMode ? "ノートブラウザー" : "カードブラウザー")
         .toolbar { toolbar }
     }

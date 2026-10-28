@@ -29,6 +29,8 @@ struct SettingsView: View {
     @State private var error: String?
     @State private var closeAfterAdd = UserDefaults.standard.object(forKey: "closeAfterAdd") as? Bool ?? false
     @State private var appearance: String = UserDefaults.standard.object(forKey: "appearance") as? String ?? "system"
+    @State private var dayTheme = StudyDayTheme(rawValue: UserDefaults.standard.string(forKey: "dayTheme") ?? "1") ?? .light
+    @State private var nightTheme = StudyNightTheme(rawValue: UserDefaults.standard.string(forKey: "nightTheme") ?? "3") ?? .black
     @State private var reviewZoom: Double = UserDefaults.standard.object(forKey: "reviewZoom") as? Double ?? 1.0
     @State private var keepScreenOn: Bool = UserDefaults.standard.object(forKey: "keepScreenOn") as? Bool ?? true
     @State private var gestureConfiguration = ReviewGestureConfiguration.load()
@@ -69,7 +71,13 @@ struct SettingsView: View {
                         Toggle("学習中にデッキ名を表示", isOn: $showDeckTitle).accessibilityIdentifier("show-deck-title")
                         Toggle("学習の残り時間を表示", isOn: $showETA).accessibilityIdentifier("show-review-eta")
                         Text("全画面でも画面を3回タップすると操作バーを表示できます。").font(.caption).foregroundStyle(.secondary)
-                        Picker("テーマ", selection: $appearance) { Text("システム").tag("system"); Text("ライト").tag("light"); Text("ダーク").tag("dark") }
+                        Picker("テーマ", selection: $appearance) { Text("システム").tag("system"); Text("ライト").tag("light"); Text("ダーク").tag("dark") }.accessibilityIdentifier("app-theme-mode")
+                        Picker("昼のテーマ", selection: $dayTheme) {
+                            ForEach(StudyDayTheme.allCases) { Text($0.title).tag($0) }
+                        }.accessibilityIdentifier("day-theme")
+                        Picker("夜のテーマ", selection: $nightTheme) {
+                            ForEach(StudyNightTheme.allCases) { Text($0.title).tag($0) }
+                        }.accessibilityIdentifier("night-theme")
                         VStack(alignment: .leading) { Text("カードの拡大率: \(Int(reviewZoom * 100))%"); Slider(value: $reviewZoom, in: 0.5...2.5, step: 0.05) }
                         Stepper("画像の拡大率: \(imageZoom)%", value: $imageZoom, in: 50...300, step: 10)
                             .accessibilityIdentifier("image-zoom")
@@ -144,6 +152,7 @@ struct SettingsView: View {
                 } else { ProgressView() }
             }
             .accessibilityIdentifier("settings-form")
+            .studyThemeSurface()
             .disabled(busy)
             .navigationTitle("設定")
             .toolbar {
@@ -180,6 +189,8 @@ struct SettingsView: View {
                             UserDefaults.standard.set(autoFocusTypeInAnswer, forKey: "autoFocusTypeInAnswer")
                             UserDefaults.standard.set(browserFontPercent, forKey: "relativeCardBrowserFontSize")
                             UserDefaults.standard.set(browserMediaFilenames, forKey: "card_browser_show_media_filenames")
+                            UserDefaults.standard.set(dayTheme.rawValue, forKey: "dayTheme")
+                            UserDefaults.standard.set(nightTheme.rawValue, forKey: "nightTheme")
                             networkPreferences.save()
                             model.setAutomaticSyncEnabled(automaticSync)
                             ReviewSpeechPreferences.setEnabled(automaticTTS, profileID: model.currentProfileID)

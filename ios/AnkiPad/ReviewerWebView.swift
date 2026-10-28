@@ -45,6 +45,8 @@ struct ReviewerWebView: UIViewRepresentable {
     @AppStorage("centerVertically") private var centerVertically = false
     @AppStorage("reviewZoom") private var reviewZoom = 1.0
     @AppStorage("autoFocusTypeInAnswer") private var autoFocusTypeInAnswer = true
+    @AppStorage("dayTheme") private var dayTheme = "1"
+    @AppStorage("nightTheme") private var nightTheme = "3"
     @Binding var typedAnswer: String
     let answer: Bool
     let media: URL
@@ -118,7 +120,10 @@ struct ReviewerWebView: UIViewRepresentable {
         context.coordinator.scriptEventError = scriptEventError
         context.coordinator.deliveredScriptEvents.formIntersection(Set(cardScriptEvents.map(\.id)))
         let dark = view.traitCollection.userInterfaceStyle == .dark
-        let key = "\(cardID)-\(answer)-\(html)-\(css)-\(dark)-\(hideAudioButtons)-\(imageZoom)-\(centerVertically)-\(autoFocusTypeInAnswer)"
+        let theme = StudyTheme.resolve(dark: dark, day: dayTheme, night: nightTheme)
+        view.backgroundColor = theme.nativeBackground
+        view.scrollView.backgroundColor = theme.nativeBackground
+        let key = "\(cardID)-\(answer)-\(html)-\(css)-\(dark)-\(hideAudioButtons)-\(imageZoom)-\(centerVertically)-\(autoFocusTypeInAnswer)-\(theme.rawValue)"
         guard context.coordinator.loaded != key else { context.coordinator.deliverScriptEvent(view); return }
         context.coordinator.dialogs.audioCapture.documentChanged()
         context.coordinator.loaded = key
@@ -140,7 +145,7 @@ struct ReviewerWebView: UIViewRepresentable {
         <base href="ankimedia://collection/">
         <link rel="stylesheet" href="ankibundle://backend/css/root-vars.css">
         <link rel="stylesheet" href="ankibundle://backend/css/reviewer_extras.css">
-        <style>:root{color-scheme:light dark}body{margin:24px;font-family:-apple-system;font-size:24px;overflow-wrap:anywhere}img{max-width:100%;height:auto}audio,video{max-width:100%}.cloze{font-weight:bold;color:#3478f6}.typeGood{background:#aaffaa;color:#000}.typeBad{background:#ffaaaa;color:#000}.typeMissed{background:#ccc;color:#000}\(css)
+        <style>:root{color-scheme:light dark}body{margin:24px;font-family:-apple-system;font-size:24px;overflow-wrap:anywhere}img{max-width:100%;height:auto}audio,video{max-width:100%}.cloze{font-weight:bold;color:#3478f6}.typeGood{background:#aaffaa;color:#000}.typeBad{background:#ffaaaa;color:#000}.typeMissed{background:#ccc;color:#000}\(StudyTheme.cardCSS)\(css)
         img{zoom:\(Double(min(300, max(50, imageZoom))) / 100)}
         body.vertically_centered{min-height:calc(100vh - 48px);display:flex;flex-direction:column;justify-content:center}
         body.vertically_centered>#qa{width:100%;flex-shrink:0}
@@ -149,7 +154,7 @@ struct ReviewerWebView: UIViewRepresentable {
         <script src="ankibundle://backend/js/jquery.min.js"></script>
         <script src="ankibundle://backend/js/reviewer_extras_bundle.js"></script>
         \(math)
-        </head><body class="card card\(ordinal + 1) \(centerVertically ? "vertically_centered" : "") \(dark ? "nightMode" : "")"><div id="qa">\(content)</div>
+        </head><body data-study-theme="\(theme.rawValue)" class="card card\(ordinal + 1) \(centerVertically ? "vertically_centered" : "") \(theme.cardClasses)"><div id="qa">\(content)</div>
         <script>if(window.MathJax?.startup?.promise){window.MathJax.startup.promise.then(()=>window.MathJax.typesetPromise()).catch(()=>{});}</script>
         </body></html>
         """, baseURL: URL(string: "ankimedia://collection/"))

@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, all]
 permissions:
   contents: read
 concurrency:
@@ -236,6 +236,11 @@ jobs:
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BrowserMediaText.swift tests/browser_media_text_smoke.swift -o build/browser-media-text-smoke
           build/browser-media-text-smoke
+      - name: Test theme resolution and card selectors
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'themes')
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/StudyTheme.swift tests/study_theme_smoke.swift -o build/study-theme-smoke
+          build/study-theme-smoke
       - name: Test backend template filter node compatibility
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'templates')
         run: |

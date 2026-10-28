@@ -104,5 +104,8 @@
   ],
   "BrowserAppearanceFlowTests": [
     "testBrowserFontAndSoundNamesPersistAfterRelaunch"
+  ],
+  "ThemeFlowTests": [
+    "testDayAndNightThemeChoicesPersistAndStyleNativeAndCardSurfaces"
   ]
 }

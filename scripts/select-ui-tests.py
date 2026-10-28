@@ -41,6 +41,7 @@ suites = {
     'template-audio': ['testTemplateMicrophoneConsentCancelCaptureStopAndRevoke'],
     'script-dialogs': ['testJavaScriptDialogsReturnNativeInputAndDecisions'],
     'browser-appearance': ['testBrowserFontAndSoundNamesPersistAfterRelaunch'],
+    'themes': ['testDayAndNightThemeChoicesPersistAndStyleNativeAndCardSurfaces'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

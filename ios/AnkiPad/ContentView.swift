@@ -52,6 +52,9 @@ struct ContentView: View {
     @AppStorage("showLargeAnswerButtons") private var largeAnswerButtons = false
     @AppStorage("showDeckTitle") private var showDeckTitle = false
     @AppStorage("showETA") private var showETA = false
+    @AppStorage("dayTheme") private var dayTheme = "1"
+    @AppStorage("nightTheme") private var nightTheme = "3"
+    private var activeTheme: StudyTheme { StudyTheme.resolve(dark: colorScheme == .dark, day: dayTheme, night: nightTheme) }
     @ScaledMetric(relativeTo: .body) private var answerFontSize: CGFloat = 17
     @AppStorage("swipeReview") private var swipeReview = true
     @AppStorage("syncShowStatusBadge") private var showSyncStatusBadge = true
@@ -411,6 +414,9 @@ struct ContentView: View {
             || namingDeck || deletingDeck != nil || model.pendingCollectionImport != nil
     }
     private var deckList: some View {
+        themedDeckList.studyThemeSurface()
+    }
+    private var themedDeckList: some View {
         List {
             if let warning = model.reminderUpdateError { Text(warning).foregroundStyle(.secondary) }
             Section {
@@ -431,9 +437,9 @@ struct ContentView: View {
                             HStack {
                                 Text(deck.name).foregroundStyle(.primary)
                                 Spacer()
-                                Text("\(deck.newCount)").foregroundStyle(.blue).monospacedDigit()
-                                Text("\(deck.learnCount)").foregroundStyle(.orange).monospacedDigit()
-                                Text("\(deck.reviewCount)").foregroundStyle(.green).monospacedDigit()
+                                Text("\(deck.newCount)").foregroundStyle(activeTheme == .eink ? Color.primary : .blue).monospacedDigit()
+                                Text("\(deck.learnCount)").foregroundStyle(activeTheme == .eink ? Color.primary : .orange).monospacedDigit()
+                                Text("\(deck.reviewCount)").foregroundStyle(activeTheme == .eink ? Color.primary : .green).monospacedDigit()
                             }.padding(.vertical, 8).frame(maxWidth: .infinity).contentShape(Rectangle())
                         }.buttonStyle(.borderless).disabled(model.busy || !model.profilesReady).accessibilityIdentifier("deck-\(deck.id)")
                         .contextMenu {
@@ -505,7 +511,7 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, minHeight: max(44, 44 * answerScale))
                 .padding(.vertical, 6 * answerScale).contentShape(Rectangle())
         }
-        .buttonStyle(.bordered).tint(ratings[rating].1)
+        .buttonStyle(.bordered).tint(activeTheme.isMonochrome ? activeTheme.accent : ratings[rating].1)
         .disabled(model.busy || model.reviewingInteractionBlocked || !model.schedulerReady)
         .accessibilityIdentifier("answer-\(rating)")
     }

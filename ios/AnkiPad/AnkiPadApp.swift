@@ -14,7 +14,7 @@ import AVFoundation
         #endif
     }
     var body: some Scene {
-        WindowGroup { ContentView().preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil) }
+        WindowGroup { StudyThemeContainer { ContentView() }.preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil) }
     }
 }
 
