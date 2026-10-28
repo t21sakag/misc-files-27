@@ -27,8 +27,8 @@ class StudyFlowTestSupport: XCTestCase {
             let lower = form.frame.maxY - 80, upper = form.frame.minY + 150
             if item.exists && item.isHittable && item.frame.minY >= upper && item.frame.maxY <= lower { return }
             let upward = !item.exists || item.frame.maxY > lower
-            form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.65 : 0.35))
-                .press(forDuration: 0.1, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.45 : 0.55)), withVelocity: .slow, thenHoldForDuration: 0.2)
+            form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: upward ? 0.65 : 0.35))
+                .press(forDuration: 0.1, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: upward ? 0.45 : 0.55)), withVelocity: .slow, thenHoldForDuration: 0.2)
         }
         XCTFail("Settings control did not become fully visible: " + app.debugDescription)
     }
