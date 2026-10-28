@@ -31,12 +31,8 @@ final class AnswerLayoutFlowTests: StudyFlowTestSupport {
         XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 10), .completed)
         let form = app.collectionViews["settings-form"]
         let size = app.sliders["answer-size"]
-        for _ in 0..<5 {
-            if size.exists && size.isHittable { break }
-            app.collectionViews["settings-form"].swipeUp()
-        }
         for _ in 0..<12 {
-            let targetY = size.frame.midY
+            let targetY = size.exists ? size.frame.midY : CGFloat.greatestFiniteMagnitude
             let upper = form.frame.minY + 160, lower = form.frame.maxY - 100
             if size.exists && targetY >= upper && targetY <= lower { break }
             let upward = !size.exists || targetY > lower
