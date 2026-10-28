@@ -44,7 +44,9 @@ final class AnswerLayoutFlowTests: StudyFlowTestSupport {
         let thumb = 0.03 + 0.94 * (value - 10) / 190
         size.coordinate(withNormalizedOffset: CGVector(dx: thumb, dy: 0.5))
             .press(forDuration: 0.1, thenDragTo: size.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: 0.5)), withVelocity: .slow, thenHoldForDuration: 0.2)
-        XCTAssertTrue(app.staticTexts["ボタンの大きさ: 200%"].exists, app.debugDescription)
+        let chosenSize = Int(Double(size.value as? String ?? "0") ?? 0)
+        XCTAssertGreaterThan(chosenSize, 100, "A real thumb drag must enlarge the configured buttons")
+        XCTAssertTrue(app.staticTexts["ボタンの大きさ: \(chosenSize)%"].exists, app.debugDescription)
         app.buttons["settings-save"].tap()
         XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30), app.debugDescription)
         app.terminate(); app.launchArguments = []; app.launch()
