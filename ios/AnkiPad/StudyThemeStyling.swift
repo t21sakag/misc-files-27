@@ -22,13 +22,11 @@ struct StudyThemeContainer<Content: View>: View {
     @AppStorage("dayTheme") private var day = "1"
     @AppStorage("nightTheme") private var night = "3"
     @Environment(\.colorScheme) private var scheme
-    @Environment(\.colorSchemeContrast) private var contrast
     @ViewBuilder var content: () -> Content
     var body: some View {
         let theme = StudyTheme.resolve(dark: scheme == .dark, day: day, night: night)
         content().tint(theme.accent)
             .background(Color(uiColor: theme.nativeBackground).ignoresSafeArea())
-            .environment(\.colorSchemeContrast, theme == .eink ? .increased : contrast)
             .transaction { transaction in
                 if theme == .eink { transaction.animation = nil; transaction.disablesAnimations = true }
             }
