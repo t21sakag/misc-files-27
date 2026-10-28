@@ -3,6 +3,7 @@ import UserNotifications
 
 @MainActor enum ReviewReminderStore {
     private static var saving = false
+    private static var generations: [String: UUID] = [:]
     private static func key(_ profileID: String) -> String { "reviewReminder." + profileID }
     private static func prefix(_ profileID: String) -> String {
         var value = "ankipad.review." + profileID + "."
@@ -19,7 +20,7 @@ import UserNotifications
             let trigger = request.trigger as? UNCalendarNotificationTrigger
             return ["id": request.identifier, "profileID": request.content.userInfo["profileID"] as? String ?? "",
                     "weekday": trigger?.dateComponents.weekday ?? -1, "hour": trigger?.dateComponents.hour ?? -1,
-                    "minute": trigger?.dateComponents.minute ?? -1, "repeats": trigger?.repeats ?? false,
+                    "minute": trigger?.dateComponents.minute ?? -1, "year": trigger?.dateComponents.year ?? -1, "month": trigger?.dateComponents.month ?? -1, "day": trigger?.dateComponents.day ?? -1, "repeats": trigger?.repeats ?? false,
                     "sound": request.content.sound != nil]
         }
         let config = try load(profileID: profileID)
@@ -33,33 +34,48 @@ import UserNotifications
         try config.validate()
         return config
     }
-    static func save(_ desired: ReviewReminderConfiguration, profile: StudyProfile) async throws {
+    static func save(_ desired: ReviewReminderConfiguration, profile: StudyProfile, engine: Engine? = nil, requestPermission: Bool = true) async throws {
         try desired.validate()
         guard !saving else { throw EngineError(message: "ほかの通知設定を保存中です。少し待ってから、もう一度保存してください。") }
         saving = true
+        let generation = UUID()
+        generations[profile.id] = generation
         defer { saving = false }
         let old = try load(profileID: profile.id)
         let center = UNUserNotificationCenter.current()
         var next = desired
         next.requestIDs = []
         if desired.enabled {
-            let granted = try await center.requestAuthorization(options: [.alert, .sound])
+            let granted: Bool
+            if requestPermission { granted = try await center.requestAuthorization(options: [.alert, .sound]) }
+            else {
+                let status = await center.notificationSettings().authorizationStatus
+                granted = status == .authorized || status == .provisional || status == .ephemeral
+            }
             guard granted else { throw EngineError(message: "通知が許可されていません。iPadの設定からAnkiPadの通知を許可してください。") }
+            var conditionalDates: [Date] = []
+            if desired.conditional {
+                guard let engine else { throw EngineError(message: "通知条件を確認するコレクションがありません。") }
+                conditionalDates = try await engine.reminderForecast(desired, now: Date()).filter { $0.matches(desired) }.map(\.date)
+            }
             try Task.checkCancellation()
+            guard generations[profile.id] == generation else { throw CancellationError() }
             let pending = await center.pendingNotificationRequests()
-            try ReviewReminderRequestBudget.validateStaging(pendingCount: Set(pending.map(\.identifier)).count, additions: desired.weekdays.count)
+            try ReviewReminderRequestBudget.validateStaging(pendingCount: Set(pending.map(\.identifier)).count, additions: desired.conditional ? conditionalDates.count : desired.weekdays.count)
             let batch = UUID().uuidString
             do {
-                for weekday in desired.weekdays.sorted() {
+                let dates: [DateComponents] = desired.conditional
+                    ? conditionalDates.map { Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: $0) }
+                    : desired.weekdays.sorted().map { DateComponents(hour: desired.hour, minute: desired.minute, weekday: $0) }
+                for (index, components) in dates.enumerated() {
                     try Task.checkCancellation()
-                    let identifier = prefix(profile.id) + batch + "." + String(weekday)
+                    let identifier = prefix(profile.id) + batch + "." + String(index)
                     let content = UNMutableNotificationContent()
                     content.title = "学習の時間です"
                     content.body = profile.name + "のカードを復習しましょう。"
                     if desired.sound { content.sound = .default }
                     content.userInfo = ["profileID": profile.id]
-                    let components = DateComponents(hour: desired.hour, minute: desired.minute, weekday: weekday)
-                    let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+                    let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: !desired.conditional)
                     try await center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
                     next.requestIDs.append(identifier)
                 }
@@ -70,6 +86,7 @@ import UserNotifications
         }
         do {
             try Task.checkCancellation()
+            guard generations[profile.id] == generation else { throw CancellationError() }
             UserDefaults.standard.set(try JSONEncoder().encode(next), forKey: key(profile.id))
         } catch {
             center.removePendingNotificationRequests(withIdentifiers: next.requestIDs)
@@ -80,6 +97,7 @@ import UserNotifications
         center.removeDeliveredNotifications(withIdentifiers: previous)
     }
     static func delete(profileID: String) {
+        generations[profileID] = UUID()
         if let config = try? load(profileID: profileID) {
             let ids = config.requestIDs.filter { $0.hasPrefix(prefix(profileID)) }
             let center = UNUserNotificationCenter.current()
@@ -92,6 +110,8 @@ import UserNotifications
 
 struct ReviewReminderSettingsView: View {
     let profile: StudyProfile
+    let engine: Engine
+    let decks: [Deck]
     @Environment(\.dismiss) private var dismiss
     @State private var config = ReviewReminderConfiguration()
     @State private var loaded = false
@@ -127,8 +147,18 @@ struct ReviewReminderSettingsView: View {
                     })).accessibilityIdentifier("reminder-weekday-\(day)")
                 }
             }
+            Section("通知の条件") {
+                Stepper("必要なカード: \(config.minimumDue)枚以上（0で制限なし）", value: $config.minimumDue, in: 0...100000)
+                    .accessibilityIdentifier("reminder-minimum-due")
+                Picker("対象デッキ", selection: Binding(get: { config.deckID ?? "" }, set: { config.deckID = $0.isEmpty ? nil : $0 })) {
+                    Text("すべてのデッキ").tag("")
+                    ForEach(decks) { Text($0.name).tag($0.id) }
+                    if let id = config.deckID, !decks.contains(where: { $0.id == id }) { Text("削除されたデッキ").tag(id) }
+                }.accessibilityIdentifier("reminder-deck")
+                Toggle("その日にまだ学習していない場合だけ", isOn: $config.onlyIfNoReviews).accessibilityIdentifier("reminder-no-reviews")
+            }
             Section {
-                Text("指定した曜日と時刻に通知します。復習枚数や、その日に学習したかどうかにかかわらず通知します。")
+                Text(config.conditional ? "今後14日分の予測で予約し、アプリの起動・学習・同期後に更新します。アプリを開かない間の変更は、通知時に再判定できません。" : "指定した曜日と時刻に通知します。復習枚数や、その日に学習したかどうかにかかわらず通知します。")
                 #if DEBUG
                 if ProcessInfo.processInfo.arguments.contains("--uitest-reminders"), !nativeSchedule.isEmpty {
                     Text("予約状態").accessibilityIdentifier("reminder-native-schedule").accessibilityValue(nativeSchedule)
@@ -140,7 +170,7 @@ struct ReviewReminderSettingsView: View {
                     busy = true
                     Task {
                         defer { busy = false }
-                        do { try await ReviewReminderStore.save(config, profile: profile); dismiss() }
+                        do { try await ReviewReminderStore.save(config, profile: profile, engine: engine); dismiss() }
                         catch {
                             #if DEBUG
                             if ProcessInfo.processInfo.arguments.contains("--uitest-reminders") {

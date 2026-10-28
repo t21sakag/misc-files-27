@@ -25,7 +25,7 @@ extension StudyModel {
         guard id != currentProfileID else { showingProfiles = false; return }
         guard profileRegistry.profiles.contains(where: { $0.id == id }) else { throw ProfileRegistryError(message: "プロファイルが見つかりません。") }
         busy = true
-        defer { busy = false; showInterruptedSyncIfNeeded(); processPendingAutomaticSync() }
+        defer { busy = false; scheduleConditionalReminderRefresh(); showInterruptedSyncIfNeeded(); processPendingAutomaticSync() }
         leave() // Stops media/callbacks; its refresh is suppressed by the busy gate.
         typedAnswer = ""; answerOverride = nil; revealed = false; finished = false; timedReminder = false
         let previous = engine

@@ -40,6 +40,22 @@ import Foundation
         let oldConfig = try JSONDecoder().decode(ReviewReminderConfiguration.self, from: legacy)
         try oldConfig.validate()
         precondition(oldConfig.enabled && oldConfig.weekdays == [1,7] && oldConfig.requestIDs == ["legacy-first","legacy-second"])
+        precondition(oldConfig.minimumDue == 0 && oldConfig.deckID == nil && !oldConfig.onlyIfNoReviews && !oldConfig.conditional)
+        var conditions = oldConfig
+        conditions.minimumDue = 2
+        precondition(conditions.conditional)
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        precondition(!ReviewReminderForecast(date: now, dueCount: 1, reviewed: false).matches(conditions))
+        precondition(ReviewReminderForecast(date: now, dueCount: 2, reviewed: false).matches(conditions))
+        conditions.onlyIfNoReviews = true
+        precondition(!ReviewReminderForecast(date: now, dueCount: 3, reviewed: true).matches(conditions))
+        precondition(!ReviewReminderForecast(date: now, dueCount: nil, reviewed: false).matches(conditions))
+        conditions.weekdays = [1,2,3,4,5,6,7]
+        var utc = Calendar(identifier: .gregorian); utc.timeZone = TimeZone(secondsFromGMT: 0)!
+        let dates = ReviewReminderDates.upcoming(conditions, now: now, calendar: utc)
+        precondition(!dates.isEmpty && dates.count <= 14 && dates.allSatisfy { $0 > now })
+        let extended = try JSONDecoder().decode(ReviewReminderConfiguration.self, from: JSONEncoder().encode(conditions))
+        precondition(extended.minimumDue == 2 && extended.onlyIfNoReviews)
         print("PASS: reminder disabling with empty days, enabled-day validation and schedule persistence")
     }
 }

@@ -59,6 +59,9 @@ import AVFoundation
     private var pausedReviewSeconds: TimeInterval = 0
     private var pendingQuestionAudio = false
     @Published private(set) var reviewSceneActive = true
+    var reminderRefreshGeneration = UUID()
+    var reminderRefreshTask: Task<Void, Never>?
+    @Published var reminderUpdateError: String?
     @Published var busy = false
     @Published var cardDialogPresented = false
     @Published var error: String?
@@ -124,6 +127,7 @@ import AVFoundation
         Task {
             defer {
                 busy = false; isSyncing = false
+                scheduleConditionalReminderRefresh()
                 showInterruptedSyncIfNeeded()
                 processPendingAutomaticSync()
             }
@@ -440,7 +444,7 @@ import AVFoundation
         scheduleAutoAdvance()
     }
     func pauseReviewScene() { reviewSceneActive = false; pauseReviewInteraction() }
-    func resumeReviewScene() { reviewSceneActive = true; resumeReviewInteraction(); showInterruptedSyncIfNeeded() }
+    func resumeReviewScene() { scheduleConditionalReminderRefresh(); reviewSceneActive = true; resumeReviewInteraction(); showInterruptedSyncIfNeeded() }
     func openReviewVoice() {
         guard card != nil, !busy else { return }
         stopCardAudioForRecognition()
@@ -721,8 +725,9 @@ import AVFoundation
             } catch {}
         }
     }
-    func replayStop() { cancelSpeechPlayback(); reviewVoice.finish(); pauseReviewScene(); cardRecognition.cancel(); cardSpeech.stop(); audio.stop(); autoTask?.cancel(); UIApplication.shared.isIdleTimerDisabled = false }
+    func replayStop() { scheduleConditionalReminderRefresh(); cancelSpeechPlayback(); reviewVoice.finish(); pauseReviewScene(); cardRecognition.cancel(); cardSpeech.stop(); audio.stop(); autoTask?.cancel(); UIApplication.shared.isIdleTimerDisabled = false }
     func leave() {
+        reminderRefreshTask?.cancel()
         timebox.clear(); timeboxReport = nil
         cancelSpeechPlayback()
         speechContexts = [:]

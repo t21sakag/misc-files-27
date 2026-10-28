@@ -387,7 +387,7 @@ struct ContentView: View {
             if value == .active { model.resumeReviewScene(); openPendingReminder(); model.requestAutomaticSync(.foreground) }
         }
         .onChange(of: model.reviewingInteractionBlocked) { _, blocked in
-            if blocked { model.pauseReviewInteraction() } else { model.resumeReviewInteraction(); openPendingReminder(); model.processPendingAutomaticSync() }
+            if blocked { model.pauseReviewInteraction() } else { model.resumeReviewInteraction(); model.scheduleConditionalReminderRefresh(); openPendingReminder(); model.processPendingAutomaticSync() }
         }
         .alert("学習の区切り", isPresented: Binding(get: { model.timeboxReport != nil && !model.busy && phase == .active }, set: { if !$0 { model.timeboxReport = nil } })) {
             Button("続ける") { model.timeboxReport = nil }.accessibilityIdentifier("timebox-continue")
@@ -401,6 +401,7 @@ struct ContentView: View {
     }
     private var deckList: some View {
         List {
+            if let warning = model.reminderUpdateError { Text(warning).foregroundStyle(.secondary) }
             Section {
                 ForEach(Deck.visible(model.decks, search: deckSearch)) { deck in
                     HStack(spacing: 0) {

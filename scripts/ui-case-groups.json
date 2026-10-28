@@ -83,5 +83,8 @@
   ],
   "CardAppearanceFlowTests": [
     "testImageOnlyZoomAndVerticalCenterSurviveRelaunch"
+  ],
+  "ConditionalReminderFlowTests": [
+    "testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode"
   ]
 }

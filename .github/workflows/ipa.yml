@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, all]
 permissions:
   contents: read
 concurrency:
@@ -232,6 +232,9 @@ jobs:
           python3 tests/template_filter_nodes_smoke.py build/native/host/libankipad_bridge.dylib build/template-filter-nodes.json
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/TemplateNodeText.swift tests/template_node_smoke.swift -o build/template-node-smoke
           build/template-node-smoke build/template-filter-nodes.json
+      - name: Test real conditional reminder due forecasts
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'conditional-reminders')
+        run: python3 tests/reminder_due_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test offline collection change detection
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
         run: python3 tests/local_sync_state_smoke.py build/native/host/libankipad_bridge.dylib
