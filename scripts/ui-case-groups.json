@@ -89,5 +89,8 @@
   ],
   "ConditionalRefreshFlowTests": [
     "testScopedReminderRecomputesAfterActualReview"
+  ],
+  "ReviewHeaderFlowTests": [
+    "testReviewTitleAndEstimatePersistAndCanBeHidden"
   ]
 }

@@ -35,6 +35,7 @@ suites = {
     'conditional-reminders': ['testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode', 'testReminderNativeSchedulePersistsReplacesAndCancels'],
     'conditional-only': ['testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode'],
     'reminder-refresh': ['testScopedReminderRecomputesAfterActualReview'],
+    'review-header': ['testReviewTitleAndEstimatePersistAndCanBeHidden'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

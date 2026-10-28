@@ -14,6 +14,8 @@ struct SettingsView: View {
     @State private var showTopbar = UserDefaults.standard.object(forKey: "showReviewTopbar") as? Bool ?? true
     @State private var imageZoom = UserDefaults.standard.object(forKey: "imageZoom") as? Int ?? 100
     @State private var centerVertically = UserDefaults.standard.bool(forKey: "centerVertically")
+    @State private var showDeckTitle = UserDefaults.standard.bool(forKey: "showDeckTitle")
+    @State private var showETA = UserDefaults.standard.bool(forKey: "showETA")
     @State private var answerPosition = AnswerButtonPosition(rawValue: UserDefaults.standard.string(forKey: "answerButtonPosition") ?? "bottom") ?? .bottom
     @State private var answerSize = Double(UserDefaults.standard.object(forKey: "answerButtonSize") as? Int ?? 100)
     @State private var largeAnswerButtons = UserDefaults.standard.bool(forKey: "showLargeAnswerButtons")
@@ -58,6 +60,8 @@ struct SettingsView: View {
                     Section("表示") {
                         Picker("学習画面の操作", selection: $displayMode) { ForEach(ReviewDisplayMode.allCases) { Text($0.title).tag($0) } }.accessibilityIdentifier("review-display-mode")
                         Toggle("学習の上部バーを表示", isOn: $showTopbar)
+                        Toggle("学習中にデッキ名を表示", isOn: $showDeckTitle).accessibilityIdentifier("show-deck-title")
+                        Toggle("学習の残り時間を表示", isOn: $showETA).accessibilityIdentifier("show-review-eta")
                         Text("全画面でも画面を3回タップすると操作バーを表示できます。").font(.caption).foregroundStyle(.secondary)
                         Picker("テーマ", selection: $appearance) { Text("システム").tag("system"); Text("ライト").tag("light"); Text("ダーク").tag("dark") }
                         VStack(alignment: .leading) { Text("カードの拡大率: \(Int(reviewZoom * 100))%"); Slider(value: $reviewZoom, in: 0.5...2.5, step: 0.05) }
@@ -146,6 +150,8 @@ struct SettingsView: View {
                             UserDefaults.standard.set(largeAnswerButtons, forKey: "showLargeAnswerButtons")
                             UserDefaults.standard.set(imageZoom, forKey: "imageZoom")
                             UserDefaults.standard.set(centerVertically, forKey: "centerVertically")
+                            UserDefaults.standard.set(showDeckTitle, forKey: "showDeckTitle")
+                            UserDefaults.standard.set(showETA, forKey: "showETA")
                             networkPreferences.save()
                             model.setAutomaticSyncEnabled(automaticSync)
                             ReviewSpeechPreferences.setEnabled(automaticTTS, profileID: model.currentProfileID)

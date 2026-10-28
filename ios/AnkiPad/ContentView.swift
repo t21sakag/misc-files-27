@@ -50,6 +50,8 @@ struct ContentView: View {
     @AppStorage("answerButtonPosition") private var answerButtonPosition = "bottom"
     @AppStorage("answerButtonSize") private var answerButtonSize = 100
     @AppStorage("showLargeAnswerButtons") private var largeAnswerButtons = false
+    @AppStorage("showDeckTitle") private var showDeckTitle = false
+    @AppStorage("showETA") private var showETA = false
     @ScaledMetric(relativeTo: .body) private var answerFontSize: CGFloat = 17
     @AppStorage("swipeReview") private var swipeReview = true
     @AppStorage("syncShowStatusBadge") private var showSyncStatusBadge = true
@@ -128,7 +130,7 @@ struct ContentView: View {
             }
         }
         .disabled(!model.profilesReady)
-        .navigationTitle(model.selected?.name ?? (model.profileRegistry.profiles.count > 1 ? "AnkiPad · " + model.currentProfile.name : "AnkiPad"))
+        .navigationTitle(model.selected.map { showDeckTitle ? $0.name : "" } ?? (model.profileRegistry.profiles.count > 1 ? "AnkiPad · " + model.currentProfile.name : "AnkiPad"))
         .toolbar { navigationToolbar }
         .toolbar(model.selected != nil && model.reviewDisplayMode.isFullscreen ? .hidden : .visible, for: .navigationBar)
         .statusBarHidden(model.selected != nil && model.reviewDisplayMode.isFullscreen)
@@ -531,6 +533,9 @@ struct ContentView: View {
     }
     @ViewBuilder private var reviewer: some View {
         if let card = model.card {
+            if showETA && !model.reviewDisplayMode.isFullscreen {
+                ReviewETAView(engine: model.engine, cardKey: card.mutationKey)
+            }
             if model.showReviewTopbar && model.reviewDisplayMode != .allGone {
             HStack {
                 if card.options.showCounts { Text(card.counts) }
