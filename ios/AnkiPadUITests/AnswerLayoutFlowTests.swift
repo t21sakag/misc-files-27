@@ -39,7 +39,11 @@ final class AnswerLayoutFlowTests: StudyFlowTestSupport {
             form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.65 : 0.35))
                 .press(forDuration: 0.1, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.45 : 0.55)), withVelocity: .slow, thenHoldForDuration: 0.2)
         }
-        waitUntilHittable(size); size.adjust(toNormalizedSliderPosition: 1)
+        waitUntilHittable(size)
+        let value = Double(size.value as? String ?? "100") ?? 100
+        let thumb = 0.03 + 0.94 * (value - 10) / 190
+        size.coordinate(withNormalizedOffset: CGVector(dx: thumb, dy: 0.5))
+            .press(forDuration: 0.1, thenDragTo: size.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: 0.5)), withVelocity: .slow, thenHoldForDuration: 0.2)
         XCTAssertTrue(app.staticTexts["ボタンの大きさ: 200%"].exists, app.debugDescription)
         app.buttons["settings-save"].tap()
         XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30), app.debugDescription)
