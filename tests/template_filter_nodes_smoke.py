@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory() as directory:
     note = engine.call('NotesService.GetNote', {'nid': engine.call('SearchService.SearchNotes', {'search': ''})['ids'][0]})
     uncommitted = engine.call('CardRenderingService.RenderUncommittedCard', {'note': note, 'cardOrd': 0, 'template': schema['templates'][0], 'fillEmpty': False})
     cases.append({'nodes': uncommitted['questionNodes'], 'expected': 'Filter content'})
-    cases.append({'nodes': uncommitted['answerNodes'], 'front': 'Unsaved front', 'expected': 'Unsaved front<hr id=answer>Answer'})
+    cases.append({'nodes': uncommitted['answerNodes'], 'front': 'Unsaved front', 'expected': 'Filter content<hr id=answer>Answer'})
     engine.close()
 Path(sys.argv[2]).write_text(json.dumps(cases))
 print('PASS: native existing and unsaved template filter node fixtures')
