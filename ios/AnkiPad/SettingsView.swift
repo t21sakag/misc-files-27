@@ -6,6 +6,8 @@ struct SettingsView: View {
     @State private var values: [String: Any] = [:]
     @State private var loaded = false
     @State private var automaticSync = true
+    @State private var networkPreferences = SyncNetworkPreferences.load()
+    @State private var confirmingOneWaySync = false
     @State private var automaticTTS = false
     @State private var allowCollectionAPI = UserDefaults.standard.bool(forKey: "allowCollectionCardAPI")
     @State private var displayMode = ReviewDisplayMode(rawValue: UserDefaults.standard.integer(forKey: "reviewDisplayMode")) ?? .buttonsAndMenu
@@ -31,6 +33,16 @@ struct SettingsView: View {
                         Toggle("自動同期", isOn: $automaticSync).accessibilityIdentifier("automatic-sync")
                         Text("起動・前面復帰時とバックグラウンド移行時に同期します。全体を置き換える同期には確認が必要です。未保存の編集がある間は待機します。")
                             .font(.caption).foregroundStyle(.secondary)
+                        Toggle("従量課金の回線でも同期する", isOn: $networkPreferences.allowMetered).accessibilityIdentifier("sync-allow-metered")
+                        Picker("画像・音声の取得", selection: $networkPreferences.mediaFetch) {
+                            ForEach(SyncMediaFetch.allCases) { Text($0.title).tag($0) }
+                        }.accessibilityIdentifier("sync-media-fetch")
+                        Toggle("未同期の変更を表示", isOn: $networkPreferences.showStatusBadge).accessibilityIdentifier("sync-status-badge")
+                        Stepper("通信のタイムアウト: \(networkPreferences.ioTimeoutSecs)秒", value: $networkPreferences.ioTimeoutSecs,
+                                in: SyncNetworkPreferences.minimumTimeout...SyncNetworkPreferences.maximumTimeout, step: 10)
+                            .accessibilityIdentifier("sync-timeout")
+                        Button("次回の同期を一方向にする") { confirmingOneWaySync = true }
+                            .disabled(busy || model.isSyncing).accessibilityIdentifier("sync-force-one-way")
                     }
                     Section("表示") {
                         Picker("学習画面の操作", selection: $displayMode) { ForEach(ReviewDisplayMode.allCases) { Text($0.title).tag($0) } }.accessibilityIdentifier("review-display-mode")
@@ -105,6 +117,7 @@ struct SettingsView: View {
                             UserDefaults.standard.set(try JSONEncoder().encode(toolbarConfiguration), forKey: "reviewToolbarConfiguration")
                             model.reviewDisplayMode = displayMode
                             model.showReviewTopbar = showTopbar
+                            networkPreferences.save()
                             model.setAutomaticSyncEnabled(automaticSync)
                             ReviewSpeechPreferences.setEnabled(automaticTTS, profileID: model.currentProfileID)
                             model.refreshAfterEditing()
@@ -114,6 +127,16 @@ struct SettingsView: View {
                     }
                 }.disabled(!loaded || busy).accessibilityIdentifier("settings-save") }
             }
+            .alert("次回の同期を一方向にしますか？", isPresented: $confirmingOneWaySync) {
+                Button("一方向にする", role: .destructive) {
+                    busy = true
+                    Task {
+                        defer { busy = false }
+                        do { try await model.forceOneWaySync() } catch { self.error = error.localizedDescription }
+                    }
+                }.accessibilityIdentifier("sync-force-one-way-confirm")
+                Button("キャンセル", role: .cancel) {}
+            } message: { Text("次の同期では、AnkiWebとこのiPadのどちらかのコレクション全体を選んで、もう一方を置き換えます。選ばなかった側だけの変更は失われます。") }
             .alert("保存できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
                 Button("閉じる", role: .cancel) { error = nil }
             } message: { Text(error ?? "") }

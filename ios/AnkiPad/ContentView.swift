@@ -48,6 +48,7 @@ struct ContentView: View {
     @AppStorage("reviewTouchConfiguration") private var touchConfigurationData = Data()
     @AppStorage("reviewToolbarConfiguration") private var toolbarConfigurationData = Data()
     @AppStorage("swipeReview") private var swipeReview = true
+    @AppStorage("syncShowStatusBadge") private var showSyncStatusBadge = true
     @Environment(\.scenePhase) private var phase
     @Environment(\.colorScheme) private var colorScheme
     private let ratings: [(String, Color)] = [("もう一度", .red), ("難しい", .orange), ("普通", .green), ("簡単", .blue)]
@@ -303,6 +304,11 @@ struct ContentView: View {
     }
     private var syncDialogContent: some View {
         deckDialogContent
+        .alert("従量課金の回線です", isPresented: $model.meteredSyncPrompt) {
+            Button("続ける") { model.synchronize(allowMeteredThisTime: true) }.accessibilityIdentifier("metered-sync-continue")
+            Button("今後は確認しない") { model.allowMeteredSyncAlways() }
+            Button("キャンセル", role: .cancel) {}
+        } message: { Text("モバイル回線などで同期すると、データ通信量がかかる場合があります。") }
         .confirmationDialog("同期するデータを選択", isPresented: Binding(get: { model.chooseFullSync && !model.busy && phase == .active }, set: { model.chooseFullSync = $0 }), titleVisibility: .visible) {
             if let decision = model.syncDecision {
                 if decision.canDownload { Button("AnkiWebのデータをこのiPadにダウンロード", role: .destructive) { model.confirmDirection = false } }
@@ -446,7 +452,9 @@ struct ContentView: View {
                 if model.syncDecision != nil {
                     Text("同期方向の確認が必要です").accessibilityIdentifier("sync-direction-pending")
                 } else if model.localSyncState?.hasChanges == true {
-                    Label("未同期の変更があります", systemImage: "arrow.triangle.2.circlepath").accessibilityIdentifier("sync-local-changes")
+                    if showSyncStatusBadge {
+                        Label("未同期の変更があります", systemImage: "arrow.triangle.2.circlepath").accessibilityIdentifier("sync-local-changes")
+                    }
                 } else if model.mediaSyncPending {
                     Text("同期が完了していません").font(.caption).accessibilityIdentifier("sync-media-pending")
                 } else if model.localSyncState?.neverSynced == true {

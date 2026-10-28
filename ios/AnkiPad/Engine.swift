@@ -156,9 +156,9 @@ actor Engine {
         guard let key = auth["hkey"] as? String, !key.isEmpty else { throw EngineError(message: "ログイン情報を取得できませんでした。") }
         return SyncCredentials(username: username, hkey: key, endpoint: auth["endpoint"] as? String)
     }
-    func sync(_ credentials: SyncCredentials) async throws -> SyncDecision {
+    func sync(_ credentials: SyncCredentials, syncMedia: Bool = true) async throws -> SyncDecision {
         try backup(force: false)
-        let result = try await longCall("SyncService.SyncCollection", ["auth": credentials.request, "syncMedia": true])
+        let result = try await longCall("SyncService.SyncCollection", ["auth": credentials.request, "syncMedia": syncMedia])
         var cardCount = 0
         var deckCount = 0
         if ["FULL_SYNC", "FULL_DOWNLOAD", "FULL_UPLOAD"].contains(result["required"] as? String ?? "") {
@@ -171,13 +171,20 @@ actor Engine {
         }
         return SyncDecision(response: result, localCardCount: cardCount, localDeckCount: deckCount)
     }
-    func fullSync(_ credentials: SyncCredentials, upload: Bool, serverUSN: Int) async throws {
+    /// Omitting `serverUsn` makes the engine skip media, as upstream does when media fetching is off.
+    func fullSync(_ credentials: SyncCredentials, upload: Bool, serverUSN: Int, syncMedia: Bool = true) async throws {
         if upload {
             let ids = try call("SearchService.SearchCards", ["search": ""])["ids"] as? [String] ?? []
             guard !ids.isEmpty else { throw EngineError(message: "空のコレクションはAnkiWebにアップロードできません。ダウンロードで同期してください。") }
         }
         try backup()
-        _ = try await longCall("SyncService.FullUploadOrDownload", ["auth": credentials.request, "upload": upload, "serverUsn": serverUSN])
+        var request: [String: Any] = ["auth": credentials.request, "upload": upload]
+        if syncMedia { request["serverUsn"] = serverUSN }
+        _ = try await longCall("SyncService.FullUploadOrDownload", request)
+    }
+    /// Upstream `modSchema(check = false)`: the next sync must replace one side completely.
+    func forceOneWaySync() throws {
+        _ = try call("_droid/force_one_way_sync")
     }
     func mediaSyncStatus() throws -> [String: Any] { try raw("SyncService.MediaSyncStatus") }
     func beginSyncSession() { syncAbortRequested = false }

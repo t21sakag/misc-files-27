@@ -92,6 +92,9 @@ import UIKit
     @Published var isSyncing = false
     @Published var syncStatus = ""
     @Published var chooseFullSync = false
+    @Published var meteredSyncPrompt = false
+    /// Whether the pending full-sync choice was prepared with media syncing allowed.
+    private var fullSyncIncludesMedia = true
     @Published var syncDecision: SyncDecision?
     @Published var confirmDirection: Bool?
     @Published var lastSync: Date?
@@ -259,12 +262,42 @@ import UIKit
             UserDefaults.standard.removeObject(forKey: profilePreferenceKey("lastSync"))
         } catch { self.error = error.localizedDescription }
     }
-    func synchronize() {
+    func synchronize(allowMeteredThisTime: Bool = false) {
         guard account != nil else { showingAccount = true; return }
-        runSync { try await self.performSync() }
+        guard !allowMeteredThisTime else { runSync { try await self.performSync() }; return }
+        let profile = currentProfileID
+        Task {
+            // Do not apply a delayed network decision to a different collection.
+            let metered = await networkMetering.isMetered()
+            guard currentProfileID == profile, account != nil, !busy else { return }
+            // Upstream asks before using a metered connection unless the user allowed it permanently.
+            if SyncNetworkPreferences.load().requiresMeteredConfirmation(metered: metered) {
+                meteredSyncPrompt = true
+            } else {
+                runSync { try await self.performSync() }
+            }
+        }
+    }
+    func allowMeteredSyncAlways() {
+        var preferences = SyncNetworkPreferences.load()
+        preferences.allowMetered = true
+        preferences.save()
+        synchronize(allowMeteredThisTime: true)
+    }
+    func forceOneWaySync() async throws {
+        try await engine.forceOneWaySync()
+        localSyncState = try? await engine.localSyncState().applyingCleanStamp(UserDefaults.standard.string(forKey: profilePreferenceKey("syncCleanStamp")))
+        syncStatus = "次回の同期では、どちらかのコレクション全体を選んで置き換えます"
     }
     private func performSync(automatic: Bool = false) async throws {
         guard let account else { return }
+        let networkPreferences = SyncNetworkPreferences.load()
+        let metered = await networkMetering.isMetered()
+        if automatic && networkPreferences.requiresMeteredConfirmation(metered: metered) {
+            syncStatus = "従量課金の回線のため、自動同期を見送りました"
+            return
+        }
+        let syncMedia = networkPreferences.syncsMedia(metered: metered)
         isSyncing = true
         audio.stop()
         cardSpeech.stop()
@@ -277,7 +310,7 @@ import UIKit
         syncStatus = "コレクションを同期中…"
         mediaSyncPending = true
         UserDefaults.standard.set(true, forKey: profilePreferenceKey("syncMediaPending"))
-        let decision = try await engine.sync(account)
+        let decision = try await engine.sync(account, syncMedia: syncMedia)
         guard !syncCancelled else { throw CancellationError() }
         if let endpoint = decision.endpoint {
             var updated = account
@@ -292,20 +325,21 @@ import UIKit
                 #if DEBUG
                 scheduleSyncExpirationForTesting()
                 #endif
-                try await engine.fullSync(self.account ?? account, upload: false, serverUSN: decision.serverUSN)
-                try await finishMediaSync()
+                try await engine.fullSync(self.account ?? account, upload: false, serverUSN: decision.serverUSN, syncMedia: syncMedia)
+                try await finishMediaSync(mediaSkipped: !syncMedia)
                 return
             }
             guard decision.canUpload || decision.canDownload else {
                 throw EngineError(message: "安全な同期方向を確認できませんでした。AnkiWebへのアップロードは行っていません。")
             }
             syncDecision = decision
+            fullSyncIncludesMedia = syncMedia
             syncStatus = "同期するデータを選択してください"
             if decision.required == "FULL_UPLOAD" && !automatic { confirmDirection = true }
             else { chooseFullSync = true }
             return
         }
-        try await finishMediaSync()
+        try await finishMediaSync(mediaSkipped: !syncMedia)
     }
     func fullSync(upload: Bool) {
         guard let decision = syncDecision, let account,
@@ -317,11 +351,12 @@ import UIKit
             #if DEBUG
             if !upload { self.scheduleSyncExpirationForTesting() }
             #endif
-            try await self.engine.fullSync(account, upload: upload, serverUSN: decision.serverUSN)
-            try await self.finishMediaSync()
+            let syncMedia = self.fullSyncIncludesMedia
+            try await self.engine.fullSync(account, upload: upload, serverUSN: decision.serverUSN, syncMedia: syncMedia)
+            try await self.finishMediaSync(mediaSkipped: !syncMedia)
         }
     }
-    private func finishMediaSync() async throws {
+    private func finishMediaSync(mediaSkipped: Bool = false) async throws {
         syncStatus = "画像・音声を同期中…"
         while true {
             guard !syncCancelled else { throw CancellationError() }
@@ -346,7 +381,7 @@ import UIKit
         mediaSyncPending = false
         UserDefaults.standard.set(false, forKey: profilePreferenceKey("syncMediaPending"))
         UserDefaults.standard.set(lastSync, forKey: profilePreferenceKey("lastSync"))
-        syncStatus = "同期しました"
+        syncStatus = mediaSkipped ? "同期しました（画像・音声は設定により同期していません）" : "同期しました"
     }
     func cancelSync() {
         requestSyncAbort(status: "同期を中止しました")

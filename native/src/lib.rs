@@ -63,6 +63,9 @@ pub unsafe extern "C" fn ap_call(handle: *mut c_void, method: *const c_char, req
         if name == "_droid/local_sync_status" {
             return local_sync::status(backend).map_err(Into::into);
         }
+        if name == "_droid/force_one_way_sync" {
+            return local_sync::force_one_way(backend).map_err(Into::into);
+        }
         if name == "_droid/eta" {
             return eta::estimate(backend, string(request)?).map_err(Into::into);
         }

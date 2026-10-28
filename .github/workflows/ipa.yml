@@ -44,6 +44,10 @@ jobs:
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/sync-decision-smoke
           build/sync-decision-smoke
+      - name: Test network sync preference policy and persistence
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/SyncNetworkPreferences.swift tests/sync_network_preferences_smoke.swift -o build/sync-network-preferences-smoke
+          build/sync-network-preferences-smoke
       - name: Test automatic sync scheduling and offline state
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/AutomaticSyncPolicy.swift tests/automatic_sync_policy_smoke.swift -o build/automatic-sync-policy-smoke

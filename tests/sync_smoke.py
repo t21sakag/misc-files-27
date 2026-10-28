@@ -98,6 +98,12 @@ with tempfile.TemporaryDirectory() as folder:
             sync(b, auth)
             sync(a, auth)
             assert not a.call('DecksService.GetDeck', {'did': parent})['common'].get('studyCollapsed', False)
+            forced = a.call('_droid/force_one_way_sync')
+            assert forced['schemaModified'].isdigit(), forced
+            assert a.call('_droid/local_sync_status')['hasChanges']
+            assert sync(a, auth, upload=False)['required'] == 'FULL_SYNC', 'one-way request must force a full sync choice'
+            assert sync(a, auth).get('required', 'NO_CHANGES') == 'NO_CHANGES'
+            assert a.call('DecksService.GetDeck', {'did': parent})['common'].get('studyCollapsed', False) is False
             c = Engine(root / 'client-c')
             local_note = c.call('NotesService.NewNote', {'ntid': c.call('NotetypesService.GetNotetypeNames')['entries'][0]['id']})
             local_note['fields'] = ['Local conflict fixture', 'Keep both collections until user chooses']
@@ -109,7 +115,7 @@ with tempfile.TemporaryDirectory() as folder:
             c.close()
             a.close()
             b.close()
-            print('PASS: login + rejected password + empty server upload + empty client download + populated conflict + media + bidirectional incremental sync + reviewer collapse round trip')
+            print('PASS: login + rejected password + empty server upload + empty client download + populated conflict + media + bidirectional incremental sync + reviewer collapse round trip + forced one-way sync')
         finally:
             server.terminate()
             server.wait(timeout=10)

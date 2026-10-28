@@ -6,7 +6,7 @@ struct SyncCredentials: Codable {
     let hkey: String
     var endpoint: String?
     var request: [String: Any] {
-        var result: [String: Any] = ["hkey": hkey, "ioTimeoutSecs": 60]
+        var result: [String: Any] = ["hkey": hkey, "ioTimeoutSecs": SyncNetworkPreferences.load().ioTimeoutSecs]
         if let endpoint { result["endpoint"] = endpoint }
         return result
     }
