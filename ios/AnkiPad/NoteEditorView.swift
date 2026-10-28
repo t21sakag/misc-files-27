@@ -146,13 +146,16 @@ struct NoteEditorView: View {
         navigationContent
             .sheet(item: $changingType, onDismiss: {
                 guard let current = document else { return }
+                busy = true
                 Task {
+                    defer { busy = false }
                     do {
                         let cards = try await model.engine.call("NotesService.CardsOfNote", ["nid": current.id])["cids"] as? [String] ?? []
                         let updated = try await model.engine.noteDocument(cardID: cards.first, noteID: cards.isEmpty ? current.id : nil, typeID: nil, deckID: current.deckID)
                         document = updated
                         typeID = updated.typeID
                         types = try await model.engine.noteTypes()
+                        isOcclusion = (try? await model.engine.call("ImageOcclusionService.GetImageOcclusionFields", ["notetypeId": updated.typeID]))?["fields"] != nil
                         expandFields(updated)
                         model.refreshAfterEditing()
                     } catch { self.error = error.localizedDescription }

@@ -43,7 +43,8 @@
   ],
   "MediaFlowTests": [
     "testZImageOcclusionCanBeCreatedFromPhoto",
-    "testPhotoEditsAndDrawingPersistWhenReeditingNote"
+    "testPhotoEditsAndDrawingPersistWhenReeditingNote",
+    "testImageOcclusionMaskCopyPersistsAndDiscardPreservesSavedMasks"
   ],
   "ReminderFlowTests": [
     "testReminderNativeSchedulePersistsReplacesAndCancels"

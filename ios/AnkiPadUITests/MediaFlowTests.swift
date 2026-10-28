@@ -120,7 +120,7 @@ final class MediaFlowTests: StudyFlowTestSupport {
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }
 
-    func testZImageOcclusionCanBeCreatedFromPhoto() {
+    private func createOcclusionFromPhoto() -> XCUIApplication {
         let app = makeApplication()
         app.launchArguments = ["--uitest-fixture"]
         app.launch()
@@ -160,6 +160,76 @@ final class MediaFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(deck.waitForExistence(timeout: 30), app.debugDescription)
         let updated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in firstNumber(deck.label) == original + 1 }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [updated], timeout: 20), .completed, deck.label)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+        return app
+    }
+    func testZImageOcclusionCanBeCreatedFromPhoto() {
+        _ = createOcclusionFromPhoto()
+    }
+    func testImageOcclusionMaskCopyPersistsAndDiscardPreservesSavedMasks() {
+        let app = createOcclusionFromPhoto()
+        func openNote() {
+            let menu = app.buttons["collection-menu"]
+            XCTAssertTrue(menu.waitForExistence(timeout: 30)); menu.tap(); app.buttons["browser-open"].tap()
+            let search = app.searchFields.matching(NSPredicate(format: "placeholderValue BEGINSWITH %@", "検索（")).firstMatch
+            XCTAssertTrue(search.waitForExistence(timeout: 20)); search.tap()
+            let clear = search.buttons["Clear text"]
+            if clear.exists { clear.tap(); search.tap() }
+            search.typeText("image-occlusion")
+            let searched = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "image-occlusion"), object: app.staticTexts["browser-results"])
+            XCTAssertEqual(XCTWaiter.wait(for: [searched], timeout: 20), .completed)
+            let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'browser-card-'")).firstMatch
+            XCTAssertTrue(row.waitForExistence(timeout: 30), app.debugDescription); row.tap()
+            XCTAssertTrue(app.buttons["occlusion-edit"].waitForExistence(timeout: 20), app.debugDescription)
+        }
+        func openMasks() -> XCUIElement {
+            let button = app.buttons["occlusion-edit"]
+            let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND enabled == true"), object: button)
+            XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed)
+            button.tap()
+            let web = app.webViews.firstMatch
+            XCTAssertTrue(web.waitForExistence(timeout: 30))
+            let loaded = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                web.images.allElementsBoundByIndex.contains { $0.frame.width > 100 && $0.frame.height > 100 }
+            }, object: nil)
+            XCTAssertEqual(XCTWaiter.wait(for: [loaded], timeout: 30), .completed, app.debugDescription)
+            return web
+        }
+        func maskCount() -> Int {
+            let field = app.textViews["note-field-0"]
+            let form = app.collectionViews["note-form"]
+            for _ in 0..<8 { if field.exists && field.isHittable { break }; form.swipeUp() }
+            XCTAssertTrue(field.waitForExistence(timeout: 20), app.debugDescription)
+            return (field.value as? String ?? "").components(separatedBy: "image-occlusion:").count - 1
+        }
+        openNote()
+        XCTAssertEqual(maskCount(), 1)
+        app.collectionViews["note-form"].swipeDown()
+        let web = openMasks()
+        guard let image = web.images.allElementsBoundByIndex.max(by: { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height }) else { XCTFail(app.debugDescription); return }
+        image.coordinate(withNormalizedOffset: CGVector(dx: 0.37, dy: 0.37)).tap()
+        let duplicate = web.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'duplicate' OR label CONTAINS '複製'")).firstMatch
+        XCTAssertTrue(duplicate.waitForExistence(timeout: 20), app.debugDescription); duplicate.tap()
+        app.buttons["occlusion-save"].tap()
+        XCTAssertTrue(web.waitForNonExistence(timeout: 30), app.debugDescription)
+        XCTAssertEqual(maskCount(), 2, "Copied masks must be saved to the actual note")
+        app.buttons["note-save"].tap()
+        XCTAssertTrue(app.navigationBars["ノートを編集"].waitForNonExistence(timeout: 30))
+        app.terminate(); app.launchArguments = []; app.launch()
+        openNote()
+        XCTAssertEqual(maskCount(), 2, "Mask copy must persist across app relaunch")
+        app.collectionViews["note-form"].swipeDown()
+        let reopened = openMasks()
+        guard let again = reopened.images.allElementsBoundByIndex.max(by: { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height }) else { XCTFail(app.debugDescription); return }
+        again.coordinate(withNormalizedOffset: CGVector(dx: 0.37, dy: 0.37)).tap()
+        reopened.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'duplicate' OR label CONTAINS '複製'")).firstMatch.tap()
+        app.buttons["backend-close"].tap()
+        XCTAssertTrue(app.alerts["マスクの変更を破棄しますか？"].waitForExistence(timeout: 20))
+        app.buttons["occlusion-continue"].firstMatch.tap()
+        XCTAssertTrue(reopened.exists, "Cancel discard must keep the editor open")
+        app.buttons["backend-close"].tap(); app.buttons["occlusion-discard"].firstMatch.tap()
+        XCTAssertTrue(reopened.waitForNonExistence(timeout: 30))
+        XCTAssertEqual(maskCount(), 2, "Discard must not replace saved masks")
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }
 

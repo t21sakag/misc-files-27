@@ -22,6 +22,7 @@ suites = {
     'p1-next': ['testPhotoEditsAndDrawingPersistWhenReeditingNote', 'testZZZProfilesKeepCollectionsAndAccountsSeparate'],
     'voice': ['testCardAudioQueueCompletesOnceAndCancellationDoesNotReplay', 'testReviewRecordingReferenceComparisonAndTemporaryCleanup'],
     'speech': ['testInstalledVoiceSelectionPersistsAndQuestionAnswerChoicesAreSeparate', 'testAutomaticSpeechChoiceAndNestedReferencePickerCanCancelAndResume', 'testNativeSpeechSynthesisQueueCompletes'],
+    'occlusion': ['testZImageOcclusionCanBeCreatedFromPhoto', 'testImageOcclusionMaskCopyPersistsAndDiscardPreservesSavedMasks'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

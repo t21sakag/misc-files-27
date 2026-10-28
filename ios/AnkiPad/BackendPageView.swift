@@ -16,6 +16,7 @@ struct BackendPageView: View {
     @State private var url: URL?
     @State private var error: String?
     @State private var closeRequest: (() -> Void)?
+    @State private var showDiscard = false
     @State private var saveRequest: (() -> Void)?
     var body: some View {
         NavigationStack {
@@ -29,8 +30,15 @@ struct BackendPageView: View {
                 if request.path.hasPrefix("image-occlusion/") {
                     ToolbarItem(placement: .primaryAction) { Button("保存") { saveRequest?() }.disabled(saveRequest == nil).accessibilityIdentifier("occlusion-save") }
                 }
-                ToolbarItem(placement: .confirmationAction) { Button("閉じる") { if let closeRequest { closeRequest() } else { finish() } } } }
-            .interactiveDismissDisabled(request.path.hasPrefix("deck-options"))
+                ToolbarItem(placement: .confirmationAction) { Button("閉じる") {
+                    if request.path.hasPrefix("image-occlusion/") { showDiscard = true }
+                    else if let closeRequest { closeRequest() } else { finish() }
+                }.accessibilityIdentifier("backend-close") } }
+            .interactiveDismissDisabled(request.path.hasPrefix("deck-options") || request.path.hasPrefix("image-occlusion/"))
+            .alert("マスクの変更を破棄しますか？", isPresented: $showDiscard) {
+                Button("編集を続ける", role: .cancel) {}.accessibilityIdentifier("occlusion-continue")
+                Button("破棄", role: .destructive) { finish() }.accessibilityIdentifier("occlusion-discard")
+            } message: { Text("保存していない画像穴埋めの変更は失われます。") }
             .task {
                 do {
                     let server = StaticAssetServer(root: Bundle.main.resourceURL!.appendingPathComponent("backend"))
