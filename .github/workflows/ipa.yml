@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, all]
 permissions:
   contents: read
 concurrency:
@@ -226,6 +226,11 @@ jobs:
       - name: Test history calculation
         if: env.CI_MODE == 'full'
         run: python3 tests/eta_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test external link permission boundaries
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'card-links')
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/CardExternalLaunchPolicy.swift tests/card_external_launch_smoke.swift -o build/card-external-launch-smoke
+          build/card-external-launch-smoke
       - name: Test backend template filter node compatibility
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'templates')
         run: |

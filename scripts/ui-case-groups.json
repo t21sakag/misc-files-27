@@ -95,5 +95,8 @@
   ],
   "TypingFocusFlowTests": [
     "testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks"
+  ],
+  "CardExternalLaunchFlowTests": [
+    "testCardAppLinkIsDeniedByDefaultAndOpensAfterSavedPermission"
   ]
 }

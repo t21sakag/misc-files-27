@@ -37,6 +37,7 @@ suites = {
     'reminder-refresh': ['testScopedReminderRecomputesAfterActualReview'],
     'review-header': ['testReviewTitleAndEstimatePersistAndCanBeHidden'],
     'typing-focus': ['testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],
+    'card-links': ['testCardAppLinkIsDeniedByDefaultAndOpensAfterSavedPermission'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

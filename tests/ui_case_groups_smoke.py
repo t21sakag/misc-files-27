@@ -18,7 +18,7 @@ for group, methods in groups.items():
         assert method not in expected, f'Duplicate manifest case: {method}'
         expected[method] = group
 assert expected == actual, (expected.keys() - actual.keys(), actual.keys() - expected.keys())
-for suite in ['milestone', 'changed', 'profiles', 'shared', 'backups', 'automatic', 'sync', 'reviewer', 'repair', 'collapse', 'reminders', 'p1', 'images', 'controls', 'p1-next', 'voice', 'speech', 'occlusion', 'preview', 'network', 'timebox', 'appearance', 'answer-layout', 'layout-regression', 'card-appearance', 'templates', 'conditional-reminders', 'conditional-only', 'reminder-refresh', 'review-header', 'typing-focus']:
+for suite in ['milestone', 'changed', 'profiles', 'shared', 'backups', 'automatic', 'sync', 'reviewer', 'repair', 'collapse', 'reminders', 'p1', 'images', 'controls', 'p1-next', 'voice', 'speech', 'occlusion', 'preview', 'network', 'timebox', 'appearance', 'answer-layout', 'layout-regression', 'card-appearance', 'templates', 'conditional-reminders', 'conditional-only', 'reminder-refresh', 'review-header', 'typing-focus', 'card-links']:
     selected = subprocess.check_output(['python3', str(root / 'scripts/select-ui-tests.py'), suite, 'ui'], text=True).splitlines()
     assert selected, suite
     for item in selected:

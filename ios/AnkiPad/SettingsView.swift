@@ -10,6 +10,7 @@ struct SettingsView: View {
     @State private var confirmingOneWaySync = false
     @State private var automaticTTS = false
     @State private var allowCollectionAPI = UserDefaults.standard.bool(forKey: "allowCollectionCardAPI")
+    @State private var allowCardExternalLaunch = UserDefaults.standard.bool(forKey: "allowCardExternalLaunch")
     @State private var displayMode = ReviewDisplayMode(rawValue: UserDefaults.standard.integer(forKey: "reviewDisplayMode")) ?? .buttonsAndMenu
     @State private var showTopbar = UserDefaults.standard.object(forKey: "showReviewTopbar") as? Bool ?? true
     @State private var imageZoom = UserDefaults.standard.object(forKey: "imageZoom") as? Int ?? 100
@@ -116,6 +117,9 @@ struct SettingsView: View {
                     Section { NavigationLink("ライセンスとソース") { OpenSourceLicensesView() } }
                     Section { NavigationLink("学習リマインダー") { ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks) }.accessibilityIdentifier("reminder-open") }
                     Section("カードのJavaScript権限") {
+                        Toggle("カードから外部アプリを開く", isOn: $allowCardExternalLaunch).accessibilityIdentifier("allow-card-external-launch")
+                        Text("通常のWebリンクはこの設定に関係なく開けます。別のアプリを起動するリンクは、許可した場合だけ開きます。")
+                            .font(.caption).foregroundStyle(.secondary)
                         Toggle("全ノートの読み取り・タグ変更を許可", isOn: $allowCollectionAPI).accessibilityIdentifier("allow-collection-card-api")
                         Text("有効にすると、カード内のJavaScriptが現在のカード以外のノートの内容も読み取り、タグを変更できます。").font(.caption).foregroundStyle(.secondary)
                     }
@@ -140,6 +144,7 @@ struct SettingsView: View {
                             try await model.engine.savePreferences(values)
                             for (key, value) in ["appearance": appearance, "reviewZoom": reviewZoom, "keepScreenOn": keepScreenOn, "swipeReview": swipeReview, "keepWhiteboard": keepWhiteboard, "closeAfterAdd": closeAfterAdd] as [String: Any] { UserDefaults.standard.set(value, forKey: key) }
                             UserDefaults.standard.set(allowCollectionAPI, forKey: model.profilePreferenceKey("allowCollectionCardAPI"))
+                            UserDefaults.standard.set(allowCardExternalLaunch, forKey: "allowCardExternalLaunch")
                             UserDefaults.standard.set(try JSONEncoder().encode(gestureConfiguration), forKey: "reviewGestureConfiguration")
                             UserDefaults.standard.set(try JSONEncoder().encode(keyboardConfiguration), forKey: "reviewKeyboardConfiguration")
                             UserDefaults.standard.set(try JSONEncoder().encode(gamepadConfiguration), forKey: "reviewGamepadConfiguration")

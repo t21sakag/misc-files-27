@@ -336,6 +336,7 @@ struct ReviewerWebView: UIViewRepresentable {
                let error = body["message"] as? String { schedulingError?(error) }
         }
         var loaded = ""
+        private var externalLaunchDenials = 0
         var playTag: ((Bool, Int) -> Void)?
         func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             guard let url = action.request.url else { decisionHandler(.cancel); return }
@@ -348,10 +349,19 @@ struct ReviewerWebView: UIViewRepresentable {
                 decisionHandler(.allow); return
             }
             if ["ankimedia", "about"].contains(url.scheme ?? "") { decisionHandler(.allow); return }
-            if action.navigationType == .linkActivated, ["https", "http"].contains(url.scheme ?? "") {
-                UIApplication.shared.open(url)
-            }
             decisionHandler(.cancel)
+            switch CardExternalLaunchPolicy.decision(for: url, allowed: UserDefaults.standard.bool(forKey: "allowCardExternalLaunch")) {
+            case .browser, .application:
+                UIApplication.shared.open(url, options: [:]) { [weak self] opened in
+                    if !opened { self?.scriptEventError?("このリンクを開けるアプリが見つかりませんでした。") }
+                }
+            case .denied:
+                if externalLaunchDenials < 2 {
+                    externalLaunchDenials += 1
+                    scriptEventError?("カードから外部アプリを開く操作は許可されていません。「設定」で変更できます。")
+                }
+            case .unsupported: break
+            }
         }
     }
 }
