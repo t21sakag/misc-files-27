@@ -102,7 +102,7 @@ final class ReviewerFlowTests: StudyFlowTestSupport {
         menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         app.buttons["設定"].tap()
         let mode = app.buttons["review-display-mode"]
-        XCTAssertTrue(mode.waitForExistence(timeout: 20), app.debugDescription)
+        revealSettingsControl(mode, in: app)
         mode.tap()
         app.buttons["カードのみ"].tap()
         app.buttons["settings-save"].tap()

@@ -24,6 +24,7 @@ final class AnswerLayoutFlowTests: StudyFlowTestSupport {
         app.buttons["answer-position"].tap(); app.buttons["上"].firstMatch.tap()
         let outer = app.switches["answer-large"]
         XCTAssertTrue(outer.waitForExistence(timeout: 20))
+        revealSettingsControl(outer, in: app)
         let toggle = outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
         waitUntilHittable(toggle)
         toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()

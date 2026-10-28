@@ -29,6 +29,7 @@ suites = {
     'timebox': ['testTimeboxReportsRealElapsedMinuteAndCanContinueOrFinish'],
     'appearance': ['testAnswerLayoutPersistsWithTopLargeButtonsAndHiddenMode', 'testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions'],
     'answer-layout': ['testAnswerLayoutPersistsWithTopLargeButtonsAndHiddenMode'],
+    'layout-regression': ['testAnswerLayoutPersistsWithTopLargeButtonsAndHiddenMode', 'testFullscreenCanBeRestoredWithTripleTap'],
     'all': [],
 }
 suite, mode = sys.argv[1:]
