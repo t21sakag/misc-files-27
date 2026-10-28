@@ -100,6 +100,17 @@ def main():
           }catch(error){out.textContent='Preview API error: '+error;}
           finally{if(original!==undefined&&(await api.ankiGetCardFlag()).value!==original)await api.ankiToggleFlag(names[original]);}
         };
+        </script><button id="preview-native-toast">Preview native toast</button><button id="preview-native-tags">Preview native tags</button><div id="preview-native-status" aria-live="polite"></div><script>
+        (()=>{const api=AnkiDroidJS.init({developer:'fixture@example.test',version:'0.0.3'});
+          document.getElementById('preview-native-toast').onclick=async()=>{
+            const r=await api.ankiShowToast(encodeURIComponent('プレビューの通知を確認'),false);
+            document.getElementById('preview-native-status').textContent=r.success&&r.value===true?'Preview toast requested':'Preview toast failed';
+          };
+          document.getElementById('preview-native-tags').onclick=async()=>{
+            const r=await api.ankiAddTagToCard();
+            document.getElementById('preview-native-status').textContent=r.success&&r.value===true?'Preview tags requested':'Preview tags failed';
+          };
+        })();
         </script><button id="api-mutations">API mutations</button><div id="api-mutations-status" aria-live="polite"></div><button id="collection-query">API collection query</button><div id="collection-query-status" aria-live="polite"></div><button id="api-navigation">API navigation</button><button id="api-options">API options</button><script>
         (()=>{const api=AnkiDroidJS.init({developer:'fixture@example.test',version:'0.0.3'});let callbackCount=0;
           addHook('ankiSearchCard',result=>{

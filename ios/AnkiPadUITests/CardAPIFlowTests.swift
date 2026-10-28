@@ -139,6 +139,43 @@ final class CardAPIFlowTests: StudyFlowTestSupport {
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }
 
+    func testPreviewNativeToastAndTagDialogPersistToPreviewedNote() {
+        let app = makeApplication()
+        app.launch()
+        let menu = app.buttons["collection-menu"]
+        XCTAssertTrue(menu.waitForExistence(timeout: 30)); menu.tap(); app.buttons["browser-open"].tap()
+        let search = app.searchFields.matching(NSPredicate(format: "placeholderValue BEGINSWITH %@", "検索（")).firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 20)); search.tap(); search.typeText("Rust")
+        let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'browser-card-'")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 30)); row.press(forDuration: 1); app.buttons["プレビュー"].tap()
+        let web = app.webViews.firstMatch
+        let toast = web.buttons["Preview native toast"]
+        XCTAssertTrue(toast.waitForExistence(timeout: 30)); toast.tap()
+        let shown = app.staticTexts["preview-script-toast"]
+        XCTAssertTrue(shown.waitForExistence(timeout: 10), app.debugDescription)
+        XCTAssertEqual(shown.label, "プレビューの通知を確認")
+        shown.tap()
+        XCTAssertTrue(shown.waitForNonExistence(timeout: 10))
+        let tags = web.buttons["Preview native tags"]
+        XCTAssertTrue(tags.waitForExistence(timeout: 20)); tags.tap()
+        let field = app.textFields["card-action-tags"]
+        XCTAssertTrue(field.waitForExistence(timeout: 20), app.debugDescription)
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: field)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed)
+        field.tap(); field.typeText(" preview-native-tag")
+        app.buttons["card-action-apply"].tap()
+        XCTAssertTrue(field.waitForNonExistence(timeout: 30))
+        XCTAssertTrue(tags.waitForExistence(timeout: 30)); tags.tap()
+        XCTAssertTrue(field.waitForExistence(timeout: 20))
+        let saved = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value CONTAINS %@", "preview-native-tag"), object: field)
+        XCTAssertEqual(XCTWaiter.wait(for: [saved], timeout: 20), .completed, app.debugDescription)
+        app.navigationBars["タグを編集"].buttons["キャンセル"].tap()
+        app.buttons["preview-close"].tap()
+        app.terminate(); app.launchArguments = []; app.launch()
+        assertBrowserContains(app, text: "tag:preview-native-tag", exists: true)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
+
     func testPreviewFlagPersistsAfterClosing() {
         let app = makeApplication()
         app.launch()

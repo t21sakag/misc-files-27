@@ -63,6 +63,9 @@ struct CardPreviewView: View {
     @State private var busy = false
     @State private var error: String?
     @State private var editor: EditorRequest?
+    @State private var tagRequest: ReviewCardActionRequest?
+    @State private var toast: String?
+    @State private var toastTask: Task<Void, Never>?
     @State private var revision = 0
     @State private var audio = CardAudio()
     @State private var visible = true
@@ -97,6 +100,14 @@ struct CardPreviewView: View {
                 else if request.ids.isEmpty { ContentUnavailableView("カードがありません", systemImage: "rectangle.stack") }
                 else { ProgressView() }
             }
+            .overlay(alignment: .bottom) {
+                if let toast {
+                    Text(toast).multilineTextAlignment(.center).padding()
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12)).padding()
+                        .accessibilityIdentifier("preview-script-toast")
+                        .onTapGesture { clearToast() }
+                }
+            }
             .navigationTitle("プレビュー \(request.ids.isEmpty ? 0 : index + 1) / \(request.ids.count)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -119,12 +130,16 @@ struct CardPreviewView: View {
                     Toggle("裏面のみ", isOn: $answerOnly).disabled(card == nil || busy).keyboardShortcut("b", modifiers: []).onChange(of: answerOnly) { _, next in if next { reveal() } else { answer = false } }
                 }
             }
+            .sheet(item: $tagRequest, onDismiss: { revision += 1 }) { ReviewCardActionsView(model: model, request: $0) }
             .sheet(item: $editor, onDismiss: { revision += 1 }) { NoteEditorView(model: model, request: $0) }
             .task(id: "\(index)-\(revision)") { await load() }
             .onAppear { visible = true }
             .onDisappear { visible = false; stopScriptAudio(); audio.stop() }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .background { stopScriptAudio(); audio.stop() }
+            }
+            .onChange(of: tagRequest?.id) { _, id in
+                if id != nil { stopScriptAudio(); audio.stop() }
             }
             .onChange(of: editor?.id) { _, id in
                 if id != nil { stopScriptAudio(); audio.stop() }
@@ -141,6 +156,7 @@ struct CardPreviewView: View {
         guard visible, self.request.ids.indices.contains(index), self.request.ids[index] == current.id, card?.mutationKey == current.mutationKey else {
             return try result("Card is no longer active", success: false)
         }
+        guard tagRequest == nil else { return try result(false) }
         let version = request["version"] as? String ?? ""
         guard !(request["developer"] as? String ?? "").isEmpty,
               version.range(of: #"^0\.0\.3(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?\z"#, options: .regularExpression) != nil else {
@@ -187,8 +203,29 @@ struct CardPreviewView: View {
                 } catch { self.error = error.localizedDescription }
             }
             return try result(started)
+        case "showToast":
+            guard editor == nil, scenePhase == .active,
+                  let data = parameter.data(using: .utf8),
+                  let payload = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let text = payload["text"] as? String else { return try result(false) }
+            clearToast()
+            let decoded = text.removingPercentEncoding ?? text
+            toast = decoded
+            UIAccessibility.post(notification: .announcement, argument: decoded)
+            let scope = current.mutationKey
+            toastTask = Task {
+                do { try await Task.sleep(nanoseconds: (payload["shortLength"] as? Bool ?? true) ? 2_000_000_000 : 3_500_000_000) }
+                catch { return }
+                guard card?.mutationKey == scope else { return }
+                toast = nil; toastTask = nil
+            }
+            return try result(true)
+        case "addTagToCard":
+            guard !busy, editor == nil, scenePhase == .active else { return try result(false) }
+            tagRequest = ReviewCardActionRequest(cardID: current.id, noteID: current.noteID, action: .tags)
+            return try result(true)
         case "showAnswer":
-            guard !busy, editor == nil else { return try result(false) }
+            guard !busy, editor == nil, tagRequest == nil else { return try result(false) }
             reveal()
             return try result(true)
         case "searchCardWithCallback":
@@ -201,7 +238,7 @@ struct CardPreviewView: View {
                 return try result(true)
             } catch { return try result(false) }
         case "markCard", "setNoteTags", "addTagToNote":
-            guard !busy, editor == nil else { return try result(false) }
+            guard !busy, editor == nil, tagRequest == nil else { return try result(false) }
             busy = true
             defer { busy = false }
             if endpoint == "markCard" {
@@ -234,7 +271,7 @@ struct CardPreviewView: View {
             }
             return try result(true)
         case "toggleFlag":
-            guard !busy, editor == nil else { return try result(false) }
+            guard !busy, editor == nil, tagRequest == nil else { return try result(false) }
             let names = ["none", "red", "orange", "green", "blue", "pink", "turquoise", "purple"]
             guard let desired = names.firstIndex(of: request["data"] as? String ?? "") else { return try result(false) }
             let value = current.flag == desired ? 0 : desired
@@ -252,19 +289,21 @@ struct CardPreviewView: View {
             return try result(value)
         }
     }
+    private func clearToast() { toastTask?.cancel(); toastTask = nil; toast = nil }
     private func stopScriptAudio() {
+        clearToast()
         recognition.cancel()
         speech.stop()
         scriptEvents.removeAll()
     }
     private func replay() {
-        guard visible, let card, !busy, editor == nil else { return }
+        guard visible, let card, !busy, editor == nil, tagRequest == nil else { return }
         recognition.cancel(); speech.stop()
         let tags = answer ? (card.options.replayQuestion ? card.rendering.questionAV : []) + card.rendering.answerAV : card.rendering.questionAV
         audio.play(tags, media: model.engine.media)
     }
     private func toggleMark() {
-        guard visible, let current = card, !busy, editor == nil else { return }
+        guard visible, let current = card, !busy, editor == nil, tagRequest == nil else { return }
         let engine = model.engine
         busy = true
         Task {
@@ -276,7 +315,7 @@ struct CardPreviewView: View {
         }
     }
     private func setFlag(_ desired: Int) {
-        guard visible, let current = card, !busy, editor == nil else { return }
+        guard visible, let current = card, !busy, editor == nil, tagRequest == nil else { return }
         let value = current.flag == desired ? 0 : desired
         let engine = model.engine
         busy = true
@@ -289,7 +328,7 @@ struct CardPreviewView: View {
         }
     }
     private func move(_ offset: Int) {
-        guard visible, !busy, request.ids.indices.contains(index + offset) else { return }
+        guard visible, !busy, tagRequest == nil, request.ids.indices.contains(index + offset) else { return }
         stopScriptAudio(); audio.stop()
         card = nil
         busy = true
@@ -323,7 +362,7 @@ struct CardPreviewView: View {
         }
     }
     private func reveal() {
-        guard visible, let card, !busy, editor == nil else { return }
+        guard visible, let card, !busy, editor == nil, tagRequest == nil else { return }
         let engine = model.engine
         let provided = typed
         busy = true

@@ -25,7 +25,7 @@ struct ReviewCardActionsView: View {
             Form {
                 switch request.action {
                 case .tags:
-                    TextField("タグ（空白で区切る）", text: $tags).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    TextField("タグ（空白で区切る）", text: $tags).textInputAutocapitalization(.never).autocorrectionDisabled().accessibilityIdentifier("card-action-tags")
                 case .due:
                     TextField("今日からの日数（例: 3、3-7）", text: $days).textInputAutocapitalization(.never).autocorrectionDisabled()
                     Text("範囲を指定すると、その範囲にカードを割り振ります。末尾に ! を付けると間隔も日数に合わせて変更します。")
@@ -40,7 +40,7 @@ struct ReviewCardActionsView: View {
             .navigationTitle(title)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { dismiss() }.disabled(busy) }
-                ToolbarItem(placement: .confirmationAction) { Button("適用") { save() }.disabled(busy || !loaded) }
+                ToolbarItem(placement: .confirmationAction) { Button("適用") { save() }.disabled(busy || !loaded).accessibilityIdentifier("card-action-apply") }
             }
             .task {
                 do {

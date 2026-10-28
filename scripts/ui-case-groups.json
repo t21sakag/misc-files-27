@@ -29,7 +29,8 @@
     "testNavigationAndReviewerOptionsAPIOpenNativePanels",
     "testUnsafeCollectionAPIRequiresExplicitSetting",
     "testPreviewCardAPIReadsAndRestoresFlag",
-    "testPreviewFlagPersistsAfterClosing"
+    "testPreviewFlagPersistsAfterClosing",
+    "testPreviewNativeToastAndTagDialogPersistToPreviewedNote"
   ],
   "LibraryFlowTests": [
     "testStoredBackupCanBeSharedToFiles",
