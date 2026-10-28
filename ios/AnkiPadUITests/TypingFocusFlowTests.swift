@@ -16,6 +16,15 @@ final class TypingFocusFlowTests: StudyFlowTestSupport {
         Typing focus verification<div id="typing-focus-status" aria-live="polite"></div><script>(()=>{function report(){document.getElementById('typing-focus-status').textContent=document.activeElement?.id==='typeans'?'Typing input focused':'Typing input not focused';}document.addEventListener('focusin',report);document.addEventListener('focusout',()=>setTimeout(report,0));window.addEventListener('load',()=>setTimeout(report,500));})();</script>
         """)
         let back = app.textViews["note-field-1"]
+        let hideKeyboard = app.buttons["Hide keyboard"]
+        if hideKeyboard.exists { hideKeyboard.tap() }
+        let form = app.collectionViews["note-form"]
+        for _ in 0..<12 {
+            if back.exists && back.isHittable && back.frame.maxY < form.frame.maxY - 10 { break }
+            form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.7))
+                .press(forDuration: 0.1, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.4)), withVelocity: .slow, thenHoldForDuration: 0.2)
+        }
+        XCTAssertTrue(back.exists && back.isHittable, app.debugDescription)
         back.tap(); back.typeText("typed expected")
         app.buttons["note-save"].tap()
         XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30)); app.buttons["note-close"].tap()
