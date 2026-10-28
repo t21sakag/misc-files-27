@@ -301,7 +301,7 @@ struct ContentView: View {
         .confirmationDialog("デッキとカードを削除しますか？", isPresented: Binding(get: { deletingDeck != nil }, set: { if !$0 { deletingDeck = nil } }), presenting: deletingDeck) { deck in
             Button("削除", role: .destructive) { model.deleteDeck(deck); deletingDeck = nil }
                 .accessibilityIdentifier("deck-delete-confirm")
-        } message: { Text("子デッキと関連するカードも削除します。バックアップを保存してから削除します。") }
+        } message: { _ in Text("子デッキと関連するカードも削除します。バックアップを保存してから削除します。") }
     }
     private var syncDialogContent: some View {
         deckDialogContent
