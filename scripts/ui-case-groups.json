@@ -80,5 +80,8 @@
   ],
   "AnswerLayoutFlowTests": [
     "testAnswerLayoutPersistsWithTopLargeButtonsAndHiddenMode"
+  ],
+  "CardAppearanceFlowTests": [
+    "testImageOnlyZoomAndVerticalCenterSurviveRelaunch"
   ]
 }

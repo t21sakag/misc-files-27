@@ -12,6 +12,8 @@ struct SettingsView: View {
     @State private var allowCollectionAPI = UserDefaults.standard.bool(forKey: "allowCollectionCardAPI")
     @State private var displayMode = ReviewDisplayMode(rawValue: UserDefaults.standard.integer(forKey: "reviewDisplayMode")) ?? .buttonsAndMenu
     @State private var showTopbar = UserDefaults.standard.object(forKey: "showReviewTopbar") as? Bool ?? true
+    @State private var imageZoom = UserDefaults.standard.object(forKey: "imageZoom") as? Int ?? 100
+    @State private var centerVertically = UserDefaults.standard.bool(forKey: "centerVertically")
     @State private var answerPosition = AnswerButtonPosition(rawValue: UserDefaults.standard.string(forKey: "answerButtonPosition") ?? "bottom") ?? .bottom
     @State private var answerSize = Double(UserDefaults.standard.object(forKey: "answerButtonSize") as? Int ?? 100)
     @State private var largeAnswerButtons = UserDefaults.standard.bool(forKey: "showLargeAnswerButtons")
@@ -59,6 +61,9 @@ struct SettingsView: View {
                         Text("全画面でも画面を3回タップすると操作バーを表示できます。").font(.caption).foregroundStyle(.secondary)
                         Picker("テーマ", selection: $appearance) { Text("システム").tag("system"); Text("ライト").tag("light"); Text("ダーク").tag("dark") }
                         VStack(alignment: .leading) { Text("カードの拡大率: \(Int(reviewZoom * 100))%"); Slider(value: $reviewZoom, in: 0.5...2.5, step: 0.05) }
+                        Stepper("画像の拡大率: \(imageZoom)%", value: $imageZoom, in: 50...300, step: 10)
+                            .accessibilityIdentifier("image-zoom")
+                        Toggle("カード内容を上下の中央に表示", isOn: $centerVertically).accessibilityIdentifier("center-vertically")
                         Toggle("学習中は画面を消灯しない", isOn: $keepScreenOn)
                         Toggle("学習枚数を表示", isOn: boolean("reviewing", "showRemainingDueCounts"))
                         Toggle("評価ボタンに次回の間隔を表示", isOn: boolean("reviewing", "showIntervalsOnButtons"))
@@ -139,6 +144,8 @@ struct SettingsView: View {
                             UserDefaults.standard.set(answerPosition.rawValue, forKey: "answerButtonPosition")
                             UserDefaults.standard.set(Int(answerSize), forKey: "answerButtonSize")
                             UserDefaults.standard.set(largeAnswerButtons, forKey: "showLargeAnswerButtons")
+                            UserDefaults.standard.set(imageZoom, forKey: "imageZoom")
+                            UserDefaults.standard.set(centerVertically, forKey: "centerVertically")
                             networkPreferences.save()
                             model.setAutomaticSyncEnabled(automaticSync)
                             ReviewSpeechPreferences.setEnabled(automaticTTS, profileID: model.currentProfileID)
