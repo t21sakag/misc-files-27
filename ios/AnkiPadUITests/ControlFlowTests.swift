@@ -78,6 +78,8 @@ final class ControlFlowTests: StudyFlowTestSupport {
         let close = app.buttons["note-close"]
         XCTAssertTrue(close.waitForExistence(timeout: 20)); close.tap()
         XCTAssertTrue(app.buttons["reveal"].waitForExistence(timeout: 20))
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: app.buttons["reveal"])
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 30), .completed)
         // Blank card space in configured lower-right zone, not a DOM control.
         web.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.92)).tap()
         XCTAssertTrue(app.buttons["answer-2"].waitForExistence(timeout: 20), "Persisted region assignment must reveal through the actual WebKit tap bridge")

@@ -36,6 +36,7 @@ final class AnswerLayoutFlowTests: StudyFlowTestSupport {
         }
         waitUntilHittable(size); size.adjust(toNormalizedSliderPosition: 1)
         app.buttons["settings-save"].tap()
+        XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30), app.debugDescription)
         app.terminate(); app.launchArguments = []; app.launch()
         XCTAssertTrue(deck.waitForExistence(timeout: 30)); deck.tap()
         XCTAssertTrue(reveal.waitForExistence(timeout: 30))
@@ -56,6 +57,7 @@ final class AnswerLayoutFlowTests: StudyFlowTestSupport {
         settings()
         app.buttons["answer-position"].tap(); app.buttons["表示しない"].firstMatch.tap()
         app.buttons["settings-save"].tap()
+        XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30), app.debugDescription)
         app.terminate(); app.launchArguments = []; app.launch()
         XCTAssertTrue(deck.waitForExistence(timeout: 30)); deck.tap()
         XCTAssertTrue(app.webViews.staticTexts["AnkiDroid API metadata verified"].waitForExistence(timeout: 30))
