@@ -26,6 +26,7 @@ suites = {
     'whiteboard': ['testWhiteboardUndoesStrokesAndKeepsPerDeckVisibility', 'testImportedDeckCanBeReviewedAndUndone'],
     'preview': ['testPreviewCardAPIReadsAndRestoresFlag', 'testPreviewNativeToastAndTagDialogPersistToPreviewedNote', 'testPreviewFlagPersistsAfterClosing'],
     'network': ['testNetworkSyncSettingsSurviveRelaunchAndCancelDoesNotSave', 'testRequestedOneWaySyncPresentsSafeDirectionChoice'],
+    'timebox': ['testTimeboxReportsRealElapsedMinuteAndCanContinueOrFinish'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

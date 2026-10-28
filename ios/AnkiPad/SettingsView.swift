@@ -44,6 +44,12 @@ struct SettingsView: View {
                         Button("次回の同期を一方向にする") { confirmingOneWaySync = true }
                             .disabled(busy || model.isSyncing).accessibilityIdentifier("sync-force-one-way")
                     }
+                    Section("学習時間") {
+                        Stepper("学習の区切り: \(timeboxMinutes.wrappedValue)分（0で無効）", value: timeboxMinutes, in: 0...120)
+                            .accessibilityIdentifier("timebox-limit")
+                        Text("指定時間を過ぎてカードに回答したときに、回答枚数を知らせます。続行か終了を選べます。")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                     Section("表示") {
                         Picker("学習画面の操作", selection: $displayMode) { ForEach(ReviewDisplayMode.allCases) { Text($0.title).tag($0) } }.accessibilityIdentifier("review-display-mode")
                         Toggle("学習の上部バーを表示", isOn: $showTopbar)
@@ -142,6 +148,13 @@ struct SettingsView: View {
             } message: { Text(error ?? "") }
             .task { do { values = try await model.engine.preferences(); automaticSync = model.automaticSyncEnabled; automaticTTS = ReviewSpeechPreferences.enabled(profileID: model.currentProfileID); allowCollectionAPI = UserDefaults.standard.bool(forKey: model.profilePreferenceKey("allowCollectionCardAPI")); loaded = true } catch { self.error = error.localizedDescription } }
         }
+    }
+    private var timeboxMinutes: Binding<Int> {
+        Binding(get: { ((values["reviewing"] as? [String: Any])?["timeLimitSecs"] as? Int ?? 0) / 60 }, set: { minutes in
+            var section = values["reviewing"] as? [String: Any] ?? [:]
+            section["timeLimitSecs"] = minutes * 60
+            values["reviewing"] = section
+        })
     }
     private func boolean(_ group: String, _ key: String) -> Binding<Bool> {
         Binding(get: { (values[group] as? [String: Any])?[key] as? Bool ?? false }, set: { value in var section = values[group] as? [String: Any] ?? [:]; section[key] = value; values[group] = section })

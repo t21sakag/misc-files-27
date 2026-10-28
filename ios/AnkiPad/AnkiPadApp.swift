@@ -113,6 +113,8 @@ import AVFoundation
     private var syncBackgroundTask: SyncBackgroundTask?
     private var syncSessionID: UUID?
     private var syncAbortTask: Task<Void, Never>?
+    private var timebox = ReviewTimebox()
+    @Published var timeboxReport: ReviewTimebox.Report?
     private var started = Date()
 
     func run(automatic: Bool = false, _ operation: @escaping () async throws -> Void) {
@@ -163,7 +165,7 @@ import AVFoundation
             || showingMaintenance || showingNoteTypes || showingNavigationDrawer || showingReviewerOptions
             || showingReviewVoice || showingTemplateActions || editorRequest != nil || backendPage != nil
             || cardActionRequest != nil || exportURL != nil || error != nil || cardDialogPresented || collectionPresentationActive
-            || speechPreparing || speechRequest != nil
+            || speechPreparing || speechRequest != nil || timeboxReport != nil
         guard automaticSyncPolicy.take(profileID: currentProfileID, enabled: automaticSyncEnabled,
             hasAccount: account != nil, canStart: !busy && !modal,
             uptime: ProcessInfo.processInfo.systemUptime) != nil else { return }
@@ -417,7 +419,7 @@ import AVFoundation
         }
     }
     var reviewingInteractionBlocked: Bool {
-        nonSpeechPresentationBlocked || showingReviewVoice || speechPreparing || speechRequest != nil
+        nonSpeechPresentationBlocked || showingReviewVoice || speechPreparing || speechRequest != nil || timeboxReport != nil
     }
     var nonSpeechPresentationBlocked: Bool {
         !reviewSceneActive || cardDialogPresented || showingAccount || showingBrowser || showingSharedDecks || showingProfiles || showingSettings || showingMaintenance || showingNoteTypes
@@ -558,6 +560,8 @@ import AVFoundation
             self.audio.stop()
             try await self.engine.select(deck.id)
             self.selected = deck
+            self.timebox.start(now: ProcessInfo.processInfo.systemUptime)
+            self.timeboxReport = nil
             try await self.loadNext()
         }
     }
@@ -610,7 +614,10 @@ import AVFoundation
         guard revealed, !reviewingInteractionBlocked, schedulerReady, let card else { return }
         run {
             self.audio.stop()
+            let preferences = try await self.engine.preferences()
+            let seconds = (preferences["reviewing"] as? [String: Any])?["timeLimitSecs"] as? Int ?? 0
             try await self.engine.answer(card, rating: rating, elapsed: self.elapsed())
+            self.timeboxReport = self.timebox.recordAnswer(limitSeconds: seconds, now: ProcessInfo.processInfo.systemUptime)
             try await self.loadNext()
             self.decks = try await self.engine.decks()
         }
@@ -716,6 +723,7 @@ import AVFoundation
     }
     func replayStop() { cancelSpeechPlayback(); reviewVoice.finish(); pauseReviewScene(); cardRecognition.cancel(); cardSpeech.stop(); audio.stop(); autoTask?.cancel(); UIApplication.shared.isIdleTimerDisabled = false }
     func leave() {
+        timebox.clear(); timeboxReport = nil
         cancelSpeechPlayback()
         speechContexts = [:]
         showingReviewVoice = false

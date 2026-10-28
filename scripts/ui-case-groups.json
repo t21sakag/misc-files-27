@@ -74,5 +74,8 @@
   "SyncSettingsFlowTests": [
     "testNetworkSyncSettingsSurviveRelaunchAndCancelDoesNotSave",
     "testRequestedOneWaySyncPresentsSafeDirectionChoice"
+  ],
+  "TimeboxFlowTests": [
+    "testTimeboxReportsRealElapsedMinuteAndCanContinueOrFinish"
   ]
 }

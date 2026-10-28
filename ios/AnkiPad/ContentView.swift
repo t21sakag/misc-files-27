@@ -385,6 +385,10 @@ struct ContentView: View {
         .onChange(of: model.reviewingInteractionBlocked) { _, blocked in
             if blocked { model.pauseReviewInteraction() } else { model.resumeReviewInteraction(); openPendingReminder(); model.processPendingAutomaticSync() }
         }
+        .alert("学習の区切り", isPresented: Binding(get: { model.timeboxReport != nil && !model.busy && phase == .active }, set: { if !$0 { model.timeboxReport = nil } })) {
+            Button("続ける") { model.timeboxReport = nil }.accessibilityIdentifier("timebox-continue")
+            Button("学習を終了") { model.leave() }.accessibilityIdentifier("timebox-finish")
+        } message: { Text(model.timeboxReport?.message ?? "") }
         .alert("自動進行", isPresented: $model.timedReminder) { Button("閉じる", role: .cancel) {} } message: { Text("カードの表示時間が終了しました。解答または評価を選んでください。") }
     }
     private var localCollectionPresentationActive: Bool {

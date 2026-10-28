@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, all]
 permissions:
   contents: read
 concurrency:
@@ -44,6 +44,10 @@ jobs:
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/sync-decision-smoke
           build/sync-decision-smoke
+      - name: Test study timebox interval and answer counts
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/ReviewTimebox.swift tests/review_timebox_smoke.swift -o build/review-timebox-smoke
+          build/review-timebox-smoke
       - name: Test network sync preference policy and persistence
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/SyncNetworkPreferences.swift tests/sync_network_preferences_smoke.swift -o build/sync-network-preferences-smoke
