@@ -2,6 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 import PencilKit
 import UIKit
+import AVFoundation
 
 @main struct AnkiPadApp: App {
     @UIApplicationDelegateAdaptor(ReviewNotificationAppDelegate.self) private var notificationDelegate
@@ -72,6 +73,7 @@ import UIKit
     @Published var showingTemplateActions = false
     @Published var speechRequest: ReviewSpeechRequest?
     @Published var speechPreparing = false
+    var speechVoiceCache: [String: AVSpeechSynthesisVoice] = [:]
     var speechGeneration = UUID()
     var speechTask: Task<Void, Never>?
     var speechResume: (() -> Void)?

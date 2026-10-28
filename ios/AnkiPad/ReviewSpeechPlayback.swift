@@ -12,7 +12,10 @@ struct ReviewSpeechRequest: Identifiable {
 
 extension StudyModel {
     var installedSpeechVoices: [InstalledSpeechVoice] {
-        AVSpeechSynthesisVoice.speechVoices().map { InstalledSpeechVoice(id: $0.identifier, name: $0.name, language: $0.language) }
+        AVSpeechSynthesisVoice.speechVoices().map { voice in
+            speechVoiceCache[voice.identifier] = voice
+            return InstalledSpeechVoice(id: voice.identifier, name: voice.name, language: voice.language)
+        }
     }
     func cancelSpeechPlayback(stopAudio: Bool = true) {
         speechGeneration = UUID()
@@ -48,7 +51,7 @@ extension StudyModel {
         if !legacy || !currentTags.isEmpty {
             let tags = sides.flatMap { $0 == .question ? card.questionAV : card.answerAV }
             if append { audio.append(tags, media: engine.media) }
-            else { audio.play(tags, media: engine.media, completion: completion) }
+            else { audio.play(tags, media: engine.media, voices: speechVoiceCache, completion: completion) }
             return
         }
         let generation = speechGeneration
@@ -83,7 +86,7 @@ extension StudyModel {
                 guard speechStillCurrent(card, profile: profile, generation: generation) else { return }
                 guard !tags.isEmpty else { return }
                 if append { audio.append(tags, media: engine.media) }
-                else { audio.play(tags, media: engine.media, completion: completion) }
+                else { audio.play(tags, media: engine.media, voices: speechVoiceCache, completion: completion) }
             } catch {
                 if speechStillCurrent(card, profile: profile, generation: generation) { self.error = error.localizedDescription }
             }
@@ -117,16 +120,16 @@ extension StudyModel {
         try checkSpeechRequest(request)
         audio.stop(); cardSpeech.stop(); cardRecognition.cancel(); reviewVoice.finish()
         guard choice.mode != .off else { return }
-        let voice = choice.mode == .voice ? installedSpeechVoices.first { $0.id == choice.voiceID } : nil
+        let voice = choice.mode == .voice ? choice.voiceID.flatMap { speechVoiceCache[$0] ?? AVSpeechSynthesisVoice(identifier: $0) } : nil
         if choice.mode == .voice && voice == nil { throw EngineError(message: "この音声は現在利用できません。別の音声を選んでください。") }
         let text = request.context.plainText
         guard !text.isEmpty else { return }
-        let snippet = ResolvedSpeechSnippet(text: text, language: voice?.language ?? "", voiceID: voice?.id)
-        audio.play([snippet.avTag], media: engine.media)
+        let snippet = ResolvedSpeechSnippet(text: text, language: voice?.language ?? "", voiceID: voice?.identifier)
+        audio.play([snippet.avTag], media: engine.media, voices: speechVoiceCache)
     }
     func applySpeechChoice(_ request: ReviewSpeechRequest, choice: ReviewSpeechChoice) throws {
         try checkSpeechRequest(request)
-        if choice.mode == .voice && !installedSpeechVoices.contains(where: { $0.id == choice.voiceID }) {
+        if choice.mode == .voice && !request.voices.contains(where: { $0.id == choice.voiceID }) {
             throw EngineError(message: "この音声は現在利用できません。別の音声を選んでください。")
         }
         try ReviewSpeechPreferences.save(choice, profileID: request.profileID, scope: request.context.scope)
@@ -136,9 +139,9 @@ extension StudyModel {
             speechResume = { [weak self] in
                 guard let self, self.card?.mutationKey == key, self.currentProfileID == profile, self.reviewSceneActive,
                       choice.mode != .off else { return }
-                let voice = self.installedSpeechVoices.first { $0.id == choice.voiceID }
-                let snippet = ResolvedSpeechSnippet(text: request.context.plainText, language: voice?.language ?? "", voiceID: voice?.id)
-                self.audio.play([snippet.avTag], media: self.engine.media)
+                let voice = choice.voiceID.flatMap { self.speechVoiceCache[$0] ?? AVSpeechSynthesisVoice(identifier: $0) }
+                let snippet = ResolvedSpeechSnippet(text: request.context.plainText, language: voice?.language ?? "", voiceID: voice?.identifier)
+                self.audio.play([snippet.avTag], media: self.engine.media, voices: self.speechVoiceCache)
             }
         }
         speechChoiceApplied = true

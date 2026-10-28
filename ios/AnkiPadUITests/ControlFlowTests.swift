@@ -1,6 +1,31 @@
 import XCTest
 
 final class ControlFlowTests: StudyFlowTestSupport {
+    func testDeckContextDeletionKeepsTargetAfterConfirmationDismisses() {
+        let app = makeApplication()
+        app.launch()
+        let menu = app.buttons["collection-menu"]
+        XCTAssertTrue(menu.waitForExistence(timeout: 30)); menu.tap(); app.buttons["デッキを作成"].tap()
+        let dialog = app.alerts["デッキを作成"]
+        XCTAssertTrue(dialog.waitForExistence(timeout: 20))
+        let field = dialog.textFields.firstMatch
+        field.tap(); field.typeText("Deletion confirmation check")
+        dialog.buttons["保存"].tap()
+        let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'deck-' AND label CONTAINS 'Deletion confirmation check'")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 30), app.debugDescription)
+        row.press(forDuration: 1)
+        app.buttons["削除"].firstMatch.tap()
+        let confirm = app.buttons["deck-delete-confirm"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 20), app.debugDescription)
+        confirm.tap()
+        XCTAssertTrue(row.waitForNonExistence(timeout: 30), app.debugDescription)
+        XCTAssertTrue(app.buttons["deck-1"].exists, "Unrelated fixture deck must remain")
+        app.terminate(); app.launchArguments = []; app.launch()
+        XCTAssertTrue(app.buttons["deck-1"].waitForExistence(timeout: 30))
+        XCTAssertFalse(row.exists, "Deletion must persist across relaunch")
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
+
     func testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions() {
         let app = makeApplication()
         app.launch()

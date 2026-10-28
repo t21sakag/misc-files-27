@@ -182,7 +182,7 @@ struct ContentView: View {
                     }
                 } label: { Image(systemName: "ellipsis.circle") }.disabled(model.busy || model.card == nil).accessibilityIdentifier("reviewer-menu")
             } else {
-                Button(action: model.synchronize) { Image(systemName: "arrow.triangle.2.circlepath") }
+                Button(action: { model.synchronize() }) { Image(systemName: "arrow.triangle.2.circlepath") }
                     .accessibilityLabel("AnkiWebと同期").accessibilityIdentifier("sync")
                     .disabled(model.busy || !model.profilesReady)
                 Button { model.showingAccount = true } label: { Image(systemName: "person.crop.circle") }
@@ -298,8 +298,9 @@ struct ContentView: View {
             }.disabled(deckName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             Button("キャンセル", role: .cancel) {}
         }
-        .confirmationDialog("デッキとカードを削除しますか？", isPresented: Binding(get: { deletingDeck != nil }, set: { if !$0 { deletingDeck = nil } })) {
-            Button("削除", role: .destructive) { if let deck = deletingDeck { model.deleteDeck(deck) }; deletingDeck = nil }
+        .confirmationDialog("デッキとカードを削除しますか？", isPresented: Binding(get: { deletingDeck != nil }, set: { if !$0 { deletingDeck = nil } }), presenting: deletingDeck) { deck in
+            Button("削除", role: .destructive) { model.deleteDeck(deck); deletingDeck = nil }
+                .accessibilityIdentifier("deck-delete-confirm")
         } message: { Text("子デッキと関連するカードも削除します。バックアップを保存してから削除します。") }
     }
     private var syncDialogContent: some View {

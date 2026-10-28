@@ -59,7 +59,8 @@
     "testImageAnnotationIsCompositedAtCanvasScale"
   ],
   "ControlFlowTests": [
-    "testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions"
+    "testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions",
+    "testDeckContextDeletionKeepsTargetAfterConfirmationDismisses"
   ],
   "AudioFlowTests": [
     "testCardAudioQueueCompletesOnceAndCancellationDoesNotReplay",

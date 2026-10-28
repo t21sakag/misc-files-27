@@ -13,6 +13,7 @@ import UniformTypeIdentifiers
     private var currentUtterance: AVSpeechUtterance?
     private var utteranceGeneration: UUID?
     private var pending: [[String: Any]] = []
+    private var preferredVoices: [String: AVSpeechSynthesisVoice] = [:]
     private var media: URL?
     private var delegate: AudioDelegate?
     private var generation = UUID()
@@ -37,6 +38,7 @@ import UniformTypeIdentifiers
     func stop() {
         generation = UUID()
         completion = nil
+        preferredVoices = [:]
         currentUtterance = nil; utteranceGeneration = nil
         pending = []; player?.stop(); player = nil; speech.stopSpeaking(at: .immediate)
         finishVideo(continueQueue: false)
@@ -90,9 +92,10 @@ import UniformTypeIdentifiers
             }
         }
     }
-    func play(_ tags: [[String: Any]], media: URL, completion: (() -> Void)? = nil) {
+    func play(_ tags: [[String: Any]], media: URL, voices: [String: AVSpeechSynthesisVoice] = [:], completion: (() -> Void)? = nil) {
         stop()
         self.completion = completion
+        preferredVoices = voices
         self.media = media
         pending = tags
         advance()
@@ -132,7 +135,7 @@ import UniformTypeIdentifiers
             let utterance = AVSpeechUtterance(string: text)
             let requested = tts["voices"] as? [String] ?? []
             let voices = AVSpeechSynthesisVoice.speechVoices()
-            utterance.voice = requested.lazy.compactMap { name in voices.first { $0.identifier == name || $0.name == name } }.first ?? AVSpeechSynthesisVoice(language: tts["lang"] as? String)
+            utterance.voice = requested.lazy.compactMap { name in self.preferredVoices[name] ?? AVSpeechSynthesisVoice(identifier: name) ?? voices.first { $0.identifier == name || $0.name == name } }.first ?? AVSpeechSynthesisVoice(language: tts["lang"] as? String)
             let speed = (tts["speed"] as? Double) ?? 1
             utterance.rate = min(AVSpeechUtteranceMaximumSpeechRate, max(AVSpeechUtteranceMinimumSpeechRate, AVSpeechUtteranceDefaultSpeechRate * Float(speed)))
             currentUtterance = utterance
