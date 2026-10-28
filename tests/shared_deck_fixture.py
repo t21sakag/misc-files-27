@@ -5,6 +5,7 @@ import http.server
 import json
 import sys
 import tempfile
+from urllib.parse import urlsplit, parse_qs
 
 output = Path(sys.argv[2]).resolve()
 output.parent.mkdir(parents=True, exist_ok=True)
@@ -23,13 +24,28 @@ package = output.read_bytes()
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path in ('/shared', '/details'):
-            details = '<h1>Shared deck fixture</h1><a href="/fixture.apkg">Download fixture deck</a>'
+            details = '<h1>Shared deck fixture</h1><a href="/svc/shared/download-deck/1?t=fixture-key">Download fixture deck</a>'
             listing = '<h1>Shared deck search</h1><a href="/details" onclick="showDeck();return false;">View fixture deck</a>'
             script = '<script>function showDeck(){history.pushState({},"","/details");document.body.innerHTML=' + json.dumps(details) + ';}window.onpopstate=()=>location.reload();</script>'
             body = ('<!doctype html><meta name="viewport" content="width=device-width"><body>' + (listing if self.path == '/shared' else details) + '</body>' + script).encode()
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
-        elif self.path == '/fixture.apkg':
+            self.send_header('Set-Cookie', 'shared_fixture=1; HttpOnly; SameSite=Lax; Path=/')
+        elif urlsplit(self.path).path == '/svc/shared/download-deck/1':
+            # Match the live portal: extensionless keyed endpoint, WebKit
+            # cookies, then a redirect to the attachment response.
+            if parse_qs(urlsplit(self.path).query).get('t') != ['fixture-key'] or 'shared_fixture=1' not in self.headers.get('Cookie', ''):
+                self.send_error(403)
+                return
+            self.send_response(302)
+            self.send_header('Location', '/package/fixture')
+            self.send_header('Content-Length', '0')
+            self.end_headers()
+            return
+        elif self.path == '/package/fixture':
+            if 'shared_fixture=1' not in self.headers.get('Cookie', ''):
+                self.send_error(403)
+                return
             body = package
             self.send_response(200)
             self.send_header('Content-Type', 'application/octet-stream')
