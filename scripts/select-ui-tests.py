@@ -31,6 +31,7 @@ suites = {
     'answer-layout': ['testAnswerLayoutPersistsWithTopLargeButtonsAndHiddenMode'],
     'layout-regression': ['testAnswerLayoutPersistsWithTopLargeButtonsAndHiddenMode', 'testFullscreenCanBeRestoredWithTripleTap'],
     'card-appearance': ['testImageOnlyZoomAndVerticalCenterSurviveRelaunch'],
+    'templates': ['testAnkiDroidCardJavaScriptReadsNativeMetadata', 'testPreviewCardAPIReadsAndRestoresFlag'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

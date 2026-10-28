@@ -28,12 +28,8 @@ extension Engine {
         let note = try call("NotesService.GetNote", ["nid": card["noteId"] as? String ?? "0"])
         let ordinal = card["templateIdx"] as? Int ?? 0
         let rendered = try call("CardRenderingService.RenderExistingCard", ["cardId": id, "partialRender": true])
-        func html(_ key: String, front: String = "") throws -> String {
-            try (rendered[key] as? [[String: Any]] ?? []).map { node in
-                if let text = node["text"] as? String { return text }
-                if let replacement = node["replacement"] as? [String: Any], replacement["fieldName"] as? String == "FrontSide" { return front }
-                throw EngineError(message: "未対応のテンプレートフィルターです。")
-            }.joined()
+        func html(_ key: String, front: String? = nil) throws -> String {
+            try TemplateNodeText.render(rendered[key] as? [[String: Any]] ?? [], frontSide: front)
         }
         let question = try call("CardRenderingService.ExtractAvTags", ["text": try html("questionNodes"), "questionSide": true])
         let answer = try call("CardRenderingService.ExtractAvTags", ["text": try html("answerNodes", front: question["text"] as? String ?? ""), "questionSide": false])

@@ -48,9 +48,9 @@ extension Engine {
             }
         }
         let rendered = try call("CardRenderingService.RenderUncommittedCard", ["note": note, "cardOrd": ordinal, "template": templates[templateIndex], "fillEmpty": true])
-        func html(_ key: String) -> String { (rendered[key] as? [[String: Any]] ?? []).compactMap { $0["text"] as? String }.joined() }
-        let question = try call("CardRenderingService.ExtractAvTags", ["text": html("questionNodes"), "questionSide": true])
-        let answer = try call("CardRenderingService.ExtractAvTags", ["text": html("answerNodes"), "questionSide": false])
+        func html(_ key: String, front: String? = nil) throws -> String { try TemplateNodeText.render(rendered[key] as? [[String: Any]] ?? [], frontSide: front) }
+        let question = try call("CardRenderingService.ExtractAvTags", ["text": try html("questionNodes"), "questionSide": true])
+        let answer = try call("CardRenderingService.ExtractAvTags", ["text": try html("answerNodes", front: question["text"] as? String ?? ""), "questionSide": false])
         return TemplatePreview(question: question["text"] as? String ?? "", answer: answer["text"] as? String ?? "",
             css: rendered["css"] as? String ?? "", questionAV: question["avTags"] as? [[String: Any]] ?? [], answerAV: answer["avTags"] as? [[String: Any]] ?? [])
     }

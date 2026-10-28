@@ -97,12 +97,7 @@ actor Engine {
         }
         let rendered = try call("CardRenderingService.RenderExistingCard", ["cardId": id, "partialRender": true])
         func text(_ key: String, front: String? = nil) throws -> String {
-            let nodes = rendered[key] as? [[String: Any]] ?? []
-            return try nodes.map { node in
-                if let text = node["text"] as? String { return text }
-                if let replacement = node["replacement"] as? [String: Any], replacement["fieldName"] as? String == "FrontSide" { return front ?? "" }
-                throw EngineError(message: "このカードには未対応のテンプレートフィルターがあります。")
-            }.joined()
+            try TemplateNodeText.render(rendered[key] as? [[String: Any]] ?? [], frontSide: front)
         }
         let q = try call("CardRenderingService.ExtractAvTags", ["text": try text("questionNodes"), "questionSide": true])
         let a = try call("CardRenderingService.ExtractAvTags", ["text": try text("answerNodes", front: q["text"] as? String ?? ""), "questionSide": false])
