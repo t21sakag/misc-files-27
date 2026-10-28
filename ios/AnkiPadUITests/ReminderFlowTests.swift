@@ -34,7 +34,19 @@ final class ReminderFlowTests: StudyFlowTestSupport {
             }
             let item = control(id)
             waitUntilHittable(item)
-            if item.value as? String != (enabled ? "1" : "0") { item.tap() }
+            // A lazy Form can report a clipped switch as hittable. Bring its
+            // entire thumb inside the scroll viewport before sending one tap.
+            for _ in 0..<8 {
+                let bounds = form.frame.insetBy(dx: 0, dy: 60)
+                if item.frame.minY >= bounds.minY && item.frame.maxY <= bounds.maxY { break }
+                let upward = item.frame.maxY > bounds.maxY
+                let from = form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.7 : 0.3))
+                let to = form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.45 : 0.55))
+                from.press(forDuration: 0.1, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.2)
+            }
+            if item.value as? String != (enabled ? "1" : "0") {
+                item.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
+            }
             let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", enabled ? "1" : "0"), object: control(id))
             XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 10), .completed, id + " " + app.debugDescription)
         }
