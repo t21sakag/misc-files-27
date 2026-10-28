@@ -34,7 +34,16 @@ final class AnswerLayoutFlowTests: StudyFlowTestSupport {
             if size.exists && size.isHittable { break }
             app.collectionViews["settings-form"].swipeUp()
         }
+        for _ in 0..<12 {
+            let targetY = size.frame.midY
+            let upper = form.frame.minY + 160, lower = form.frame.maxY - 100
+            if size.exists && targetY >= upper && targetY <= lower { break }
+            let upward = !size.exists || targetY > lower
+            form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.65 : 0.35))
+                .press(forDuration: 0.1, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.45 : 0.55)), withVelocity: .slow, thenHoldForDuration: 0.2)
+        }
         waitUntilHittable(size); size.adjust(toNormalizedSliderPosition: 1)
+        XCTAssertTrue(app.staticTexts["ボタンの大きさ: 200%"].exists, app.debugDescription)
         app.buttons["settings-save"].tap()
         XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30), app.debugDescription)
         app.terminate(); app.launchArguments = []; app.launch()

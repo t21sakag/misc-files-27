@@ -509,7 +509,7 @@ struct ContentView: View {
                         }
                     }
                 }
-            }.padding().accessibilityIdentifier("answer-controls")
+            }.padding()
         } else {
             Button(action: model.reveal) {
                 Text("解答を表示").font(.system(size: answerFontSize * answerScale))
