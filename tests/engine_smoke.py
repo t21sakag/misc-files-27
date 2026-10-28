@@ -159,7 +159,11 @@ def main():
           frame.src='data:text/html;charset=utf-8,'+encodeURIComponent(child);
         })();
         </script>"""
-        note['fields'] = ['iPad移植の質問' + api_probe, 'Rustエンジンの解答 [sound:test.wav] <img src="test.svg">']
+        math_probe = r'''<p>\(x^2\)</p><div id="mathjax-status" aria-live="polite"></div><script>
+        (()=>{let tries=0;const check=()=>{const status=document.getElementById('mathjax-status');if(!status)return;
+          if(document.querySelector('mjx-container'))status.textContent='MathJax typeset verified';else if(++tries<150)setTimeout(check,100);};check();})();
+        </script>'''
+        note['fields'] = ['iPad移植の質問' + math_probe + api_probe, 'Rustエンジンの解答 [sound:test.wav] <img src="test.svg">']
         added = source.call('NotesService.AddNote', {'note': note, 'deckId': '1'})
         assert added.get('noteId')
         (source.root / 'collection.media' / 'test.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
