@@ -25,6 +25,7 @@ suites = {
     'occlusion': ['testZImageOcclusionCanBeCreatedFromPhoto', 'testImageOcclusionMaskCopyPersistsAndDiscardPreservesSavedMasks'],
     'whiteboard': ['testWhiteboardUndoesStrokesAndKeepsPerDeckVisibility', 'testImportedDeckCanBeReviewedAndUndone'],
     'preview': ['testPreviewCardAPIReadsAndRestoresFlag', 'testPreviewNativeToastAndTagDialogPersistToPreviewedNote', 'testPreviewFlagPersistsAfterClosing'],
+    'network': ['testNetworkSyncSettingsSurviveRelaunchAndCancelDoesNotSave', 'testRequestedOneWaySyncPresentsSafeDirectionChoice'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

@@ -70,5 +70,9 @@
     "testInstalledVoiceSelectionPersistsAndQuestionAnswerChoicesAreSeparate",
     "testAutomaticSpeechChoiceAndNestedReferencePickerCanCancelAndResume",
     "testNativeSpeechSynthesisQueueCompletes"
+  ],
+  "SyncSettingsFlowTests": [
+    "testNetworkSyncSettingsSurviveRelaunchAndCancelDoesNotSave",
+    "testRequestedOneWaySyncPresentsSafeDirectionChoice"
   ]
 }

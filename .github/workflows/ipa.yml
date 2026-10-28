@@ -226,10 +226,10 @@ jobs:
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'collapse')
         run: python3 tests/deck_collapse_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test authenticated data and media sync
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair' || env.UI_SUITE == 'collapse'))
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'network' || env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair' || env.UI_SUITE == 'collapse'))
         run: python3 tests/sync_smoke.py build/native/host/libankipad_bridge.dylib build/native/host/sync_test_server
       - name: Test interrupted download preservation and retry
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair'))
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'network' || env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair'))
         run: python3 tests/sync_interrupt_smoke.py build/native/host/libankipad_bridge.dylib build/native/host/sync_test_server
       - name: Test independent parallel sync fixtures
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair'))
@@ -314,7 +314,7 @@ jobs:
         env:
           SIMULATOR_ID: ${{ steps.ui-simulator.outputs.simulator }}
         run: |
-          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then
+          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = network ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then
             sync_ports=(18891)
             if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then sync_ports+=(18901); fi
             for sync_port in "${sync_ports[@]}"; do
