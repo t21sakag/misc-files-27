@@ -40,6 +40,7 @@ import AVFoundation
     @Published var card: StudyCard?
     @Published var selected: Deck?
     @Published var revealed = false
+    var reviewButtonTiming = ReviewButtonTiming()
     @Published var typedAnswer = ""
     @Published var answerOverride: String?
     @Published var autoAdvance = false
@@ -567,6 +568,7 @@ import AVFoundation
             self.audio.stop()
             try await self.engine.select(deck.id)
             self.selected = deck
+            self.reviewButtonTiming = ReviewButtonTiming()
             self.timebox.start(now: ProcessInfo.processInfo.systemUptime)
             self.timeboxReport = nil
             try await self.loadNext()

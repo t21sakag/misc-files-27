@@ -22,6 +22,8 @@ struct SettingsView: View {
     @State private var autoFocusTypeInAnswer = UserDefaults.standard.object(forKey: "autoFocusTypeInAnswer") as? Bool ?? true
     @State private var browserFontPercent = UserDefaults.standard.object(forKey: "relativeCardBrowserFontSize") as? Int ?? 100
     @State private var browserMediaFilenames = UserDefaults.standard.bool(forKey: "card_browser_show_media_filenames")
+    @State private var answerHoldMilliseconds = String(UserDefaults.standard.object(forKey: "showCardAnswerButtonTime") as? Int ?? 0)
+    @State private var buttonIntervalMilliseconds = String(UserDefaults.standard.object(forKey: "doubleTapTimeout") as? Int ?? 200)
     @State private var answerPosition = AnswerButtonPosition(rawValue: UserDefaults.standard.string(forKey: "answerButtonPosition") ?? "bottom") ?? .bottom
     @State private var answerSize = Double(UserDefaults.standard.object(forKey: "answerButtonSize") as? Int ?? 100)
     @State private var largeAnswerButtons = UserDefaults.standard.bool(forKey: "showLargeAnswerButtons")
@@ -106,6 +108,16 @@ struct SettingsView: View {
                         Text("学習画面の「読み上げ音声を選択」から、デッキとカードの面に合わせて音声を選べます。")
                     }
                     Section("学習操作") {
+                        LabeledContent("解答表示の長押し（ミリ秒）") {
+                            TextField("0〜2000", text: $answerHoldMilliseconds).keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing).frame(width: 100).accessibilityIdentifier("answer-hold-time")
+                        }
+                        LabeledContent("ボタンの連打防止（ミリ秒）") {
+                            TextField("0〜1000", text: $buttonIntervalMilliseconds).keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing).frame(width: 100).accessibilityIdentifier("review-button-interval")
+                        }
+                        Text("長押し時間を0にすると通常のタップで解答を表示します。連打防止は解答表示・評価ボタンの誤操作を防ぎます。")
+                            .font(.caption).foregroundStyle(.secondary)
                         Toggle("入力式カードの解答欄に自動フォーカス", isOn: $autoFocusTypeInAnswer).accessibilityIdentifier("auto-focus-type-answer")
                         Toggle("スワイプで解答・評価", isOn: $swipeReview)
                         NavigationLink("スワイプの割り当て") { ReviewGestureSettingsView(configuration: $gestureConfiguration) }
@@ -162,6 +174,10 @@ struct SettingsView: View {
                     Task {
                         defer { busy = false }
                         do {
+                            guard let hold = Int(answerHoldMilliseconds.trimmingCharacters(in: .whitespacesAndNewlines)), (0...2000).contains(hold),
+                                  let interval = Int(buttonIntervalMilliseconds.trimmingCharacters(in: .whitespacesAndNewlines)), (0...1000).contains(interval) else {
+                                throw EngineError(message: "長押し時間は0〜2000、連打防止は0〜1000の整数を入力してください（ミリ秒）。")
+                            }
                             if allowTemplateAudioRecording {
                                 guard await AVAudioApplication.requestRecordPermission() else {
                                     throw EngineError(message: "マイクの使用が許可されていません。iPadの設定でマイクの許可を確認してください。")
@@ -189,6 +205,8 @@ struct SettingsView: View {
                             UserDefaults.standard.set(autoFocusTypeInAnswer, forKey: "autoFocusTypeInAnswer")
                             UserDefaults.standard.set(browserFontPercent, forKey: "relativeCardBrowserFontSize")
                             UserDefaults.standard.set(browserMediaFilenames, forKey: "card_browser_show_media_filenames")
+                            UserDefaults.standard.set(hold, forKey: "showCardAnswerButtonTime")
+                            UserDefaults.standard.set(interval, forKey: "doubleTapTimeout")
                             UserDefaults.standard.set(dayTheme.rawValue, forKey: "dayTheme")
                             UserDefaults.standard.set(nightTheme.rawValue, forKey: "nightTheme")
                             networkPreferences.save()

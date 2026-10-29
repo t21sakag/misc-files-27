@@ -43,6 +43,7 @@ suites = {
     'browser-appearance': ['testBrowserFontAndSoundNamesPersistAfterRelaunch'],
     'themes': ['testDayAndNightThemeChoicesPersistAndStyleNativeAndCardSurfaces'],
     'milestone-repair': ['testPreviewCardAPIReadsAndRestoresFlag', 'testUnsafeCollectionAPIRequiresExplicitSetting', 'testReminderNativeSchedulePersistsReplacesAndCancels', 'testAutomaticSpeechChoiceAndNestedReferencePickerCanCancelAndResume'],
+    'button-timing': ['testRevealHoldPersistsCancelsOutsideAndAcceptsSustainedPress'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

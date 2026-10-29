@@ -52,6 +52,7 @@ struct ContentView: View {
     @AppStorage("showLargeAnswerButtons") private var largeAnswerButtons = false
     @AppStorage("showDeckTitle") private var showDeckTitle = false
     @AppStorage("showETA") private var showETA = false
+    @AppStorage("showCardAnswerButtonTime") private var answerHoldMilliseconds = 0
     @AppStorage("dayTheme") private var dayTheme = "1"
     @AppStorage("nightTheme") private var nightTheme = "3"
     private var activeTheme: StudyTheme { StudyTheme.resolve(dark: colorScheme == .dark, day: dayTheme, night: nightTheme) }
@@ -501,7 +502,7 @@ struct ContentView: View {
     }
     private var answerScale: CGFloat { CGFloat(min(200, max(10, answerButtonSize))) / 100 }
     private func ratingButton(_ rating: Int, card: StudyCard) -> some View {
-        Button { model.answer(rating) } label: {
+        Button { model.answerFromButton(rating, cardKey: card.mutationKey) } label: {
             VStack(spacing: 6 * answerScale) {
                 if card.options.showIntervals && card.intervals.indices.contains(rating) {
                     Text(card.intervals[rating]).font(.system(size: answerFontSize * 0.75 * answerScale))
@@ -529,9 +530,13 @@ struct ContentView: View {
                 }
             }.padding()
         } else {
-            Button(action: model.reveal) {
-                Text("解答を表示").font(.system(size: answerFontSize * answerScale))
-                    .frame(minHeight: max(44, 44 * answerScale))
+            ReviewRevealButton(milliseconds: answerHoldMilliseconds,
+                               enabled: !model.busy && !model.reviewingInteractionBlocked && model.schedulerReady,
+                               cardKey: card.mutationKey, action: { model.revealFromButton(cardKey: card.mutationKey) }) {
+                VStack {
+                    Text("解答を表示").font(.system(size: answerFontSize * answerScale))
+                    if answerHoldMilliseconds > 0 { Text("\(answerHoldMilliseconds)ミリ秒長押し").font(.caption) }
+                }.frame(minHeight: max(44, 44 * answerScale))
             }.buttonStyle(.borderedProminent).controlSize(.large).padding()
                 .disabled(model.busy || model.reviewingInteractionBlocked || !model.schedulerReady)
                 .accessibilityIdentifier("reveal")
