@@ -119,7 +119,7 @@ jobs:
           xcrun simctl list runtimes
       - name: Start requested iPadOS 27 simulator before native setup
         id: ui-simulator
-        if: env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check'
+        if: env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
         run: |
           simulator_id=$(xcrun simctl list devices available -j | python3 scripts/select-ipad-simulator.py)
           echo "simulator=$simulator_id" >> "$GITHUB_OUTPUT"
@@ -357,7 +357,7 @@ jobs:
         env:
           SIMULATOR_ID: ${{ steps.ui-simulator.outputs.simulator }}
         run: |
-          if [ "$CI_MODE" = ui ] && [ "$UI_SUITE" != batch-check ]; then
+          if [ "$CI_MODE" = ui ] && [ "$UI_SUITE" != batch-check ] && [ "$UI_SUITE" != all ]; then
             if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = network ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then
               sync_ports=(18891)
               if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then sync_ports+=(18901); fi
@@ -410,16 +410,16 @@ jobs:
           key: ${{ steps.xcode-simulator.outputs.cache-primary-key }}
       - name: Plan serial UI batches
         id: ui-batch-plan
-        if: env.CI_MODE == 'full' || env.UI_SUITE == 'batch-check'
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'batch-check' || env.UI_SUITE == 'all'))
         run: |
           proof_args=()
-          if [ "$CI_MODE" != full ]; then proof_args+=(--proof); fi
+          if [ "$UI_SUITE" = batch-check ] && [ "$CI_MODE" != full ]; then proof_args+=(--proof); fi
           python3 scripts/plan-ui-batches.py "${proof_args[@]}" --output build/ui-batches.json >> "$GITHUB_OUTPUT"
       - name: Package compiled test products
-        if: env.CI_MODE == 'full' || env.UI_SUITE == 'batch-check'
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'batch-check' || env.UI_SUITE == 'all'))
         run: python3 scripts/ui-products.py pack --source "$GITHUB_SHA"
       - uses: actions/upload-artifact@v4
-        if: env.CI_MODE == 'full' || env.UI_SUITE == 'batch-check'
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'batch-check' || env.UI_SUITE == 'all'))
         with:
           name: compiled-checks
           path: |
@@ -427,7 +427,7 @@ jobs:
             build/ui-products.json
           retention-days: 7
       - name: Execute selected UI cases without rebuilding
-        if: env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check'
+        if: env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
         env:
           SIMULATOR_ID: ${{ steps.ui-prepare.outputs.simulator }}
         run: |
@@ -447,7 +447,7 @@ jobs:
           done < ../build/ui-test-arguments.txt
           xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator "${ui_test_args[@]}" -parallel-testing-enabled "$parallel_ui" -parallel-testing-worker-count "$ui_workers" -maximum-concurrent-test-simulator-destinations 2 -destination "id=$SIMULATOR_ID" ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -derivedDataPath ../build/simulator -resultBundlePath ../build/UITests.xcresult CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" test-without-building
       - name: Export structured UI failures and timing
-        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check'
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
         run: |
           if [ -d build/UITests.xcresult ]; then
             xcrun xcresulttool get test-results summary --path build/UITests.xcresult > build/test-summary.json
@@ -456,13 +456,13 @@ jobs:
           fi
           xcrun simctl list devices booted -j > build/booted-after-tests.json
       - name: Export simulator screenshots
-        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check'
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
         run: |
           if [ -f build/UITests.xcresult/Info.plist ]; then
             xcrun xcresulttool export attachments --path build/UITests.xcresult --output-path build/screenshots
           fi
       - uses: actions/upload-artifact@v4
-        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check'
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
         with:
           name: test-results
           path: |
@@ -477,14 +477,14 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v4
-        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check'
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
         with:
           name: screenshots
           path: build/screenshots/*.png
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v4
-        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check'
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
         with:
           name: ui-diagnostics
           path: |
@@ -510,7 +510,7 @@ jobs:
   ui-batch:
     name: Check batch ${{ matrix.batch }}
     needs: build
-    if: inputs.mode == 'full' || (inputs.mode == 'ui' && inputs.ui_suite == 'batch-check')
+    if: inputs.mode == 'full' || (inputs.mode == 'ui' && (inputs.ui_suite == 'batch-check' || inputs.ui_suite == 'all'))
     strategy:
       fail-fast: false
       max-parallel: 1
