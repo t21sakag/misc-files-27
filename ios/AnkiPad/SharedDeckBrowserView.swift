@@ -19,6 +19,12 @@ struct SharedDeckBrowserView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 SharedDeckWebView(url: startURL, state: controls, downloaded: { clearPending(); pending = $0; confirmImport = true }, failed: { error = $0 })
+                #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--uitest-shared-decks"), UITestIsolation.namespace() != nil {
+                    Text("Transport state").font(.caption2).accessibilityIdentifier("shared-browser-state")
+                        .accessibilityValue(controls.diagnostics.joined(separator: " | "))
+                }
+                #endif
                 if controls.downloading || importing || controls.loading {
                     ProgressView(importing ? AppText.localized("デッキを取り込んでいます…") : controls.downloading ? AppText.localized("ダウンロードしています…") : AppText.localized("ページを読み込んでいます…")).padding()
                 }
@@ -67,6 +73,9 @@ struct SharedDeckBrowserView: View {
     @Published var canGoBack = false
     @Published var downloading = false
     @Published var loading = false
+    #if DEBUG
+    @Published var diagnostics: [String] = []
+    #endif
     weak var webView: WKWebView?
     var cancel: () -> Void = {}
 }
@@ -106,6 +115,13 @@ struct SharedDeckWebView: UIViewRepresentable {
         let failed: (String) -> Void
         let dialogs = CardScriptDialogs()
         private var active: WKDownload?
+        private func record(_ event: String) {
+            #if DEBUG
+            guard ProcessInfo.processInfo.arguments.contains("--uitest-shared-decks"), UITestIsolation.namespace() != nil else { return }
+            state.diagnostics.append(event)
+            if state.diagnostics.count > 16 { state.diagnostics.removeFirst() }
+            #endif
+        }
         private var historyObservation: NSKeyValueObservation?
         func observeHistory(_ view: WKWebView) {
             historyObservation = view.observe(\.canGoBack, options: [.initial, .new]) { [weak state = self.state] view, _ in
@@ -135,11 +151,13 @@ struct SharedDeckWebView: UIViewRepresentable {
         }
         private func attach(_ download: WKDownload) {
             guard active == nil else { download.cancel { _ in }; return }
+            record("download attached")
             active = download; state.downloading = true; state.loading = false; download.delegate = self
         }
         func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) { attach(download) }
         func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) { attach(download) }
         func download(_ download: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String, completionHandler: @escaping (URL?) -> Void) {
+            record("destination " + suggestedFilename)
             guard active === download else { completionHandler(nil); return }
             let name = (suggestedFilename as NSString).lastPathComponent
             guard (name as NSString).pathExtension.lowercased() == "apkg" else { completionHandler(nil); cancel(); failed(AppText.localized("共有デッキ（.apkg）を選んでください。")); return }
@@ -153,11 +171,13 @@ struct SharedDeckWebView: UIViewRepresentable {
         }
         func downloadDidFinish(_ download: WKDownload) {
             guard active === download, let local = destination else { return }
-            active = nil; destination = nil; state.downloading = false
+            record("download finished")
+            active = nil; destination = nil; state.downloading = false; state.loading = false
             downloaded(local)
         }
         func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {
             guard active === download else { return }
+            record("download failed: " + error.localizedDescription)
             cancel(); failed(error.localizedDescription)
         }
         func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
@@ -171,6 +191,7 @@ struct SharedDeckWebView: UIViewRepresentable {
             #if DEBUG
             trusted = trusted || (ProcessInfo.processInfo.arguments.contains("--uitest-shared-decks") && target.host == "127.0.0.1" && target.port == 18892)
             #endif
+            record("action " + target.path + " download=" + String(action.shouldPerformDownload))
             if trusted {
                 if action.shouldPerformDownload { downloadNavigationURL = target }
                 decisionHandler(action.shouldPerformDownload ? .download : .allow)
@@ -178,8 +199,12 @@ struct SharedDeckWebView: UIViewRepresentable {
             else { if action.navigationType == .linkActivated && ["http", "https"].contains(scheme) { UIApplication.shared.open(target) }; decisionHandler(.cancel) }
         }
         func webView(_ webView: WKWebView, decidePolicyFor response: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
-            if !response.canShowMIMEType { downloadNavigationURL = response.response.url }
-            decisionHandler(response.canShowMIMEType ? .allow : .download)
+            let disposition = (response.response as? HTTPURLResponse)?.value(forHTTPHeaderField: "Content-Disposition")?
+                .split(separator: ";", maxSplits: 1).first?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            let shouldDownload = disposition == "attachment" || !response.canShowMIMEType
+            record("response " + (response.response.url?.path ?? "") + " show=" + String(response.canShowMIMEType) + " disposition=" + (disposition ?? "none"))
+            if shouldDownload { downloadNavigationURL = response.response.url }
+            decisionHandler(shouldDownload ? .download : .allow)
         }
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
             if webView.url != downloadNavigationURL { downloadNavigationURL = nil }
@@ -188,10 +213,12 @@ struct SharedDeckWebView: UIViewRepresentable {
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { state.loading = false; state.canGoBack = webView.canGoBack }
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
             state.loading = false
+            record("navigation error " + (error as NSError).domain + ":" + String((error as NSError).code))
             if !expectedDownloadInterruption(error), !((error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled) { failed(error.localizedDescription) }
         }
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
             state.loading = false
+            record("navigation error " + (error as NSError).domain + ":" + String((error as NSError).code))
             if !expectedDownloadInterruption(error), !((error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled) { failed(error.localizedDescription) }
         }
         func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? { if action.targetFrame == nil { webView.load(action.request) }; return nil }
