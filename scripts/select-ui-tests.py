@@ -46,6 +46,9 @@ suites = {
     'button-timing': ['testRevealHoldPersistsCancelsOutsideAndAcceptsSustainedPress'],
     'motion': ['testMotionSettingPersistsCancelsAndControlsNativePresentation', 'testJavaScriptDialogsReturnNativeInputAndDecisions'],
     'motion-only': ['testMotionSettingPersistsCancelsAndControlsNativePresentation'],
+    'background': ['testBackgroundImagePersistsAndCancellingSelectionOrRemovalKeepsSavedImage', 'testRejectedReplacementKeepsSavedBackgroundAndProfilesStayIndependent'],
+    'background-ui': ['testBackgroundImagePersistsAndCancellingSelectionOrRemovalKeepsSavedImage'],
+    'background-storage': ['testRejectedReplacementKeepsSavedBackgroundAndProfilesStayIndependent'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

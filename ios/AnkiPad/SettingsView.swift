@@ -34,6 +34,7 @@ struct SettingsView: View {
     @State private var dayTheme = StudyDayTheme(rawValue: UserDefaults.standard.string(forKey: "dayTheme") ?? "1") ?? .light
     @State private var nightTheme = StudyNightTheme(rawValue: UserDefaults.standard.string(forKey: "nightTheme") ?? "3") ?? .black
     @State private var removeAnimations = UserDefaults.standard.bool(forKey: "safeDisplay")
+    @State private var deckBackgroundChange = DeckBackgroundChange.unchanged
     @State private var reviewZoom: Double = UserDefaults.standard.object(forKey: "reviewZoom") as? Double ?? 1.0
     @State private var keepScreenOn: Bool = UserDefaults.standard.object(forKey: "keepScreenOn") as? Bool ?? true
     @State private var gestureConfiguration = ReviewGestureConfiguration.load()
@@ -84,6 +85,9 @@ struct SettingsView: View {
                         Toggle("アプリのアニメーションを無効にする", isOn: $removeAnimations).accessibilityIdentifier("remove-app-animations")
                         Text("iPadの「視差効果を減らす」やE Inkテーマが有効な場合も、アプリの画面遷移を抑制します。")
                             .font(.caption).foregroundStyle(.secondary)
+                        NavigationLink("デッキ一覧の背景") {
+                            DeckBackgroundSettingsView(root: model.engine.root, change: $deckBackgroundChange)
+                        }.accessibilityIdentifier("deck-background-open")
                         VStack(alignment: .leading) { Text("カードの拡大率: \(Int(reviewZoom * 100))%"); Slider(value: $reviewZoom, in: 0.5...2.5, step: 0.05) }
                         Stepper("画像の拡大率: \(imageZoom)%", value: $imageZoom, in: 50...300, step: 10)
                             .accessibilityIdentifier("image-zoom")
@@ -188,6 +192,7 @@ struct SettingsView: View {
                                 }
                             }
                             try await model.engine.savePreferences(values)
+                            try await DeckBackgroundStore.shared.save(deckBackgroundChange, root: model.engine.root)
                             for (key, value) in ["appearance": appearance, "reviewZoom": reviewZoom, "keepScreenOn": keepScreenOn, "swipeReview": swipeReview, "keepWhiteboard": keepWhiteboard, "closeAfterAdd": closeAfterAdd] as [String: Any] { UserDefaults.standard.set(value, forKey: key) }
                             UserDefaults.standard.set(allowCollectionAPI, forKey: model.profilePreferenceKey("allowCollectionCardAPI"))
                             UserDefaults.standard.set(allowCardExternalLaunch, forKey: "allowCardExternalLaunch")

@@ -113,5 +113,11 @@
   ],
   "MotionFlowTests": [
     "testMotionSettingPersistsCancelsAndControlsNativePresentation"
+  ],
+  "DeckBackgroundFlowTests": [
+    "testBackgroundImagePersistsAndCancellingSelectionOrRemovalKeepsSavedImage"
+  ],
+  "DeckBackgroundStorageTests": [
+    "testRejectedReplacementKeepsSavedBackgroundAndProfilesStayIndependent"
   ]
 }

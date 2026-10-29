@@ -1,6 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import PencilKit
+import UIKit
 
 private enum ReviewerPanelAction: String, CaseIterable, Identifiable {
     case edit, add, tags, due, reset, info, mark, suspend, suspendNote, bury, buryNote, undo, redo, replay, voice, speech, whiteboard
@@ -16,7 +17,11 @@ private enum ReviewerPanelAction: String, CaseIterable, Identifiable {
     }
 }
 struct ContentView: View {
+    private struct BackgroundRequest: Hashable { let root: URL?; let settingsOpen: Bool }
     @StateObject private var model = StudyModel()
+    @State private var deckBackgroundImage: UIImage?
+    @State private var deckBackgroundRoot: URL?
+    @State private var deckBackgroundError: String?
     @ObservedObject private var notificationRoute = ReviewNotificationRoute.shared
     @State private var importing = false
     #if DEBUG
@@ -65,6 +70,19 @@ struct ContentView: View {
     var body: some View {
         NavigationStack { observedContent }
             .onChange(of: model.selected?.id, initial: true) { _, _ in loadWhiteboard() }
+            .task(id: BackgroundRequest(root: model.profilesReady ? model.engine.root : nil, settingsOpen: model.showingSettings)) {
+                guard model.profilesReady, !model.showingSettings else { return }
+                let root = model.engine.root
+                do {
+                    let image = try await DeckBackgroundStore.shared.load(root: root)
+                    guard !Task.isCancelled, model.engine.root == root else { return }
+                    deckBackgroundImage = image; deckBackgroundRoot = root; deckBackgroundError = nil
+                } catch {
+                    guard !Task.isCancelled, model.engine.root == root else { return }
+                    deckBackgroundImage = nil; deckBackgroundRoot = root
+                    deckBackgroundError = "デッキ一覧の背景を読み込めませんでした: " + error.localizedDescription
+                }
+            }
             .background { reviewKeyboardCommands }
             .background { reviewGamepadCommands }
             .overlay(alignment: .bottomTrailing) {
@@ -415,10 +433,23 @@ struct ContentView: View {
             || namingDeck || deletingDeck != nil || model.pendingCollectionImport != nil
     }
     private var deckList: some View {
-        themedDeckList.studyThemeSurface()
+        themedDeckList.scrollContentBackground(.hidden).background {
+            GeometryReader { geometry in
+                if let image = currentDeckBackground {
+                    Image(uiImage: image).resizable().scaledToFill()
+                        .frame(width: geometry.size.width, height: geometry.size.height).clipped()
+                        .allowsHitTesting(false).accessibilityHidden(true)
+                } else { Color(uiColor: activeTheme.nativeBackground) }
+            }
+        }
     }
+    private var currentDeckBackground: UIImage? { model.profilesReady && deckBackgroundRoot == model.engine.root ? deckBackgroundImage : nil }
+    private var deckRowBackground: Color? { currentDeckBackground == nil ? nil : .clear }
     private var themedDeckList: some View {
         List {
+            if let error = deckBackgroundError, deckBackgroundRoot == model.engine.root {
+                Text(error).foregroundStyle(.secondary).listRowBackground(deckRowBackground)
+            }
             if let warning = model.reminderUpdateError { Text(warning).foregroundStyle(.secondary) }
             Section {
                 ForEach(Deck.visible(model.decks, search: deckSearch)) { deck in
@@ -461,6 +492,7 @@ struct ContentView: View {
                     }.padding(.leading, CGFloat(deck.level) * 16)
                 }
             } header: { Text("デッキ                         新規 · 学習 · 復習") }
+            .listRowBackground(deckRowBackground)
             Section {
                 if let account = model.account {
                     Text(account.username).font(.subheadline)
@@ -493,7 +525,7 @@ struct ContentView: View {
                 Button(".apkgファイルを取り込む", systemImage: "square.and.arrow.down") { importing = true }.disabled(model.busy || !model.profilesReady)
                 Text("AnkiDroidまたはAnkiから書き出したデッキを読み込めます。")
                     .font(.footnote).foregroundStyle(.secondary)
-            }
+            }.listRowBackground(deckRowBackground)
         }
         .searchable(text: $deckSearch, prompt: "デッキを検索")
     }
