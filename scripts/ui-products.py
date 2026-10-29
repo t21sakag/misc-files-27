@@ -44,8 +44,12 @@ else:
     def relocate(value):
         if isinstance(value, dict): return {k: relocate(v) for k, v in value.items()}
         if isinstance(value, list): return [relocate(v) for v in value]
-        if isinstance(value, str) and value.startswith(data['workspace']+'/'):
-            return workspace+value[len(data['workspace']):]
+        if isinstance(value, str) and Path(value).is_absolute():
+            # macOS exposes /var through /private/var. Normalize both sides so
+            # a logical producer path cannot survive in the consumer manifest.
+            canonical = str(Path(value).resolve())
+            if canonical.startswith(data['workspace']+'/'):
+                return workspace+canonical[len(data['workspace']):]
         return value
     for run in Path('build/simulator/Build/Products').glob('*.xctestrun'):
         run.write_bytes(plistlib.dumps(relocate(plistlib.loads(run.read_bytes()))))

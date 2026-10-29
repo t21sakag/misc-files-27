@@ -46,7 +46,7 @@ with tempfile.TemporaryDirectory() as directory:
     assert (out/'App.app/App').read_bytes() == binary.read_bytes()
     assert os.access(out/'App.app/App', os.X_OK) and (out/'AppLink').is_symlink()
     restored = plistlib.loads((out/'tests.xctestrun').read_bytes())
-    assert restored['TestTargets'][0]['TestBundlePath'] == str(out/'App.app/App')
+    assert Path(restored['TestTargets'][0]['TestBundlePath']).resolve() == (out/'App.app/App').resolve()
     assert restored['TestTargets'][0]['Root'] == '__TESTROOT__/App.app'
     archive = b/'build/ui-products.tar.gz'; archive.write_bytes(archive.read_bytes()+b'corrupt')
     rejected = subprocess.run(['python3', script, 'unpack', '--source', 'abc'], cwd=b, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
