@@ -21,7 +21,11 @@ final class ButtonTimingFlowTests: StudyFlowTestSupport {
         func enter(_ id: String, _ value: String) {
             let field = app.textFields[id]
             revealSettingsControl(field, in: app)
-            field.doubleTap()
+            // LabeledContent exposes the whole row as the text-field frame.
+            // Its center is the label; the actual numeric input is on the right.
+            let frame = field.frame, origin = app.frame.origin
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+                .withOffset(CGVector(dx: frame.maxX - 12 - origin.x, dy: frame.midY - origin.y)).doubleTap()
             let selectAll = app.descendants(matching: .any).matching(NSPredicate(format: "label IN %@", ["Select All", "すべてを選択", "全てを選択"])).firstMatch
             if selectAll.waitForExistence(timeout: 3) { selectAll.tap() }
             field.typeText(value)
