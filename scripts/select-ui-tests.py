@@ -51,6 +51,7 @@ suites = {
     'background-storage': ['testRejectedReplacementKeepsSavedBackgroundAndProfilesStayIndependent'],
     'background-selection': ['testCurrentDeckHighlightMovesPersistsAndStaysTranslucentOverBackground'],
     'theme-panels': ['testDarkAndBlackThemesReachAccountProfilesEditorAndMaintenance'],
+    'theme-repair': ['testImageOcclusionMaskCopyPersistsAndDiscardPreservesSavedMasks', 'testReminderNativeSchedulePersistsReplacesAndCancels', 'testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

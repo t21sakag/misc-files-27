@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, all]
 permissions:
   contents: read
 concurrency:
@@ -366,7 +366,7 @@ jobs:
             python3 tests/shared_deck_fixture.py build/native/host/libankipad_bridge.dylib build/shared-fixture.apkg > build/shared-deck-server.log 2>&1 &
           fi
           cp build/fixture.apkg ios/AnkiPad/Resources/fixture.apkg
-          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = images ] || [ "$UI_SUITE" = occlusion ] || [ "$UI_SUITE" = background ] || [ "$UI_SUITE" = background-ui ] || [ "$UI_SUITE" = background-selection ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = all ]; then
+          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = images ] || [ "$UI_SUITE" = occlusion ] || [ "$UI_SUITE" = background ] || [ "$UI_SUITE" = background-ui ] || [ "$UI_SUITE" = background-selection ] || [ "$UI_SUITE" = theme-repair ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = all ]; then
             python3 tests/make_occlusion_image.py build/occlusion-fixture.png
           fi
           cd ios

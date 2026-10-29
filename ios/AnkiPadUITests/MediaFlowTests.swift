@@ -184,9 +184,17 @@ final class MediaFlowTests: StudyFlowTestSupport {
         }
         func openMasks() -> XCUIElement {
             let button = app.buttons["occlusion-edit"]
+            let form = app.collectionViews["note-form"]
+            for _ in 0..<12 {
+                let bounds = form.frame.insetBy(dx: 0, dy: 24)
+                if button.exists && button.isHittable && bounds.contains(button.frame) { break }
+                let up = !button.exists || button.frame.maxY > bounds.maxY
+                form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: up ? 0.65 : 0.35))
+                    .press(forDuration: 0.1, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: up ? 0.4 : 0.6)), withVelocity: .slow, thenHoldForDuration: 0.2)
+            }
             let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND enabled == true"), object: button)
-            XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed)
-            button.tap()
+            XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed, app.debugDescription)
+            tapScreenFrame(button, in: app)
             let web = app.webViews.firstMatch
             XCTAssertTrue(web.waitForExistence(timeout: 30))
             let loaded = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in

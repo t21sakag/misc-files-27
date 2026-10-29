@@ -39,7 +39,9 @@ final class ReminderFlowTests: StudyFlowTestSupport {
                 from.press(forDuration: 0.1, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.2)
             }
             if item.value as? String != (enabled ? "1" : "0") {
-                item.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
+                let frame = item.frame, origin = app.frame.origin
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+                    .withOffset(CGVector(dx: frame.maxX - 26 - origin.x, dy: frame.midY - origin.y)).tap()
             }
             let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", enabled ? "1" : "0"), object: control(id))
             XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 10), .completed, id + " " + app.debugDescription)
