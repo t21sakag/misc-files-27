@@ -31,15 +31,32 @@ class StudyFlowTestSupport: XCTestCase {
 
     func revealSettingsControl(_ item: XCUIElement, in app: XCUIApplication) {
         let form = app.collectionViews["settings-form"]
+        revealFormControl(item, in: form)
+    }
+
+    func revealFormControl(_ item: XCUIElement, in form: XCUIElement,
+                           topInset: CGFloat = 150, bottomInset: CGFloat = 80, maximumAttempts: Int = 40) {
         XCTAssertTrue(form.waitForExistence(timeout: 20))
-        for _ in 0..<40 {
-            let lower = form.frame.maxY - 80, upper = form.frame.minY + 150
-            if item.exists && item.isHittable && item.frame.minY >= upper && item.frame.maxY <= lower { return }
-            let upward = !item.exists || item.frame.maxY > lower
-            form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: upward ? 0.65 : 0.35))
-                .press(forDuration: 0.1, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: upward ? 0.45 : 0.55)), withVelocity: .slow, thenHoldForDuration: 0.2)
+        for attempt in 0..<maximumAttempts {
+            let viewport = form.frame
+            let lower = viewport.maxY - bottomInset, upper = viewport.minY + topInset
+            let frame = item.exists ? item.frame : .zero
+            let located = frame.width > 0 && frame.height > 0
+            if located && frame.minY >= upper && frame.maxY <= lower && item.isHittable {
+                print("UI reveal \(item.identifier): \(attempt) drags")
+                return
+            }
+            let upward = !located || frame.maxY > lower
+            // Large steps retain at least 80pt of overlap in the usable area;
+            // when the row is known, stop near it rather than overshooting.
+            let far = min(0.45, max(0.1, (lower - upper - 80) / viewport.height))
+            let delta = upward ? frame.maxY - lower : upper - frame.minY
+            let distance = located ? min(far, max(0.1, delta / viewport.height + 0.03)) : far
+            let start: CGFloat = upward ? 0.75 : 0.25
+            form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: start))
+                .press(forDuration: 0.1, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: start + (upward ? -distance : distance))), withVelocity: .slow, thenHoldForDuration: 0.2)
         }
-        XCTFail("Settings control did not become fully visible: " + app.debugDescription)
+        XCTFail("Form control did not become fully visible: " + form.debugDescription)
     }
 
     var syncFixturePort: Int { 18891 }
