@@ -76,7 +76,10 @@ actor Engine {
     }
     func decks() throws -> [Deck] {
         let tree = try call("DecksService.DeckTree", ["now": String(Int64(Date().timeIntervalSince1970))])
-        return Deck.flatten(tree["children"] as? [[String: Any]] ?? [])
+        let current = try call("DecksService.GetCurrentDeck")["id"] as? String
+        return Deck.flatten(tree["children"] as? [[String: Any]] ?? []).map { deck in
+            var deck = deck; deck.isSelected = deck.id == current; return deck
+        }
     }
     func setDeckCollapsed(_ id: String, collapsed: Bool) throws {
         _ = try call("DecksService.SetDeckCollapsed", ["deckId": id, "collapsed": collapsed, "scope": "REVIEWER"])

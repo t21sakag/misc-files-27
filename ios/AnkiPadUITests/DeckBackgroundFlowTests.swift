@@ -2,6 +2,69 @@ import XCTest
 import UIKit
 
 final class DeckBackgroundFlowTests: StudyFlowTestSupport {
+    func testCurrentDeckHighlightMovesPersistsAndStaysTranslucentOverBackground() {
+        let app = makeApplication(); app.launchArguments = []; app.launch()
+        let first = app.buttons["deck-1"]
+        XCTAssertTrue(first.waitForExistence(timeout: 30))
+        func selected(_ item: XCUIElement, _ expected: Bool) {
+            let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND selected == %@", NSNumber(value: expected)), object: item)
+            XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed, app.debugDescription)
+        }
+        func settings() { app.buttons["collection-menu"].tap(); app.buttons["設定"].tap() }
+        func save() {
+            app.buttons["settings-save"].tap()
+            XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30))
+        }
+        func rowPixel(_ expected: Int) {
+            func read() -> [UInt8] {
+            let screenshot = app.screenshot().image.cgImage!
+            let point = CGPoint(x: app.frame.width * 0.55, y: first.frame.midY)
+            let sample = screenshot.cropping(to: CGRect(x: point.x * CGFloat(screenshot.width) / app.frame.width,
+                                                        y: point.y * CGFloat(screenshot.height) / app.frame.height, width: 1, height: 1))!
+            var bytes = [UInt8](repeating: 0, count: 4)
+            bytes.withUnsafeMutableBytes { data in
+                let ctx = CGContext(data: data.baseAddress, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+                                    space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+                ctx.draw(sample, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+            }
+                return bytes
+            }
+            let matches = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                read().prefix(3).allSatisfy { abs(Int($0) - expected) <= 2 }
+            }, object: nil)
+            XCTAssertEqual(XCTWaiter.wait(for: [matches], timeout: 20), .completed, "Actual selected row pixel: \(read())")
+        }
+        settings()
+        let theme = app.buttons["app-theme-mode"]
+        revealSettingsControl(theme, in: app); theme.tap(); app.buttons["ライト"].firstMatch.tap(); save()
+        selected(first, true); rowPixel(236)
+        app.buttons["collection-menu"].tap(); app.buttons["デッキを作成"].tap()
+        app.alerts.textFields.firstMatch.typeText("Selection scope")
+        app.alerts.buttons["保存"].tap()
+        let other = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'deck-' AND label CONTAINS 'Selection scope'")).firstMatch
+        XCTAssertTrue(other.waitForExistence(timeout: 30)); other.tap()
+        XCTAssertTrue(app.buttons["デッキ"].waitForExistence(timeout: 30)); app.buttons["デッキ"].tap()
+        selected(other, true); selected(first, false)
+        app.terminate(); app.launch()
+        XCTAssertTrue(other.waitForExistence(timeout: 30)); selected(other, true); selected(first, false)
+        first.tap(); XCTAssertTrue(app.buttons["デッキ"].waitForExistence(timeout: 30)); app.buttons["デッキ"].tap()
+        selected(first, true); selected(other, false)
+        settings()
+        let background = app.buttons["deck-background-open"]
+        revealSettingsControl(background, in: app); background.tap()
+        let choose = app.buttons["deck-background-photo"]
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND enabled == true"), object: choose)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed); choose.tap()
+        let photo = app.images.matching(identifier: "PXGGridLayout-Info").firstMatch
+        XCTAssertTrue(photo.waitForExistence(timeout: 30)); tapScreenFrame(photo, in: app)
+        XCTAssertTrue(app.images["deck-background-preview"].waitForExistence(timeout: 30))
+        app.buttons["deck-background-done"].tap(); save()
+        // The fixture is RGB248 beneath the first row. Native alpha is the
+        // upstream integer truncation floor(255*0.45), composited over that image.
+        app.terminate(); app.launch()
+        XCTAssertTrue(first.waitForExistence(timeout: 30)); selected(first, true); rowPixel(243)
+    }
+
     func testBackgroundImagePersistsAndCancellingSelectionOrRemovalKeepsSavedImage() {
         let app = makeApplication()
         app.launchArguments = []

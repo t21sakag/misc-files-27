@@ -2,6 +2,16 @@ import SwiftUI
 import UIKit
 
 extension StudyTheme {
+    var selectedDeckBackground: Color {
+        let white: Double
+        switch self {
+        case .light, .plain: white = 236
+        case .eink: white = 224
+        case .black: white = 26
+        case .dark: white = 57
+        }
+        return Color(.sRGB, red: white / 255, green: white / 255, blue: white / 255, opacity: 1)
+    }
     var nativeBackground: UIColor {
         switch self {
         case .black: .black

@@ -474,6 +474,7 @@ struct ContentView: View {
                                 Text("\(deck.reviewCount)").foregroundStyle(activeTheme == .eink ? Color.primary : .green).monospacedDigit()
                             }.padding(.vertical, 8).frame(maxWidth: .infinity).contentShape(Rectangle())
                         }.buttonStyle(.borderless).disabled(model.busy || !model.profilesReady).accessibilityIdentifier("deck-\(deck.id)")
+                        .accessibilityAddTraits(deck.isSelected ? .isSelected : [])
                         .contextMenu {
                             Button("デッキの説明") { deckDescription = DeckDescriptionRequest(deck: deck) }
                             if deck.filtered {
@@ -490,6 +491,9 @@ struct ContentView: View {
                             Button("削除", role: .destructive) { deletingDeck = deck }
                         }
                     }.padding(.leading, CGFloat(deck.level) * 16)
+                        .listRowBackground(deck.isSelected
+                            ? activeTheme.selectedDeckBackground.opacity(currentDeckBackground == nil ? 1 : 114.0 / 255)
+                            : deckRowBackground)
                 }
             } header: { Text("デッキ                         新規 · 学習 · 復習") }
             .listRowBackground(deckRowBackground)

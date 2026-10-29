@@ -10,6 +10,7 @@ struct Deck: Identifiable {
     var filtered = false
     var collapsed = false
     var hasChildren = false
+    var isSelected = false
 }
 extension Deck {
     // Retain the complete tree for deck pickers and searches. Only the home
