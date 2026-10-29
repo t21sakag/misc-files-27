@@ -22,26 +22,10 @@ final class ReminderFlowTests: StudyFlowTestSupport {
         }
         func setSwitch(_ id: String, _ enabled: Bool, upward: Bool = true) {
             let form = app.collectionViews["reminder-form"]
-            for _ in 0..<12 {
-                if control(id).exists && control(id).isHittable { break }
-                if upward { form.swipeUp() } else { form.swipeDown() }
-            }
+            revealFormControl(app.switches[id], in: form, topInset: 40, bottomInset: 10, searchUpward: upward)
             let item = control(id)
-            waitUntilHittable(item)
-            // A lazy Form can report a clipped switch as hittable. Bring its
-            // entire thumb inside the scroll viewport before sending one tap.
-            for _ in 0..<8 {
-                let bounds = form.frame.insetBy(dx: 0, dy: 60)
-                if item.frame.minY >= bounds.minY && item.frame.maxY <= bounds.maxY { break }
-                let upward = item.frame.maxY > bounds.maxY
-                let from = form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.7 : 0.3))
-                let to = form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.45 : 0.55))
-                from.press(forDuration: 0.1, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.2)
-            }
             if item.value as? String != (enabled ? "1" : "0") {
-                let frame = item.frame, origin = app.frame.origin
-                app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
-                    .withOffset(CGVector(dx: frame.maxX - 26 - origin.x, dy: frame.midY - origin.y)).tap()
+                item.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
             }
             let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", enabled ? "1" : "0"), object: control(id))
             XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 10), .completed, id + " " + app.debugDescription)
