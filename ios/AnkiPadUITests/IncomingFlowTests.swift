@@ -38,11 +38,11 @@ final class IncomingFlowTests: StudyFlowTestSupport {
         let front = app.textViews["note-field-0"]
         XCTAssertTrue(front.waitForExistence(timeout: 20))
         front.tap(); front.typeText("Unsaved incoming sentinel")
-        XCUISystem.shared.open(URL(string: "studyclient://x-callback-url/browser?search=obsolete")!)
+        XCUIDevice.shared.system.open(URL(string: "studyclient://x-callback-url/browser?search=obsolete")!)
         XCTAssertTrue(front.waitForExistence(timeout: 15), app.debugDescription)
         XCTAssertEqual(front.value as? String, "Unsaved incoming sentinel")
         XCTAssertFalse(app.staticTexts["browser-results"].exists)
-        XCUISystem.shared.open(URL(string: "studyclient://x-callback-url/browser?search=")!)
+        XCUIDevice.shared.system.open(URL(string: "studyclient://x-callback-url/browser?search=")!)
         XCTAssertEqual(front.value as? String, "Unsaved incoming sentinel")
         app.buttons["note-close"].tap()
         let discard = app.buttons["破棄"]
