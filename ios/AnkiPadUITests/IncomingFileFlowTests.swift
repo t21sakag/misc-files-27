@@ -70,6 +70,77 @@ final class IncomingFileFlowTests: StudyFlowTestSupport {
         XCTAssertEqual(try Data(contentsOf: file), bytes)
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }
+    func testReceivedCollectionReplacementCanBeCancelledBeforeMutation() throws {
+        let file = try temporaryFile("incoming-cancel.colpkg")
+        let bytes = Data("Not parsed until final confirmation".utf8)
+        try bytes.write(to: file)
+        let app = makeApplication()
+        app.launchArguments = []
+        app.launch()
+        XCTAssertTrue(app.buttons["add-note"].waitForExistence(timeout: 30))
+        addUnsyncedNote(app, frontText: "Keep existing collection sentinel")
+        app.open(file)
+        let replace = app.buttons["incoming-import-replace"]
+        XCTAssertTrue(replace.waitForExistence(timeout: 30), app.debugDescription)
+        replace.tap()
+        let confirmation = app.buttons["incoming-import-replace-confirm"]
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 10), app.debugDescription)
+        let dialogCancel = app.buttons.matching(NSPredicate(format: "label == %@ AND identifier != %@", "キャンセル", "incoming-import-cancel")).firstMatch
+        if dialogCancel.exists { dialogCancel.tap() }
+        else { app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.15)).tap() }
+        app.buttons["incoming-import-cancel"].tap()
+        XCTAssertTrue(replace.waitForNonExistence(timeout: 20))
+        XCTAssertEqual(try Data(contentsOf: file), bytes)
+        assertBrowserContains(app, text: "Keep existing collection sentinel", exists: true)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
+    func testReceivedAudioAndVideoBecomeDraftAttachmentsWithoutSaving() throws {
+        for (ext, marker) in [("wav", "[sound:"), ("mp4", "<video")] {
+            let file = try temporaryFile("incoming-media." + ext)
+            let bytes = Data("Synthetic attachment container".utf8)
+            try bytes.write(to: file)
+            let app = makeApplication()
+            app.launchArguments = []
+            app.open(file)
+            let attach = app.buttons["incoming-media-note"]
+            XCTAssertTrue(attach.waitForExistence(timeout: 30), app.debugDescription)
+            attach.tap()
+            let front = app.textViews["note-field-0"]
+            let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND value CONTAINS %@", marker), object: front)
+            XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 30), .completed, app.debugDescription)
+            XCTAssertTrue((front.value as? String ?? "").contains("." + ext))
+            XCTAssertEqual(try Data(contentsOf: file), bytes)
+            app.buttons["note-close"].tap(); app.buttons["破棄"].tap()
+            assertBrowserContains(app, text: "incoming-media", exists: false)
+            XCTAssertFalse(app.alerts.firstMatch.exists)
+            app.terminate()
+        }
+    }
+    func testReceivedStillImageOpensOcclusionAndSavesRealMask() throws {
+        let file = try temporaryFile("incoming-mask.png")
+        let bytes = image().pngData()!
+        try bytes.write(to: file)
+        let app = makeApplication()
+        app.launchArguments = []
+        app.open(file)
+        let open = app.buttons["incoming-image-occlusion"]
+        XCTAssertTrue(open.waitForExistence(timeout: 30), app.debugDescription)
+        open.tap()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30), app.debugDescription)
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            web.images.allElementsBoundByIndex.contains { $0.frame.width > 100 && $0.frame.height > 100 }
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 45), .completed, app.debugDescription)
+        let canvas = try XCTUnwrap(web.images.allElementsBoundByIndex.max(by: { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height }))
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.2)).press(forDuration: 0.1,
+            thenDragTo: canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.55, dy: 0.55)))
+        app.buttons["occlusion-save"].tap()
+        XCTAssertTrue(web.waitForNonExistence(timeout: 30), app.debugDescription)
+        XCTAssertEqual(try Data(contentsOf: file), bytes)
+        assertBrowserContains(app, text: "image-occlusion", exists: true)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
     func testIncomingImagePreparationBoundsPreviewAndPreservesAnimation() throws {
         let still = try temporaryFile("still.png"), animated = try animatedFile()
         let original = image().pngData()!

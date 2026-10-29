@@ -139,7 +139,10 @@
   "IncomingFileFlowTests": [
     "testReceivedTextDocumentCancelPreservesOriginalAndCollection",
     "testReceivedAnimatedImageAttachesOriginalAndPersistsOnNote",
-    "testIncomingImagePreparationBoundsPreviewAndPreservesAnimation"
+    "testIncomingImagePreparationBoundsPreviewAndPreservesAnimation",
+    "testReceivedCollectionReplacementCanBeCancelledBeforeMutation",
+    "testReceivedAudioAndVideoBecomeDraftAttachmentsWithoutSaving",
+    "testReceivedStillImageOpensOcclusionAndSavesRealMask"
   ],
   "NotificationAuthorizationFlowTests": [
     "testActualNotificationAuthorizationAndScheduleReplacement"

@@ -72,6 +72,10 @@ suites = {
     'recovery-baseline': ['testActualNotificationAuthorizationAndScheduleReplacement', 'testZZSharedDeckCanBeDownloadedAndImported'],
     'incoming-milestone': ['testReceivedTextDocumentCancelPreservesOriginalAndCollection', 'testReceivedAnimatedImageAttachesOriginalAndPersistsOnNote', 'testIncomingImagePreparationBoundsPreviewAndPreservesAnimation', 'testActualNotificationAuthorizationAndScheduleReplacement', 'testZZSharedDeckCanBeDownloadedAndImported'],
     'incoming-repair': ['testReceivedAnimatedImageAttachesOriginalAndPersistsOnNote', 'testActualNotificationAuthorizationAndScheduleReplacement', 'testZZSharedDeckCanBeDownloadedAndImported'],
+    'incoming-final': ['testReceivedCollectionReplacementCanBeCancelledBeforeMutation', 'testReceivedAudioAndVideoBecomeDraftAttachmentsWithoutSaving', 'testReceivedStillImageOpensOcclusionAndSavesRealMask', 'testScopedReminderRecomputesAfterActualReview'],
+    'incoming-collection-cancel': ['testReceivedCollectionReplacementCanBeCancelledBeforeMutation'],
+    'incoming-audio-video': ['testReceivedAudioAndVideoBecomeDraftAttachmentsWithoutSaving'],
+    'incoming-occlusion': ['testReceivedStillImageOpensOcclusionAndSavesRealMask'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

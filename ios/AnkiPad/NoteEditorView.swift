@@ -38,7 +38,7 @@ struct NoteEditorView: View {
     @State private var typeLoadGeneration = UUID()
     private var extraFieldIndices: [Int] {
         guard request.isNew, let document else { return [] }
-        return preservedNewFields.indices.filter { $0 >= document.fields.count && !preservedNewFields[$0].isEmpty }
+        return NewNoteFields.unmapped(preservedNewFields, fieldCount: document.fields.count)
     }
     @AppStorage("visualNoteEditor") private var visualEditor = false
     @AppStorage("capitalizeNoteEditor") private var capitalizeEditor = true
@@ -298,15 +298,9 @@ struct NoteEditorView: View {
             do {
                 var replacement = try await engine.noteDocument(cardID: nil, typeID: type, deckID: document?.deckID ?? request.deckID)
                 guard typeLoadGeneration == generation else { return }
-                var retained = preservedNewFields
-                if let previous = document {
-                    for index in previous.fields.indices {
-                        if retained.indices.contains(index) { retained[index] = previous.fields[index] }
-                        else { retained.append(previous.fields[index]) }
-                    }
-                    replacement.tags = previous.tags
-                }
-                for index in replacement.fields.indices where retained.indices.contains(index) { replacement.fields[index] = retained[index] }
+                let retained = NewNoteFields.retaining(document?.fields ?? [], in: preservedNewFields)
+                if let previous = document { replacement.tags = previous.tags }
+                replacement.fields = NewNoteFields.applying(retained, to: replacement.fields)
                 preservedNewFields = retained
                 document = replacement
                 expandFields(replacement)

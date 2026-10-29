@@ -53,6 +53,7 @@ struct IncomingImportView: View {
             } }
             .confirmationDialog(AppText.localized("コレクションを置き換えますか？"), isPresented: $confirmingReplacement, titleVisibility: .visible) {
                 Button(AppText.localized("バックアップして置き換える"), role: .destructive) { perform(.importDocument) }
+                    .accessibilityIdentifier("incoming-import-replace-confirm")
                 Button(AppText.localized("キャンセル"), role: .cancel) {}
             } message: { Text(AppText.localized("現在のコレクションを置き換えます。復元前のバックアップも保存します。")) }
             .task(id: file.id) {
