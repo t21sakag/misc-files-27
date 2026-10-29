@@ -59,7 +59,7 @@ final class ReminderFlowTests: StudyFlowTestSupport {
                 let allow = system.alerts.buttons.matching(NSPredicate(format: "label IN %@", ["Allow", "許可"])).firstMatch
                 if allow.waitForExistence(timeout: 8) { allow.tap() }
             }
-            XCTAssertTrue(app.navigationBars["学習リマインダー"].waitForNonExistence(timeout: 30), app.debugDescription)
+            XCTAssertTrue(app.navigationBars["学習リマインダー"].waitForNonExistence(timeout: 30), reminderFailureContext(app))
         }
         func snapshot(days: Set<Int>) -> Set<String> {
             let status = app.staticTexts["reminder-native-schedule"]

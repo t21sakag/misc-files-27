@@ -40,7 +40,7 @@ final class LibraryFlowTests: StudyFlowTestSupport {
         search.buttons.firstMatch.tap()
         XCTAssertTrue(toggle.waitForExistence(timeout: 20))
         XCTAssertFalse(child.exists)
-        let parent = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'deck-' AND label BEGINSWITH 'Hierarchy Parent'")).firstMatch
+        let parent = app.buttons.matching(NSPredicate(format: "identifier MATCHES 'deck-[0-9]+' AND label BEGINSWITH 'Hierarchy Parent'")).firstMatch
         XCTAssertTrue(parent.label.contains("1"), "Parent must count its child's new card")
         parent.tap()
         XCTAssertTrue(app.webViews.staticTexts["Nested review question"].waitForExistence(timeout: 30), app.debugDescription)

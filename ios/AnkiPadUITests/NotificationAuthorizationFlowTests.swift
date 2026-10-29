@@ -28,7 +28,7 @@ final class NotificationAuthorizationFlowTests: StudyFlowTestSupport {
             button.tap()
             let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.buttons.matching(NSPredicate(format: "label IN %@", ["Allow", "許可"])).firstMatch
             if allow.waitForExistence(timeout: 3) { allow.tap() }
-            XCTAssertTrue(app.navigationBars["学習リマインダー"].waitForNonExistence(timeout: 30), app.debugDescription)
+            XCTAssertTrue(app.navigationBars["学習リマインダー"].waitForNonExistence(timeout: 30), reminderFailureContext(app))
         }
         func snapshot() throws -> Set<String> {
             let status = app.staticTexts["reminder-native-schedule"]

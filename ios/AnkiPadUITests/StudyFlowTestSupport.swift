@@ -15,6 +15,14 @@ class StudyFlowTestSupport: XCTestCase {
         try super.tearDownWithError()
     }
 
+    func reminderFailureContext(_ app: XCUIApplication) -> String {
+        let state = app.staticTexts["reminder-native-schedule"]
+        let phase = app.staticTexts["reminder-save-state"]
+        return "OS schedule: " + (state.exists ? String(describing: state.value) : "missing")
+            + "\nSave phase: " + (phase.exists ? String(describing: phase.value) : "missing")
+            + "\n" + app.debugDescription
+    }
+
     func waitUntilHittable(_ element: XCUIElement, timeout: TimeInterval = 30) {
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND hittable == true"), object: element)
         XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: timeout), .completed)

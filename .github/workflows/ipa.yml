@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, incoming-final-repair, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, incoming-final-repair, reminder-repair, regression-repair, upload-only, all]
 permissions:
   contents: read
 concurrency:
@@ -27,7 +27,7 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_27.app/Contents/Developer
       CI_MODE: ${{ inputs.mode || 'full' }}
       UI_SUITE: ${{ inputs.ui_suite || 'all' }}
-    timeout-minutes: ${{ (inputs.mode == 'compile' && 30) || (inputs.mode == 'ipa' && 30) || (inputs.mode == 'ui' && inputs.ui_suite == 'automatic' && 60) || (inputs.mode == 'ui' && inputs.ui_suite != 'all' && 40) || 150 }}
+    timeout-minutes: ${{ (inputs.mode == 'compile' && 30) || (inputs.mode == 'ipa' && 30) || (inputs.mode == 'ui' && (inputs.ui_suite == 'automatic' || inputs.ui_suite == 'reminder-repair') && 60) || (inputs.mode == 'ui' && inputs.ui_suite != 'all' && 40) || 150 }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -98,6 +98,8 @@ jobs:
         run: |
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/WhiteboardPreferences.swift tests/whiteboard_preferences_smoke.swift -o build/whiteboard-preferences-smoke
           build/whiteboard-preferences-smoke
+      - name: Test owned simulator lifecycle
+        run: python3 tests/ci_simulator_smoke.py
       - name: Test cache input selection
         run: python3 tests/cache_input_hashes_smoke.py
       - name: Test compiler input timestamp restoration
@@ -137,7 +139,7 @@ jobs:
         id: ui-simulator
         if: env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
         run: |
-          simulator_id=$(xcrun simctl list devices available -j | python3 scripts/select-ipad-simulator.py)
+          simulator_id=$(python3 scripts/ci-simulator.py create)
           echo "simulator=$simulator_id" >> "$GITHUB_OUTPUT"
           xcrun simctl bootstatus "$simulator_id" -b > build/simulator-boot.log 2>&1 &
       - name: Identify exact native engine/toolchain
@@ -279,7 +281,7 @@ jobs:
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/TemplateNodeText.swift tests/template_node_smoke.swift -o build/template-node-smoke
           build/template-node-smoke build/template-filter-nodes.json
       - name: Test real conditional reminder due forecasts
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'conditional-reminders' || env.UI_SUITE == 'conditional-only' || env.UI_SUITE == 'reminder-refresh' || env.UI_SUITE == 'incoming-final' || env.UI_SUITE == 'incoming-final-repair'))
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'conditional-reminders' || env.UI_SUITE == 'conditional-only' || env.UI_SUITE == 'reminder-refresh' || env.UI_SUITE == 'incoming-final' || env.UI_SUITE == 'incoming-final-repair' || env.UI_SUITE == 'reminder-repair'))
         run: python3 tests/reminder_due_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test persisted current list selection
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'background-selection')
@@ -291,7 +293,7 @@ jobs:
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'collapse')
         run: python3 tests/deck_collapse_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test authenticated data and media sync
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'network' || env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair' || env.UI_SUITE == 'engine-languages' || env.UI_SUITE == 'languages' || env.UI_SUITE == 'collapse'))
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'network' || env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair' || env.UI_SUITE == 'engine-languages' || env.UI_SUITE == 'languages' || env.UI_SUITE == 'collapse' || env.UI_SUITE == 'regression-repair' || env.UI_SUITE == 'upload-only'))
         run: python3 tests/sync_smoke.py build/native/host/libankipad_bridge.dylib build/native/host/sync_test_server
       - name: Test interrupted download preservation and retry
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'network' || env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair'))
@@ -380,7 +382,7 @@ jobs:
           SIMULATOR_ID: ${{ steps.ui-simulator.outputs.simulator }}
         run: |
           if [ "$CI_MODE" = ui ] && [ "$UI_SUITE" != batch-check ] && [ "$UI_SUITE" != all ]; then
-            if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = languages ] || [ "$UI_SUITE" = network ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then
+            if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = languages ] || [ "$UI_SUITE" = regression-repair ] || [ "$UI_SUITE" = upload-only ] || [ "$UI_SUITE" = network ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then
               sync_ports=(18891)
               if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then sync_ports+=(18901); fi
               for sync_port in "${sync_ports[@]}"; do
@@ -519,6 +521,9 @@ jobs:
             build/screenshots/*.txt
           if-no-files-found: ignore
           retention-days: 7
+      - name: Remove owned test simulator
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'all' && env.UI_SUITE != 'batch-check'
+        run: python3 scripts/ci-simulator.py delete
       - uses: actions/upload-artifact@v4
         if: always() && env.CI_MODE != 'ipa'
         with:
@@ -560,7 +565,7 @@ jobs:
       - name: Start fresh iPad simulator
         id: simulator
         run: |
-          simulator_id=$(xcrun simctl list devices available -j | python3 scripts/select-ipad-simulator.py)
+          simulator_id=$(python3 scripts/ci-simulator.py create)
           echo "id=$simulator_id" >> "$GITHUB_OUTPUT"
           xcrun simctl bootstatus "$simulator_id" -b
           xcrun simctl addmedia "$simulator_id" build/occlusion-fixture.png
@@ -598,3 +603,6 @@ jobs:
             build/shared-deck-server.log
           if-no-files-found: ignore
           retention-days: 7
+      - name: Remove owned test simulator
+        if: always()
+        run: python3 scripts/ci-simulator.py delete

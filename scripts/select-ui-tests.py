@@ -77,6 +77,9 @@ suites = {
     'incoming-audio-video': ['testReceivedAudioAndVideoBecomeDraftAttachmentsWithoutSaving'],
     'incoming-occlusion': ['testReceivedStillImageOpensOcclusionAndSavesRealMask'],
     'incoming-final-repair': ['testScopedReminderRecomputesAfterActualReview', 'testReceivedStillImageOpensOcclusionAndSavesRealMask'],
+    'reminder-repair': ['testActualNotificationAuthorizationAndScheduleReplacement', 'testScopedReminderRecomputesAfterActualReview', 'testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode', 'testReminderNativeSchedulePersistsReplacesAndCancels'],
+    'regression-repair': ['testBundledPagesUseNativeNightThemeAndRemainInteractive', 'testAutomaticFullUploadRequiresDirectionChoice', 'testJavaScriptDialogsReturnNativeInputAndDecisions', 'testSubdeckCollapsePersistsAndParentReviewsChildren'],
+    'upload-only': ['testAutomaticFullUploadRequiresDirectionChoice'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

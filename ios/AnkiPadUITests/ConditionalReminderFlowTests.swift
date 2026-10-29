@@ -35,7 +35,7 @@ final class ConditionalReminderFlowTests: StudyFlowTestSupport {
                 let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.buttons.matching(NSPredicate(format: "label IN %@", ["Allow", "許可"])).firstMatch
                 if allow.waitForExistence(timeout: 10) { allow.tap() }
             }
-            XCTAssertTrue(app.navigationBars["学習リマインダー"].waitForNonExistence(timeout: 30))
+            XCTAssertTrue(app.navigationBars["学習リマインダー"].waitForNonExistence(timeout: 30), reminderFailureContext(app))
             app.buttons["settings-save"].tap()
             XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30))
         }

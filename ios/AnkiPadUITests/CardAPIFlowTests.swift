@@ -38,7 +38,7 @@ final class CardAPIFlowTests: StudyFlowTestSupport {
         let button = app.webViews.buttons["API dialogs"]
         XCTAssertTrue(button.waitForExistence(timeout: 30))
         waitUntilHittable(button)
-        button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        tapScreenFrame(button, in: app)
         let input = app.alerts.textFields["card-js-prompt-input"]
         XCTAssertTrue(input.waitForExistence(timeout: 20), app.debugDescription)
         input.tap(); input.typeText("template input")
@@ -49,7 +49,7 @@ final class CardAPIFlowTests: StudyFlowTestSupport {
         app.alerts.buttons["OK"].tap()
         XCTAssertTrue(app.webViews.staticTexts["Template dialogs verified"].waitForExistence(timeout: 20), app.debugDescription)
         waitUntilHittable(button)
-        button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        tapScreenFrame(button, in: app)
         XCTAssertTrue(input.waitForExistence(timeout: 20), app.debugDescription)
         app.alerts.buttons["キャンセル"].tap()
         XCTAssertTrue(app.alerts.staticTexts["Template cancel confirm"].waitForExistence(timeout: 20), app.debugDescription)
