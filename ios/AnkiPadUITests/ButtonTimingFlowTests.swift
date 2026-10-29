@@ -21,14 +21,18 @@ final class ButtonTimingFlowTests: StudyFlowTestSupport {
         func enter(_ id: String, _ value: String) {
             let field = app.textFields[id]
             revealSettingsControl(field, in: app)
-            // LabeledContent exposes the whole row as the text-field frame.
-            // Its center is the label; the actual numeric input is on the right.
-            let frame = field.frame, origin = app.frame.origin
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
-                .withOffset(CGVector(dx: frame.maxX - 12 - origin.x, dy: frame.midY - origin.y)).doubleTap()
-            let selectAll = app.descendants(matching: .any).matching(NSPredicate(format: "label IN %@", ["Select All", "すべてを選択", "全てを選択"])).firstMatch
-            if selectAll.waitForExistence(timeout: 3) { selectAll.tap() }
-            field.typeText(value)
+            let previous = field.value as? String ?? ""
+            func focusEnd() {
+                let frame = field.frame, origin = app.frame.origin
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+                    .withOffset(CGVector(dx: frame.maxX - 2 - origin.x, dy: frame.midY - origin.y)).tap()
+            }
+            // Focusing moves the sheet above the keyboard. Re-read the frame
+            // before positioning the caret after the right-aligned number.
+            focusEnd()
+            XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10))
+            focusEnd()
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count) + value)
             XCTAssertEqual(field.value as? String, value)
         }
         settings()
