@@ -1,7 +1,23 @@
 import SwiftUI
 import UserNotifications
 
+#if DEBUG
+@MainActor final class ReminderSaveDiagnostics: ObservableObject {
+    static let shared = ReminderSaveDiagnostics()
+    @Published var phase = "idle"
+    func record(_ phase: String) {
+        guard UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-reminders") else { return }
+        self.phase = phase
+    }
+}
+#endif
+
 @MainActor enum ReviewReminderStore {
+    private static func record(_ phase: String) {
+        #if DEBUG
+        ReminderSaveDiagnostics.shared.record(phase)
+        #endif
+    }
     private static var saving = false
     private static var generations: [String: UUID] = [:]
     private static func key(_ profileID: String) -> String { "reviewReminder." + profileID }
@@ -42,16 +58,21 @@ import UserNotifications
         try desired.validate()
         guard !saving else { throw EngineError(message: AppText.localized("ほかの通知設定を保存中です。少し待ってから、もう一度保存してください。")) }
         saving = true
+        record("begin")
         let generation = UUID()
         generations[profile.id] = generation
-        defer { saving = false }
+        defer { saving = false; record("finished") }
         let old = try load(profileID: profile.id)
         let center = UNUserNotificationCenter.current()
         var next = desired
         next.requestIDs = []
         if desired.enabled {
             let granted: Bool
-            if requestPermission { granted = try await center.requestAuthorization(options: [.alert, .sound]) }
+            if requestPermission {
+                record("await authorization; status=" + String((await center.notificationSettings()).authorizationStatus.rawValue))
+                granted = try await center.requestAuthorization(options: [.alert, .sound])
+                record("authorization returned; granted=" + String(granted))
+            }
             else {
                 let status = await center.notificationSettings().authorizationStatus
                 granted = status == .authorized || status == .provisional || status == .ephemeral
@@ -60,10 +81,12 @@ import UserNotifications
             var conditionalDates: [Date] = []
             if desired.conditional {
                 guard let engine else { throw EngineError(message: AppText.localized("通知条件を確認するコレクションがありません。")) }
+                record("await forecast")
                 conditionalDates = try await engine.reminderForecast(desired, now: Date()).filter { $0.matches(desired) }.map(\.date)
             }
             try Task.checkCancellation()
             guard generations[profile.id] == generation else { throw CancellationError() }
+            record("await pending requests; dates=" + String(conditionalDates.count))
             let pending = await center.pendingNotificationRequests()
             try ReviewReminderRequestBudget.validateStaging(pendingCount: Set(pending.map(\.identifier)).count, additions: desired.conditional ? conditionalDates.count : desired.weekdays.count)
             let batch = UUID().uuidString
@@ -80,6 +103,7 @@ import UserNotifications
                     if desired.sound { content.sound = .default }
                     content.userInfo = ["profileID": profile.id]
                     let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: !desired.conditional)
+                    record("await OS add " + String(index))
                     try await center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
                     next.requestIDs.append(identifier)
                 }
@@ -124,6 +148,7 @@ struct ReviewReminderSettingsView: View {
     @State private var permission = ""
     #if DEBUG
     @State private var nativeSchedule = ""
+    @ObservedObject private var diagnostics = ReminderSaveDiagnostics.shared
     #endif
     private var time: Binding<Date> {
         Binding(get: {
@@ -186,6 +211,14 @@ struct ReviewReminderSettingsView: View {
                     }
                 }.accessibilityIdentifier("reminder-save")
             }
+        }
+        .overlay(alignment: .bottomLeading) {
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--uitest-reminders"), UITestIsolation.namespace() != nil {
+                Text("Save state").font(.caption2).allowsHitTesting(false)
+                    .accessibilityIdentifier("reminder-save-state").accessibilityValue(diagnostics.phase)
+            }
+            #endif
         }
         .accessibilityIdentifier("reminder-form")
         .disabled(!loaded || busy)

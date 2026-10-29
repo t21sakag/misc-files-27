@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, incoming-final-repair, all]
 permissions:
   contents: read
 concurrency:
@@ -279,7 +279,7 @@ jobs:
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/TemplateNodeText.swift tests/template_node_smoke.swift -o build/template-node-smoke
           build/template-node-smoke build/template-filter-nodes.json
       - name: Test real conditional reminder due forecasts
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'conditional-reminders' || env.UI_SUITE == 'conditional-only' || env.UI_SUITE == 'reminder-refresh' || env.UI_SUITE == 'incoming-final'))
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'conditional-reminders' || env.UI_SUITE == 'conditional-only' || env.UI_SUITE == 'reminder-refresh' || env.UI_SUITE == 'incoming-final' || env.UI_SUITE == 'incoming-final-repair'))
         run: python3 tests/reminder_due_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test persisted current list selection
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'background-selection')

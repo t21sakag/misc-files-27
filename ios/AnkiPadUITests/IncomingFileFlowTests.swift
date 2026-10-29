@@ -124,7 +124,8 @@ final class IncomingFileFlowTests: StudyFlowTestSupport {
         app.launchArguments = []
         app.open(file)
         let open = app.buttons["incoming-image-occlusion"]
-        XCTAssertTrue(open.waitForExistence(timeout: 30), app.debugDescription)
+        revealFormControl(open, in: app.collectionViews["incoming-import-form"], topInset: 40, bottomInset: 20)
+        XCTAssertTrue(open.waitForExistence(timeout: 10), app.debugDescription)
         open.tap()
         let web = app.webViews.firstMatch
         XCTAssertTrue(web.waitForExistence(timeout: 30), app.debugDescription)

@@ -76,6 +76,7 @@ suites = {
     'incoming-collection-cancel': ['testReceivedCollectionReplacementCanBeCancelledBeforeMutation'],
     'incoming-audio-video': ['testReceivedAudioAndVideoBecomeDraftAttachmentsWithoutSaving'],
     'incoming-occlusion': ['testReceivedStillImageOpensOcclusionAndSavesRealMask'],
+    'incoming-final-repair': ['testScopedReminderRecomputesAfterActualReview', 'testReceivedStillImageOpensOcclusionAndSavesRealMask'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

@@ -46,6 +46,7 @@ struct IncomingImportView: View {
                     }
                 }
             }
+            .accessibilityIdentifier("incoming-import-form")
             .disabled(model.busy || model.isSyncing)
             .studyThemeSurface().navigationTitle(AppText.localized("取り込みを確認"))
             .toolbar { ToolbarItem(placement: .cancellationAction) {
