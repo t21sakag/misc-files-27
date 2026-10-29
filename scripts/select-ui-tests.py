@@ -53,6 +53,8 @@ suites = {
     'theme-panels': ['testDarkAndBlackThemesReachAccountProfilesEditorAndMaintenance'],
     'theme-repair': ['testImageOcclusionMaskCopyPersistsAndDiscardPreservesSavedMasks', 'testReminderNativeSchedulePersistsReplacesAndCancels', 'testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],
     'batch-check': ['testAnkiWebLoginAndTokenSurviveRelaunch', 'testZImageOcclusionCanBeCreatedFromPhoto'],
+    'web-themes': ['testBundledPagesUseNativeNightThemeAndRemainInteractive', 'testZZSharedDeckCanBeDownloadedAndImported'],
+    'web-theme-only': ['testBundledPagesUseNativeNightThemeAndRemainInteractive'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

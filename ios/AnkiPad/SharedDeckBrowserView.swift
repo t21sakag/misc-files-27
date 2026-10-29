@@ -23,7 +23,7 @@ struct SharedDeckBrowserView: View {
                     ProgressView(importing ? "デッキを取り込んでいます…" : controls.downloading ? "ダウンロードしています…" : "ページを読み込んでいます…").padding()
                 }
             }
-            .navigationTitle("共有デッキ").navigationBarTitleDisplayMode(.inline)
+            .studyThemeSurface().navigationTitle("共有デッキ").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("閉じる") { controls.cancel(); clearPending(); dismiss() }.disabled(importing).accessibilityIdentifier("shared-decks-close") }
                 ToolbarItemGroup(placement: .primaryAction) {
@@ -71,6 +71,10 @@ struct SharedDeckBrowserView: View {
     var cancel: () -> Void = {}
 }
 struct SharedDeckWebView: UIViewRepresentable {
+    @AppStorage("dayTheme") private var dayTheme = "1"
+    @AppStorage("nightTheme") private var nightTheme = "3"
+    @Environment(\.colorScheme) private var colorScheme
+    private var theme: StudyTheme { StudyTheme.resolve(dark: colorScheme == .dark, day: dayTheme, night: nightTheme) }
     let url: URL
     let state: SharedDeckBrowserState
     let downloaded: (URL) -> Void
@@ -80,6 +84,7 @@ struct SharedDeckWebView: UIViewRepresentable {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .nonPersistent()
         let view = WKWebView(frame: .zero, configuration: configuration)
+        applyTheme(view)
         view.navigationDelegate = context.coordinator
         view.uiDelegate = context.coordinator
         context.coordinator.observeHistory(view)
@@ -88,7 +93,12 @@ struct SharedDeckWebView: UIViewRepresentable {
         view.load(URLRequest(url: url))
         return view
     }
-    func updateUIView(_ view: WKWebView, context: Context) {}
+    private func applyTheme(_ view: WKWebView) {
+        view.overrideUserInterfaceStyle = theme.backendIsDark ? .dark : .light
+        view.backgroundColor = theme.nativeBackground
+        view.scrollView.backgroundColor = theme.nativeBackground
+    }
+    func updateUIView(_ view: WKWebView, context: Context) { applyTheme(view) }
     static func dismantleUIView(_ view: WKWebView, coordinator: Coordinator) { coordinator.cancel(); coordinator.dialogs.cancel(); view.stopLoading() }
     @MainActor final class Coordinator: NSObject, WKNavigationDelegate, WKDownloadDelegate, WKUIDelegate {
         let state: SharedDeckBrowserState

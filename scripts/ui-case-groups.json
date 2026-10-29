@@ -123,5 +123,8 @@
   ],
   "ThemePanelFlowTests": [
     "testDarkAndBlackThemesReachAccountProfilesEditorAndMaintenance"
+  ],
+  "BackendThemeFlowTests": [
+    "testBundledPagesUseNativeNightThemeAndRemainInteractive"
   ]
 }

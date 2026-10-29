@@ -18,14 +18,26 @@ struct BackendPageView: View {
     @State private var closeRequest: (() -> Void)?
     @State private var showDiscard = false
     @State private var saveRequest: (() -> Void)?
+    @State private var themeInspection = 0
+    @State private var themeReport = ""
     var body: some View {
         NavigationStack {
             Group {
-                if let url { BackendWebView(url: url, model: model, noteIDs: request.noteIDs, close: finish, ready: { closeRequest = $0 }, saveReady: { saveRequest = $0 }) }
+                if let url { BackendWebView(url: url, model: model, noteIDs: request.noteIDs, close: finish, ready: { closeRequest = $0 }, saveReady: { saveRequest = $0 }, inspection: themeInspection, themeObserved: { themeReport = $0 }) }
                 else if let error { ContentUnavailableView("画面を開けませんでした", systemImage: "exclamationmark.triangle", description: Text(error)) }
                 else { ProgressView() }
             }
-            .navigationTitle(request.title).navigationBarTitleDisplayMode(.inline)
+            .studyThemeSurface().navigationTitle(request.title).navigationBarTitleDisplayMode(.inline)
+            .overlay(alignment: .bottomLeading) {
+                #if DEBUG
+                if UITestIsolation.namespace() != nil && ProcessInfo.processInfo.arguments.contains("--uitest-backend-theme") {
+                    VStack {
+                        Button("Inspect backend theme") { themeInspection += 1 }.accessibilityIdentifier("backend-theme-inspect")
+                        Text("Backend theme observation").accessibilityIdentifier("backend-theme-report").accessibilityValue(themeReport)
+                    }.font(.caption2)
+                }
+                #endif
+            }
             .toolbar {
                 if request.path.hasPrefix("image-occlusion/") {
                     ToolbarItem(placement: .primaryAction) { Button("保存") { saveRequest?() }.disabled(saveRequest == nil).accessibilityIdentifier("occlusion-save") }
@@ -56,21 +68,30 @@ struct BackendPageView: View {
 }
 
 struct BackendWebView: UIViewRepresentable {
+    @AppStorage("dayTheme") private var dayTheme = "1"
+    @AppStorage("nightTheme") private var nightTheme = "3"
+    @Environment(\.colorScheme) private var colorScheme
     let url: URL
     let model: StudyModel
     let noteIDs: [String]
     let close: () -> Void
     let ready: (@escaping () -> Void) -> Void
     let saveReady: (@escaping () -> Void) -> Void
+    var inspection = 0
+    var themeObserved: ((String) -> Void)? = nil
+    private var theme: StudyTheme { StudyTheme.resolve(dark: colorScheme == .dark, day: dayTheme, night: nightTheme) }
     func makeCoordinator() -> Coordinator { Coordinator(model: model, origin: url, noteIDs: noteIDs, close: close) }
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.userContentController.addScriptMessageHandler(context.coordinator, contentWorld: .page, name: "ankiBackend")
         configuration.userContentController.addUserScript(WKUserScript(source: Self.bridge, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        configuration.userContentController.addUserScript(WKUserScript(source: theme.backendScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         let view = WKWebView(frame: .zero, configuration: configuration)
         view.navigationDelegate = context.coordinator
         view.uiDelegate = context.coordinator
-        view.load(URLRequest(url: url))
+        applyNativeTheme(view)
+        context.coordinator.theme = theme
+        view.load(URLRequest(url: theme.backendURL(url)))
         DispatchQueue.main.async {
             saveReady { [weak view] in
                 view?.evaluateJavaScript("if (typeof globalThis.anki?.imageOcclusion?.save === 'function') { globalThis.anki.imageOcclusion.save(); } else { throw new Error('画像穴埋めの準備ができていません。'); }") { _, error in
@@ -87,7 +108,30 @@ struct BackendWebView: UIViewRepresentable {
         }
         return view
     }
-    func updateUIView(_ view: WKWebView, context: Context) {}
+    private func applyNativeTheme(_ view: WKWebView) {
+        view.overrideUserInterfaceStyle = theme.backendIsDark ? .dark : .light
+        view.isOpaque = false
+        view.backgroundColor = theme.nativeBackground
+        view.scrollView.backgroundColor = theme.nativeBackground
+    }
+    func updateUIView(_ view: WKWebView, context: Context) {
+        applyNativeTheme(view)
+        if context.coordinator.theme != theme {
+            context.coordinator.theme = theme
+            view.configuration.userContentController.removeAllUserScripts()
+            view.configuration.userContentController.addUserScript(WKUserScript(source: Self.bridge, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+            view.configuration.userContentController.addUserScript(WKUserScript(source: theme.backendScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+            view.evaluateJavaScript(theme.backendScript, completionHandler: nil)
+        }
+        #if DEBUG
+        if context.coordinator.inspection != inspection, UITestIsolation.namespace() != nil {
+            context.coordinator.inspection = inspection
+            view.evaluateJavaScript("JSON.stringify({night:document.documentElement.classList.contains('night-mode'),bootstrap:document.documentElement.dataset.bsTheme,theme:document.documentElement.dataset.studyBackendTheme,scheme:getComputedStyle(document.documentElement).colorScheme,body:getComputedStyle(document.body).backgroundColor,canvas:getComputedStyle(document.documentElement).getPropertyValue('--canvas').trim(),hash:location.hash})") { value, _ in
+                themeObserved?(value as? String ?? "")
+            }
+        }
+        #endif
+    }
     static func dismantleUIView(_ view: WKWebView, coordinator: Coordinator) {
         view.stopLoading()
         view.configuration.userContentController.removeScriptMessageHandler(forName: "ankiBackend", contentWorld: .page)
@@ -115,6 +159,8 @@ struct BackendWebView: UIViewRepresentable {
         let model: StudyModel
         let origin: URL
         let noteIDs: [String]
+        var theme: StudyTheme?
+        var inspection = 0
         private let completeClose: () -> Void
         private var closed = false
         func close() {
