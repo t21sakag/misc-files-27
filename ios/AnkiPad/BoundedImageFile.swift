@@ -3,7 +3,7 @@ import Foundation
 enum BoundedImageFile {
     struct TooLarge: LocalizedError {
         let maximumBytes: Int
-        var errorDescription: String? { "画像ファイルは\(String(format: "%g", Double(maximumBytes + 1) / 1_048_576))MiB未満を選んでください。" }
+        var errorDescription: String? { AppText.localized("画像ファイルは\(String(format: "%g", Double(maximumBytes + 1) / 1_048_576))MiB未満を選んでください。") }
     }
     static func read(_ url: URL, maximumBytes: Int) throws -> Data {
         precondition(maximumBytes >= 0 && maximumBytes < Int.max)

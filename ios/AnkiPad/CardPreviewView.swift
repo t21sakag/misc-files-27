@@ -82,7 +82,7 @@ struct CardPreviewView: View {
                             let tags = isAnswer ? card.rendering.answerAV : card.rendering.questionAV
                             if tags.indices.contains(offset) { audio.play([tags[offset]], media: model.engine.media) }
                         }, reveal: reveal, scheduling: nil,
-                        schedulingRequest: { _, _ in throw EngineError(message: "プレビューではスケジュールを変更できません。") }, schedulingError: { _ in },
+                        schedulingRequest: { _, _ in throw EngineError(message: AppText.localized("プレビューではスケジュールを変更できません。")) }, schedulingError: { _ in },
                         cardAPI: { try await previewAPI($0, request: $1, current: card) },
                         scriptEventScope: card.mutationKey.uuidString, cardScriptEvents: scriptEvents,
                         scriptEventDelivered: { id in scriptEvents.removeAll { $0.id == id } },
@@ -90,12 +90,12 @@ struct CardPreviewView: View {
                     HStack {
                         Button { move(-1) } label: { Image(systemName: "chevron.left") }.disabled(index == 0 || busy).keyboardShortcut(.leftArrow, modifiers: [])
                         Spacer()
-                        Button(answer ? "表面を表示" : "解答を表示") { if answer { answer = false } else { reveal() } }.disabled(busy)
+                        Button(answer ? AppText.localized("表面を表示") : AppText.localized("解答を表示")) { if answer { answer = false } else { reveal() } }.disabled(busy)
                         Spacer()
                         Button { move(1) } label: { Image(systemName: "chevron.right") }.disabled(index + 1 >= request.ids.count || busy).keyboardShortcut(.rightArrow, modifiers: [])
                     }.padding()
-                } else if let error { ContentUnavailableView("カードを表示できませんでした", systemImage: "exclamationmark.triangle", description: Text(error)) }
-                else if request.ids.isEmpty { ContentUnavailableView("カードがありません", systemImage: "rectangle.stack") }
+                } else if let error { ContentUnavailableView(AppText.localized("カードを表示できませんでした"), systemImage: "exclamationmark.triangle", description: Text(error)) }
+                else if request.ids.isEmpty { ContentUnavailableView(AppText.localized("カードがありません"), systemImage: "rectangle.stack") }
                 else { ProgressView() }
             }
             .overlay(alignment: .bottom) {
@@ -106,26 +106,26 @@ struct CardPreviewView: View {
                         .onTapGesture { clearToast() }
                 }
             }
-            .studyThemeSurface().navigationTitle("プレビュー \(request.ids.isEmpty ? 0 : index + 1) / \(request.ids.count)")
+            .studyThemeSurface().navigationTitle(AppText.localized("プレビュー \(request.ids.isEmpty ? 0 : index + 1) / \(request.ids.count)"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("閉じる") { visible = false; loadGeneration = UUID(); stopScriptAudio(); audio.stop(); dismiss() }.accessibilityIdentifier("preview-close") }
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("閉じる")) { visible = false; loadGeneration = UUID(); stopScriptAudio(); audio.stop(); dismiss() }.accessibilityIdentifier("preview-close") }
                 ToolbarItemGroup(placement: .primaryAction) {
                     Button { if let card { editor = EditorRequest(cardID: card.id, deckID: card.deckID) } } label: { Image(systemName: "pencil") }.disabled(card == nil || busy).keyboardShortcut("e", modifiers: [])
-                    Button(card?.marked == true ? "マークを外す" : "マークを付ける", systemImage: card?.marked == true ? "star.fill" : "star") {
+                    Button(card?.marked == true ? AppText.localized("マークを外す") : AppText.localized("マークを付ける"), systemImage: card?.marked == true ? "star.fill" : "star") {
                         toggleMark()
                     }.disabled(card == nil || busy).keyboardShortcut("*", modifiers: []).accessibilityIdentifier("preview-mark")
-                    Button("音声を再生", systemImage: "speaker.wave.2") { replay() }.disabled(card == nil || busy).accessibilityIdentifier("preview-replay").keyboardShortcut("r", modifiers: [])
-                    Menu((card?.flag ?? 0) == 0 ? "フラグなし" : "フラグ \(card?.flag ?? 0)", systemImage: "flag") {
+                    Button(AppText.localized("音声を再生"), systemImage: "speaker.wave.2") { replay() }.disabled(card == nil || busy).accessibilityIdentifier("preview-replay").keyboardShortcut("r", modifiers: [])
+                    Menu((card?.flag ?? 0) == 0 ? AppText.localized("フラグなし") : AppText.localized("フラグ \(card?.flag ?? 0)"), systemImage: "flag") {
                         ForEach(0..<8, id: \.self) { flag in
                             Button { setFlag(flag) } label: {
-                                if card?.flag == flag { Label(flag == 0 ? "なし" : "フラグ \(flag)", systemImage: "checkmark") }
-                                else { Text(flag == 0 ? "なし" : "フラグ \(flag)") }
+                                if card?.flag == flag { Label(flag == 0 ? AppText.localized("なし") : AppText.localized("フラグ \(flag)"), systemImage: "checkmark") }
+                                else { Text(flag == 0 ? AppText.localized("なし") : AppText.localized("フラグ \(flag)")) }
                             }.keyboardShortcut(flag == 0 ? nil : KeyboardShortcut(KeyEquivalent(Character(String(flag))), modifiers: .control))
-                            .accessibilityIdentifier("preview-flag-\(flag)").accessibilityValue(card?.flag == flag ? "選択中" : "未選択")
+                            .accessibilityIdentifier("preview-flag-\(flag)").accessibilityValue(card?.flag == flag ? AppText.localized("選択中") : AppText.localized("未選択"))
                         }
                     }.disabled(card == nil || busy).accessibilityIdentifier("preview-flags")
-                    Toggle("裏面のみ", isOn: $answerOnly).disabled(card == nil || busy).keyboardShortcut("b", modifiers: []).onChange(of: answerOnly) { _, next in if next { reveal() } else { answer = false } }
+                    Toggle(AppText.localized("裏面のみ"), isOn: $answerOnly).disabled(card == nil || busy).keyboardShortcut("b", modifiers: []).onChange(of: answerOnly) { _, next in if next { reveal() } else { answer = false } }
                 }
             }
             .sheet(item: $tagRequest, onDismiss: { revision += 1 }) { ReviewCardActionsView(model: model, request: $0) }
@@ -142,8 +142,8 @@ struct CardPreviewView: View {
             .onChange(of: editor?.id) { _, id in
                 if id != nil { stopScriptAudio(); audio.stop() }
             }
-            .alert("処理できませんでした", isPresented: Binding(get: { error != nil && card != nil }, set: { if !$0 { error = nil } })) {
-                Button("閉じる", role: .cancel) { error = nil }
+            .alert(AppText.localized("処理できませんでした"), isPresented: Binding(get: { error != nil && card != nil }, set: { if !$0 { error = nil } })) {
+                Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
         }
     }

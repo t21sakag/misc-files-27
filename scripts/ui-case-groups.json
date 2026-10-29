@@ -126,5 +126,8 @@
   ],
   "BackendThemeFlowTests": [
     "testBundledPagesUseNativeNightThemeAndRemainInteractive"
+  ],
+  "LanguageFlowTests": [
+    "testLanguageSavesOnRelaunchAndKeepsNoteTextWithTranslatedKeys"
   ]
 }

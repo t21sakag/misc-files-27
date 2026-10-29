@@ -5,12 +5,12 @@ struct SpeechSnippet: Equatable {
     let locale: String
 }
 struct SpeechTextError: LocalizedError {
-    var errorDescription: String? { "カードの読み上げ用テキストを取得できませんでした。" }
+    var errorDescription: String? { AppText.localized("カードの読み上げ用テキストを取得できませんでした。") }
 }
 private final class SpeechTextCollector { var values: [SpeechSnippet] = [] }
 
 enum LegacySpeechText {
-    static func parse(_ html: String, blank: String = "空欄", localized: Bool = true) throws -> [SpeechSnippet] {
+    static func parse(_ html: String, blank: String = AppText.localized("空欄"), localized: Bool = true) throws -> [SpeechSnippet] {
         let collector = SpeechTextCollector()
         let callback: APSpeechSegmentCallback = { text, locale, context in
             guard let context else { return }

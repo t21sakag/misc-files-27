@@ -1,0 +1,4 @@
+"NSCameraUsageDescription" = "カードのフィールドに挿入する写真を撮影します。";
+"NSSpeechRecognitionUsageDescription" = "カードの音声入力を文字に変換します。";
+"NSMicrophoneUsageDescription" = "学習中の発音練習、カードへの音声入力、フィールドに挿入する音声の録音にマイクを使います。";
+"NSLocalNetworkUsageDescription" = "独自の同期サーバーやアプリ内の画面に接続します。";

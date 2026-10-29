@@ -10,7 +10,7 @@ import UIKit
             Task { @MainActor in self?.expire() }
         }
         guard identifier != .invalid else {
-            throw EngineError(message: "同期の実行時間を確保できませんでした。アプリを前面に戻してから再試行してください。")
+            throw EngineError(message: AppText.localized("同期の実行時間を確保できませんでした。アプリを前面に戻してから再試行してください。"))
         }
     }
     func end() {

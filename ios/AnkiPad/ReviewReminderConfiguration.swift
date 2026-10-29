@@ -32,12 +32,12 @@ struct ReviewReminderConfiguration: Codable {
     }
     func validate() throws {
         guard (0...100000).contains(minimumDue), deckID == nil || (Int64(deckID!) ?? 0) > 0 else {
-            throw ReviewReminderConfigurationError(message: "通知の枚数と対象デッキを確認してください。")
+            throw ReviewReminderConfigurationError(message: AppText.localized("通知の枚数と対象デッキを確認してください。"))
         }
 
         guard (0...23).contains(hour), (0...59).contains(minute), (!enabled || !weekdays.isEmpty),
               weekdays.allSatisfy({ (1...7).contains($0) }), Set(weekdays).count == weekdays.count else {
-            throw ReviewReminderConfigurationError(message: "通知の時刻または曜日を確認してください。")
+            throw ReviewReminderConfigurationError(message: AppText.localized("通知の時刻または曜日を確認してください。"))
         }
     }
 }
@@ -51,7 +51,7 @@ enum ReviewReminderRequestBudget {
         guard pendingCount >= 0, additions >= 0,
               additions <= maximumPendingRequests,
               pendingCount <= maximumPendingRequests - additions else {
-            throw ReviewReminderConfigurationError(message: "通知の予約枠が足りません。既存の予約は変更していません。ほかのプロファイルの通知を減らしてから、もう一度保存してください。")
+            throw ReviewReminderConfigurationError(message: AppText.localized("通知の予約枠が足りません。既存の予約は変更していません。ほかのプロファイルの通知を減らしてから、もう一度保存してください。"))
         }
     }
 }

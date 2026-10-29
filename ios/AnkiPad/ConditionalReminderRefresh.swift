@@ -24,7 +24,7 @@ extension StudyModel {
                     #endif
                 }
             } catch is CancellationError {} catch {
-                if currentProfileID == profile.id { reminderUpdateError = "条件付き通知を更新できませんでした。通知設定を確認してください。" }
+                if currentProfileID == profile.id { reminderUpdateError = AppText.localized("条件付き通知を更新できませんでした。通知設定を確認してください。") }
             }
         }
     }

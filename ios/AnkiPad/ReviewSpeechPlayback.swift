@@ -114,14 +114,14 @@ extension StudyModel {
     }
     private func checkSpeechRequest(_ request: ReviewSpeechRequest) throws {
         guard reviewSceneActive, request.profileID == currentProfileID, card?.mutationKey == request.cardKey,
-              speechRequest?.id == request.id else { throw EngineError(message: "学習対象が変わりました。音声を選び直してください。") }
+              speechRequest?.id == request.id else { throw EngineError(message: AppText.localized("学習対象が変わりました。音声を選び直してください。")) }
     }
     func previewSpeechChoice(_ request: ReviewSpeechRequest, choice: ReviewSpeechChoice) throws {
         try checkSpeechRequest(request)
         audio.stop(); cardSpeech.stop(); cardRecognition.cancel(); reviewVoice.finish()
         guard choice.mode != .off else { return }
         let voice = choice.mode == .voice ? choice.voiceID.flatMap { speechVoiceCache[$0] ?? AVSpeechSynthesisVoice(identifier: $0) } : nil
-        if choice.mode == .voice && voice == nil { throw EngineError(message: "この音声は現在利用できません。別の音声を選んでください。") }
+        if choice.mode == .voice && voice == nil { throw EngineError(message: AppText.localized("この音声は現在利用できません。別の音声を選んでください。")) }
         let text = request.context.plainText
         guard !text.isEmpty else { return }
         let snippet = ResolvedSpeechSnippet(text: text, language: voice?.language ?? "", voiceID: voice?.identifier)
@@ -130,7 +130,7 @@ extension StudyModel {
     func applySpeechChoice(_ request: ReviewSpeechRequest, choice: ReviewSpeechChoice) throws {
         try checkSpeechRequest(request)
         if choice.mode == .voice && !request.voices.contains(where: { $0.id == choice.voiceID }) {
-            throw EngineError(message: "この音声は現在利用できません。別の音声を選んでください。")
+            throw EngineError(message: AppText.localized("この音声は現在利用できません。別の音声を選んでください。"))
         }
         try ReviewSpeechPreferences.save(choice, profileID: request.profileID, scope: request.context.scope)
         audio.stop()

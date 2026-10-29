@@ -15,11 +15,11 @@ struct DraftNotePreviewView: View {
                 ForEach(templates.indices, id: \.self) { index in
                     Button(templates[index]) { ordinal = ordinals[index]; selected = true }
                 }
-                if templates.isEmpty { Text("プレビューするカードテンプレートを読み込んでいます。") }
+                if templates.isEmpty { Text(AppText.localized("プレビューするカードテンプレートを読み込んでいます。")) }
                 if let error { Text(error).foregroundStyle(.red) }
             }
-            .studyThemeSurface().navigationTitle("カードのプレビュー")
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() } } }
+            .studyThemeSurface().navigationTitle(AppText.localized("カードのプレビュー"))
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("閉じる")) { dismiss() } } }
             .sheet(isPresented: $selected) { NoteTemplatePreviewView(model: model, typeID: document.typeID, ordinal: ordinal, document: document) }
             .task {
                 do {
@@ -30,9 +30,9 @@ struct DraftNotePreviewView: View {
                         let numbers = try await model.engine.call("NotesService.ClozeNumbersInNote", note)["numbers"] as? [Int] ?? []
                         let sorted = Array(Set(numbers.filter { $0 > 0 })).sorted()
                         ordinals = sorted.isEmpty ? [0] : sorted.map { $0 - 1 }
-                        templates = ordinals.map { "穴埋め c\($0 + 1)" }
+                        templates = ordinals.map { AppText.localized("穴埋め c\($0 + 1)") }
                     } else {
-                        templates = (schema["templates"] as? [[String: Any]] ?? []).map { $0["name"] as? String ?? "カード" }
+                        templates = (schema["templates"] as? [[String: Any]] ?? []).map { $0["name"] as? String ?? AppText.localized("カード") }
                         ordinals = Array(templates.indices)
                     }
                 } catch { self.error = error.localizedDescription }

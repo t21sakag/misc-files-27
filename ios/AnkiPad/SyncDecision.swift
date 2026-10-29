@@ -19,5 +19,5 @@ struct SyncDecision {
     var canUpload: Bool { localCardCount > 0 && ["FULL_SYNC", "FULL_UPLOAD"].contains(required) }
     var canDownload: Bool { ["FULL_SYNC", "FULL_DOWNLOAD"].contains(required) }
     var automaticallyDownload: Bool { needsFull && localCardCount == 0 && canDownload }
-    var localSummary: String { "このiPad: デッキ \(localDeckCount)個・カード \(localCardCount)枚" }
+    var localSummary: String { AppText.localized("このiPad: デッキ \(localDeckCount)個・カード \(localCardCount)枚") }
 }

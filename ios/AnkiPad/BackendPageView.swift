@@ -24,7 +24,7 @@ struct BackendPageView: View {
         NavigationStack {
             Group {
                 if let url { BackendWebView(url: url, model: model, noteIDs: request.noteIDs, close: finish, ready: { closeRequest = $0 }, saveReady: { saveRequest = $0 }, inspection: themeInspection, themeObserved: { themeReport = $0 }) }
-                else if let error { ContentUnavailableView("画面を開けませんでした", systemImage: "exclamationmark.triangle", description: Text(error)) }
+                else if let error { ContentUnavailableView(AppText.localized("画面を開けませんでした"), systemImage: "exclamationmark.triangle", description: Text(error)) }
                 else { ProgressView() }
             }
             .studyThemeSurface().navigationTitle(request.title).navigationBarTitleDisplayMode(.inline)
@@ -40,17 +40,17 @@ struct BackendPageView: View {
             }
             .toolbar {
                 if request.path.hasPrefix("image-occlusion/") {
-                    ToolbarItem(placement: .primaryAction) { Button("保存") { saveRequest?() }.disabled(saveRequest == nil).accessibilityIdentifier("occlusion-save") }
+                    ToolbarItem(placement: .primaryAction) { Button(AppText.localized("保存")) { saveRequest?() }.disabled(saveRequest == nil).accessibilityIdentifier("occlusion-save") }
                 }
-                ToolbarItem(placement: .confirmationAction) { Button("閉じる") {
+                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("閉じる")) {
                     if request.path.hasPrefix("image-occlusion/") { showDiscard = true }
                     else if let closeRequest { closeRequest() } else { finish() }
                 }.accessibilityIdentifier("backend-close") } }
             .interactiveDismissDisabled(request.path.hasPrefix("deck-options") || request.path.hasPrefix("image-occlusion/"))
-            .alert("マスクの変更を破棄しますか？", isPresented: $showDiscard) {
-                Button("編集を続ける", role: .cancel) {}.accessibilityIdentifier("occlusion-continue")
-                Button("破棄", role: .destructive) { finish() }.accessibilityIdentifier("occlusion-discard")
-            } message: { Text("保存していない画像穴埋めの変更は失われます。") }
+            .alert(AppText.localized("マスクの変更を破棄しますか？"), isPresented: $showDiscard) {
+                Button(AppText.localized("編集を続ける"), role: .cancel) {}.accessibilityIdentifier("occlusion-continue")
+                Button(AppText.localized("破棄"), role: .destructive) { finish() }.accessibilityIdentifier("occlusion-discard")
+            } message: { Text(AppText.localized("保存していない画像穴埋めの変更は失われます。")) }
             .task {
                 do {
                     let server = StaticAssetServer(root: Bundle.main.resourceURL!.appendingPathComponent("backend"))
@@ -94,7 +94,8 @@ struct BackendWebView: UIViewRepresentable {
         view.load(URLRequest(url: theme.backendURL(url)))
         DispatchQueue.main.async {
             saveReady { [weak view] in
-                view?.evaluateJavaScript("if (typeof globalThis.anki?.imageOcclusion?.save === 'function') { globalThis.anki.imageOcclusion.save(); } else { throw new Error('画像穴埋めの準備ができていません。'); }") { _, error in
+                    let unavailable = String(decoding: (try? JSONEncoder().encode(AppText.localized("画像穴埋めの準備ができていません。"))) ?? Data("\"\"".utf8), as: UTF8.self)
+                    view?.evaluateJavaScript("if (typeof globalThis.anki?.imageOcclusion?.save === 'function') { globalThis.anki.imageOcclusion.save(); } else { throw new Error(\(unavailable)); }") { _, error in
                     if let error { context.coordinator.model.error = error.localizedDescription }
                 }
             }
@@ -207,7 +208,7 @@ struct BackendWebView: UIViewRepresentable {
                     }
                     if method == "change_notetype" {
                         let request = try await model.engine.call("_decode/" + method, ["data": input])
-                        guard !noteIDs.isEmpty, Set(request["noteIds"] as? [String] ?? []) == Set(noteIDs) else { throw EngineError(message: "変更対象のノートが一致しません。") }
+                        guard !noteIDs.isEmpty, Set(request["noteIds"] as? [String] ?? []) == Set(noteIDs) else { throw EngineError(message: AppText.localized("変更対象のノートが一致しません。")) }
                         try await model.engine.backup()
                         let response = try await model.engine.call("NotetypesService.ChangeNotetype", request)
                         let encoded = try await model.engine.call("_encode/" + method, response)
@@ -244,7 +245,7 @@ struct BackendWebView: UIViewRepresentable {
                 while let presented = presenter.presentedViewController { presenter = presented }
                 let alert = UIAlertController(title: title, message: text, preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in continuation.resume(returning: true) })
-                if confirm { alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel) { _ in continuation.resume(returning: false) }) }
+                if confirm { alert.addAction(UIAlertAction(title: AppText.localized("キャンセル"), style: .cancel) { _ in continuation.resume(returning: false) }) }
                 StudyMotion.present(alert, from: presenter)
             }
         }

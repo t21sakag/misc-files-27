@@ -36,7 +36,7 @@ import UserNotifications
     }
     static func save(_ desired: ReviewReminderConfiguration, profile: StudyProfile, engine: Engine? = nil, requestPermission: Bool = true) async throws {
         try desired.validate()
-        guard !saving else { throw EngineError(message: "ほかの通知設定を保存中です。少し待ってから、もう一度保存してください。") }
+        guard !saving else { throw EngineError(message: AppText.localized("ほかの通知設定を保存中です。少し待ってから、もう一度保存してください。")) }
         saving = true
         let generation = UUID()
         generations[profile.id] = generation
@@ -52,10 +52,10 @@ import UserNotifications
                 let status = await center.notificationSettings().authorizationStatus
                 granted = status == .authorized || status == .provisional || status == .ephemeral
             }
-            guard granted else { throw EngineError(message: "通知が許可されていません。iPadの設定からAnkiPadの通知を許可してください。") }
+            guard granted else { throw EngineError(message: AppText.localized("通知が許可されていません。iPadの設定からAnkiPadの通知を許可してください。")) }
             var conditionalDates: [Date] = []
             if desired.conditional {
-                guard let engine else { throw EngineError(message: "通知条件を確認するコレクションがありません。") }
+                guard let engine else { throw EngineError(message: AppText.localized("通知条件を確認するコレクションがありません。")) }
                 conditionalDates = try await engine.reminderForecast(desired, now: Date()).filter { $0.matches(desired) }.map(\.date)
             }
             try Task.checkCancellation()
@@ -71,8 +71,8 @@ import UserNotifications
                     try Task.checkCancellation()
                     let identifier = prefix(profile.id) + batch + "." + String(index)
                     let content = UNMutableNotificationContent()
-                    content.title = "学習の時間です"
-                    content.body = profile.name + "のカードを復習しましょう。"
+                    content.title = AppText.localized("学習の時間です")
+                    content.body = AppText.localized("\(profile.name)のカードを復習しましょう。")
                     if desired.sound { content.sound = .default }
                     content.userInfo = ["profileID": profile.id]
                     let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: !desired.conditional)
@@ -133,13 +133,13 @@ struct ReviewReminderSettingsView: View {
     var body: some View {
         Form {
             Section(profile.name) {
-                Toggle("学習リマインダー", isOn: $config.enabled).accessibilityIdentifier("reminder-enabled")
-                DatePicker("通知時刻", selection: time, displayedComponents: .hourAndMinute)
-                Toggle("通知音", isOn: $config.sound).accessibilityIdentifier("reminder-sound")
+                Toggle(AppText.localized("学習リマインダー"), isOn: $config.enabled).accessibilityIdentifier("reminder-enabled")
+                DatePicker(AppText.localized("通知時刻"), selection: time, displayedComponents: .hourAndMinute)
+                Toggle(AppText.localized("通知音"), isOn: $config.sound).accessibilityIdentifier("reminder-sound")
             }
-            Section("通知する曜日") {
+            Section(AppText.localized("通知する曜日")) {
                 ForEach(1...7, id: \.self) { day in
-                    Toggle(Calendar.current.weekdaySymbols[day - 1], isOn: Binding(get: {
+                    Toggle(AppText.calendar.weekdaySymbols[day - 1], isOn: Binding(get: {
                         config.weekdays.contains(day)
                     }, set: { enabled in
                         config.weekdays.removeAll { $0 == day }
@@ -147,26 +147,26 @@ struct ReviewReminderSettingsView: View {
                     })).accessibilityIdentifier("reminder-weekday-\(day)")
                 }
             }
-            Section("通知の条件") {
-                Stepper("必要なカード: \(config.minimumDue)枚以上（0で制限なし）", value: $config.minimumDue, in: 0...100000)
+            Section(AppText.localized("通知の条件")) {
+                Stepper(AppText.localized("必要なカード: \(config.minimumDue)枚以上（0で制限なし）"), value: $config.minimumDue, in: 0...100000)
                     .accessibilityIdentifier("reminder-minimum-due")
-                Picker("対象デッキ", selection: Binding(get: { config.deckID ?? "" }, set: { config.deckID = $0.isEmpty ? nil : $0 })) {
-                    Text("すべてのデッキ").tag("")
+                Picker(AppText.localized("対象デッキ"), selection: Binding(get: { config.deckID ?? "" }, set: { config.deckID = $0.isEmpty ? nil : $0 })) {
+                    Text(AppText.localized("すべてのデッキ")).tag("")
                     ForEach(decks) { Text($0.name).tag($0.id) }
-                    if let id = config.deckID, !decks.contains(where: { $0.id == id }) { Text("削除されたデッキ").tag(id) }
+                    if let id = config.deckID, !decks.contains(where: { $0.id == id }) { Text(AppText.localized("削除されたデッキ")).tag(id) }
                 }.accessibilityIdentifier("reminder-deck")
-                Toggle("その日にまだ学習していない場合だけ", isOn: $config.onlyIfNoReviews).accessibilityIdentifier("reminder-no-reviews")
+                Toggle(AppText.localized("その日にまだ学習していない場合だけ"), isOn: $config.onlyIfNoReviews).accessibilityIdentifier("reminder-no-reviews")
             }
             Section {
-                Text(config.conditional ? "今後14日分の予測で予約し、アプリの起動・学習・同期後に更新します。アプリを開かない間の変更は、通知時に再判定できません。" : "指定した曜日と時刻に通知します。復習枚数や、その日に学習したかどうかにかかわらず通知します。")
+                Text(config.conditional ? AppText.localized("今後14日分の予測で予約し、アプリの起動・学習・同期後に更新します。アプリを開かない間の変更は、通知時に再判定できません。") : AppText.localized("指定した曜日と時刻に通知します。復習枚数や、その日に学習したかどうかにかかわらず通知します。"))
                 #if DEBUG
                 if ProcessInfo.processInfo.arguments.contains("--uitest-reminders"), !nativeSchedule.isEmpty {
-                    Text("予約状態").accessibilityIdentifier("reminder-native-schedule").accessibilityValue(nativeSchedule)
+                    Text(AppText.localized("予約状態")).accessibilityIdentifier("reminder-native-schedule").accessibilityValue(nativeSchedule)
                 }
                 #endif
                 if !permission.isEmpty { Text(permission).foregroundStyle(.secondary) }
                 if busy { ProgressView() }
-                Button("リマインダーを保存") {
+                Button(AppText.localized("リマインダーを保存")) {
                     busy = true
                     Task {
                         defer { busy = false }
@@ -185,7 +185,7 @@ struct ReviewReminderSettingsView: View {
         }
         .accessibilityIdentifier("reminder-form")
         .disabled(!loaded || busy)
-        .studyThemeSurface().navigationTitle("学習リマインダー")
+        .studyThemeSurface().navigationTitle(AppText.localized("学習リマインダー"))
         .task {
             loaded = false
             #if DEBUG
@@ -200,10 +200,10 @@ struct ReviewReminderSettingsView: View {
             }
             #endif
             let settings = await UNUserNotificationCenter.current().notificationSettings()
-            if settings.authorizationStatus == .denied { permission = "通知はiPadの設定で無効になっています。" }
+            if settings.authorizationStatus == .denied { permission = AppText.localized("通知はiPadの設定で無効になっています。") }
         }
-        .alert("保存できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
-            Button("閉じる", role: .cancel) { error = nil }
+        .alert(AppText.localized("保存できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
+            Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
         } message: { Text(error ?? "") }
     }
 }

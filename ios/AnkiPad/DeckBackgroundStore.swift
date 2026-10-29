@@ -25,17 +25,17 @@ actor DeckBackgroundStore {
               let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let width = (properties[kCGImagePropertyPixelWidth] as? NSNumber)?.int64Value,
               let height = (properties[kCGImagePropertyPixelHeight] as? NSNumber)?.int64Value,
-              width > 0, height > 0 else { throw DeckBackgroundError(message: "画像を読み込めませんでした。") }
+              width > 0, height > 0 else { throw DeckBackgroundError(message: AppText.localized("画像を読み込めませんでした。")) }
         // Divide before multiplying; dimensions from an untrusted header may overflow.
         guard width <= Int64(Self.maximumBitmapBytes) / 4 / height else {
-            throw DeckBackgroundError(message: "画像の縦横サイズが大きすぎます（展開後100MiB以下）。")
+            throw DeckBackgroundError(message: AppText.localized("画像の縦横サイズが大きすぎます（展開後100MiB以下）。"))
         }
         let options: [CFString: Any] = [kCGImageSourceCreateThumbnailFromImageAlways: true,
                                       kCGImageSourceCreateThumbnailWithTransform: true,
                                       kCGImageSourceThumbnailMaxPixelSize: max(width, height),
                                       kCGImageSourceShouldCacheImmediately: true]
         guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
-            throw DeckBackgroundError(message: "画像を読み込めませんでした。")
+            throw DeckBackgroundError(message: AppText.localized("画像を読み込めませんでした。"))
         }
         return UIImage(cgImage: image, scale: 1, orientation: .up)
     }

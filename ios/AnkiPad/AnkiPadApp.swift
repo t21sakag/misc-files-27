@@ -14,7 +14,11 @@ import AVFoundation
         #endif
     }
     var body: some Scene {
-        WindowGroup { StudyThemeContainer { ContentView() }.preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil) }
+        WindowGroup {
+            StudyThemeContainer { ContentView() }
+                .environment(\.locale, AppText.locale)
+                .preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil)
+        }
     }
 }
 
@@ -143,7 +147,7 @@ import AVFoundation
                     if !automatic { showingAccount = true }
                 }
                 if !syncCancelled {
-                    if automatic { syncStatus = "自動同期できませんでした: " + error.localizedDescription }
+                    if automatic { syncStatus = AppText.localized("自動同期できませんでした: ") + error.localizedDescription }
                     else { self.error = error.localizedDescription }
                 }
             }
@@ -188,7 +192,7 @@ import AVFoundation
         let background = SyncBackgroundTask { [weak self] in
             guard let self, self.syncSessionID == sessionID else { return }
             self.syncActivity.interrupt(profileID: profileID)
-            self.requestSyncAbort(status: "同期が中断されました。前面に戻して再同期してください。")
+            self.requestSyncAbort(status: AppText.localized("同期が中断されました。前面に戻して再同期してください。"))
         }
         syncSessionID = sessionID
         syncBackgroundTask = background
@@ -225,8 +229,8 @@ import AVFoundation
         guard profilesReady, !busy, !isSyncing, error == nil,
               UIApplication.shared.applicationState == .active,
               syncActivity.consumeInterruption(profileID: currentProfileID) else { return }
-        syncStatus = "前回の同期が中断されました"
-        error = "前回の同期が中断されました。アプリを前面に開いたまま、もう一度同期してください。"
+        syncStatus = AppText.localized("前回の同期が中断されました")
+        error = AppText.localized("前回の同期が中断されました。アプリを前面に開いたまま、もう一度同期してください。")
     }
     func bootstrap() {
         guard !profilesReady else { return }
@@ -255,7 +259,7 @@ import AVFoundation
     func login(username: String, password: String, endpoint: String?) {
         runSync {
             self.isSyncing = true
-            self.syncStatus = "AnkiWebにログイン中…"
+            self.syncStatus = AppText.localized("AnkiWebにログイン中…")
             let credentials = try await self.engine.login(username: username, password: password, endpoint: endpoint)
             guard !self.syncCancelled else { throw CancellationError() }
             try AccountStore.save(credentials, profileID: self.currentProfileID)
@@ -299,14 +303,14 @@ import AVFoundation
     func forceOneWaySync() async throws {
         try await engine.forceOneWaySync()
         localSyncState = try? await engine.localSyncState().applyingCleanStamp(UserDefaults.standard.string(forKey: profilePreferenceKey("syncCleanStamp")))
-        syncStatus = "次回の同期では、どちらかのコレクション全体を選んで置き換えます"
+        syncStatus = AppText.localized("次回の同期では、どちらかのコレクション全体を選んで置き換えます")
     }
     private func performSync(automatic: Bool = false) async throws {
         guard let account else { return }
         let networkPreferences = SyncNetworkPreferences.load()
         let metered = await networkMetering.isMetered()
         if automatic && networkPreferences.requiresMeteredConfirmation(metered: metered) {
-            syncStatus = "従量課金の回線のため、自動同期を見送りました"
+            syncStatus = AppText.localized("従量課金の回線のため、自動同期を見送りました")
             return
         }
         let syncMedia = networkPreferences.syncsMedia(metered: metered)
@@ -319,7 +323,7 @@ import AVFoundation
         selected = nil
         pendingQuestionAudio = false
         card = nil
-        syncStatus = "コレクションを同期中…"
+        syncStatus = AppText.localized("コレクションを同期中…")
         mediaSyncPending = true
         UserDefaults.standard.set(true, forKey: profilePreferenceKey("syncMediaPending"))
         let decision = try await engine.sync(account, syncMedia: syncMedia)
@@ -333,7 +337,7 @@ import AVFoundation
         if !decision.message.isEmpty { syncStatus = decision.message }
         if decision.needsFull {
             if decision.automaticallyDownload && !automatic {
-                syncStatus = "空のコレクションにAnkiWebからダウンロード中…"
+                syncStatus = AppText.localized("空のコレクションにAnkiWebからダウンロード中…")
                 #if DEBUG
                 scheduleSyncExpirationForTesting()
                 #endif
@@ -342,11 +346,11 @@ import AVFoundation
                 return
             }
             guard decision.canUpload || decision.canDownload else {
-                throw EngineError(message: "安全な同期方向を確認できませんでした。AnkiWebへのアップロードは行っていません。")
+                throw EngineError(message: AppText.localized("安全な同期方向を確認できませんでした。AnkiWebへのアップロードは行っていません。"))
             }
             syncDecision = decision
             fullSyncIncludesMedia = syncMedia
-            syncStatus = "同期するデータを選択してください"
+            syncStatus = AppText.localized("同期するデータを選択してください")
             if decision.required == "FULL_UPLOAD" && !automatic { confirmDirection = true }
             else { chooseFullSync = true }
             return
@@ -358,7 +362,7 @@ import AVFoundation
               upload ? decision.canUpload : decision.canDownload else { return }
         runSync {
             self.isSyncing = true
-            self.syncStatus = upload ? "AnkiWebにアップロード中…" : "AnkiWebからダウンロード中…"
+            self.syncStatus = upload ? AppText.localized("AnkiWebにアップロード中…") : AppText.localized("AnkiWebからダウンロード中…")
             self.syncDecision = nil
             #if DEBUG
             if !upload { self.scheduleSyncExpirationForTesting() }
@@ -369,7 +373,7 @@ import AVFoundation
         }
     }
     private func finishMediaSync(mediaSkipped: Bool = false) async throws {
-        syncStatus = "画像・音声を同期中…"
+        syncStatus = AppText.localized("画像・音声を同期中…")
         while true {
             guard !syncCancelled else { throw CancellationError() }
             let status = try await engine.mediaSyncStatus()
@@ -393,10 +397,10 @@ import AVFoundation
         mediaSyncPending = false
         UserDefaults.standard.set(false, forKey: profilePreferenceKey("syncMediaPending"))
         UserDefaults.standard.set(lastSync, forKey: profilePreferenceKey("lastSync"))
-        syncStatus = mediaSkipped ? "同期しました（画像・音声は設定により同期していません）" : "同期しました"
+        syncStatus = mediaSkipped ? AppText.localized("同期しました（画像・音声は設定により同期していません）") : AppText.localized("同期しました")
     }
     func cancelSync() {
-        requestSyncAbort(status: "同期を中止しました")
+        requestSyncAbort(status: AppText.localized("同期を中止しました"))
     }
     private func requestSyncAbort(status: String) {
         guard isSyncing else { return }
@@ -665,7 +669,7 @@ import AVFoundation
                 var allowed = CharacterSet.urlPathAllowed
                 allowed.remove(charactersIn: "/")
                 let path = local.path.addingPercentEncoding(withAllowedCharacters: allowed) ?? ""
-                self.backendPage = BackendPageRequest(path: "import-csv/" + path, title: "テキストを取り込む")
+                self.backendPage = BackendPageRequest(path: "import-csv/" + path, title: AppText.localized("テキストを取り込む"))
             default: try await self.engine.importPackage(url)
             }
             self.decks = try await self.engine.decks()
@@ -681,15 +685,15 @@ import AVFoundation
         audio.play([tags[index]], media: engine.media)
     }
     func schedulingRequest(_ method: String, input: String, key: String) async throws -> String {
-        guard let current = card, current.mutationKey == key, !revealed else { throw EngineError(message: "学習対象のカードが変わりました。") }
+        guard let current = card, current.mutationKey == key, !revealed else { throw EngineError(message: AppText.localized("学習対象のカードが変わりました。")) }
         if method == "getSchedulingStatesWithContext" {
             return try await engine.call("_encode/get_scheduling_states_with_context", ["states": current.states, "context": current.context])["data"] as? String ?? ""
         }
-        guard method == "setSchedulingStates" else { throw EngineError(message: "未対応のスケジューラー操作です。") }
+        guard method == "setSchedulingStates" else { throw EngineError(message: AppText.localized("未対応のスケジューラー操作です。")) }
         let request = try await engine.call("_decode/set_scheduling_states", ["data": input])
-        guard request["key"] as? String == key, let states = request["states"] as? [String: Any] else { throw EngineError(message: "スケジューラーの応答が一致しません。") }
+        guard request["key"] as? String == key, let states = request["states"] as? [String: Any] else { throw EngineError(message: AppText.localized("スケジューラーの応答が一致しません。")) }
         let labels = try await engine.call("SchedulerService.DescribeNextStates", states)
-        guard var updated = card, updated.mutationKey == key, !revealed else { throw EngineError(message: "学習対象のカードが変わりました。") }
+        guard var updated = card, updated.mutationKey == key, !revealed else { throw EngineError(message: AppText.localized("学習対象のカードが変わりました。")) }
         updated.states = states
         updated.intervals = labels["vals"] as? [String] ?? []
         card = updated
@@ -700,7 +704,7 @@ import AVFoundation
     func schedulingFailed(_ message: String, key: String) {
         guard card?.mutationKey == key, !revealed, !schedulerReady else { return }
         schedulerReady = true
-        error = "カスタムスケジューラーを適用できませんでした。標準の学習状態を使います。\n" + message
+        error = AppText.localized("カスタムスケジューラーを適用できませんでした。標準の学習状態を使います。\n") + message
     }
     func elapsed() -> TimeInterval { max(0, (stoppedAt ?? interactionPauseStarted ?? Date()).timeIntervalSince(started) - pausedReviewSeconds) }
     func scheduleAutoAdvance() {

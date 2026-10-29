@@ -20,26 +20,26 @@ struct SharedDeckBrowserView: View {
             VStack(spacing: 0) {
                 SharedDeckWebView(url: startURL, state: controls, downloaded: { clearPending(); pending = $0; confirmImport = true }, failed: { error = $0 })
                 if controls.downloading || importing || controls.loading {
-                    ProgressView(importing ? "デッキを取り込んでいます…" : controls.downloading ? "ダウンロードしています…" : "ページを読み込んでいます…").padding()
+                    ProgressView(importing ? AppText.localized("デッキを取り込んでいます…") : controls.downloading ? AppText.localized("ダウンロードしています…") : AppText.localized("ページを読み込んでいます…")).padding()
                 }
             }
-            .studyThemeSurface().navigationTitle("共有デッキ").navigationBarTitleDisplayMode(.inline)
+            .studyThemeSurface().navigationTitle(AppText.localized("共有デッキ")).navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("閉じる") { controls.cancel(); clearPending(); dismiss() }.disabled(importing).accessibilityIdentifier("shared-decks-close") }
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("閉じる")) { controls.cancel(); clearPending(); dismiss() }.disabled(importing).accessibilityIdentifier("shared-decks-close") }
                 ToolbarItemGroup(placement: .primaryAction) {
                     Button { controls.webView?.goBack() } label: { Image(systemName: "chevron.left") }.disabled(!controls.canGoBack || importing || controls.downloading).accessibilityIdentifier("shared-browser-back")
                     Button { controls.webView?.load(URLRequest(url: startURL)) } label: { Image(systemName: "house") }.disabled(importing || controls.downloading)
-                    if pending != nil && !importing { Button("取り込みを確認") { confirmImport = true } }
-                    if controls.downloading { Button("中止") { controls.cancel() } }
+                    if pending != nil && !importing { Button(AppText.localized("取り込みを確認")) { confirmImport = true } }
+                    if controls.downloading { Button(AppText.localized("中止")) { controls.cancel() } }
                     else { Button { controls.webView?.reload() } label: { Image(systemName: "arrow.clockwise") }.disabled(importing) }
                 }
             }
-            .confirmationDialog("ダウンロードしたデッキを取り込みますか？", isPresented: $confirmImport, titleVisibility: .visible) {
-                Button("取り込む") { importPending() }.accessibilityIdentifier("shared-deck-import")
-                Button("キャンセル", role: .cancel) { clearPending() }
+            .confirmationDialog(AppText.localized("ダウンロードしたデッキを取り込みますか？"), isPresented: $confirmImport, titleVisibility: .visible) {
+                Button(AppText.localized("取り込む")) { importPending() }.accessibilityIdentifier("shared-deck-import")
+                Button(AppText.localized("キャンセル"), role: .cancel) { clearPending() }
             } message: { Text(pending?.lastPathComponent ?? "") }
-            .alert("共有デッキを開けませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
-                Button("閉じる", role: .cancel) { error = nil }
+            .alert(AppText.localized("共有デッキを開けませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
+                Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
             .interactiveDismissDisabled(importing || controls.downloading)
             .onDisappear { controls.cancel(); if !importing { clearPending() } }
@@ -51,7 +51,7 @@ struct SharedDeckBrowserView: View {
     }
     private func importPending() {
         guard let local = pending, !importing else { return }
-        guard !model.busy else { error = "処理が終わってからデッキを取り込んでください。"; return }
+        guard !model.busy else { error = AppText.localized("処理が終わってからデッキを取り込んでください。"); return }
         importing = true; model.busy = true
         Task {
             defer { clearPending(); importing = false; model.busy = false }
@@ -130,7 +130,7 @@ struct SharedDeckWebView: UIViewRepresentable {
         func download(_ download: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String, completionHandler: @escaping (URL?) -> Void) {
             guard active === download else { completionHandler(nil); return }
             let name = (suggestedFilename as NSString).lastPathComponent
-            guard (name as NSString).pathExtension.lowercased() == "apkg" else { completionHandler(nil); cancel(); failed("共有デッキ（.apkg）を選んでください。"); return }
+            guard (name as NSString).pathExtension.lowercased() == "apkg" else { completionHandler(nil); cancel(); failed(AppText.localized("共有デッキ（.apkg）を選んでください。")); return }
             do {
                 let folder = FileManager.default.temporaryDirectory.appendingPathComponent("shared-deck-" + UUID().uuidString, isDirectory: true)
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

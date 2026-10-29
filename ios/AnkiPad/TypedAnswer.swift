@@ -44,7 +44,7 @@ extension Engine {
         let definitions = schema["fields"] as? [[String: Any]] ?? []
         guard let index = definitions.firstIndex(where: { $0["name"] as? String == field }),
               let fields = note["fields"] as? [String], fields.indices.contains(index) else {
-            throw EngineError(message: "入力解答のフィールドが見つかりません: \(field)")
+            throw EngineError(message: AppText.localized("入力解答のフィールドが見つかりません: \(field)"))
         }
         var expected = fields[index]
         if cloze { expected = try call("CardRenderingService.ExtractClozeForTyping", ["text": expected, "ordinal": ordinal + 1])["val"] as? String ?? "" }

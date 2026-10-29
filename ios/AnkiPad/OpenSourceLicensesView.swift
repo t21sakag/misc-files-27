@@ -3,11 +3,11 @@ import UIKit
 
 struct OpenSourceLicensesView: View {
     private let entries = [
-        ("Anki / Ankitects のライセンス表記", "Anki-NOTICE", "txt", false),
+        (AppText.localized("Anki / Ankitects のライセンス表記"), "Anki-NOTICE", "txt", false),
         ("GNU AGPL v3", "AGPL-3.0", "txt", false),
         ("AnkiDroid / GNU GPL v3", "AnkiDroid-GPL-3.0", "txt", false),
-        ("Web表示の依存ライブラリ", "licenses-ts", "json", true),
-        ("エンジンの依存ライブラリ", "licenses-cargo", "json", true),
+        (AppText.localized("Web表示の依存ライブラリ"), "licenses-ts", "json", true),
+        (AppText.localized("エンジンの依存ライブラリ"), "licenses-cargo", "json", true),
     ]
     private var sourceURL: URL {
         let commit = Bundle.main.object(forInfoDictionaryKey: "AnkiPadSourceCommit") as? String ?? ""
@@ -21,8 +21,8 @@ struct OpenSourceLicensesView: View {
                     LicenseDocumentView(name: entry.1, ext: entry.2, backend: entry.3).studyThemeSurface().navigationTitle(entry.0).navigationBarTitleDisplayMode(.inline)
                 }
             }
-            Link("ソースコード", destination: sourceURL)
-        }.studyThemeSurface().navigationTitle("ライセンスとソース")
+            Link(AppText.localized("ソースコード"), destination: sourceURL)
+        }.studyThemeSurface().navigationTitle(AppText.localized("ライセンスとソース"))
     }
 }
 private struct LicenseDocumentView: View {
@@ -34,7 +34,7 @@ private struct LicenseDocumentView: View {
         ReadOnlyLicenseText(text: text)
             .task {
                 do {
-                    guard let url = backend ? Bundle.main.resourceURL?.appendingPathComponent("backend/\(name).\(ext)") : Bundle.main.url(forResource: name, withExtension: ext) else { throw EngineError(message: "ライセンスを読み込めませんでした。") }
+                    guard let url = backend ? Bundle.main.resourceURL?.appendingPathComponent("backend/\(name).\(ext)") : Bundle.main.url(forResource: name, withExtension: ext) else { throw EngineError(message: AppText.localized("ライセンスを読み込めませんでした。")) }
                     text = try String(contentsOf: url, encoding: .utf8)
                 } catch { text = error.localizedDescription }
             }

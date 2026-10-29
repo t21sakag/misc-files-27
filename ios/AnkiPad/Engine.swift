@@ -38,7 +38,7 @@ actor Engine {
     nonisolated var media: URL { root.appendingPathComponent("collection.media", isDirectory: true) }
 
     init(root profileRoot: URL? = nil, preferredLanguages: [String]? = nil) {
-        self.preferredLanguages = preferredLanguages
+        self.preferredLanguages = preferredLanguages ?? AppText.backendLanguages
         root = profileRoot ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("AnkiPad", isDirectory: true)
     }
@@ -59,7 +59,7 @@ actor Engine {
         opened = true
     }
     private func raw(_ method: String, _ args: [String: Any] = [:]) throws -> [String: Any] {
-        guard let transport else { throw EngineError(message: "学習エンジンが閉じられています。") }
+        guard let transport else { throw EngineError(message: AppText.localized("学習エンジンが閉じられています。")) }
         return try transport.call(method, args)
     }
     func longCall(_ method: String, _ args: [String: Any]) async throws -> [String: Any] {
@@ -117,12 +117,12 @@ actor Engine {
             css: rendered["css"] as? String ?? "", states: states, intervals: descriptions["vals"] as? [String] ?? [],
             context: queued["context"] as? [String: Any] ?? [:], customScheduling: customScheduling, mutationKey: UUID().uuidString,
             questionAV: q["avTags"] as? [[String: Any]] ?? [], answerAV: a["avTags"] as? [[String: Any]] ?? [],
-            counts: "新規 \(queue["newCount"] as? Int ?? 0) · 学習 \(queue["learningCount"] as? Int ?? 0) · 復習 \(queue["reviewCount"] as? Int ?? 0)")
+            counts: AppText.localized("新規 \(queue["newCount"] as? Int ?? 0) · 学習 \(queue["learningCount"] as? Int ?? 0) · 復習 \(queue["reviewCount"] as? Int ?? 0)"))
     }
     func answer(_ card: StudyCard, rating: Int, elapsed: TimeInterval) throws {
         let keys = ["again", "hard", "good", "easy"]
         guard keys.indices.contains(rating), let current = card.states["current"], let next = card.states[keys[rating]] else {
-            throw EngineError(message: "学習状態を取得できません。")
+            throw EngineError(message: AppText.localized("学習状態を取得できません。"))
         }
         _ = try call("SchedulerService.AnswerCard", ["cardId": card.id, "currentState": current,
             "newState": next, "rating": rating, "answeredAtMillis": String(Int64(Date().timeIntervalSince1970 * 1000)),
@@ -155,7 +155,7 @@ actor Engine {
         var request: [String: Any] = ["username": username, "password": password]
         if let endpoint, !endpoint.isEmpty { request["endpoint"] = endpoint }
         let auth = try await longCall("SyncService.SyncLogin", request)
-        guard let key = auth["hkey"] as? String, !key.isEmpty else { throw EngineError(message: "ログイン情報を取得できませんでした。") }
+        guard let key = auth["hkey"] as? String, !key.isEmpty else { throw EngineError(message: AppText.localized("ログイン情報を取得できませんでした。")) }
         return SyncCredentials(username: username, hkey: key, endpoint: auth["endpoint"] as? String)
     }
     func sync(_ credentials: SyncCredentials, syncMedia: Bool = true) async throws -> SyncDecision {
@@ -177,7 +177,7 @@ actor Engine {
     func fullSync(_ credentials: SyncCredentials, upload: Bool, serverUSN: Int, syncMedia: Bool = true) async throws {
         if upload {
             let ids = try call("SearchService.SearchCards", ["search": ""])["ids"] as? [String] ?? []
-            guard !ids.isEmpty else { throw EngineError(message: "空のコレクションはAnkiWebにアップロードできません。ダウンロードで同期してください。") }
+            guard !ids.isEmpty else { throw EngineError(message: AppText.localized("空のコレクションはAnkiWebにアップロードできません。ダウンロードで同期してください。")) }
         }
         try backup()
         var request: [String: Any] = ["auth": credentials.request, "upload": upload]
@@ -193,7 +193,7 @@ actor Engine {
     func localSyncState() throws -> LocalSyncState {
         let result = try call("_droid/local_sync_status")
         guard let neverSynced = result["neverSynced"] as? Bool, let hasChanges = result["hasChanges"] as? Bool, let modification = result["modification"] as? String else {
-            throw EngineError(message: "ローカルの同期状態を確認できませんでした。")
+            throw EngineError(message: AppText.localized("ローカルの同期状態を確認できませんでした。"))
         }
         return LocalSyncState(neverSynced: neverSynced, hasChanges: hasChanges, modification: modification)
     }
@@ -258,7 +258,7 @@ final class BackendTransport: @unchecked Sendable {
             opened = String(decoding: data, as: UTF8.self).withCString { ap_open_with_languages($0, &error) }
         } else { opened = ap_open(&error) }
         guard let handle = opened else {
-            let message = error.map { String(cString: $0) } ?? "学習エンジンを起動できませんでした。"
+            let message = error.map { String(cString: $0) } ?? AppText.localized("学習エンジンを起動できませんでした。")
             if let error { ap_string_free(error) }
             throw EngineError(message: message)
         }
@@ -269,12 +269,12 @@ final class BackendTransport: @unchecked Sendable {
         let data = try JSONSerialization.data(withJSONObject: args, options: [.sortedKeys])
         let request = String(decoding: data, as: UTF8.self)
         guard let result = method.withCString({ m in request.withCString { ap_call(handle, m, $0) } }) else {
-            throw EngineError(message: "エンジンから応答がありません。")
+            throw EngineError(message: AppText.localized("エンジンから応答がありません。"))
         }
         defer { ap_string_free(result) }
         let envelope = try JSONSerialization.jsonObject(with: Data(String(cString: result).utf8)) as? [String: Any]
         if let error = envelope?["error"] as? String { throw EngineError(message: error, kind: envelope?["errorKind"] as? Int) }
-        guard let value = envelope?["ok"] as? [String: Any] else { throw EngineError(message: "エンジンの応答を読み取れません。") }
+        guard let value = envelope?["ok"] as? [String: Any] else { throw EngineError(message: AppText.localized("エンジンの応答を読み取れません。")) }
         return value
     }
 }

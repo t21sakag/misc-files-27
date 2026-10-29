@@ -38,8 +38,8 @@ struct NoteImageEditorView: View {
                     let size = CGSize(width: image.size.width * factor, height: image.size.height * factor)
                     ZStack(alignment: .topLeading) {
                         Image(uiImage: image).resizable().frame(width: size.width, height: size.height)
-                            .accessibilityLabel("編集する画像").accessibilityIdentifier("image-editor-image")
-                            .accessibilityValue("\(Int(image.size.width * image.scale)) × \(Int(image.size.height * image.scale)) ピクセル")
+                            .accessibilityLabel(AppText.localized("編集する画像")).accessibilityIdentifier("image-editor-image")
+                            .accessibilityValue(AppText.localized("\(Int(image.size.width * image.scale)) × \(Int(image.size.height * image.scale)) ピクセル"))
                         if drawingMode {
                             WhiteboardCanvas(drawing: $drawing, eraser: eraser)
                                 .frame(width: size.width, height: size.height)
@@ -65,29 +65,29 @@ struct NoteImageEditorView: View {
                     .onAppear { resizeDrawing(to: size) }
                     .onChange(of: size) { _, next in resizeDrawing(to: next) }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .accessibilityLabel("編集する画像")
-                    .accessibilityHint(drawingMode ? "指またはApple Pencilで画像に書き込めます。" : "ドラッグして切り抜く範囲を選びます。")
+                    .accessibilityLabel(AppText.localized("編集する画像"))
+                    .accessibilityHint(drawingMode ? AppText.localized("指またはApple Pencilで画像に書き込めます。") : AppText.localized("ドラッグして切り抜く範囲を選びます。"))
                 }
                 HStack {
-                    Toggle("手書き", isOn: $drawingMode).accessibilityIdentifier("image-editor-drawing").onChange(of: drawingMode) { _, _ in crop = nil }
+                    Toggle(AppText.localized("手書き"), isOn: $drawingMode).accessibilityIdentifier("image-editor-drawing").onChange(of: drawingMode) { _, _ in crop = nil }
                     if drawingMode {
-                        Toggle("消しゴム", isOn: $eraser)
-                        Button("書き込みを消す") { drawing = PKDrawing() }.disabled(drawing.strokes.isEmpty)
+                        Toggle(AppText.localized("消しゴム"), isOn: $eraser)
+                        Button(AppText.localized("書き込みを消す")) { drawing = PKDrawing() }.disabled(drawing.strokes.isEmpty)
                     }
                 }
-                Text(drawingMode ? "画像に書き込めます。色やペンはツールパレットで変更できます。" : "画像をドラッグして切り抜く範囲を選べます。") .font(.footnote).foregroundStyle(.secondary)
+                Text(drawingMode ? AppText.localized("画像に書き込めます。色やペンはツールパレットで変更できます。") : AppText.localized("画像をドラッグして切り抜く範囲を選べます。")) .font(.footnote).foregroundStyle(.secondary)
                 HStack {
-                    Button("回転", systemImage: "rotate.right") { transform(rotate: true) }.accessibilityIdentifier("image-editor-rotate").disabled(drawingMode)
-                    Button("左右反転", systemImage: "arrow.left.and.right.righttriangle.left.righttriangle.right") { transform(rotate: false) }.accessibilityIdentifier("image-editor-mirror").disabled(drawingMode)
-                    Button("切り抜く", systemImage: "crop") { applyCrop() }.accessibilityIdentifier("image-editor-crop").disabled(crop == nil)
-                    Button("元に戻す") { image = request.image; crop = nil; changed = false; drawing = PKDrawing(); drawingMode = false }
+                    Button(AppText.localized("回転"), systemImage: "rotate.right") { transform(rotate: true) }.accessibilityIdentifier("image-editor-rotate").disabled(drawingMode)
+                    Button(AppText.localized("左右反転"), systemImage: "arrow.left.and.right.righttriangle.left.righttriangle.right") { transform(rotate: false) }.accessibilityIdentifier("image-editor-mirror").disabled(drawingMode)
+                    Button(AppText.localized("切り抜く"), systemImage: "crop") { applyCrop() }.accessibilityIdentifier("image-editor-crop").disabled(crop == nil)
+                    Button(AppText.localized("元に戻す")) { image = request.image; crop = nil; changed = false; drawing = PKDrawing(); drawingMode = false }
                 }.buttonStyle(.bordered)
             }
             .padding().disabled(saving)
-            .studyThemeSurface().navigationTitle("画像を編集")
+            .studyThemeSurface().navigationTitle(AppText.localized("画像を編集"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { dismiss() }.disabled(saving) }
-                ToolbarItem(placement: .confirmationAction) { Button("挿入") {
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { dismiss() }.disabled(saving) }
+                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("挿入")) {
                     saving = true
                     Task {
                         defer { saving = false }
@@ -97,8 +97,8 @@ struct NoteImageEditorView: View {
                 }.disabled(saving).accessibilityIdentifier("image-editor-insert") }
             }
             .interactiveDismissDisabled(saving)
-            .alert("画像を編集できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
-                Button("閉じる", role: .cancel) { error = nil }
+            .alert(AppText.localized("画像を編集できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
+                Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
         }
     }
@@ -124,7 +124,7 @@ struct NoteImageEditorView: View {
         guard let crop else { return }
         let source = normalized()
         guard let result = NoteImageRendering.cropped(source, unitRect: crop) else {
-            error = "切り抜く範囲を広げてください。"; return
+            error = AppText.localized("切り抜く範囲を広げてください。"); return
         }
         image = result
         self.crop = nil

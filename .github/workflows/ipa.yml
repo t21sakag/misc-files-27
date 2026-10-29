@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, all]
 permissions:
   contents: read
 concurrency:
@@ -40,27 +40,32 @@ jobs:
       - name: Test actual loopback routing for bundled interfaces
         run: |
           mkdir -p build
-          swiftc -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/StaticAssetServer.swift tests/asset_server_smoke.swift -o build/asset-server-smoke
+          swiftc ios/AnkiPad/AppText.swift -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/StaticAssetServer.swift tests/asset_server_smoke.swift -o build/asset-server-smoke
           build/asset-server-smoke
+      - name: Test native translations and language policy
+        run: |
+          python3 tests/localization_resources_smoke.py
+          swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/AnkiPad/AppText.swift tests/app_text_smoke.swift -o build/app-text-smoke
+          build/app-text-smoke ios/AnkiPad/Resources
       - name: Test full sync direction safety
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/sync-decision-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/sync-decision-smoke
           build/sync-decision-smoke
       - name: Test study timebox interval and answer counts
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/ReviewTimebox.swift tests/review_timebox_smoke.swift -o build/review-timebox-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/ReviewTimebox.swift tests/review_timebox_smoke.swift -o build/review-timebox-smoke
           build/review-timebox-smoke
       - name: Test network sync preference policy and persistence
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/SyncNetworkPreferences.swift tests/sync_network_preferences_smoke.swift -o build/sync-network-preferences-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/SyncNetworkPreferences.swift tests/sync_network_preferences_smoke.swift -o build/sync-network-preferences-smoke
           build/sync-network-preferences-smoke
       - name: Test automatic sync scheduling and offline state
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/AutomaticSyncPolicy.swift tests/automatic_sync_policy_smoke.swift -o build/automatic-sync-policy-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/AutomaticSyncPolicy.swift tests/automatic_sync_policy_smoke.swift -o build/automatic-sync-policy-smoke
           build/automatic-sync-policy-smoke
       - name: Test stored backup share snapshot preservation
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BackupExport.swift tests/backup_export_smoke.swift -o build/backup-export-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/BackupExport.swift tests/backup_export_smoke.swift -o build/backup-export-smoke
           build/backup-export-smoke
       - name: Test inert speech parsing and scoped selection persistence
         run: |
@@ -68,19 +73,19 @@ jobs:
           xcrun clang -Wall -Wextra -I"$sdk_root/usr/include/libxml2" -c ios/AnkiPad/SpeechHTML.c -o build/SpeechHTML.o
           xcrun clang -dynamiclib -I"$sdk_root/usr/include/libxml2" ios/AnkiPad/SpeechHTML.c -lxml2 -o build/libspeechhtml.dylib
           python3 tests/speech_html_smoke.py build/libspeechhtml.dylib
-          swiftc -swift-version 5 -parse-as-library -import-objc-header ios/AnkiPad/SpeechHTML.h ios/AnkiPad/LegacySpeechText.swift ios/AnkiPad/ReviewSpeechPreferences.swift ios/AnkiPad/ReviewSpeechPlan.swift tests/review_speech_smoke.swift build/SpeechHTML.o -lxml2 -o build/review-speech-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library -import-objc-header ios/AnkiPad/SpeechHTML.h ios/AnkiPad/LegacySpeechText.swift ios/AnkiPad/ReviewSpeechPreferences.swift ios/AnkiPad/ReviewSpeechPlan.swift tests/review_speech_smoke.swift build/SpeechHTML.o -lxml2 -o build/review-speech-smoke
           build/review-speech-smoke
       - name: Test reminder configuration validity and persistence
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/ReviewReminderConfiguration.swift tests/reminder_configuration_smoke.swift -o build/reminder-configuration-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/ReviewReminderConfiguration.swift tests/reminder_configuration_smoke.swift -o build/reminder-configuration-smoke
           build/reminder-configuration-smoke
       - name: Test nested list visibility and aggregate counts
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/DeckTree.swift tests/deck_tree_smoke.swift -o build/deck-tree-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/DeckTree.swift tests/deck_tree_smoke.swift -o build/deck-tree-smoke
           build/deck-tree-smoke
       - name: Test per-list drawing preferences
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/WhiteboardPreferences.swift tests/whiteboard_preferences_smoke.swift -o build/whiteboard-preferences-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/WhiteboardPreferences.swift tests/whiteboard_preferences_smoke.swift -o build/whiteboard-preferences-smoke
           build/whiteboard-preferences-smoke
       - name: Test cache input selection
         run: python3 tests/cache_input_hashes_smoke.py
@@ -88,7 +93,7 @@ jobs:
         run: python3 tests/xcode_input_mtimes_smoke.py
       - name: Test isolated test-case storage and relaunch persistence
         run: |
-          swiftc -DDEBUG -swift-version 5 -parse-as-library ios/AnkiPad/UITestIsolation.swift tests/ui_test_isolation_smoke.swift -o build/ui-test-isolation-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -DDEBUG -swift-version 5 -parse-as-library ios/AnkiPad/UITestIsolation.swift tests/ui_test_isolation_smoke.swift -o build/ui-test-isolation-smoke
           build/ui-test-isolation-smoke
       - name: Validate UI case grouping and scope selection
         run: python3 tests/ui_case_groups_smoke.py
@@ -96,21 +101,21 @@ jobs:
         run: python3 tests/ui_batch_transfer_smoke.py
       - name: Test interrupted sync marker persistence
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/SyncActivityStore.swift tests/sync_activity_smoke.swift -o build/sync-activity-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/SyncActivityStore.swift tests/sync_activity_smoke.swift -o build/sync-activity-smoke
           build/sync-activity-smoke
       - name: Test card touch bridge cancellation and control exclusions
         run: node tests/review_touch_bridge_smoke.js
       - name: Test persistent reviewer gesture configuration
         run: |
-          swiftc -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/ReviewGestureConfiguration.swift ios/AnkiPad/ReviewKeyboardConfiguration.swift ios/AnkiPad/ReviewGamepadConfiguration.swift ios/AnkiPad/ReviewTouchConfiguration.swift ios/AnkiPad/ReviewToolbarConfiguration.swift tests/gesture_configuration_smoke.swift -o build/gesture-configuration-smoke
+          swiftc ios/AnkiPad/AppText.swift -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/ReviewGestureConfiguration.swift ios/AnkiPad/ReviewKeyboardConfiguration.swift ios/AnkiPad/ReviewGamepadConfiguration.swift ios/AnkiPad/ReviewTouchConfiguration.swift ios/AnkiPad/ReviewToolbarConfiguration.swift tests/gesture_configuration_smoke.swift -o build/gesture-configuration-smoke
           build/gesture-configuration-smoke
       - name: Test profile registry preservation and deletion rollback
         run: |
-          swiftc -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/ProfileRegistry.swift tests/profile_registry_smoke.swift -o build/profile-registry-smoke
+          swiftc ios/AnkiPad/AppText.swift -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/ProfileRegistry.swift tests/profile_registry_smoke.swift -o build/profile-registry-smoke
           build/profile-registry-smoke
       - name: Test local image source parsing and exact HTML replacement
         run: |
-          swiftc -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/FieldImageReferences.swift tests/field_image_references_smoke.swift -o build/field-image-references-smoke
+          swiftc ios/AnkiPad/AppText.swift -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/FieldImageReferences.swift tests/field_image_references_smoke.swift -o build/field-image-references-smoke
           build/field-image-references-smoke
       - name: Record actual Apple toolchain and runtimes
         run: |
@@ -201,7 +206,7 @@ jobs:
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
         run: python3 tests/engine_smoke.py build/native/host/libankipad_bridge.dylib build/fixture.apkg
       - name: Test backend language isolation and existing data preservation
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'engine-languages')
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'engine-languages' || env.UI_SUITE == 'languages'))
         run: python3 tests/backend_languages_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test collection editing, search and card actions
         if: env.CI_MODE == 'full'
@@ -236,28 +241,28 @@ jobs:
       - name: Test external link permission boundaries
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'card-links')
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/CardExternalLaunchPolicy.swift tests/card_external_launch_smoke.swift -o build/card-external-launch-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/CardExternalLaunchPolicy.swift tests/card_external_launch_smoke.swift -o build/card-external-launch-smoke
           build/card-external-launch-smoke
       - name: Test browser sound filename presentation
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'browser-appearance')
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BrowserMediaText.swift tests/browser_media_text_smoke.swift -o build/browser-media-text-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/BrowserMediaText.swift tests/browser_media_text_smoke.swift -o build/browser-media-text-smoke
           build/browser-media-text-smoke
       - name: Test theme resolution and card selectors
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'themes')
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/StudyTheme.swift tests/study_theme_smoke.swift -o build/study-theme-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/StudyTheme.swift tests/study_theme_smoke.swift -o build/study-theme-smoke
           build/study-theme-smoke
       - name: Test review button timing boundaries
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'button-timing')
         run: |
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/ReviewButtonTiming.swift tests/review_button_timing_smoke.swift -o build/review-button-timing-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/ReviewButtonTiming.swift tests/review_button_timing_smoke.swift -o build/review-button-timing-smoke
           build/review-button-timing-smoke
       - name: Test backend template filter node compatibility
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'templates')
         run: |
           python3 tests/template_filter_nodes_smoke.py build/native/host/libankipad_bridge.dylib build/template-filter-nodes.json
-          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/TemplateNodeText.swift tests/template_node_smoke.swift -o build/template-node-smoke
+          swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/TemplateNodeText.swift tests/template_node_smoke.swift -o build/template-node-smoke
           build/template-node-smoke build/template-filter-nodes.json
       - name: Test real conditional reminder due forecasts
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'conditional-reminders' || env.UI_SUITE == 'conditional-only' || env.UI_SUITE == 'reminder-refresh'))
@@ -272,7 +277,7 @@ jobs:
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'collapse')
         run: python3 tests/deck_collapse_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test authenticated data and media sync
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'network' || env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair' || env.UI_SUITE == 'engine-languages' || env.UI_SUITE == 'collapse'))
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'network' || env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair' || env.UI_SUITE == 'engine-languages' || env.UI_SUITE == 'languages' || env.UI_SUITE == 'collapse'))
         run: python3 tests/sync_smoke.py build/native/host/libankipad_bridge.dylib build/native/host/sync_test_server
       - name: Test interrupted download preservation and retry
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'network' || env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair'))
@@ -361,7 +366,7 @@ jobs:
           SIMULATOR_ID: ${{ steps.ui-simulator.outputs.simulator }}
         run: |
           if [ "$CI_MODE" = ui ] && [ "$UI_SUITE" != batch-check ] && [ "$UI_SUITE" != all ]; then
-            if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = network ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then
+            if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = languages ] || [ "$UI_SUITE" = network ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then
               sync_ports=(18891)
               if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then sync_ports+=(18901); fi
               for sync_port in "${sync_ports[@]}"; do

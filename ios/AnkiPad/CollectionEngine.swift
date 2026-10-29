@@ -56,13 +56,13 @@ extension Engine {
             targetDeck = card["deckId"] as? String ?? deckID
             note = try call("NotesService.GetNote", ["nid": card["noteId"] as? String ?? "0"])
         } else {
-            guard let chosen = try typeID ?? defaults["notetypeId"] as? String ?? noteTypes().first?.id else { throw EngineError(message: "ノートタイプがありません。") }
+            guard let chosen = try typeID ?? defaults["notetypeId"] as? String ?? noteTypes().first?.id else { throw EngineError(message: AppText.localized("ノートタイプがありません。")) }
             note = try call("NotesService.NewNote", ["ntid": chosen])
         }
         let type = try call("NotetypesService.GetNotetype", ["ntid": note["notetypeId"] as? String ?? "0"])
         var fields = note["fields"] as? [String] ?? []
         let definitions = type["fields"] as? [[String: Any]] ?? []
-        let names = definitions.map { $0["name"] as? String ?? "フィールド" }
+        let names = definitions.map { $0["name"] as? String ?? AppText.localized("フィールド") }
         let configs = definitions.map { $0["config"] as? [String: Any] ?? [:] }
         if cardID == nil && noteID == nil {
             let kept = stickyFieldValues[note["notetypeId"] as? String ?? "0"] ?? [:]
@@ -147,13 +147,13 @@ extension Engine {
             let name = url.deletingPathExtension().lastPathComponent + ".png"
             return try call("MediaService.AddMediaFile", ["desiredName": name, "data": data.base64EncodedString()])["val"] as? String ?? name
         }
-        guard let filename = try call("MediaService.AddMediaFromPath", ["path": url.path])["val"] as? String else { throw EngineError(message: "メディアを読み込めませんでした。") }
+        guard let filename = try call("MediaService.AddMediaFromPath", ["path": url.path])["val"] as? String else { throw EngineError(message: AppText.localized("メディアを読み込めませんでした。")) }
         return filename
     }
     func webProtobuf(_ method: String, input: String) throws -> String {
         guard !method.contains("sync"), !method.contains("login"), !method.contains("certificate"),
               method.range(of: "^[a-z][a-z0-9_]*$", options: .regularExpression) != nil else {
-            throw EngineError(message: "この画面から呼び出せない操作です。")
+            throw EngineError(message: AppText.localized("この画面から呼び出せない操作です。"))
         }
         return try call("_anki/" + method, ["data": input])["data"] as? String ?? ""
     }

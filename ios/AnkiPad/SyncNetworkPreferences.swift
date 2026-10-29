@@ -6,9 +6,9 @@ enum SyncMediaFetch: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .always: "常に取得"
-        case .unmetered: "Wi-Fiなど従量課金でない回線のみ"
-        case .never: "取得しない"
+        case .always: AppText.localized("常に取得")
+        case .unmetered: AppText.localized("Wi-Fiなど従量課金でない回線のみ")
+        case .never: AppText.localized("取得しない")
         }
     }
 }

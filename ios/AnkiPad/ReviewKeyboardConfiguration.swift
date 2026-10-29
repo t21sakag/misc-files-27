@@ -56,7 +56,7 @@ struct ReviewKeyboardSettingsView: View {
     @Binding var configuration: ReviewKeyboardConfiguration
     var body: some View {
         Form {
-            Section("キーの割り当て") {
+            Section(AppText.localized("キーの割り当て")) {
                 ForEach(ReviewKey.allCases) { key in
                     Picker(key.title, selection: Binding(get: { configuration.action(for: key) }, set: { configuration.actions[key.rawValue] = $0 })) {
                         ForEach(ReviewGestureAction.allCases) { action in Text(action.title).tag(action) }
@@ -64,10 +64,10 @@ struct ReviewKeyboardSettingsView: View {
                 }
             }
             Section {
-                Text("文字入力を求めるカードの表面では、Return以外の割り当てを停止します。編集画面やダイアログの表示中も停止します。")
-                Button("初期設定に戻す") { configuration = ReviewKeyboardConfiguration() }
+                Text(AppText.localized("文字入力を求めるカードの表面では、Return以外の割り当てを停止します。編集画面やダイアログの表示中も停止します。"))
+                Button(AppText.localized("初期設定に戻す")) { configuration = ReviewKeyboardConfiguration() }
             }
-        }.studyThemeSurface().navigationTitle("キーボードの割り当て")
+        }.studyThemeSurface().navigationTitle(AppText.localized("キーボードの割り当て"))
     }
 }
 

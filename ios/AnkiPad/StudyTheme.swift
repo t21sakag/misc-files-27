@@ -3,12 +3,12 @@ import Foundation
 enum StudyDayTheme: String, CaseIterable, Identifiable {
     case light = "1", plain = "2", eink = "3"
     var id: String { rawValue }
-    var title: String { switch self { case .light: "ライト"; case .plain: "プレーン"; case .eink: "E Ink" } }
+    var title: String { switch self { case .light: AppText.localized("ライト"); case .plain: AppText.localized("プレーン"); case .eink: "E Ink" } }
 }
 enum StudyNightTheme: String, CaseIterable, Identifiable {
     case black = "3", dark = "4"
     var id: String { rawValue }
-    var title: String { switch self { case .black: "ブラック"; case .dark: "ダーク" } }
+    var title: String { switch self { case .black: AppText.localized("ブラック"); case .dark: AppText.localized("ダーク") } }
 }
 enum StudyTheme: String {
     case light, plain, eink, black, dark

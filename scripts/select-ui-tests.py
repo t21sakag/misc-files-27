@@ -56,6 +56,7 @@ suites = {
     'web-themes': ['testBundledPagesUseNativeNightThemeAndRemainInteractive', 'testZZSharedDeckCanBeDownloadedAndImported'],
     'web-theme-only': ['testBundledPagesUseNativeNightThemeAndRemainInteractive'],
     'engine-languages': ['testNoteCanBeCreatedAndFoundInBrowser'],
+    'languages': ['testLanguageSavesOnRelaunchAndKeepsNoteTextWithTranslatedKeys', 'testFullSyncWithLocalDataRequiresTypedUploadConfirmation'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

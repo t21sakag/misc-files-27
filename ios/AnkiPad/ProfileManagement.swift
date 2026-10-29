@@ -8,22 +8,22 @@ extension StudyModel {
         return id == "default" ? key : "profile." + id + "." + key
     }
     func addProfile(_ name: String) throws -> String {
-        guard profilesReady, !busy else { throw ProfileRegistryError(message: "処理が終わってからもう一度選んでください。") }
+        guard profilesReady, !busy else { throw ProfileRegistryError(message: AppText.localized("処理が終わってからもう一度選んでください。")) }
         busy = true
         defer { busy = false }
         profileRegistry = try profileStore.adding(name, to: profileRegistry)
         return profileRegistry.profiles.last!.id
     }
     func renameProfile(_ profile: StudyProfile, name: String) throws {
-        guard profilesReady, !busy else { throw ProfileRegistryError(message: "処理が終わってからもう一度選んでください。") }
+        guard profilesReady, !busy else { throw ProfileRegistryError(message: AppText.localized("処理が終わってからもう一度選んでください。")) }
         busy = true
         defer { busy = false }
         profileRegistry = try profileStore.renaming(profile.id, to: name, in: profileRegistry)
     }
     func switchProfile(_ id: String) async throws {
-        guard profilesReady, !busy else { throw ProfileRegistryError(message: "処理が終わってからもう一度選んでください。") }
+        guard profilesReady, !busy else { throw ProfileRegistryError(message: AppText.localized("処理が終わってからもう一度選んでください。")) }
         guard id != currentProfileID else { showingProfiles = false; return }
-        guard profileRegistry.profiles.contains(where: { $0.id == id }) else { throw ProfileRegistryError(message: "プロファイルが見つかりません。") }
+        guard profileRegistry.profiles.contains(where: { $0.id == id }) else { throw ProfileRegistryError(message: AppText.localized("プロファイルが見つかりません。")) }
         busy = true
         defer { busy = false; scheduleConditionalReminderRefresh(); showInterruptedSyncIfNeeded(); processPendingAutomaticSync() }
         leave() // Stops media/callbacks; its refresh is suppressed by the busy gate.
@@ -59,7 +59,7 @@ extension StudyModel {
     }
     func deleteProfile(_ profile: StudyProfile) async throws {
         guard profilesReady, !busy, profile.id != currentProfileID,
-              profileRegistry.profiles.contains(where: { $0.id == profile.id }) else { throw ProfileRegistryError(message: "使用中のプロファイルは削除できません。") }
+              profileRegistry.profiles.contains(where: { $0.id == profile.id }) else { throw ProfileRegistryError(message: AppText.localized("使用中のプロファイルは削除できません。")) }
         busy = true
         defer { busy = false }
         let store = profileStore

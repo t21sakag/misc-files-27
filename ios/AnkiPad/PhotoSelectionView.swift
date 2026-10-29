@@ -34,7 +34,7 @@ struct PhotoSelectionView: UIViewControllerRepresentable {
             guard !loading else { return }
             loading = true
             guard let type = provider.registeredTypeIdentifiers.first(where: { UTType($0)?.conforms(to: .image) == true }) else {
-                finished = true; selected(nil, "画像を読み込めませんでした。"); dismiss(); return
+                finished = true; selected(nil, AppText.localized("画像を読み込めませんでした。")); dismiss(); return
             }
             if let maximumBytes {
                 // This URL is valid only during the provider callback. Copy the
@@ -62,7 +62,7 @@ struct PhotoSelectionView: UIViewControllerRepresentable {
                 Task { @MainActor in
                     guard let self, !self.finished else { return }
                     self.finished = true
-                    self.selected(data, message ?? (data == nil ? "画像を読み込めませんでした。" : nil))
+                    self.selected(data, message ?? (data == nil ? AppText.localized("画像を読み込めませんでした。") : nil))
                     self.dismiss()
                 }
             }

@@ -20,7 +20,7 @@ extension Engine {
     func addStockNoteType(name: String, kind: String) throws {
         let response = try call("NotetypesService.GetStockNotetypeLegacy", ["kind": kind])
         guard let encoded = response["json"] as? String, let data = Data(base64Encoded: encoded),
-              var legacy = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw EngineError(message: "ノートタイプを作成できませんでした。") }
+              var legacy = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw EngineError(message: AppText.localized("ノートタイプを作成できませんでした。")) }
         legacy["name"] = name
         legacy["id"] = 0
         let encodedNew = try JSONSerialization.data(withJSONObject: legacy).base64EncodedString()
@@ -31,7 +31,7 @@ extension Engine {
         let templates = schema["templates"] as? [[String: Any]] ?? []
         let isCloze = (schema["config"] as? [String: Any])?["kind"] as? String == "KIND_CLOZE"
         let templateIndex = isCloze ? 0 : ordinal
-        guard ordinal >= 0, templates.indices.contains(templateIndex) else { throw EngineError(message: "テンプレートが見つかりません。") }
+        guard ordinal >= 0, templates.indices.contains(templateIndex) else { throw EngineError(message: AppText.localized("テンプレートが見つかりません。")) }
         let result = try call("SearchService.SearchNotes", ["search": "mid:" + typeID])
         var note: [String: Any]
         if let document {

@@ -23,11 +23,11 @@ struct ReviewTouchSettingsView: View {
     @State private var answer = false
     var body: some View {
         Form {
-            Toggle("タッチ領域を使う", isOn: $configuration.enabled).accessibilityIdentifier("touch-enabled")
-            Picker("カードの面", selection: $answer) { Text("表面").tag(false); Text("裏面").tag(true) }.pickerStyle(.segmented)
-            Section("カードを3×3に分けた領域") {
+            Toggle(AppText.localized("タッチ領域を使う"), isOn: $configuration.enabled).accessibilityIdentifier("touch-enabled")
+            Picker(AppText.localized("カードの面"), selection: $answer) { Text(AppText.localized("表面")).tag(false); Text(AppText.localized("裏面")).tag(true) }.pickerStyle(.segmented)
+            Section(AppText.localized("カードを3×3に分けた領域")) {
                 ForEach(0..<9, id: \.self) { zone in
-                    Picker(["上・左", "上・中央", "上・右", "中央・左", "中央", "中央・右", "下・左", "下・中央", "下・右"][zone], selection: Binding(get: {
+                    Picker([AppText.localized("上・左"), AppText.localized("上・中央"), AppText.localized("上・右"), AppText.localized("中央・左"), AppText.localized("中央"), AppText.localized("中央・右"), AppText.localized("下・左"), AppText.localized("下・中央"), AppText.localized("下・右")][zone], selection: Binding(get: {
                         (answer ? configuration.answer : configuration.question)[String(zone)] ?? .none
                     }, set: { value in
                         if answer { configuration.answer[String(zone)] = value }
@@ -38,10 +38,10 @@ struct ReviewTouchSettingsView: View {
                 }
             }
             Section {
-                Text("リンクや入力欄、ボタンのタップ、文字選択、手書き中は領域操作を行いません。3回タップと区別するため少し待ってから実行します。")
-                Button("初期設定に戻す") { configuration = ReviewTouchConfiguration() }
+                Text(AppText.localized("リンクや入力欄、ボタンのタップ、文字選択、手書き中は領域操作を行いません。3回タップと区別するため少し待ってから実行します。"))
+                Button(AppText.localized("初期設定に戻す")) { configuration = ReviewTouchConfiguration() }
             }
-        }.accessibilityIdentifier("touch-settings-form").studyThemeSurface().navigationTitle("タッチ領域の割り当て")
+        }.accessibilityIdentifier("touch-settings-form").studyThemeSurface().navigationTitle(AppText.localized("タッチ領域の割り当て"))
     }
 }
 

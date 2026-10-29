@@ -6,7 +6,7 @@ struct ReviewTimebox {
     struct Report: Equatable {
         let seconds: Int
         let answers: Int
-        var message: String { "\(seconds / 60)分で\(answers)枚に回答しました。" }
+        var message: String { AppText.localized("\(seconds / 60)分で\(answers)枚に回答しました。") }
     }
     private var began: TimeInterval?
     private var answers = 0

@@ -49,6 +49,6 @@ enum AccountStore {
         guard status == errSecSuccess || status == errSecItemNotFound else { throw failure(status) }
     }
     private static func failure(_ status: OSStatus) -> EngineError {
-        EngineError(message: "ログイン情報の保存領域を開けませんでした（\(status)）。")
+        EngineError(message: AppText.localized("ログイン情報の保存領域を開けませんでした（\(Int(status))）。"))
     }
 }

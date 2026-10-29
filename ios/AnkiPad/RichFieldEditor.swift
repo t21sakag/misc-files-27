@@ -23,26 +23,26 @@ struct RichFieldEditor: View {
         VStack(spacing: 5) {
             ScrollView(.horizontal) {
                 HStack {
-                    formatButton("太字", icon: "bold", command: "bold")
-                    formatButton("斜体", icon: "italic", command: "italic")
-                    formatButton("下線", icon: "underline", command: "underline")
-                    formatButton("取り消し線", icon: "strikethrough", command: "strikeThrough")
-                    formatButton("下付き", icon: "textformat.subscript", command: "subscript")
-                    formatButton("上付き", icon: "textformat.superscript", command: "superscript")
-                    formatButton("箇条書き", icon: "list.bullet", command: "insertUnorderedList")
-                    formatButton("番号付きリスト", icon: "list.number", command: "insertOrderedList")
-                    Button { linking = true } label: { Image(systemName: "link") }.accessibilityLabel("リンクを挿入")
-                    formatButton("書式を解除", icon: "textformat", command: "removeFormat")
-                    formatButton("取り消す", icon: "arrow.uturn.backward", command: "undo")
-                    formatButton("やり直す", icon: "arrow.uturn.forward", command: "redo")
+                    formatButton(AppText.localized("太字"), icon: "bold", command: "bold")
+                    formatButton(AppText.localized("斜体"), icon: "italic", command: "italic")
+                    formatButton(AppText.localized("下線"), icon: "underline", command: "underline")
+                    formatButton(AppText.localized("取り消し線"), icon: "strikethrough", command: "strikeThrough")
+                    formatButton(AppText.localized("下付き"), icon: "textformat.subscript", command: "subscript")
+                    formatButton(AppText.localized("上付き"), icon: "textformat.superscript", command: "superscript")
+                    formatButton(AppText.localized("箇条書き"), icon: "list.bullet", command: "insertUnorderedList")
+                    formatButton(AppText.localized("番号付きリスト"), icon: "list.number", command: "insertOrderedList")
+                    Button { linking = true } label: { Image(systemName: "link") }.accessibilityLabel(AppText.localized("リンクを挿入"))
+                    formatButton(AppText.localized("書式を解除"), icon: "textformat", command: "removeFormat")
+                    formatButton(AppText.localized("取り消す"), icon: "arrow.uturn.backward", command: "undo")
+                    formatButton(AppText.localized("やり直す"), icon: "arrow.uturn.forward", command: "redo")
                 }.buttonStyle(.borderless)
             }
             RichFieldWebView(text: $text, media: media, label: label, fontName: fontName, fontSize: fontSize, rtl: rtl, capitalize: capitalize, commands: commands).frame(minHeight: 160)
         }
-        .alert("リンクを挿入", isPresented: $linking) {
+        .alert(AppText.localized("リンクを挿入"), isPresented: $linking) {
             TextField("https://…", text: $link).textInputAutocapitalization(.never).autocorrectionDisabled()
-            Button("挿入") { if let url = URL(string: link), ["http", "https", "mailto"].contains(url.scheme ?? "") { commands.perform("createLink", value: link) } }
-            Button("キャンセル", role: .cancel) {}
+            Button(AppText.localized("挿入")) { if let url = URL(string: link), ["http", "https", "mailto"].contains(url.scheme ?? "") { commands.perform("createLink", value: link) } }
+            Button(AppText.localized("キャンセル"), role: .cancel) {}
         }
     }
     private func formatButton(_ label: String, icon: String, command: String) -> some View {

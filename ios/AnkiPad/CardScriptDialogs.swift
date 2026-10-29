@@ -32,7 +32,7 @@ import WebKit
             self?.resolve(text: prompt ? dialog?.textFields?.first?.text : nil, accepted: true)
         })
         if confirm || prompt {
-            dialog.addAction(UIAlertAction(title: "キャンセル", style: .cancel) { [weak self] _ in self?.resolve(text: nil, accepted: false) })
+            dialog.addAction(UIAlertAction(title: AppText.localized("キャンセル"), style: .cancel) { [weak self] _ in self?.resolve(text: nil, accepted: false) })
         }
         notifyPresented()
         StudyMotion.present(dialog, from: presenter)

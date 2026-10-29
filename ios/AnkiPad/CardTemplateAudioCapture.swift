@@ -51,9 +51,9 @@ import WebKit
         guard var presenter = view.window?.rootViewController else { finish(.deny); return }
         while let next = presenter.presentedViewController { presenter = next }
         guard !(presenter is UIAlertController), !presenter.isBeingDismissed else { finish(.deny); return }
-        let dialog = UIAlertController(title: "カードの録音", message: "このカードがマイクで録音しようとしています。許可すると、ほかのカードのテンプレートも録音できます。設定で取り消せます。", preferredStyle: .alert)
-        dialog.addAction(UIAlertAction(title: "許可", style: .default) { [weak self] _ in self?.resolveConsent(true) })
-        dialog.addAction(UIAlertAction(title: "キャンセル", style: .cancel) { [weak self] _ in self?.resolveConsent(false) })
+        let dialog = UIAlertController(title: AppText.localized("カードの録音"), message: AppText.localized("このカードがマイクで録音しようとしています。許可すると、ほかのカードのテンプレートも録音できます。設定で取り消せます。"), preferredStyle: .alert)
+        dialog.addAction(UIAlertAction(title: AppText.localized("許可"), style: .default) { [weak self] _ in self?.resolveConsent(true) })
+        dialog.addAction(UIAlertAction(title: AppText.localized("キャンセル"), style: .cancel) { [weak self] _ in self?.resolveConsent(false) })
         alert = dialog
         StudyMotion.present(dialog, from: presenter)
     }

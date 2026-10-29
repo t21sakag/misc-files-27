@@ -23,25 +23,25 @@ struct DeckDescriptionView: View {
             VStack {
                 if !loaded { ProgressView() }
                 else if editing {
-                    Toggle("Markdownを使う", isOn: $markdown).padding(.horizontal)
+                    Toggle(AppText.localized("Markdownを使う"), isOn: $markdown).padding(.horizontal)
                     TextEditor(text: $description).padding().font(.system(.body, design: .monospaced))
-                } else if html.isEmpty { ContentUnavailableView("説明はありません", systemImage: "text.alignleft") }
+                } else if html.isEmpty { ContentUnavailableView(AppText.localized("説明はありません"), systemImage: "text.alignleft") }
                 else {
                     ReviewerWebView(html: html, css: "", cardID: "deck-description", ordinal: 0, typing: nil, hideAudioButtons: true, typedAnswer: $typed, answer: false, media: model.engine.media,
                                     playTag: { _, _ in }, reveal: {}, scheduling: nil,
-                                    schedulingRequest: { _, _ in throw EngineError(message: "説明では学習予定を変更できません。") }, schedulingError: { _ in })
+                                    schedulingRequest: { _, _ in throw EngineError(message: AppText.localized("説明では学習予定を変更できません。")) }, schedulingError: { _ in })
                 }
             }
             .studyThemeSurface().navigationTitle(request.deck.name)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("閉じる") { if editing { discard = true } else { dismiss() } }.disabled(busy) }
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("閉じる")) { if editing { discard = true } else { dismiss() } }.disabled(busy) }
                 if !request.deck.filtered {
                     ToolbarItem(placement: .confirmationAction) {
-                        Button(editing ? "保存" : "編集") { if editing { save() } else { editing = true } }.disabled(!loaded || busy)
+                        Button(editing ? AppText.localized("保存") : AppText.localized("編集")) { if editing { save() } else { editing = true } }.disabled(!loaded || busy)
                     }
                 }
             }
-            .confirmationDialog("説明の変更を破棄しますか？", isPresented: $discard) { Button("破棄", role: .destructive) { dismiss() } }
+            .confirmationDialog(AppText.localized("説明の変更を破棄しますか？"), isPresented: $discard) { Button(AppText.localized("破棄"), role: .destructive) { dismiss() } }
             .interactiveDismissDisabled(editing || busy)
             .task {
                 do {
@@ -53,7 +53,7 @@ struct DeckDescriptionView: View {
                     loaded = true
                 } catch { self.error = error.localizedDescription }
             }
-            .alert("説明を保存できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("閉じる", role: .cancel) { error = nil } } message: { Text(error ?? "") }
+            .alert(AppText.localized("説明を保存できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button(AppText.localized("閉じる"), role: .cancel) { error = nil } } message: { Text(error ?? "") }
         }
     }
     private func save() {

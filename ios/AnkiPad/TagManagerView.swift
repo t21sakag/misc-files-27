@@ -58,33 +58,33 @@ struct TagManagerView: View {
                         if entry.hasChildren {
                             Button { setCollapsed(entry) } label: {
                                 Image(systemName: entry.collapsed && search.isEmpty ? "chevron.right" : "chevron.down")
-                            }.buttonStyle(.borderless).accessibilityLabel(entry.name + (entry.collapsed ? "を展開" : "を折りたたむ"))
+                    }.buttonStyle(.borderless).accessibilityLabel(entry.collapsed ? AppText.localized("\(entry.name)を展開") : AppText.localized("\(entry.name)を折りたたむ"))
                                 .accessibilityIdentifier("tag-collapse-" + entry.name)
-                                .accessibilityValue(entry.collapsed ? "折りたたみ" : "展開")
+                                .accessibilityValue(entry.collapsed ? AppText.localized("折りたたみ") : AppText.localized("展開"))
                                 .disabled(!search.isEmpty)
                         }
                         Text(search.isEmpty ? entry.label : entry.name).accessibilityIdentifier("tag-name-" + entry.name)
                         Spacer()
                         Menu {
-                            Button("名前を変更") { editing = TagEditRequest(tag: entry.name, moving: false) }
-                            Button("別の親タグへ移動") { editing = TagEditRequest(tag: entry.name, moving: true) }
-                            Button("タグを削除", role: .destructive) { removing = entry.name }
-                        } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel(entry.name + "の操作").accessibilityIdentifier("tag-actions-" + entry.name)
+                            Button(AppText.localized("名前を変更")) { editing = TagEditRequest(tag: entry.name, moving: false) }
+                            Button(AppText.localized("別の親タグへ移動")) { editing = TagEditRequest(tag: entry.name, moving: true) }
+                            Button(AppText.localized("タグを削除"), role: .destructive) { removing = entry.name }
+                    } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel(AppText.localized("\(entry.name)の操作")).accessibilityIdentifier("tag-actions-" + entry.name)
                     }.padding(.leading, search.isEmpty ? CGFloat(entry.depth) * 14 : 0)
                 }
-                if tree.isEmpty && !busy { Text("タグがありません").foregroundStyle(.secondary) }
+                if tree.isEmpty && !busy { Text(AppText.localized("タグがありません")).foregroundStyle(.secondary) }
                 if busy { ProgressView() }
             }
             .disabled(busy)
-            .searchable(text: $search, prompt: "タグを検索")
-            .studyThemeSurface().navigationTitle("タグ管理")
+            .searchable(text: $search, prompt: AppText.localized("タグを検索"))
+            .studyThemeSurface().navigationTitle(AppText.localized("タグ管理"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() }.disabled(busy) }
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("閉じる")) { dismiss() }.disabled(busy) }
                 ToolbarItem(placement: .primaryAction) {
-                    Menu("管理", systemImage: "tag") {
-                        Button("未使用タグを整理") { run("TagsService.ClearUnusedTags") }
-                        Button("取り消す") { run("CollectionService.Undo", backup: false) }
-                        Button("やり直す") { run("CollectionService.Redo", backup: false) }
+                    Menu(AppText.localized("管理"), systemImage: "tag") {
+                        Button(AppText.localized("未使用タグを整理")) { run("TagsService.ClearUnusedTags") }
+                        Button(AppText.localized("取り消す")) { run("CollectionService.Undo", backup: false) }
+                        Button(AppText.localized("やり直す")) { run("CollectionService.Redo", backup: false) }
                     }.disabled(busy)
                 }
             }
@@ -102,12 +102,12 @@ struct TagManagerView: View {
                     model.refreshAfterEditing()
                 }
             }
-            .confirmationDialog("タグを削除しますか？", isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }), titleVisibility: .visible) {
-                if let tag = removing { Button("タグと子タグを削除", role: .destructive) { run("TagsService.RemoveTags", ["val": tag]); removing = nil }.accessibilityIdentifier("tag-delete-confirm") }
-                Button("キャンセル", role: .cancel) { removing = nil }
-            } message: { Text("「\(removing ?? "")」と子タグをすべてのノートから外します。ノートやカードは削除しません。") }
-            .alert("タグを変更できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
-                Button("閉じる", role: .cancel) { error = nil }
+            .confirmationDialog(AppText.localized("タグを削除しますか？"), isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }), titleVisibility: .visible) {
+                if let tag = removing { Button(AppText.localized("タグと子タグを削除"), role: .destructive) { run("TagsService.RemoveTags", ["val": tag]); removing = nil }.accessibilityIdentifier("tag-delete-confirm") }
+                Button(AppText.localized("キャンセル"), role: .cancel) { removing = nil }
+            } message: { Text(AppText.localized("「\(removing ?? "")」と子タグをすべてのノートから外します。ノートやカードは削除しません。")) }
+            .alert(AppText.localized("タグを変更できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
+                Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
             .interactiveDismissDisabled(busy)
         }
@@ -157,19 +157,19 @@ private struct TagEditForm: View {
         NavigationStack {
             Form {
                 Text(request.tag)
-                TextField(request.moving ? "移動先の親タグ（空欄で最上位）" : "新しいタグ名", text: $value)
+                TextField(request.moving ? AppText.localized("移動先の親タグ（空欄で最上位）") : AppText.localized("新しいタグ名"), text: $value)
                     .autocorrectionDisabled().textInputAutocapitalization(.never).accessibilityIdentifier("tag-edit-name")
-                Text("子タグとノートに付いているタグも変更します。")
+                Text(AppText.localized("子タグとノートに付いているタグも変更します。"))
                 if busy { ProgressView() }
             }.disabled(busy)
-            .studyThemeSurface().navigationTitle(request.moving ? "タグを移動" : "タグ名を変更")
+            .studyThemeSurface().navigationTitle(request.moving ? AppText.localized("タグを移動") : AppText.localized("タグ名を変更"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { dismiss() }.disabled(busy) }
-                ToolbarItem(placement: .confirmationAction) { Button("適用") {
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { dismiss() }.disabled(busy) }
+                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("適用")) {
                     let cleaned = value.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard (request.moving || !cleaned.isEmpty), !cleaned.contains(where: \.isWhitespace),
                           cleaned.isEmpty || !cleaned.components(separatedBy: "::").contains("") else {
-                        error = "空白や空の階層を含まないタグ名を入力してください。"; return
+                        error = AppText.localized("空白や空の階層を含まないタグ名を入力してください。"); return
                     }
                     busy = true
                     Task {
@@ -180,8 +180,8 @@ private struct TagEditForm: View {
                 }.disabled(busy).accessibilityIdentifier("tag-edit-apply") }
             }
             .interactiveDismissDisabled(busy)
-            .alert("タグを変更できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
-                Button("閉じる", role: .cancel) { error = nil }
+            .alert(AppText.localized("タグを変更できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
+                Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
         }
     }

@@ -17,16 +17,16 @@ struct ImageOcclusionEntryView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Picker("デッキ", selection: $deckID) { ForEach(model.decks) { Text($0.name).tag($0.id) } }
-                Text("画像を選び、覚えたい部分をマスクで隠します。マスクごとに穴埋めカードを作成します。")
-                Button("ファイルから画像を選択", systemImage: "folder") { picking = true }.accessibilityIdentifier("occlusion-select-image")
-                Button("写真から選択", systemImage: "photo") { pickingPhoto = true }.accessibilityIdentifier("occlusion-select-photo")
-                Button("写真を撮影", systemImage: "camera") { camera = true }.disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+                Picker(AppText.localized("デッキ"), selection: $deckID) { ForEach(model.decks) { Text($0.name).tag($0.id) } }
+                Text(AppText.localized("画像を選び、覚えたい部分をマスクで隠します。マスクごとに穴埋めカードを作成します。"))
+                Button(AppText.localized("ファイルから画像を選択"), systemImage: "folder") { picking = true }.accessibilityIdentifier("occlusion-select-image")
+                Button(AppText.localized("写真から選択"), systemImage: "photo") { pickingPhoto = true }.accessibilityIdentifier("occlusion-select-photo")
+                Button(AppText.localized("写真を撮影"), systemImage: "camera") { camera = true }.disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
                 if busy { ProgressView() }
             }
             .disabled(busy)
-            .studyThemeSurface().navigationTitle("画像穴埋め")
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() }.accessibilityIdentifier("occlusion-entry-close") } }
+            .studyThemeSurface().navigationTitle(AppText.localized("画像穴埋め"))
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("閉じる")) { dismiss() }.accessibilityIdentifier("occlusion-entry-close") } }
             .fileImporter(isPresented: $picking, allowedContentTypes: [.image]) { result in
                 switch result {
                 case .failure(let failure): error = failure.localizedDescription
@@ -44,7 +44,7 @@ struct ImageOcclusionEntryView: View {
             }) {
                 PhotoSelectionView { data, error in
                     if let data { photoResult = .success(data) }
-                    else { photoResult = .failure(EngineError(message: error ?? "画像を読み込めませんでした。")) }
+                    else { photoResult = .failure(EngineError(message: error ?? AppText.localized("画像を読み込めませんでした。"))) }
                 }
             }
             .sheet(isPresented: $camera, onDismiss: {
@@ -52,12 +52,12 @@ struct ImageOcclusionEntryView: View {
             }) {
                 CameraCaptureView { image in
                     if let data = image.jpegData(compressionQuality: 0.95) { cameraResult = .success(data) }
-                    else { cameraResult = .failure(EngineError(message: "写真を変換できませんでした。")) }
+                    else { cameraResult = .failure(EngineError(message: AppText.localized("写真を変換できませんでした。"))) }
                 }
             }
             .sheet(item: $page, onDismiss: { dismiss() }) { BackendPageView(model: model, request: $0, onClose: { page = nil }) }
-            .alert("画像を開けませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
-                Button("閉じる", role: .cancel) { error = nil }
+            .alert(AppText.localized("画像を開けませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
+                Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
         }
     }
@@ -76,7 +76,7 @@ struct ImageOcclusionEntryView: View {
     }
     private func open(_ local: URL) async throws {
         try await model.engine.select(deckID)
-        guard let path = local.path.addingPercentEncoding(withAllowedCharacters: .alphanumerics) else { throw EngineError(message: "画像のパスを作成できませんでした。") }
-        page = BackendPageRequest(path: "image-occlusion/" + path, title: "画像穴埋め")
+        guard let path = local.path.addingPercentEncoding(withAllowedCharacters: .alphanumerics) else { throw EngineError(message: AppText.localized("画像のパスを作成できませんでした。")) }
+        page = BackendPageRequest(path: "image-occlusion/" + path, title: AppText.localized("画像穴埋め"))
     }
 }

@@ -1,0 +1,4 @@
+"NSCameraUsageDescription" = "Take photos to insert into card fields.";
+"NSSpeechRecognitionUsageDescription" = "Convert speech input on cards into text.";
+"NSMicrophoneUsageDescription" = "Use the microphone to practice pronunciation, enter text by voice on cards, and record audio to insert into fields.";
+"NSLocalNetworkUsageDescription" = "Connect to custom sync servers and in-app pages.";

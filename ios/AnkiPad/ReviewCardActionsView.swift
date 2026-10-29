@@ -19,28 +19,28 @@ struct ReviewCardActionsView: View {
     @State private var loaded = false
     @State private var busy = false
     @State private var error: String?
-    private var title: String { switch request.action { case .tags: "タグを編集"; case .due: "期日を変更"; case .reset: "新規カードに戻す" } }
+    private var title: String { switch request.action { case .tags: AppText.localized("タグを編集"); case .due: AppText.localized("期日を変更"); case .reset: AppText.localized("新規カードに戻す") } }
     var body: some View {
         NavigationStack {
             Form {
                 switch request.action {
                 case .tags:
-                    TextField("タグ（空白で区切る）", text: $tags).textInputAutocapitalization(.never).autocorrectionDisabled().accessibilityIdentifier("card-action-tags")
+                    TextField(AppText.localized("タグ（空白で区切る）"), text: $tags).textInputAutocapitalization(.never).autocorrectionDisabled().accessibilityIdentifier("card-action-tags")
                 case .due:
-                    TextField("今日からの日数（例: 3、3-7）", text: $days).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    Text("範囲を指定すると、その範囲にカードを割り振ります。末尾に ! を付けると間隔も日数に合わせて変更します。")
+                    TextField(AppText.localized("今日からの日数（例: 3、3-7）"), text: $days).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    Text(AppText.localized("範囲を指定すると、その範囲にカードを割り振ります。末尾に ! を付けると間隔も日数に合わせて変更します。"))
                 case .reset:
-                    Toggle("元の新規カードの位置に戻す", isOn: $restorePosition)
-                    Toggle("解答回数と忘却回数をリセット", isOn: $resetCounts)
-                    Toggle("変更を学習履歴に記録", isOn: $log)
+                    Toggle(AppText.localized("元の新規カードの位置に戻す"), isOn: $restorePosition)
+                    Toggle(AppText.localized("解答回数と忘却回数をリセット"), isOn: $resetCounts)
+                    Toggle(AppText.localized("変更を学習履歴に記録"), isOn: $log)
                 }
                 if busy { ProgressView() }
             }
             .disabled(busy || !loaded)
             .studyThemeSurface().navigationTitle(title)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { dismiss() }.disabled(busy) }
-                ToolbarItem(placement: .confirmationAction) { Button("適用") { save() }.disabled(busy || !loaded).accessibilityIdentifier("card-action-apply") }
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { dismiss() }.disabled(busy) }
+                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("適用")) { save() }.disabled(busy || !loaded).accessibilityIdentifier("card-action-apply") }
             }
             .task {
                 do {
@@ -55,7 +55,7 @@ struct ReviewCardActionsView: View {
                     loaded = true
                 } catch { self.error = error.localizedDescription }
             }
-            .alert("変更できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("閉じる", role: .cancel) { error = nil } } message: { Text(error ?? "") }
+            .alert(AppText.localized("変更できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button(AppText.localized("閉じる"), role: .cancel) { error = nil } } message: { Text(error ?? "") }
         }
     }
     private func save() {

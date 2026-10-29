@@ -21,34 +21,34 @@ struct DeckBackgroundSettingsView: View {
         Form {
             if let image {
                 Image(uiImage: image).resizable().scaledToFit().frame(maxHeight: 240)
-                    .accessibilityLabel("背景のプレビュー").accessibilityIdentifier("deck-background-preview")
+                    .accessibilityLabel(AppText.localized("背景のプレビュー")).accessibilityIdentifier("deck-background-preview")
                     .accessibilityValue("\(image.cgImage?.width ?? 0) × \(image.cgImage?.height ?? 0)")
-            } else { Text("背景画像なし").accessibilityIdentifier("deck-background-none") }
+            } else { Text(AppText.localized("背景画像なし")).accessibilityIdentifier("deck-background-none") }
             Section {
-                Button("写真から選ぶ") {
+                Button(AppText.localized("写真から選ぶ")) {
                     pendingData = nil; pendingFile = nil; pendingPhotoError = nil; choosingPhoto = true
                 }.accessibilityIdentifier("deck-background-photo")
-                Button("ファイルから選ぶ") {
+                Button(AppText.localized("ファイルから選ぶ")) {
                     pendingData = nil; pendingFile = nil; choosingFile = true
                 }.accessibilityIdentifier("deck-background-file")
                 if canRemove {
-                    Button("背景画像を削除", role: .destructive) { confirmingRemove = true }.accessibilityIdentifier("deck-background-remove")
+                    Button(AppText.localized("背景画像を削除"), role: .destructive) { confirmingRemove = true }.accessibilityIdentifier("deck-background-remove")
                 }
             }
-            Text("デッキ一覧に中央で切り抜いて表示します。10MiB未満の画像を選んでください。変更は設定画面の「保存」で適用します。")
+            Text(AppText.localized("デッキ一覧に中央で切り抜いて表示します。10MiB未満の画像を選んでください。変更は設定画面の「保存」で適用します。"))
                 .font(.caption).foregroundStyle(.secondary)
             if busy { ProgressView() }
         }
         .studyThemeSurface()
         .disabled(busy)
-        .navigationTitle("デッキ一覧の背景")
-        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完了") { dismiss() }.disabled(busy).accessibilityIdentifier("deck-background-done") } }
-        .alert("背景画像を削除しますか？", isPresented: $confirmingRemove) {
-            Button("削除", role: .destructive) { change = .remove; image = nil; canRemove = false }
-            Button("キャンセル", role: .cancel) {}
+        .navigationTitle(AppText.localized("デッキ一覧の背景"))
+        .toolbar { ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("完了")) { dismiss() }.disabled(busy).accessibilityIdentifier("deck-background-done") } }
+        .alert(AppText.localized("背景画像を削除しますか？"), isPresented: $confirmingRemove) {
+            Button(AppText.localized("削除"), role: .destructive) { change = .remove; image = nil; canRemove = false }
+            Button(AppText.localized("キャンセル"), role: .cancel) {}
         }
-        .alert("画像を読み込めませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
-            Button("閉じる", role: .cancel) { error = nil }
+        .alert(AppText.localized("画像を読み込めませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
+            Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
         } message: { Text(error ?? "") }
         .sheet(isPresented: $choosingPhoto, onDismiss: {
             if let message = pendingPhotoError { error = message; pendingPhotoError = nil }

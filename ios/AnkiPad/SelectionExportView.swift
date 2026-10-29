@@ -25,35 +25,35 @@ struct SelectionExportView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("対象: \(request.cardIDs.count)枚") {
-                    Picker("形式", selection: $format) {
-                        Text("Ankiデッキパッケージ (.apkg)").tag("apkg")
-                        Text("ノートのテキスト").tag("notes")
-                        Text("カードのテキスト").tag("cards")
+                Section(AppText.localized("対象: \(request.cardIDs.count)枚")) {
+                    Picker(AppText.localized("形式"), selection: $format) {
+                        Text(AppText.localized("Ankiデッキパッケージ (.apkg)")).tag("apkg")
+                        Text(AppText.localized("ノートのテキスト")).tag("notes")
+                        Text(AppText.localized("カードのテキスト")).tag("cards")
                     }
                     if format == "apkg" {
-                        Toggle("学習履歴を含める", isOn: $scheduling)
-                        Toggle("メディアを含める", isOn: $media)
-                        Toggle("デッキ設定を含める", isOn: $deckConfigs)
-                        Toggle("古いAnkiとの互換性", isOn: $legacy)
+                        Toggle(AppText.localized("学習履歴を含める"), isOn: $scheduling)
+                        Toggle(AppText.localized("メディアを含める"), isOn: $media)
+                        Toggle(AppText.localized("デッキ設定を含める"), isOn: $deckConfigs)
+                        Toggle(AppText.localized("古いAnkiとの互換性"), isOn: $legacy)
                     } else {
-                        Toggle("HTMLを含める", isOn: $html)
+                        Toggle(AppText.localized("HTMLを含める"), isOn: $html)
                         if format == "notes" {
-                            Toggle("タグを含める", isOn: $tags); Toggle("デッキ名を含める", isOn: $deck)
-                            Toggle("ノートタイプを含める", isOn: $notetype); Toggle("一意の識別子を含める", isOn: $guid)
+                            Toggle(AppText.localized("タグを含める"), isOn: $tags); Toggle(AppText.localized("デッキ名を含める"), isOn: $deck)
+                            Toggle(AppText.localized("ノートタイプを含める"), isOn: $notetype); Toggle(AppText.localized("一意の識別子を含める"), isOn: $guid)
                         }
                     }
                 }
-                if busy { ProgressView("書き出し中…") }
+                if busy { ProgressView(AppText.localized("書き出し中…")) }
             }
             .disabled(busy)
-            .studyThemeSurface().navigationTitle("選択したカードを書き出す")
+            .studyThemeSurface().navigationTitle(AppText.localized("選択したカードを書き出す"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() }.disabled(busy) }
-                ToolbarItem(placement: .confirmationAction) { Button("書き出す") { export() }.disabled(busy || request.cardIDs.isEmpty) }
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("閉じる")) { dismiss() }.disabled(busy) }
+                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("書き出す")) { export() }.disabled(busy || request.cardIDs.isEmpty) }
             }
             .sheet(isPresented: $share) { if let exported { ShareSheet(url: exported) } }
-            .alert("書き出せませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("閉じる", role: .cancel) { error = nil } } message: { Text(error ?? "") }
+            .alert(AppText.localized("書き出せませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button(AppText.localized("閉じる"), role: .cancel) { error = nil } } message: { Text(error ?? "") }
         }
     }
     private func export() {

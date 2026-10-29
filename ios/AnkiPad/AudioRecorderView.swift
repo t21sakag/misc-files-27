@@ -23,7 +23,7 @@ import AVFoundation
         let granted = await AVAudioApplication.requestRecordPermission()
         guard permissionGeneration == generation else { return }
         requestingPermission = false
-        guard granted else { error = "設定でAnkiPadのマイクへのアクセスを許可してください。"; return }
+        guard granted else { error = AppText.localized("設定でAnkiPadのマイクへのアクセスを許可してください。"); return }
         do {
             discard()
             let session = AVAudioSession.sharedInstance()
@@ -35,7 +35,7 @@ import AVFoundation
             recorder.delegate = self
             self.recorder = recorder
             file = url
-            guard recorder.record() else { throw EngineError(message: "録音を開始できませんでした。") }
+            guard recorder.record() else { throw EngineError(message: AppText.localized("録音を開始できませんでした。")) }
             recording = true
         } catch {
             self.error = error.localizedDescription
@@ -58,7 +58,7 @@ import AVFoundation
             try session.setActive(true)
             ownsAudioSession = true
             if playback.currentTime >= playback.duration { playback.currentTime = 0 }
-            guard playback.play() else { throw EngineError(message: "録音を再生できませんでした。") }
+            guard playback.play() else { throw EngineError(message: AppText.localized("録音を再生できませんでした。")) }
             playing = true
         } catch { self.error = error.localizedDescription }
     }
@@ -72,7 +72,7 @@ import AVFoundation
             playback?.stop()
             playback = try AVAudioPlayer(contentsOf: file)
             playback?.delegate = self
-            guard playback?.play() == true else { throw EngineError(message: "録音を再生できませんでした。") }
+            guard playback?.play() == true else { throw EngineError(message: AppText.localized("録音を再生できませんでした。")) }
             playing = true
         }
         catch { self.error = error.localizedDescription }
@@ -89,12 +89,12 @@ import AVFoundation
         Task { @MainActor in
             guard let current = self.playback, ObjectIdentifier(current) == identity else { return }
             self.playing = false
-            if !flag { self.error = "録音の再生を完了できませんでした。" }
+            if !flag { self.error = AppText.localized("録音の再生を完了できませんでした。") }
         }
     }
     nonisolated func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
         let identity = ObjectIdentifier(player)
-        let message = error?.localizedDescription ?? "録音を読み取れませんでした。"
+        let message = error?.localizedDescription ?? AppText.localized("録音を読み取れませんでした。")
         Task { @MainActor in
             guard let current = self.playback, ObjectIdentifier(current) == identity else { return }
             self.finish(); self.error = message
@@ -115,7 +115,7 @@ import AVFoundation
         }
     }
     nonisolated func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
-        let message = error?.localizedDescription ?? "録音中にエラーが発生しました。"
+        let message = error?.localizedDescription ?? AppText.localized("録音中にエラーが発生しました。")
         let failedRecorder = ObjectIdentifier(recorder)
         Task { @MainActor in
             guard let current = self.recorder, ObjectIdentifier(current) == failedRecorder else { return }
@@ -134,19 +134,19 @@ struct AudioRecorderView: View {
         NavigationStack {
             VStack(spacing: 24) {
                 Image(systemName: recorder.recording ? "waveform" : "mic").font(.system(size: 60)).foregroundStyle(recorder.recording ? .red : .primary)
-                Text(recorder.recording ? "録音中" : "音声を録音")
-                if recorder.recording { Button("停止", systemImage: "stop.circle") { recorder.stop() } }
+                Text(recorder.recording ? AppText.localized("録音中") : AppText.localized("音声を録音"))
+                if recorder.recording { Button(AppText.localized("停止"), systemImage: "stop.circle") { recorder.stop() } }
                 else {
-                    Button(recorder.file == nil ? "録音を開始" : "録り直す", systemImage: "record.circle") { Task { await recorder.start() } }.disabled(recorder.requestingPermission)
-                    if recorder.file != nil { Button("再生して確認", systemImage: "play.circle") { recorder.preview() } }
+                    Button(recorder.file == nil ? AppText.localized("録音を開始") : AppText.localized("録り直す"), systemImage: "record.circle") { Task { await recorder.start() } }.disabled(recorder.requestingPermission)
+                    if recorder.file != nil { Button(AppText.localized("再生して確認"), systemImage: "play.circle") { recorder.preview() } }
                 }
                 if saving { ProgressView() }
             }
             .disabled(saving).padding()
-            .studyThemeSurface().navigationTitle("音声を録音")
+            .studyThemeSurface().navigationTitle(AppText.localized("音声を録音"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { recorder.discard(); dismiss() }.disabled(saving) }
-                ToolbarItem(placement: .confirmationAction) { Button("挿入") {
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { recorder.discard(); dismiss() }.disabled(saving) }
+                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("挿入")) {
                     guard let file = recorder.file else { return }
                     recorder.stop(); saving = true
                     Task {
@@ -160,7 +160,7 @@ struct AudioRecorderView: View {
                 if phase == .background { recorder.finish() }
             }
             .onDisappear { recorder.finish(); recorder.discard() }
-            .alert("録音できませんでした", isPresented: Binding(get: { recorder.error != nil }, set: { if !$0 { recorder.error = nil } })) { Button("閉じる", role: .cancel) { recorder.error = nil } } message: { Text(recorder.error ?? "") }
+            .alert(AppText.localized("録音できませんでした"), isPresented: Binding(get: { recorder.error != nil }, set: { if !$0 { recorder.error = nil } })) { Button(AppText.localized("閉じる"), role: .cancel) { recorder.error = nil } } message: { Text(recorder.error ?? "") }
         }
     }
 }
@@ -198,48 +198,48 @@ struct ReviewVoiceView: View {
                 Image(systemName: recorder.recording ? "waveform" : "mic")
                     .font(.system(size: 60))
                     .foregroundStyle(recorder.recording ? .red : .primary)
-                Text(recorder.recording ? "録音中" : "カードの音声と自分の発音を聞き比べられます。")
+                Text(recorder.recording ? AppText.localized("録音中") : AppText.localized("カードの音声と自分の発音を聞き比べられます。"))
                 TimelineView(.periodic(from: .now, by: 0.2)) { _ in
-                    Text("録音時間: \(recorder.duration, specifier: "%.1f")秒")
+                    Text(AppText.localized("録音時間: \(String(format: "%.1f", recorder.duration))秒"))
                         .monospacedDigit().accessibilityIdentifier("voice-recording-seconds")
                         .accessibilityValue(String(recorder.duration))
                 }
                 if recorder.recording {
-                    Button("録音を停止", systemImage: "stop.circle") { model.saveReviewRecording() }
+                    Button(AppText.localized("録音を停止"), systemImage: "stop.circle") { model.saveReviewRecording() }
                         .accessibilityIdentifier("voice-stop")
                 } else {
-                    Button(recorder.file == nil ? "録音を開始" : "録り直す", systemImage: "record.circle") {
+                    Button(recorder.file == nil ? AppText.localized("録音を開始") : AppText.localized("録り直す"), systemImage: "record.circle") {
                         model.recordReviewVoice()
                     }.disabled(recorder.requestingPermission).accessibilityIdentifier("voice-record")
                     if recorder.file != nil {
-                        Button(recorder.playing ? "録音を一時停止" : "録音を再生", systemImage: recorder.playing ? "pause.circle" : "play.circle") {
+                        Button(recorder.playing ? AppText.localized("録音を一時停止") : AppText.localized("録音を再生"), systemImage: recorder.playing ? "pause.circle" : "play.circle") {
                             model.replayReviewVoice()
                         }.accessibilityIdentifier("voice-replay")
-                        Button("聞き比べる（カード→録音）", systemImage: "arrow.right.circle") { model.compareReviewVoice() }
+                        Button(AppText.localized("聞き比べる（カード→録音）"), systemImage: "arrow.right.circle") { model.compareReviewVoice() }
                             .disabled(!model.reviewVoiceHasReference).accessibilityIdentifier("voice-compare")
-                        Button("録音を消す", role: .destructive) { model.stopCardAudioForRecognition(); recorder.discard() }
+                        Button(AppText.localized("録音を消す"), role: .destructive) { model.stopCardAudioForRecognition(); recorder.discard() }
                             .accessibilityIdentifier("voice-discard")
                     }
-                    Button("カードの音声を再生", systemImage: "speaker.wave.2") { model.playReviewVoiceReference() }
+                    Button(AppText.localized("カードの音声を再生"), systemImage: "speaker.wave.2") { model.playReviewVoiceReference() }
                         .disabled(!model.reviewVoiceHasReference).accessibilityIdentifier("voice-reference")
                 }
-                Text("録音はこのカードの練習用に一時保存します。次のカードに進むと削除します。")
+                Text(AppText.localized("録音はこのカードの練習用に一時保存します。次のカードに進むと削除します。"))
                     .font(.footnote).foregroundStyle(.secondary)
             }
             .padding()
-            .studyThemeSurface().navigationTitle("自分の声")
+            .studyThemeSurface().navigationTitle(AppText.localized("自分の声"))
             .overlay { keyboardCommands }
             .sheet(item: model.speechRequestBinding(inVoice: true), onDismiss: model.finishSpeechChoice) { request in
                 ReviewSpeechVoiceView(model: model, request: request)
             }
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("閉じる") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("閉じる")) { dismiss() } } }
             .onDisappear { recorder.finish() }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .background { model.stopCardAudioForRecognition(); recorder.finish() }
                 else if phase == .active { model.prepareVoiceSpeechContexts() }
             }
-            .alert("録音できませんでした", isPresented: Binding(get: { recorder.error != nil }, set: { if !$0 { recorder.error = nil } })) {
-                Button("閉じる", role: .cancel) { recorder.error = nil }
+            .alert(AppText.localized("録音できませんでした"), isPresented: Binding(get: { recorder.error != nil }, set: { if !$0 { recorder.error = nil } })) {
+                Button(AppText.localized("閉じる"), role: .cancel) { recorder.error = nil }
             } message: { Text(recorder.error ?? "") }
         }
     }

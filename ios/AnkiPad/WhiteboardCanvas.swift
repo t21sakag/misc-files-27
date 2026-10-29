@@ -17,10 +17,10 @@ struct WhiteboardCanvas: UIViewRepresentable {
         canvas.tool = Self.pen(penColor)
         canvas.delegate = context.coordinator
         canvas.isAccessibilityElement = true
-        canvas.accessibilityLabel = "手書きキャンバス"
+        canvas.accessibilityLabel = AppText.localized("手書きキャンバス")
         canvas.accessibilityIdentifier = "whiteboard"
         canvas.drawing = drawing
-        canvas.accessibilityValue = "\(drawing.strokes.count)本の描線"
+        canvas.accessibilityValue = AppText.localized("\(drawing.strokes.count)本の描線")
         context.coordinator.canvas = canvas
         context.coordinator.penColorChanged = penColorChanged
         context.coordinator.toolPickerVisible = toolPickerVisible
@@ -40,7 +40,7 @@ struct WhiteboardCanvas: UIViewRepresentable {
         coordinator.drawing = $drawing
         coordinator.penColorChanged = penColorChanged
         canvas.drawingPolicy = pencilOnly ? .pencilOnly : .anyInput
-        canvas.accessibilityValue = "\(drawing.strokes.count)本の描線"
+        canvas.accessibilityValue = AppText.localized("\(drawing.strokes.count)本の描線")
         if coordinator.eraser != eraser {
             if eraser { coordinator.previousTool = canvas.tool; canvas.tool = PKEraserTool(.vector) }
             else { canvas.tool = coordinator.previousTool ?? Self.pen(penColor) }

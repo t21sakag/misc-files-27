@@ -11,14 +11,14 @@ enum ReviewGestureAction: String, Codable, CaseIterable, Identifiable {
     case user1, user2, user3, user4, user5, user6, user7, user8, user9
     var id: String { rawValue }
     var title: String {
-        if rawValue.hasPrefix("user") { return "ユーザー操作 " + String(rawValue.dropFirst(4)) }
-        if rawValue.hasPrefix("flag") { return rawValue == "flag0" ? "フラグを外す" : "フラグ " + String(rawValue.dropFirst(4)) }
-        return ["none": "何もしない", "flipOrGood": "解答表示 / 普通", "flipOrAgain": "解答表示 / もう一度",
-            "showAnswer": "解答を表示", "again": "もう一度", "hard": "難しい", "good": "普通", "easy": "簡単",
-            "replay": "音声を再生", "recordVoice": "自分の声を録音", "replayVoice": "自分の声を再生・一時停止", "saveVoice": "録音を停止して保持", "selectTTS": "読み上げ音声を選択", "undo": "取り消す", "redo": "やり直す", "mark": "マークを切り替え",
-            "edit": "ノートを編集", "add": "ノートを追加", "tags": "タグを編集", "bury": "今日は表示しない", "suspend": "保留",
-            "whiteboard": "手書きを切り替え", "eraser": "消しゴムを切り替え", "clearWhiteboard": "手書きを消去", "penColor": "ペンの色を変更",
-            "autoAdvance": "自動進行を切り替え", "hint": "次のヒントを表示", "allHints": "すべてのヒントを表示"][rawValue] ?? rawValue
+        if rawValue.hasPrefix("user") { return AppText.localized("ユーザー操作 ") + String(rawValue.dropFirst(4)) }
+        if rawValue.hasPrefix("flag") { return rawValue == "flag0" ? AppText.localized("フラグを外す") : AppText.localized("フラグ ") + String(rawValue.dropFirst(4)) }
+        return ["none": AppText.localized("何もしない"), "flipOrGood": AppText.localized("解答表示 / 普通"), "flipOrAgain": AppText.localized("解答表示 / もう一度"),
+            "showAnswer": AppText.localized("解答を表示"), "again": AppText.localized("もう一度"), "hard": AppText.localized("難しい"), "good": AppText.localized("普通"), "easy": AppText.localized("簡単"),
+            "replay": AppText.localized("音声を再生"), "recordVoice": AppText.localized("自分の声を録音"), "replayVoice": AppText.localized("自分の声を再生・一時停止"), "saveVoice": AppText.localized("録音を停止して保持"), "selectTTS": AppText.localized("読み上げ音声を選択"), "undo": AppText.localized("取り消す"), "redo": AppText.localized("やり直す"), "mark": AppText.localized("マークを切り替え"),
+            "edit": AppText.localized("ノートを編集"), "add": AppText.localized("ノートを追加"), "tags": AppText.localized("タグを編集"), "bury": AppText.localized("今日は表示しない"), "suspend": AppText.localized("保留"),
+            "whiteboard": AppText.localized("手書きを切り替え"), "eraser": AppText.localized("消しゴムを切り替え"), "clearWhiteboard": AppText.localized("手書きを消去"), "penColor": AppText.localized("ペンの色を変更"),
+            "autoAdvance": AppText.localized("自動進行を切り替え"), "hint": AppText.localized("次のヒントを表示"), "allHints": AppText.localized("すべてのヒントを表示")][rawValue] ?? rawValue
     }
 }
 struct ReviewGestureConfiguration: Codable {
@@ -44,21 +44,21 @@ struct ReviewGestureSettingsView: View {
     @Binding var configuration: ReviewGestureConfiguration
     var body: some View {
         Form {
-            Section("スワイプ操作") {
-                actionPicker("左", value: $configuration.left)
-                actionPicker("右", value: $configuration.right)
-                actionPicker("上", value: $configuration.up)
-                actionPicker("下", value: $configuration.down)
+            Section(AppText.localized("スワイプ操作")) {
+                actionPicker(AppText.localized("左"), value: $configuration.left)
+                actionPicker(AppText.localized("右"), value: $configuration.right)
+                actionPicker(AppText.localized("上"), value: $configuration.up)
+                actionPicker(AppText.localized("下"), value: $configuration.down)
             }
-            Section("スワイプの距離") {
-                Text("\(Int(configuration.minimumDistance))ポイント")
+            Section(AppText.localized("スワイプの距離")) {
+                Text(AppText.localized("\(Int(configuration.minimumDistance))ポイント"))
                 Slider(value: $configuration.distance, in: 20...180, step: 10)
             }
             Section {
-                Text("手書き中はスワイプ操作を停止します。評価だけを割り当てた操作は、解答表示後に使えます。画面を3回タップすると全画面表示を解除できます。")
-                Button("初期設定に戻す") { configuration = ReviewGestureConfiguration() }
+                Text(AppText.localized("手書き中はスワイプ操作を停止します。評価だけを割り当てた操作は、解答表示後に使えます。画面を3回タップすると全画面表示を解除できます。"))
+                Button(AppText.localized("初期設定に戻す")) { configuration = ReviewGestureConfiguration() }
             }
-        }.studyThemeSurface().navigationTitle("スワイプの割り当て")
+        }.studyThemeSurface().navigationTitle(AppText.localized("スワイプの割り当て"))
     }
     private func actionPicker(_ title: String, value: Binding<ReviewGestureAction>) -> some View {
         Picker(title, selection: value) { ForEach(ReviewGestureAction.allCases) { Text($0.title).tag($0) } }

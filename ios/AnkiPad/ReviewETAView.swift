@@ -8,7 +8,7 @@ struct ReviewETAView: View {
     @State private var minutes: Int?
 
     var body: some View {
-        Text(minutes.map { "残り約\($0)分" } ?? "残り時間: —")
+        Text(minutes.map { AppText.localized("残り約\($0)分") } ?? AppText.localized("残り時間: —"))
             .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
             .accessibilityIdentifier("review-eta")
             .task(id: cardKey) {

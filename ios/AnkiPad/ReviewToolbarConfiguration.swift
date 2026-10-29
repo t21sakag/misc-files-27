@@ -23,25 +23,25 @@ struct ReviewToolbarSettingsView: View {
     var body: some View {
         List {
             Section {
-                Toggle("追加の操作バーを表示", isOn: $configuration.enabled).accessibilityIdentifier("toolbar-enabled")
+                Toggle(AppText.localized("追加の操作バーを表示"), isOn: $configuration.enabled).accessibilityIdentifier("toolbar-enabled")
             }
-            Section("表示する操作と順序") {
+            Section(AppText.localized("表示する操作と順序")) {
                 ForEach($configuration.items) { $item in
-                    Picker("操作", selection: $item.action) {
+                    Picker(AppText.localized("操作"), selection: $item.action) {
                         ForEach(ReviewGestureAction.allCases) { action in Text(action.title).tag(action) }
                     }
                 }
                 .onDelete { configuration.items.remove(atOffsets: $0) }
                 .onMove { configuration.items.move(fromOffsets: $0, toOffset: $1) }
-                Button("操作を追加", systemImage: "plus") { configuration.items.append(ReviewToolbarItem(action: .replay)) }
+                Button(AppText.localized("操作を追加"), systemImage: "plus") { configuration.items.append(ReviewToolbarItem(action: .replay)) }
                     .disabled(configuration.items.count >= ReviewToolbarConfiguration.maximumItems)
             }
             Section {
-                Text("編集を押すと操作を並べ替え・削除できます。操作バーは通常表示で使えます。")
-                Button("初期設定に戻す") { configuration = ReviewToolbarConfiguration() }
+                Text(AppText.localized("編集を押すと操作を並べ替え・削除できます。操作バーは通常表示で使えます。"))
+                Button(AppText.localized("初期設定に戻す")) { configuration = ReviewToolbarConfiguration() }
             }
         }
-        .studyThemeSurface().navigationTitle("操作バーの設定")
+        .studyThemeSurface().navigationTitle(AppText.localized("操作バーの設定"))
         .toolbar { EditButton() }
     }
 }

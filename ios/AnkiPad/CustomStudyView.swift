@@ -17,40 +17,40 @@ struct CustomStudyView: View {
     @State private var available = ""
     @State private var busy = false
     @State private var error: String?
-    private let actions = [("newLimitDelta", "今日の新規カード上限を増やす"), ("reviewLimitDelta", "今日の復習上限を増やす"), ("forgotDays", "最近忘れたカードを復習"), ("reviewAheadDays", "先の日付のカードを復習"), ("previewDays", "最近追加したカードをプレビュー"), ("cram", "状態・タグで選んで学習")]
+    private let actions = [("newLimitDelta", AppText.localized("今日の新規カード上限を増やす")), ("reviewLimitDelta", AppText.localized("今日の復習上限を増やす")), ("forgotDays", AppText.localized("最近忘れたカードを復習")), ("reviewAheadDays", AppText.localized("先の日付のカードを復習")), ("previewDays", AppText.localized("最近追加したカードをプレビュー")), ("cram", AppText.localized("状態・タグで選んで学習"))]
     var body: some View {
         NavigationStack {
             Form {
                 Section(request.deck.name) {
-                    Picker("学習方法", selection: $action) { ForEach(actions, id: \.0) { Text($0.1).tag($0.0) } }
+                    Picker(AppText.localized("学習方法"), selection: $action) { ForEach(actions, id: \.0) { Text($0.1).tag($0.0) } }
                     if action == "cram" {
-                        Picker("対象", selection: $kind) {
-                            Text("期日到来").tag("CRAM_KIND_DUE"); Text("新規").tag("CRAM_KIND_NEW")
-                            Text("復習").tag("CRAM_KIND_REVIEW"); Text("すべて（予定を変更しない）").tag("CRAM_KIND_ALL")
+                        Picker(AppText.localized("対象"), selection: $kind) {
+                            Text(AppText.localized("期日到来")).tag("CRAM_KIND_DUE"); Text(AppText.localized("新規")).tag("CRAM_KIND_NEW")
+                            Text(AppText.localized("復習")).tag("CRAM_KIND_REVIEW"); Text(AppText.localized("すべて（予定を変更しない）")).tag("CRAM_KIND_ALL")
                         }
-                        Stepper("最大 \(limit)枚", value: $limit, in: 1...10000)
-                        TextField("含めるタグ（空白区切り）", text: $include)
-                        TextField("除外するタグ（空白区切り）", text: $exclude)
+                        Stepper(AppText.localized("最大 \(limit)枚"), value: $limit, in: 1...10000)
+                        TextField(AppText.localized("含めるタグ（空白区切り）"), text: $include)
+                        TextField(AppText.localized("除外するタグ（空白区切り）"), text: $exclude)
                     } else {
-                        Stepper("\(amount)\(action.hasSuffix("Delta") ? "枚" : "日")", value: $amount, in: 1...10000)
+                    Stepper(action.hasSuffix("Delta") ? AppText.localized("\(amount)枚") : AppText.localized("\(amount)日"), value: $amount, in: 1...10000)
                     }
                     if !available.isEmpty { Text(available).foregroundStyle(.secondary) }
                 }
                 if busy { ProgressView() }
             }
             .disabled(busy)
-            .studyThemeSurface().navigationTitle("カスタム学習")
+            .studyThemeSurface().navigationTitle(AppText.localized("カスタム学習"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { dismiss() }.disabled(busy) }
-                ToolbarItem(placement: .confirmationAction) { Button("作成") { perform() }.disabled(busy) }
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { dismiss() }.disabled(busy) }
+                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("作成")) { perform() }.disabled(busy) }
             }
             .task {
                 do {
                     let defaults = try await model.engine.call("SchedulerService.CustomStudyDefaults", ["deckId": request.deck.id])
-                    available = "利用できる新規: \(defaults["availableNew"] as? Int ?? 0)枚、復習: \(defaults["availableReview"] as? Int ?? 0)枚"
+                    available = AppText.localized("利用できる新規: \(defaults["availableNew"] as? Int ?? 0)枚、復習: \(defaults["availableReview"] as? Int ?? 0)枚")
                 } catch { self.error = error.localizedDescription }
             }
-            .alert("学習を作成できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("閉じる", role: .cancel) { error = nil } } message: { Text(error ?? "") }
+            .alert(AppText.localized("学習を作成できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button(AppText.localized("閉じる"), role: .cancel) { error = nil } } message: { Text(error ?? "") }
         }
     }
     private func perform() {
@@ -101,46 +101,46 @@ struct FilteredDeckView: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField("デッキ名", text: $name)
-                Section("検索条件") {
-                    TextField("検索", text: $query).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    Stepper("上限 \(limit)枚", value: $limit, in: 1...100000)
+                TextField(AppText.localized("デッキ名"), text: $name)
+                Section(AppText.localized("検索条件")) {
+                    TextField(AppText.localized("検索"), text: $query).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    Stepper(AppText.localized("上限 \(limit)枚"), value: $limit, in: 1...100000)
                     orderPicker($order)
                 }
-                Toggle("2つ目の検索条件", isOn: $secondEnabled)
+                Toggle(AppText.localized("2つ目の検索条件"), isOn: $secondEnabled)
                 if secondEnabled {
-                    Section("2つ目の検索条件") {
-                        TextField("検索", text: $secondQuery).textInputAutocapitalization(.never).autocorrectionDisabled()
-                        Stepper("上限 \(secondLimit)枚", value: $secondLimit, in: 1...100000)
+                    Section(AppText.localized("2つ目の検索条件")) {
+                        TextField(AppText.localized("検索"), text: $secondQuery).textInputAutocapitalization(.never).autocorrectionDisabled()
+                        Stepper(AppText.localized("上限 \(secondLimit)枚"), value: $secondLimit, in: 1...100000)
                         orderPicker($secondOrder)
                     }
                 }
-                Toggle("解答に基づいて学習予定を更新", isOn: $reschedule)
+                Toggle(AppText.localized("解答に基づいて学習予定を更新"), isOn: $reschedule)
                 if !reschedule {
-                    Stepper("もう一度: \(again)秒", value: $again, in: 0...86400)
-                    Stepper("難しい: \(hard)秒", value: $hard, in: 0...86400)
-                    Stepper("普通: \(good)秒（0で元のデッキに戻す）", value: $good, in: 0...86400)
+                    Stepper(AppText.localized("もう一度: \(again)秒"), value: $again, in: 0...86400)
+                    Stepper(AppText.localized("難しい: \(hard)秒"), value: $hard, in: 0...86400)
+                    Stepper(AppText.localized("普通: \(good)秒（0で元のデッキに戻す）"), value: $good, in: 0...86400)
                 }
                 if busy { ProgressView() }
             }
             .disabled(busy || !loaded)
-            .studyThemeSurface().navigationTitle("フィルターデッキ")
+            .studyThemeSurface().navigationTitle(AppText.localized("フィルターデッキ"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { dismiss() }.disabled(busy) }
-                ToolbarItem(placement: .confirmationAction) { Button("構築") { save() }.disabled(busy || !loaded || name.isEmpty) }
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { dismiss() }.disabled(busy) }
+                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("構築")) { save() }.disabled(busy || !loaded || name.isEmpty) }
             }
             .task { await load() }
-            .alert("構築できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("閉じる", role: .cancel) { error = nil } } message: { Text(error ?? "") }
+            .alert(AppText.localized("構築できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button(AppText.localized("閉じる"), role: .cancel) { error = nil } } message: { Text(error ?? "") }
         }
     }
     private func orderPicker(_ selection: Binding<Int>) -> some View {
-        Picker("抽出順", selection: selection) { ForEach(orders.indices, id: \.self) { Text(labels.indices.contains($0) ? labels[$0] : orders[$0]).tag($0) } }
+        Picker(AppText.localized("抽出順"), selection: selection) { ForEach(orders.indices, id: \.self) { Text(labels.indices.contains($0) ? labels[$0] : orders[$0]).tag($0) } }
     }
     private func load() async {
         do {
             raw = try await model.engine.call("DecksService.GetOrCreateFilteredDeck", ["did": request.deckID])
             config = raw["config"] as? [String: Any] ?? [:]
-            name = raw["name"] as? String ?? "フィルターデッキ"
+            name = raw["name"] as? String ?? AppText.localized("フィルターデッキ")
             labels = try await model.engine.call("DecksService.FilteredDeckOrderLabels")["vals"] as? [String] ?? []
             let terms = config["searchTerms"] as? [[String: Any]] ?? []
             if let first = terms.first { query = first["search"] as? String ?? ""; limit = first["limit"] as? Int ?? 100; order = orders.firstIndex(of: first["order"] as? String ?? "") ?? 0 }

@@ -21,25 +21,25 @@ struct FindReplaceView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("対象: \(request.noteIDs.count)ノート") {
-                    TextField("検索する文字列", text: $search).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    TextField("置換後の文字列", text: $replacement).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    Picker("フィールド", selection: $field) { Text("すべてのフィールド").tag(""); ForEach(fields, id: \.self) { Text($0).tag($0) } }
-                    Toggle("正規表現", isOn: $regex)
-                    Toggle("大文字・小文字を区別", isOn: $matchCase)
+                Section(AppText.localized("対象: \(request.noteIDs.count)ノート")) {
+                    TextField(AppText.localized("検索する文字列"), text: $search).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    TextField(AppText.localized("置換後の文字列"), text: $replacement).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    Picker(AppText.localized("フィールド"), selection: $field) { Text(AppText.localized("すべてのフィールド")).tag(""); ForEach(fields, id: \.self) { Text($0).tag($0) } }
+                    Toggle(AppText.localized("正規表現"), isOn: $regex)
+                    Toggle(AppText.localized("大文字・小文字を区別"), isOn: $matchCase)
                 }
-                if let result { Text("\(result)件を変更しました。") }
+                if let result { Text(AppText.localized("\(result)件を変更しました。")) }
                 if busy { ProgressView() }
             }
             .disabled(busy)
-            .studyThemeSurface().navigationTitle("検索と置換")
+            .studyThemeSurface().navigationTitle(AppText.localized("検索と置換"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() }.disabled(busy) }
-                ToolbarItem(placement: .confirmationAction) { Button("置換") { confirming = true }.disabled(search.isEmpty || busy) }
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("閉じる")) { dismiss() }.disabled(busy) }
+                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("置換")) { confirming = true }.disabled(search.isEmpty || busy) }
             }
-            .confirmationDialog("選択した\(request.noteIDs.count)ノートの内容を置換しますか？", isPresented: $confirming, titleVisibility: .visible) {
-                Button("置換する", role: .destructive) { replace() }
-            } message: { Text("変更前のバックアップを保存します。正規表現ではAnkiの置換構文を使います。") }
+            .confirmationDialog(AppText.localized("選択した\(request.noteIDs.count)ノートの内容を置換しますか？"), isPresented: $confirming, titleVisibility: .visible) {
+                Button(AppText.localized("置換する"), role: .destructive) { replace() }
+            } message: { Text(AppText.localized("変更前のバックアップを保存します。正規表現ではAnkiの置換構文を使います。")) }
             .task {
                 do {
                     let typeIDs = try await model.engine.noteTypes()
@@ -51,7 +51,7 @@ struct FindReplaceView: View {
                     fields = names.sorted()
                 } catch { self.error = error.localizedDescription }
             }
-            .alert("置換できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("閉じる", role: .cancel) { error = nil } } message: { Text(error ?? "") }
+            .alert(AppText.localized("置換できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button(AppText.localized("閉じる"), role: .cancel) { error = nil } } message: { Text(error ?? "") }
         }
     }
     private func replace() {

@@ -128,10 +128,12 @@ struct ReviewerWebView: UIViewRepresentable {
         context.coordinator.dialogs.audioCapture.documentChanged()
         context.coordinator.loaded = key
         context.coordinator.tapToken = UUID().uuidString
-        var content = "<script>window.__ankiPadTapToken='" + context.coordinator.tapToken + "';</script>" + html.replacingOccurrences(of: #"\[anki:play:([qa]):([0-9]+)\]"#, with: #"<a href="ankiplay://$1/$2" aria-label="音声を再生">▶︎</a>"#, options: .regularExpression)
+        let audioLabel = NSRegularExpression.escapedTemplate(for: TypedAnswerMarkup.escape(AppText.localized("音声を再生")))
+        var content = "<script>window.__ankiPadTapToken='" + context.coordinator.tapToken + "';</script>" + html.replacingOccurrences(of: #"\[anki:play:([qa]):([0-9]+)\]"#, with: #"<a href="ankiplay://$1/$2" aria-label="\#(audioLabel)">▶︎</a>"#, options: .regularExpression)
         if hideAudioButtons { content = content.replacingOccurrences(of: #"<a href="ankiplay://[^"]+"[^>]*>.*?</a>"#, with: "", options: .regularExpression) }
         if !answer, let typing {
-            let field = "<input id=\"typeans\" type=\"text\" aria-label=\"解答を入力\" autocomplete=\"off\" autocorrect=\"\(typing.noSuggest ? "off" : "on")\" spellcheck=\"false\" value=\"\(TypedAnswerMarkup.escape(typedAnswer))\" style=\"font-size:\(typing.size)px;font-family:'\(TypedAnswerMarkup.escape(typing.font))';max-width:95%\" oninput=\"window.webkit.messageHandlers.typedAnswer.postMessage({cardID:'\(cardID)',value:this.value})\" onkeydown=\"if(event.key==='Enter'){event.preventDefault();window.webkit.messageHandlers.reveal.postMessage('\(cardID)')}\">"
+            let answerLabel = TypedAnswerMarkup.escape(AppText.localized("解答を入力"))
+            let field = "<input id=\"typeans\" type=\"text\" aria-label=\"\(answerLabel)\" autocomplete=\"off\" autocorrect=\"\(typing.noSuggest ? "off" : "on")\" spellcheck=\"false\" value=\"\(TypedAnswerMarkup.escape(typedAnswer))\" style=\"font-size:\(typing.size)px;font-family:'\(TypedAnswerMarkup.escape(typing.font))';max-width:95%\" oninput=\"window.webkit.messageHandlers.typedAnswer.postMessage({cardID:'\(cardID)',value:this.value})\" onkeydown=\"if(event.key==='Enter'){event.preventDefault();window.webkit.messageHandlers.reveal.postMessage('\(cardID)')}\">"
             content = TypedAnswerMarkup.replace(in: content, with: field)
         }
         let needsMath = html.contains("\\(") || html.contains("\\[") || html.contains("$$")
@@ -175,12 +177,14 @@ struct ReviewerWebView: UIViewRepresentable {
         coordinator.timeout?.cancel()
     }
 
-    private static let schedulerBridge = """
+    private static let schedulerBridge: String = {
+        let missingAction = String(decoding: (try? JSONEncoder().encode(AppText.localized("カードに userJs{number} が定義されていません。"))) ?? Data("\"\"".utf8), as: UTF8.self)
+        return """
     (()=>{
       window.userAction = number => {
         const action=globalThis['userJs'+number];
         if(typeof action==='function') action();
-        else throw new Error('カードに userJs'+number+' が定義されていません。');
+        else throw new Error(\(missingAction).replace('{number}', String(number)));
       };
       window.showHint = () => document.querySelector("a.hint:not([style*='display: none'])")?.click();
       window.showAllHints = () => document.querySelectorAll('a.hint').forEach(hint=>hint.click());
@@ -223,6 +227,7 @@ struct ReviewerWebView: UIViewRepresentable {
       };
     })();
     """
+    }()
     static let reviewTapScript = #"""
     (()=>{
       let pending;
@@ -340,7 +345,7 @@ struct ReviewerWebView: UIViewRepresentable {
             webView.evaluateJavaScript(script) { [weak self] _, error in if let error { self?.schedulingError?(error.localizedDescription) } }
             timeout?.cancel()
             timeout = Task { @MainActor [weak self] in
-                do { try await Task.sleep(nanoseconds: 15_000_000_000); self?.schedulingError?("実行時間を超えました。") } catch {}
+                do { try await Task.sleep(nanoseconds: 15_000_000_000); self?.schedulingError?(AppText.localized("実行時間を超えました。")) } catch {}
             }
         }
         var cardID = ""
@@ -380,12 +385,12 @@ struct ReviewerWebView: UIViewRepresentable {
             switch CardExternalLaunchPolicy.decision(for: url, allowed: UserDefaults.standard.bool(forKey: "allowCardExternalLaunch")) {
             case .browser, .application:
                 UIApplication.shared.open(url, options: [:]) { [weak self] opened in
-                    if !opened { self?.scriptEventError?("このリンクを開けるアプリが見つかりませんでした。") }
+                    if !opened { self?.scriptEventError?(AppText.localized("このリンクを開けるアプリが見つかりませんでした。")) }
                 }
             case .denied:
                 if externalLaunchDenials < 2 {
                     externalLaunchDenials += 1
-                    scriptEventError?("カードから外部アプリを開く操作は許可されていません。「設定」で変更できます。")
+                    scriptEventError?(AppText.localized("カードから外部アプリを開く操作は許可されていません。「設定」で変更できます。"))
                 }
             case .unsupported: break
             }

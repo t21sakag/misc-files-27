@@ -19,52 +19,52 @@ struct NoteTypeManagerView: View {
                 ForEach(types) { type in
                     Button(type.name) { selected = type }.foregroundStyle(.primary)
                         .contextMenu {
-                            Button("複製") { copying = type; name = type.name + " コピー"; naming = true }
-                            Button("削除", role: .destructive) { deleting = type }
+                            Button(AppText.localized("複製")) { copying = type; name = type.name + AppText.localized(" コピー"); naming = true }
+                            Button(AppText.localized("削除"), role: .destructive) { deleting = type }
                         }
                 }
                 if busy { ProgressView() }
             }
-            .studyThemeSurface().navigationTitle("ノートタイプ")
+            .studyThemeSurface().navigationTitle(AppText.localized("ノートタイプ"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss(); model.refreshAfterEditing() } }
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("閉じる")) { dismiss(); model.refreshAfterEditing() } }
                 ToolbarItem(placement: .primaryAction) { Button { name = ""; adding = true } label: { Image(systemName: "plus") }.disabled(busy).accessibilityIdentifier("notetype-add") }
             }
             .sheet(item: $selected, onDismiss: reload) { type in NoteTypeEditorView(model: model, type: type) }
             .sheet(isPresented: $adding) {
                 NavigationStack {
                     Form {
-                        TextField("名前", text: $name).accessibilityIdentifier("notetype-name")
-                        Picker("種類", selection: $kind) {
-                            Text("基本").tag("KIND_BASIC")
-                            Text("基本（裏表）").tag("KIND_BASIC_AND_REVERSED")
-                            Text("基本（裏表を任意に選択）").tag("KIND_BASIC_OPTIONAL_REVERSED")
-                            Text("基本（解答を入力）").tag("KIND_BASIC_TYPING")
-                            Text("穴埋め").tag("KIND_CLOZE")
-                            Text("画像穴埋め").tag("KIND_IMAGE_OCCLUSION")
+                        TextField(AppText.localized("名前"), text: $name).accessibilityIdentifier("notetype-name")
+                        Picker(AppText.localized("種類"), selection: $kind) {
+                            Text(AppText.localized("基本")).tag("KIND_BASIC")
+                            Text(AppText.localized("基本（裏表）")).tag("KIND_BASIC_AND_REVERSED")
+                            Text(AppText.localized("基本（裏表を任意に選択）")).tag("KIND_BASIC_OPTIONAL_REVERSED")
+                            Text(AppText.localized("基本（解答を入力）")).tag("KIND_BASIC_TYPING")
+                            Text(AppText.localized("穴埋め")).tag("KIND_CLOZE")
+                            Text(AppText.localized("画像穴埋め")).tag("KIND_IMAGE_OCCLUSION")
                         }
-                    }.studyThemeSurface().navigationTitle("ノートタイプを追加")
-                    .alert("作成できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
-                        Button("閉じる", role: .cancel) { error = nil }
+                    }.studyThemeSurface().navigationTitle(AppText.localized("ノートタイプを追加"))
+                    .alert(AppText.localized("作成できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
+                        Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
                     } message: { Text(error ?? "") }
                     .toolbar {
-                        ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { adding = false } }
-                        ToolbarItem(placement: .confirmationAction) { Button("追加") {
+                        ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { adding = false } }
+                        ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("追加")) {
                             run { try await model.engine.addStockNoteType(name: name, kind: kind); adding = false; types = try await model.engine.noteTypes() }
                         }.disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || busy).accessibilityIdentifier("notetype-create") }
                     }
                 }
             }
-            .alert("ノートタイプを複製", isPresented: $naming) {
-                TextField("名前", text: $name)
-                if let copying { Button("複製") { run { try await model.engine.copyNoteType(copying.id, name: name); types = try await model.engine.noteTypes() } } }
-                Button("キャンセル", role: .cancel) {}
+            .alert(AppText.localized("ノートタイプを複製"), isPresented: $naming) {
+                TextField(AppText.localized("名前"), text: $name)
+                if let copying { Button(AppText.localized("複製")) { run { try await model.engine.copyNoteType(copying.id, name: name); types = try await model.engine.noteTypes() } } }
+                Button(AppText.localized("キャンセル"), role: .cancel) {}
             }
-            .confirmationDialog("ノートタイプと関連するすべてのノートを削除しますか？", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } })) {
-                if let type = deleting { Button("削除", role: .destructive) { run { try await model.engine.deleteNoteType(type.id); deleting = nil; types = try await model.engine.noteTypes() } } }
+            .confirmationDialog(AppText.localized("ノートタイプと関連するすべてのノートを削除しますか？"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } })) {
+                if let type = deleting { Button(AppText.localized("削除"), role: .destructive) { run { try await model.engine.deleteNoteType(type.id); deleting = nil; types = try await model.engine.noteTypes() } } }
             }
-            .alert("処理できませんでした", isPresented: Binding(get: { error != nil && !adding }, set: { if !$0 { error = nil } })) {
-                Button("閉じる", role: .cancel) { error = nil }
+            .alert(AppText.localized("処理できませんでした"), isPresented: Binding(get: { error != nil && !adding }, set: { if !$0 { error = nil } })) {
+                Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
             .task { reload() }
         }
@@ -96,68 +96,68 @@ struct NoteTypeEditorView: View {
         NavigationStack {
             Form {
                 if loaded {
-                    Section("名前") { TextField("名前", text: text("name")).accessibilityIdentifier("notetype-edit-name") }
+                    Section(AppText.localized("名前")) { TextField(AppText.localized("名前"), text: text("name")).accessibilityIdentifier("notetype-edit-name") }
                     Section {
                         ForEach(fields.indices, id: \.self) { index in
-                            NavigationLink(fields[index]["name"] as? String ?? "フィールド") { NoteFieldEditor(value: element("fields", index)) }
+                            NavigationLink(fields[index]["name"] as? String ?? AppText.localized("フィールド")) { NoteFieldEditor(value: element("fields", index)) }
                         }
                         .onMove { source, destination in var result = fields; result.move(fromOffsets: source, toOffset: destination); schema["fields"] = result; dirty = true }
                         .onDelete { offsets in
-                            if offsets.contains(where: { ((fields[$0]["config"] as? [String: Any])?["preventDeletion"] as? Bool) == true }) { error = "削除から保護されたフィールドがあります。"; return }
+                            if offsets.contains(where: { ((fields[$0]["config"] as? [String: Any])?["preventDeletion"] as? Bool) == true }) { error = AppText.localized("削除から保護されたフィールドがあります。"); return }
                             var result = fields; result.remove(atOffsets: offsets); schema["fields"] = result; dirty = true
                         }
-                        Button("フィールドを追加") { fieldName = ""; addingField = true }
-                    } header: { Text("フィールド") } footer: { Text("削除して保存すると、すべての関連ノートからそのフィールドの値が削除されます。保存前にバックアップを作成します。") }
-                    Section("カードテンプレート") {
+                        Button(AppText.localized("フィールドを追加")) { fieldName = ""; addingField = true }
+                    } header: { Text(AppText.localized("フィールド")) } footer: { Text(AppText.localized("削除して保存すると、すべての関連ノートからそのフィールドの値が削除されます。保存前にバックアップを作成します。")) }
+                    Section(AppText.localized("カードテンプレート")) {
                         ForEach(templates.indices, id: \.self) { index in
-                            NavigationLink(templates[index]["name"] as? String ?? "カード") {
+                            NavigationLink(templates[index]["name"] as? String ?? AppText.localized("カード")) {
                                 NoteTemplateEditor(model: model, schema: Binding(get: { schema }, set: { schema = $0; dirty = true }), ordinal: index, saved: { dirty = false })
                             }
                         }
                         .onMove { source, destination in var result = templates; result.move(fromOffsets: source, toOffset: destination); schema["templates"] = result; dirty = true }
                         .onDelete { offsets in var result = templates; result.remove(atOffsets: offsets); schema["templates"] = result; dirty = true }
                         if !cloze {
-                            Button("テンプレートを追加") {
+                            Button(AppText.localized("テンプレートを追加")) {
                                 var template = templates.first ?? [:]
                                 template.removeValue(forKey: "ord")
-                                template["name"] = "カード \(templates.count + 1)"
+                                template["name"] = AppText.localized("カード \(templates.count + 1)")
                                 schema["templates"] = templates + [template]
                                 dirty = true
                             }
                         }
                     }
-                    Section("スタイル（CSS）") {
+                    Section(AppText.localized("スタイル（CSS）")) {
                         TextEditor(text: configText("css")).font(.system(.body, design: .monospaced)).frame(minHeight: 180)
                     }
-                    Section("並べ替えに使うフィールド") {
-                        Picker("フィールド", selection: sortField) {
+                    Section(AppText.localized("並べ替えに使うフィールド")) {
+                        Picker(AppText.localized("フィールド"), selection: sortField) {
                             ForEach(fields.indices, id: \.self) { index in Text(fields[index]["name"] as? String ?? "").tag(index) }
                         }
                     }
                 } else { ProgressView() }
             }
             .disabled(busy)
-            .studyThemeSurface().navigationTitle("ノートタイプを編集")
+            .studyThemeSurface().navigationTitle(AppText.localized("ノートタイプを編集"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { if dirty { discarding = true } else { dismiss() } } }
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { if dirty { discarding = true } else { dismiss() } } }
                 ToolbarItemGroup(placement: .confirmationAction) {
                     EditButton()
-                    Button("保存") { save() }.disabled(!loaded || busy || fields.isEmpty || templates.isEmpty).accessibilityIdentifier("notetype-save")
+                    Button(AppText.localized("保存")) { save() }.disabled(!loaded || busy || fields.isEmpty || templates.isEmpty).accessibilityIdentifier("notetype-save")
                 }
             }
             .interactiveDismissDisabled(dirty || busy)
-            .confirmationDialog("変更を破棄しますか？", isPresented: $discarding) { Button("破棄", role: .destructive) { dismiss() } }
-            .alert("フィールドを追加", isPresented: $addingField) {
-                TextField("フィールド名", text: $fieldName)
-                Button("追加") {
+            .confirmationDialog(AppText.localized("変更を破棄しますか？"), isPresented: $discarding) { Button(AppText.localized("破棄"), role: .destructive) { dismiss() } }
+            .alert(AppText.localized("フィールドを追加"), isPresented: $addingField) {
+                TextField(AppText.localized("フィールド名"), text: $fieldName)
+                Button(AppText.localized("追加")) {
                     var result = fields
                     result.append(["name": fieldName, "config": ["fontName": "Arial", "fontSize": 20]])
                     schema["fields"] = result; dirty = true
                 }.disabled(fieldName.isEmpty)
-                Button("キャンセル", role: .cancel) {}
+                Button(AppText.localized("キャンセル"), role: .cancel) {}
             }
-            .alert("保存できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
-                Button("閉じる", role: .cancel) { error = nil }
+            .alert(AppText.localized("保存できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
+                Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
             .task { do { schema = try await model.engine.noteType(type.id); loaded = true } catch { self.error = error.localizedDescription } }
         }
@@ -186,17 +186,17 @@ struct NoteFieldEditor: View {
     @Binding var value: [String: Any]
     var body: some View {
         Form {
-            TextField("フィールド名", text: text("name", config: false))
-            TextField("編集画面のフォント", text: text("fontName"))
-            Stepper("編集画面の文字サイズ: \(size.wrappedValue)", value: size, in: 8...100)
-            Toggle("右から左に入力", isOn: boolean("rtl"))
-            Toggle("追加時に値を保持", isOn: boolean("sticky"))
-            Toggle("プレーンテキスト", isOn: boolean("plainText"))
-            Toggle("初期状態で折りたたむ", isOn: boolean("collapsed"))
-            Toggle("検索対象から除外", isOn: boolean("excludeFromSearch"))
-            Toggle("削除から保護", isOn: boolean("preventDeletion"))
-            TextField("説明", text: text("description"), axis: .vertical)
-        }.studyThemeSurface().navigationTitle("フィールド")
+            TextField(AppText.localized("フィールド名"), text: text("name", config: false))
+            TextField(AppText.localized("編集画面のフォント"), text: text("fontName"))
+            Stepper(AppText.localized("編集画面の文字サイズ: \(size.wrappedValue)"), value: size, in: 8...100)
+            Toggle(AppText.localized("右から左に入力"), isOn: boolean("rtl"))
+            Toggle(AppText.localized("追加時に値を保持"), isOn: boolean("sticky"))
+            Toggle(AppText.localized("プレーンテキスト"), isOn: boolean("plainText"))
+            Toggle(AppText.localized("初期状態で折りたたむ"), isOn: boolean("collapsed"))
+            Toggle(AppText.localized("検索対象から除外"), isOn: boolean("excludeFromSearch"))
+            Toggle(AppText.localized("削除から保護"), isOn: boolean("preventDeletion"))
+            TextField(AppText.localized("説明"), text: text("description"), axis: .vertical)
+        }.studyThemeSurface().navigationTitle(AppText.localized("フィールド"))
     }
     private func text(_ key: String, config: Bool = true) -> Binding<String> {
         Binding(get: { (config ? value["config"] as? [String: Any] ?? [:] : value)[key] as? String ?? "" }, set: { updated in

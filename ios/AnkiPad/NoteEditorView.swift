@@ -43,50 +43,50 @@ struct NoteEditorView: View {
                 if let current = document {
                     Section {
                         if request.isNew {
-                            Picker("ノートタイプ", selection: $typeID) { ForEach(types) { Text($0.name).tag($0.id) } }
+                            Picker(AppText.localized("ノートタイプ"), selection: $typeID) { ForEach(types) { Text($0.name).tag($0.id) } }
                                 .accessibilityIdentifier("note-type")
                                 .onChange(of: typeID) { _, next in load(type: next) }
                         } else {
-                            LabeledContent("ノートタイプ", value: types.first(where: { $0.id == current.typeID })?.name ?? "")
+                            LabeledContent(AppText.localized("ノートタイプ"), value: types.first(where: { $0.id == current.typeID })?.name ?? "")
                             if isOcclusion {
-                                Button(dirty ? "保存して画像穴埋めのマスクを編集" : "画像穴埋めのマスクを編集", systemImage: "rectangle.dashed") {
+                                Button(dirty ? AppText.localized("保存して画像穴埋めのマスクを編集") : AppText.localized("画像穴埋めのマスクを編集"), systemImage: "rectangle.dashed") {
                                     busy = true
                                     Task {
                                         defer { busy = false }
                                         do {
                                             if dirty { try await model.engine.saveNote(current, isNew: false); dirty = false }
-                                            changingType = BackendPageRequest(path: "image-occlusion/" + current.id, title: "画像穴埋め", noteIDs: [current.id])
+                                            changingType = BackendPageRequest(path: "image-occlusion/" + current.id, title: AppText.localized("画像穴埋め"), noteIDs: [current.id])
                                         } catch { self.error = error.localizedDescription }
                                     }
                                 }.accessibilityIdentifier("occlusion-edit")
                             }
-                            Button(dirty ? "保存してノートタイプを変更" : "ノートタイプを変更") {
+                            Button(dirty ? AppText.localized("保存してノートタイプを変更") : AppText.localized("ノートタイプを変更")) {
                                 busy = true
                                 Task {
                                     defer { busy = false }
                                     do {
                                         if dirty { try await model.engine.saveNote(current, isNew: false); dirty = false }
-                                        changingType = BackendPageRequest(path: "change-notetype/" + current.typeID, title: "ノートタイプを変更", noteIDs: [current.id])
+                                        changingType = BackendPageRequest(path: "change-notetype/" + current.typeID, title: AppText.localized("ノートタイプを変更"), noteIDs: [current.id])
                                     } catch { self.error = error.localizedDescription }
                                 }
                             }
                         }
-                        Picker("デッキ", selection: Binding(get: { document?.deckID ?? "1" }, set: { document?.deckID = $0; dirty = true })) {
+                        Picker(AppText.localized("デッキ"), selection: Binding(get: { document?.deckID ?? "1" }, set: { document?.deckID = $0; dirty = true })) {
                             ForEach(model.decks) { Text($0.name).tag($0.id) }
                         }
                     }
-                    Toggle("ビジュアル編集", isOn: $visualEditor)
-                    Toggle("文頭を自動で大文字にする", isOn: $capitalizeEditor)
-                    Button("編集時の文字サイズ: " + (editorFontSize > 0 ? String(editorFontSize) : "既定")) {
+                    Toggle(AppText.localized("ビジュアル編集"), isOn: $visualEditor)
+                    Toggle(AppText.localized("文頭を自動で大文字にする"), isOn: $capitalizeEditor)
+                    Button(AppText.localized("編集時の文字サイズ: ") + (editorFontSize > 0 ? String(editorFontSize) : AppText.localized("既定"))) {
                         fontSizeDraft = editorFontSize > 0 ? String(editorFontSize) : ""
                         changingEditorFontSize = true
                     }
-                    .alert("編集時の文字サイズ", isPresented: $changingEditorFontSize) {
+                    .alert(AppText.localized("編集時の文字サイズ"), isPresented: $changingEditorFontSize) {
                         TextField("1〜99", text: $fontSizeDraft).keyboardType(.numberPad)
-                        Button("適用") { if let size = Int(fontSizeDraft), (1...99).contains(size) { editorFontSize = size } }
+                        Button(AppText.localized("適用")) { if let size = Int(fontSizeDraft), (1...99).contains(size) { editorFontSize = size } }
                             .disabled(Int(fontSizeDraft).map { !(1...99).contains($0) } ?? true)
-                        Button("既定に戻す") { editorFontSize = 0 }
-                        Button("キャンセル", role: .cancel) {}
+                        Button(AppText.localized("既定に戻す")) { editorFontSize = 0 }
+                        Button(AppText.localized("キャンセル"), role: .cancel) {}
                     }
                     ForEach(current.fields.indices, id: \.self) { index in
                         Section {
@@ -101,53 +101,53 @@ struct NoteEditorView: View {
                                 .environment(\.layoutDirection, current.fieldConfigs.indices.contains(index) && current.fieldConfigs[index]["rtl"] as? Bool == true ? .rightToLeft : .leftToRight)
                             }
                             Menu {
-                                Button("ファイルから画像・音声を追加", systemImage: "folder") { mediaField = index; importingMedia = true }
-                                Button("写真ライブラリから追加", systemImage: "photo.on.rectangle") { mediaField = index; choosingPhoto = true }.accessibilityIdentifier("note-photo-\(index)")
-                                Button("写真を撮影", systemImage: "camera") { mediaField = index; camera = true }.disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
-                                Button("フィールド内の画像を編集", systemImage: "photo.badge.arrow.down") {
+                                Button(AppText.localized("ファイルから画像・音声を追加"), systemImage: "folder") { mediaField = index; importingMedia = true }
+                                Button(AppText.localized("写真ライブラリから追加"), systemImage: "photo.on.rectangle") { mediaField = index; choosingPhoto = true }.accessibilityIdentifier("note-photo-\(index)")
+                                Button(AppText.localized("写真を撮影"), systemImage: "camera") { mediaField = index; camera = true }.disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+                                Button(AppText.localized("フィールド内の画像を編集"), systemImage: "photo.badge.arrow.down") {
                                     let html = document?.fields[index] ?? ""
                                     selectingImage = FieldImageSelection(field: index, html: html, images: FieldImageReference.extract(html))
                                 }.accessibilityIdentifier("note-edit-image-\(index)")
-                                Button("音声を録音", systemImage: "mic") { mediaField = index; recordingAudio = true }
+                                Button(AppText.localized("音声を録音"), systemImage: "mic") { mediaField = index; recordingAudio = true }
                             } label: {
-                                Label("添付", systemImage: "paperclip")
+                                Label(AppText.localized("添付"), systemImage: "paperclip")
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .contentShape(Rectangle())
                             }.buttonStyle(.borderless).accessibilityIdentifier("note-attachment-\(index)")
                             if current.fieldConfigs.indices.contains(index), let description = current.fieldConfigs[index]["description"] as? String, !description.isEmpty { Text(description).font(.footnote).foregroundStyle(.secondary) }
-                            } label: { Text(index < current.fieldNames.count ? current.fieldNames[index] : "フィールド \(index + 1)") }
+                            } label: { Text(index < current.fieldNames.count ? current.fieldNames[index] : AppText.localized("フィールド \(index + 1)")) }
                         }
                     }
                     Section {
-                        Button("保存せずにプレビュー", systemImage: "eye") { draftPreview = true }.accessibilityIdentifier("note-preview")
-                        Button("このノートを複製", systemImage: "doc.on.doc") { copied = EditorRequest(deckID: current.deckID, copiedDocument: current) }
+                        Button(AppText.localized("保存せずにプレビュー"), systemImage: "eye") { draftPreview = true }.accessibilityIdentifier("note-preview")
+                        Button(AppText.localized("このノートを複製"), systemImage: "doc.on.doc") { copied = EditorRequest(deckID: current.deckID, copiedDocument: current) }
                     }
-                    Section("タグ（空白で区切る）") {
-                        TextField("タグ", text: Binding(get: { document?.tags ?? "" }, set: { document?.tags = $0; dirty = true }))
+                    Section(AppText.localized("タグ（空白で区切る）")) {
+                        TextField(AppText.localized("タグ"), text: Binding(get: { document?.tags ?? "" }, set: { document?.tags = $0; dirty = true }))
                             .textInputAutocapitalization(.never).autocorrectionDisabled().accessibilityIdentifier("note-tags")
                     }
-                    Section { Text("フィールドはHTMLを含む元の内容を編集できます。穴埋めは {{c1::内容}} の形式で入力します。")
+                    Section { Text(AppText.localized("フィールドはHTMLを含む元の内容を編集できます。穴埋めは {{c1::内容}} の形式で入力します。"))
                         .font(.footnote).foregroundStyle(.secondary) }
                 } else { ProgressView() }
-                if busy { ProgressView("保存中…") }
+                if busy { ProgressView(AppText.localized("保存中…")) }
             }.accessibilityIdentifier("note-form")
     }
     private var navigationContent: some View {
         editorForm
             .disabled(busy || model.busy)
             .safeAreaInset(edge: .top) {
-                if added { Text("ノートを追加しました").foregroundStyle(.green).padding(8).accessibilityIdentifier("note-added") }
+                if added { Text(AppText.localized("ノートを追加しました")).foregroundStyle(.green).padding(8).accessibilityIdentifier("note-added") }
             }
-            .studyThemeSurface().navigationTitle(request.isNew ? "ノートを追加" : "ノートを編集")
+            .studyThemeSurface().navigationTitle(request.isNew ? AppText.localized("ノートを追加") : AppText.localized("ノートを編集"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button(request.isNew ? "閉じる" : "キャンセル") { if dirty { showDiscard = true } else { dismiss() } }.accessibilityIdentifier("note-close") }
-                ToolbarItem(placement: .confirmationAction) { Button("保存") { save() }.disabled(document == nil || busy).accessibilityIdentifier("note-save") }
+                ToolbarItem(placement: .cancellationAction) { Button(request.isNew ? AppText.localized("閉じる") : AppText.localized("キャンセル")) { if dirty { showDiscard = true } else { dismiss() } }.accessibilityIdentifier("note-close") }
+                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("保存")) { save() }.disabled(document == nil || busy).accessibilityIdentifier("note-save") }
             }
             .interactiveDismissDisabled(dirty || busy)
-            .confirmationDialog("変更を破棄しますか？", isPresented: $showDiscard) { Button("破棄", role: .destructive) { dismiss() } }
-            .alert("このまま保存しますか？", isPresented: Binding(get: { fieldWarning != nil }, set: { if !$0 { fieldWarning = nil } })) {
-                Button("保存") { fieldWarning = nil; save(force: true) }
-                Button("キャンセル", role: .cancel) { fieldWarning = nil }
+            .confirmationDialog(AppText.localized("変更を破棄しますか？"), isPresented: $showDiscard) { Button(AppText.localized("破棄"), role: .destructive) { dismiss() } }
+            .alert(AppText.localized("このまま保存しますか？"), isPresented: Binding(get: { fieldWarning != nil }, set: { if !$0 { fieldWarning = nil } })) {
+                Button(AppText.localized("保存")) { fieldWarning = nil; save(force: true) }
+                Button(AppText.localized("キャンセル"), role: .cancel) { fieldWarning = nil }
             } message: { Text(fieldWarning ?? "") }
     }
     private var schemaContent: some View {
@@ -180,7 +180,7 @@ struct NoteEditorView: View {
                 Task {
                     defer { busy = false }
                     do {
-                        guard let data = try await item.loadTransferable(type: Data.self), let image = UIImage(data: data) else { throw EngineError(message: "画像を読み込めませんでした。") }
+                        guard let data = try await item.loadTransferable(type: Data.self), let image = UIImage(data: data) else { throw EngineError(message: AppText.localized("画像を読み込めませんでした。")) }
                         pendingImage = NoteImageEditRequest(image: image, field: field)
                         presentPendingImage()
                     } catch { self.error = error.localizedDescription }
@@ -196,12 +196,12 @@ struct NoteEditorView: View {
                     List(selection.images) { image in
                         Button(image.source) { openFieldImage(image, selection: selection) }.accessibilityIdentifier("field-image-\(image.id)")
                     }
-                    .overlay { if selection.images.isEmpty { ContentUnavailableView("編集できる画像がありません", systemImage: "photo") } }
-                    .studyThemeSurface().navigationTitle("画像を選択")
-                    .alert("画像を開けませんでした", isPresented: Binding(get: { imageSelectionError != nil }, set: { if !$0 { imageSelectionError = nil } })) {
-                        Button("閉じる", role: .cancel) { imageSelectionError = nil }
+                    .overlay { if selection.images.isEmpty { ContentUnavailableView(AppText.localized("編集できる画像がありません"), systemImage: "photo") } }
+                    .studyThemeSurface().navigationTitle(AppText.localized("画像を選択"))
+                    .alert(AppText.localized("画像を開けませんでした"), isPresented: Binding(get: { imageSelectionError != nil }, set: { if !$0 { imageSelectionError = nil } })) {
+                        Button(AppText.localized("閉じる"), role: .cancel) { imageSelectionError = nil }
                     } message: { Text(imageSelectionError ?? "") }
-                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { selectingImage = nil } } }
+                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { selectingImage = nil } } }
                 }
             }
             .sheet(item: $editingImage) { request in
@@ -231,8 +231,8 @@ struct NoteEditorView: View {
     }
     private var loadedContent: some View {
         mediaContent
-            .alert("処理できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
-                Button("閉じる", role: .cancel) { error = nil }
+            .alert(AppText.localized("処理できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
+                Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
             .task {
                 do {
@@ -272,7 +272,7 @@ struct NoteEditorView: View {
             do {
                 if !force {
                     let state = try await model.engine.checkNoteDocument(document)
-                    let warnings = ["EMPTY": "最初のフィールドが空です。", "DUPLICATE": "同じ最初のフィールドを持つノートがあります。", "MISSING_CLOZE": "穴埋めの指定がありません。", "NOTETYPE_NOT_CLOZE": "このノートタイプでは穴埋めを生成できません。", "FIELD_NOT_CLOZE": "穴埋めのフィルターを設定していないフィールドに穴埋めがあります。"]
+                    let warnings = ["EMPTY": AppText.localized("最初のフィールドが空です。"), "DUPLICATE": AppText.localized("同じ最初のフィールドを持つノートがあります。"), "MISSING_CLOZE": AppText.localized("穴埋めの指定がありません。"), "NOTETYPE_NOT_CLOZE": AppText.localized("このノートタイプでは穴埋めを生成できません。"), "FIELD_NOT_CLOZE": AppText.localized("穴埋めのフィルターを設定していないフィールドに穴埋めがあります。")]
                     if let warning = warnings[state] { fieldWarning = warning; return }
                 }
                 try await model.engine.saveNote(document, isNew: request.isNew)
@@ -292,10 +292,10 @@ struct NoteEditorView: View {
         do {
             let root = model.engine.media.standardizedFileURL.resolvingSymlinksInPath()
             let url = root.appendingPathComponent(reference.source).standardizedFileURL.resolvingSymlinksInPath()
-            guard url.deletingLastPathComponent() == root else { throw EngineError(message: "画像の場所を確認できませんでした。") }
+            guard url.deletingLastPathComponent() == root else { throw EngineError(message: AppText.localized("画像の場所を確認できませんでした。")) }
             let data = try Data(contentsOf: url)
             guard let source = CGImageSourceCreateWithData(data as CFData, nil), CGImageSourceGetCount(source) == 1,
-                  let image = UIImage(data: data) else { throw EngineError(message: "この画像形式は編集できません。") }
+                  let image = UIImage(data: data) else { throw EngineError(message: AppText.localized("この画像形式は編集できません。")) }
             pendingImage = NoteImageEditRequest(image: image, field: selection.field, originalData: data,
                 originalExtension: url.pathExtension, originalField: selection.html, replacementRange: reference.range)
             selectingImage = nil
@@ -307,20 +307,20 @@ struct NoteEditorView: View {
         editingImage = pendingImage
     }
     private func insertPhoto(_ image: UIImage, field: Int, replacing request: NoteImageEditRequest? = nil) async throws {
-        guard document?.fields.indices.contains(field) == true else { throw EngineError(message: "画像の挿入先が見つかりません。") }
+        guard document?.fields.indices.contains(field) == true else { throw EngineError(message: AppText.localized("画像の挿入先が見つかりません。")) }
         busy = true
         defer { busy = false }
         let preferences = try await model.engine.preferences()
         let asPNG = (preferences["editing"] as? [String: Any])?["pasteImagesAsPng"] as? Bool ?? false
-        guard let data = asPNG ? image.pngData() : image.jpegData(compressionQuality: 0.95) else { throw EngineError(message: "写真を変換できませんでした。") }
+        guard let data = asPNG ? image.pngData() : image.jpegData(compressionQuality: 0.95) else { throw EngineError(message: AppText.localized("写真を変換できませんでした。")) }
         try await insertImageData(data, extension: asPNG ? "png" : "jpg", field: field, replacing: request)
     }
     private func insertImageData(_ data: Data, extension ext: String, field: Int, replacing request: NoteImageEditRequest? = nil) async throws {
-        guard document?.fields.indices.contains(field) == true else { throw EngineError(message: "画像の挿入先が見つかりません。") }
+        guard document?.fields.indices.contains(field) == true else { throw EngineError(message: AppText.localized("画像の挿入先が見つかりません。")) }
         busy = true
         defer { busy = false }
         if let original = request?.originalField, document?.fields[field] != original {
-            throw EngineError(message: "フィールドが変更されています。画像を選び直してください。")
+            throw EngineError(message: AppText.localized("フィールドが変更されています。画像を選び直してください。"))
         }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("photo-" + UUID().uuidString + "." + ext)
         defer { try? FileManager.default.removeItem(at: url) }
@@ -328,7 +328,7 @@ struct NoteEditorView: View {
         let name = try await model.engine.addMedia(url)
         let escaped = name.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;").replacingOccurrences(of: "<", with: "&lt;")
         if let original = request?.originalField, let range = request?.replacementRange {
-            guard document?.fields.indices.contains(field) == true, document?.fields[field] == original else { throw EngineError(message: "フィールドが変更されています。画像を選び直してください。") }
+            guard document?.fields.indices.contains(field) == true, document?.fields[field] == original else { throw EngineError(message: AppText.localized("フィールドが変更されています。画像を選び直してください。")) }
             document?.fields[field] = (original as NSString).replacingCharacters(in: range, with: escaped)
             dirty = true
         } else if document?.fields.indices.contains(field) == true {

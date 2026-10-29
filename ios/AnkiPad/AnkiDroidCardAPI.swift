@@ -10,7 +10,7 @@ extension Engine {
         var types: [String: [String]] = [:]
         return try ids.map { id in
             let card = try call("CardsService.GetCard", ["cid": id])
-            guard let nid = card["noteId"] as? String, let cardNumber = Int64(id), let noteNumber = Int64(nid) else { throw EngineError(message: "カードIDを読み取れませんでした。") }
+            guard let nid = card["noteId"] as? String, let cardNumber = Int64(id), let noteNumber = Int64(nid) else { throw EngineError(message: AppText.localized("カードIDを読み取れませんでした。")) }
             let note: [String: Any]
             if let cached = notes[nid] { note = cached } else { note = try call("NotesService.GetNote", ["nid": nid]); notes[nid] = note }
             let typeID = note["notetypeId"] as? String ?? "0"
@@ -26,7 +26,7 @@ extension Engine {
     }
     func ankiDroidETA() throws -> Int {
         let timing = try call("SchedulerService.SchedTimingToday")
-        guard let rawCutoff = timing["nextDayAt"] as? String, let cutoff = Int64(rawCutoff) else { throw EngineError(message: "日付の境界を取得できませんでした。") }
+        guard let rawCutoff = timing["nextDayAt"] as? String, let cutoff = Int64(rawCutoff) else { throw EngineError(message: AppText.localized("日付の境界を取得できませんでした。")) }
         let queue = try call("SchedulerService.GetQueuedCards", ["fetchLimit": 1])
         return try call("_droid/eta", ["cutoffMillis": (cutoff - 10 * 86400) * 1000,
             "new": queue["newCount"] as? Int ?? 0,
@@ -57,7 +57,7 @@ extension Engine {
 extension StudyModel {
     private func allowCollectionCardAPI() -> Bool {
         if UserDefaults.standard.bool(forKey: profilePreferenceKey("allowCollectionCardAPI")) { return true }
-        if cardAPIDenials < 2 { showCardToast("カードによる他のノートの読み取り・タグ変更は設定で許可されていません。", short: false) }
+        if cardAPIDenials < 2 { showCardToast(AppText.localized("カードによる他のノートの読み取り・タグ変更は設定で許可されていません。"), short: false) }
         cardAPIDenials += 1
         return false
     }
@@ -133,7 +133,7 @@ extension StudyModel {
         case "isTopbarShown": return try result(showReviewTopbar)
         case "setFullscreenButtonsAndMenu", "setFullscreenButtonsOnly", "setFullscreenAllGone":
             reviewDisplayMode = endpoint == "setFullscreenButtonsOnly" ? .buttonsOnly : endpoint == "setFullscreenAllGone" ? .allGone : .buttonsAndMenu
-            if reviewDisplayMode.isFullscreen { showCardToast("画面を3回タップすると操作バーを表示できます。", short: false) }
+            if reviewDisplayMode.isFullscreen { showCardToast(AppText.localized("画面を3回タップすると操作バーを表示できます。"), short: false) }
             return try result(true)
         case "isDisplayingAnswer": return try result(revealed)
         case "isInNightMode":
