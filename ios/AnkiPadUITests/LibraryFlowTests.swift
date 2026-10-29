@@ -216,7 +216,7 @@ final class LibraryFlowTests: StudyFlowTestSupport {
         let confirm = app.buttons.matching(identifier: "shared-deck-import").firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 30), app.debugDescription)
         confirm.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        let deck = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Shared fixture,")).firstMatch
+        let deck = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "deck-", "Shared fixture")).firstMatch
         XCTAssertTrue(deck.waitForExistence(timeout: 40), app.debugDescription)
         deck.tap()
         XCTAssertTrue(app.webViews.staticTexts["Shared deck fixture"].waitForExistence(timeout: 30), app.debugDescription)
