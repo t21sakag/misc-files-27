@@ -47,6 +47,15 @@ jobs:
           python3 tests/localization_resources_smoke.py
           swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/AnkiPad/AppText.swift tests/app_text_smoke.swift -o build/app-text-smoke
           build/app-text-smoke ios/AnkiPad/Resources
+      - name: Test incoming request contracts and owned file lifetime
+        if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && startsWith(env.UI_SUITE, 'incoming'))
+        run: |
+          swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/AnkiPad/BrowserLink.swift tests/browser_link_smoke.swift -o build/browser-link-smoke
+          build/browser-link-smoke tests/browser_links.json
+          swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/AnkiPad/IncomingNoteDraft.swift tests/incoming_note_draft_smoke.swift -o build/incoming-note-draft-smoke
+          build/incoming-note-draft-smoke
+          swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/AnkiPad/AppText.swift ios/AnkiPad/IncomingImportFile.swift tests/incoming_import_file_smoke.swift -o build/incoming-import-file-smoke
+          build/incoming-import-file-smoke
       - name: Test full sync direction safety
         run: |
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/sync-decision-smoke
