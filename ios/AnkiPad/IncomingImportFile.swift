@@ -1,10 +1,11 @@
 import Foundation
+import UniformTypeIdentifiers
 
 /// Owns a private copy while an incoming document waits behind editing or sync.
 /// The original document is never removed or modified. An import task retains
 /// this lease until the engine has finished reading its copy.
 final class IncomingImportFile: Identifiable, @unchecked Sendable {
-    enum Kind: Equatable, Sendable { case deck, collection, text }
+    enum Kind: Equatable, Sendable { case deck, collection, text, image, audio, video }
     struct ImportError: LocalizedError {
         let message: String
         var errorDescription: String? { message }
@@ -23,16 +24,34 @@ final class IncomingImportFile: Identifiable, @unchecked Sendable {
     deinit { try? FileManager.default.removeItem(at: directory) }
 
     static func kind(for url: URL) -> Kind? {
+        format(for: url)?.kind
+    }
+    private static func format(for url: URL) -> (kind: Kind, ext: String)? {
         guard url.isFileURL else { return nil }
-        switch url.pathExtension.lowercased() {
-        case "apkg": return .deck
-        case "colpkg": return .collection
-        case "csv", "tsv", "txt": return .text
-        default: return nil
+        func documentKind(_ ext: String) -> Kind? {
+            switch ext {
+            case "apkg": .deck
+            case "colpkg": .collection
+            case "csv", "tsv", "txt": .text
+            default: nil
+            }
         }
+        let supplied = url.pathExtension.lowercased()
+        if let kind = documentKind(supplied) { return (kind, supplied) }
+        let declared = supplied.isEmpty ? nil : UTType(filenameExtension: supplied)
+        let provided = (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType
+        for type in [declared, provided].compactMap({ $0 }) {
+            let ext = (type == declared && !supplied.isEmpty ? supplied : type.preferredFilenameExtension) ?? ""
+            guard !ext.isEmpty else { continue }
+            if let kind = documentKind(ext) { return (kind, ext) }
+            if type.conforms(to: .image) { return (.image, ext) }
+            if type.conforms(to: .audio) { return (.audio, ext) }
+            if type.conforms(to: .movie) { return (.video, ext) }
+        }
+        return nil
     }
     static func stage(_ source: URL) throws -> IncomingImportFile {
-        guard let kind = kind(for: source) else {
+        guard source.isFileURL else {
             throw ImportError(message: AppText.localized("対応していない取り込みファイルです。"))
         }
         let access = source.startAccessingSecurityScopedResource()
@@ -44,13 +63,25 @@ final class IncomingImportFile: Identifiable, @unchecked Sendable {
                 guard try readable.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true else {
                     throw ImportError(message: AppText.localized("通常のファイルを選んでください。"))
                 }
+                guard let format = Self.format(for: source) ?? Self.format(for: readable) else {
+                    throw ImportError(message: AppText.localized("対応していない取り込みファイルです。"))
+                }
                 let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Received-" + UUID().uuidString, isDirectory: true)
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                 do {
-                    let local = folder.appendingPathComponent("source." + source.pathExtension.lowercased())
+                    // Keep a useful media name, but only as one filename inside
+                    // our own directory; never accept path separators from it.
+                    let sanitized = source.lastPathComponent
+                        .replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "\\", with: "_")
+                        .replacingOccurrences(of: ":", with: "_").replacingOccurrences(of: "\0", with: "_")
+                        .components(separatedBy: .controlCharacters).joined()
+                    let stem = (sanitized as NSString).deletingPathExtension
+                    let candidate = source.pathExtension.lowercased() == format.ext ? sanitized : stem + "." + format.ext
+                    let name = candidate.isEmpty || candidate.utf8.count > 240 ? "source." + format.ext : candidate
+                    let local = folder.appendingPathComponent(name, isDirectory: false)
                     try FileManager.default.copyItem(at: readable, to: local)
                     let bytes = (try FileManager.default.attributesOfItem(atPath: local.path)[.size] as? NSNumber)?.int64Value ?? 0
-                    return IncomingImportFile(name: source.lastPathComponent, url: local, directory: folder, kind: kind, byteCount: bytes)
+                    return IncomingImportFile(name: source.lastPathComponent, url: local, directory: folder, kind: format.kind, byteCount: bytes)
                 } catch {
                     try? FileManager.default.removeItem(at: folder)
                     throw error

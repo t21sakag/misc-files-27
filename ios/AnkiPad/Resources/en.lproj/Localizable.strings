@@ -760,3 +760,17 @@
 "通常のファイルを選んでください。" = "Choose a regular file.";
 "受け取りを開く" = "Open received item";
 "ファイルを受信しています…" = "Receiving file…";
+"受け取った内容に使えるノートタイプがありません。通常のノートタイプを追加してください。" = "No suitable note type is available for the received content. Add a regular note type.";
+"件名（任意）" = "Subject (optional)";
+"テキスト" = "Text";
+"件名が空ならテキストを表面に入れます。件名がある場合は、件名を表面、テキストを裏面に入れます。" = "If the subject is empty, text goes on the front. Otherwise, the subject goes on the front and text on the back.";
+"HTMLとして取り込む" = "Import as HTML";
+"次の編集画面でノートタイプとデッキを確認してから保存します。" = "Check the note type and deck in the editor before saving.";
+"テキストからノートを追加" = "Add note from text";
+"画像を付けてノートを追加" = "Add note with image";
+"メディアを付けてノートを追加" = "Add note with media";
+"受け取った画像を開く" = "Open received image";
+"受け取ったメディアを挿入" = "Insert received media";
+"このノートタイプにないフィールド" = "Fields absent from this note type";
+"保持している内容を別のフィールドに移すか、空にすると保存できます。" = "Move the retained content to another field or clear it before saving.";
+"未割り当てのフィールド %lld" = "Unassigned field %lld";

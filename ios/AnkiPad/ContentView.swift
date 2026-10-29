@@ -30,6 +30,10 @@ struct ContentView: View {
     @State private var incomingFiles: [IncomingImportFile] = []
     @State private var incomingFileReview: IncomingImportFile?
     @State private var incomingFileCopies = 0
+    private enum PendingNoteAction { case edit(EditorRequest), occlusion(IncomingImportFile) }
+    @State private var pendingNoteActions: [PendingNoteAction] = []
+    @State private var receivedOcclusionFile: IncomingImportFile?
+    @State private var addingTextNote = false
     @State private var importing = false
     #if DEBUG
     @State private var lastReviewSwipe = "none"
@@ -77,7 +81,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack { observedContent }
             .safeAreaInset(edge: .bottom) {
-                if !incomingFiles.isEmpty || browserLinks.pending != nil {
+                if !incomingFiles.isEmpty || !pendingNoteActions.isEmpty || browserLinks.pending != nil {
                     Button(AppText.localized("受け取りを開く"), action: openPendingExternalRequest)
                         .disabled(!canPresentExternalRequest).padding(8)
                         .accessibilityIdentifier("received-open")
@@ -244,6 +248,8 @@ struct ContentView: View {
                 Button { model.editorRequest = EditorRequest() } label: { Image(systemName: "plus") }.accessibilityLabel(AppText.localized("ノートを追加")).accessibilityIdentifier("add-note").disabled(model.busy || !model.profilesReady)
                 Menu {
                     Button(AppText.localized("カードブラウザー"), systemImage: "rectangle.stack") { model.browserSearch = ""; model.showingBrowser = true }.accessibilityIdentifier("browser-open")
+                    Button(AppText.localized("テキストからノートを追加"), systemImage: "text.badge.plus") { addingTextNote = true }
+                        .accessibilityIdentifier("add-text-note")
                     Button(AppText.localized("プロファイル"), systemImage: "person.2") { model.showingProfiles = true }.accessibilityIdentifier("profiles-open")
                     Button(AppText.localized("共有デッキを取得"), systemImage: "arrow.down.circle") { model.showingSharedDecks = true }.accessibilityIdentifier("shared-decks")
                     Button(AppText.localized("統計"), systemImage: "chart.bar") { model.backendPage = BackendPageRequest(path: "graphs", title: AppText.localized("統計")) }.accessibilityIdentifier("statistics")
@@ -341,12 +347,31 @@ struct ContentView: View {
         .sheet(item: $deckDescription, onDismiss: openPendingExternalRequest) { DeckDescriptionView(model: model, request: $0) }
         .sheet(item: $customStudy, onDismiss: openPendingExternalRequest) { CustomStudyView(model: model, request: $0) }
         .sheet(item: $filteredDeck, onDismiss: openPendingExternalRequest) { FilteredDeckView(model: model, request: $0) }
-        .sheet(isPresented: $addingOcclusion, onDismiss: openPendingExternalRequest) { ImageOcclusionEntryView(model: model) }
+        .sheet(isPresented: $addingOcclusion, onDismiss: {
+            receivedOcclusionFile = nil; openPendingExternalRequest()
+        }) { ImageOcclusionEntryView(model: model, initialFile: receivedOcclusionFile) }
+        .sheet(isPresented: $addingTextNote, onDismiss: openPendingExternalRequest) {
+            SharedTextEntryView { draft in
+                guard addingTextNote else { return }
+                pendingNoteActions.append(.edit(EditorRequest(initialDraft: draft)))
+                addingTextNote = false
+            }
+        }
         .sheet(isPresented: $model.showingAccount, onDismiss: openPendingExternalRequest) { AccountView(model: model) }
         .sheet(item: $incomingFileReview, onDismiss: openPendingExternalRequest) { file in
-            IncomingImportView(model: model, file: file) {
-                guard model.profilesReady, !model.busy, !model.isSyncing else { return }
-                model.importFile(file.url, retaining: file)
+            IncomingImportView(model: model, file: file) { action in
+                guard incomingFileReview?.id == file.id, model.profilesReady, !model.busy, !model.isSyncing else { return }
+                switch action {
+                case .importDocument:
+                    guard [.deck, .collection, .text].contains(file.kind) else { return }
+                    model.importFile(file.url, retaining: file)
+                case .attachToNote:
+                    guard [.image, .audio, .video].contains(file.kind) else { return }
+                    pendingNoteActions.append(.edit(EditorRequest(incomingMedia: file)))
+                case .imageOcclusion:
+                    guard file.kind == .image else { return }
+                    pendingNoteActions.append(.occlusion(file))
+                }
                 incomingFileReview = nil
             }
         }
@@ -438,13 +463,20 @@ struct ContentView: View {
             && !openingReminder && !browserSessionActive && notificationRoute.profileID == nil
     }
     private func openPendingExternalRequest() {
-        guard !incomingFiles.isEmpty || browserLinks.pending != nil,
+        guard !incomingFiles.isEmpty || !pendingNoteActions.isEmpty || browserLinks.pending != nil,
               canPresentExternalRequest else { return }
         let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
             .flatMap(\.windows).first(where: \.isKeyWindow)
         // Model bindings can clear before a sheet's dismissal animation ends.
         // Its onDismiss retries after the real controller has gone away.
         guard let root = window?.rootViewController, root.presentedViewController == nil else { return }
+        if !pendingNoteActions.isEmpty {
+            switch pendingNoteActions.removeFirst() {
+            case .edit(let request): model.editorRequest = request
+            case .occlusion(let file): receivedOcclusionFile = file; addingOcclusion = true
+            }
+            return
+        }
         if !incomingFiles.isEmpty {
             incomingFileReview = incomingFiles.removeFirst()
             return
@@ -464,6 +496,9 @@ struct ContentView: View {
                 incomingFileCopies -= 1
                 openPendingExternalRequest()
             }
+        } else if let draft = IncomingNoteDraft(url: url) {
+            pendingNoteActions.append(.edit(EditorRequest(initialDraft: draft)))
+            openPendingExternalRequest()
         } else if browserLinks.receive(url) { openPendingExternalRequest() }
     }
     private var observedContent: some View {
@@ -494,7 +529,7 @@ struct ContentView: View {
         .alert(AppText.localized("自動進行"), isPresented: $model.timedReminder) { Button(AppText.localized("閉じる"), role: .cancel) {} } message: { Text(AppText.localized("カードの表示時間が終了しました。解答または評価を選んでください。")) }
     }
     private var localCollectionPresentationActive: Bool {
-        importing || addingOcclusion || customStudy != nil || filteredDeck != nil || deckDescription != nil
+        importing || addingOcclusion || addingTextNote || customStudy != nil || filteredDeck != nil || deckDescription != nil
             || namingDeck || deletingDeck != nil || model.pendingCollectionImport != nil || incomingFileReview != nil
     }
     private var deckList: some View {

@@ -6,6 +6,7 @@ import ImageIO
 struct NoteEditorView: View {
     @ObservedObject var model: StudyModel
     let request: EditorRequest
+    private let engine: Engine
     @Environment(\.dismiss) private var dismiss
     @State private var document: NoteDocument?
     @State private var types: [NamedID] = []
@@ -33,10 +34,19 @@ struct NoteEditorView: View {
     @State private var changingEditorFontSize = false
     @State private var fontSizeDraft = ""
     @State private var expanded: Set<Int> = []
+    @State private var preservedNewFields: [String] = []
+    @State private var typeLoadGeneration = UUID()
+    private var extraFieldIndices: [Int] {
+        guard request.isNew, let document else { return [] }
+        return preservedNewFields.indices.filter { $0 >= document.fields.count && !preservedNewFields[$0].isEmpty }
+    }
     @AppStorage("visualNoteEditor") private var visualEditor = false
     @AppStorage("capitalizeNoteEditor") private var capitalizeEditor = true
     @AppStorage("noteEditorFontSize") private var editorFontSize = 0
     @AppStorage("closeAfterAdd") private var closeAfterAdd = false
+    init(model: StudyModel, request: EditorRequest) {
+        self.model = model; self.request = request; engine = model.engine
+    }
     var body: some View { NavigationStack { loadedContent } }
     private var editorForm: some View {
             Form {
@@ -54,7 +64,7 @@ struct NoteEditorView: View {
                                     Task {
                                         defer { busy = false }
                                         do {
-                                            if dirty { try await model.engine.saveNote(current, isNew: false); dirty = false }
+                                            if dirty { try await engine.saveNote(current, isNew: false); dirty = false }
                                             changingType = BackendPageRequest(path: "image-occlusion/" + current.id, title: AppText.localized("画像穴埋め"), noteIDs: [current.id])
                                         } catch { self.error = error.localizedDescription }
                                     }
@@ -65,7 +75,7 @@ struct NoteEditorView: View {
                                 Task {
                                     defer { busy = false }
                                     do {
-                                        if dirty { try await model.engine.saveNote(current, isNew: false); dirty = false }
+                                        if dirty { try await engine.saveNote(current, isNew: false); dirty = false }
                                         changingType = BackendPageRequest(path: "change-notetype/" + current.typeID, title: AppText.localized("ノートタイプを変更"), noteIDs: [current.id])
                                     } catch { self.error = error.localizedDescription }
                                 }
@@ -92,7 +102,7 @@ struct NoteEditorView: View {
                         Section {
                             DisclosureGroup(isExpanded: Binding(get: { expanded.contains(index) }, set: { value in if value { expanded.insert(index) } else { expanded.remove(index) } })) {
                             if visualEditor {
-                                RichFieldEditor(text: Binding(get: { document?.fields[index] ?? "" }, set: { document?.fields[index] = $0; dirty = true }), media: model.engine.media, label: "note-field-\(index)", fontName: current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", fontSize: editorFontSize > 0 ? editorFontSize : (current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontSize"] as? Int ?? 20 : 20), rtl: current.fieldConfigs.indices.contains(index) && current.fieldConfigs[index]["rtl"] as? Bool == true, capitalize: capitalizeEditor)
+                                RichFieldEditor(text: Binding(get: { document?.fields[index] ?? "" }, set: { document?.fields[index] = $0; dirty = true }), media: engine.media, label: "note-field-\(index)", fontName: current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", fontSize: editorFontSize > 0 ? editorFontSize : (current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontSize"] as? Int ?? 20 : 20), rtl: current.fieldConfigs.indices.contains(index) && current.fieldConfigs[index]["rtl"] as? Bool == true, capitalize: capitalizeEditor)
                             } else {
                             TextEditor(text: Binding(get: { document?.fields[index] ?? "" }, set: { document?.fields[index] = $0; dirty = true }))
                                 .frame(minHeight: 110).accessibilityIdentifier("note-field-\(index)")
@@ -118,7 +128,25 @@ struct NoteEditorView: View {
                             } label: { Text(index < current.fieldNames.count ? current.fieldNames[index] : AppText.localized("フィールド \(index + 1)")) }
                         }
                     }
+                    if !extraFieldIndices.isEmpty {
+                        Section(AppText.localized("このノートタイプにないフィールド")) {
+                            Text(AppText.localized("保持している内容を別のフィールドに移すか、空にすると保存できます。"))
+                                .font(.caption).foregroundStyle(.secondary)
+                            ForEach(extraFieldIndices, id: \.self) { index in
+                                VStack(alignment: .leading) {
+                                    Text(AppText.localized("未割り当てのフィールド \(index + 1)"))
+                                    TextEditor(text: Binding(get: { preservedNewFields[index] }, set: { preservedNewFields[index] = $0; dirty = true }))
+                                        .frame(minHeight: 90).accessibilityIdentifier("note-unmapped-field-\(index)")
+                                }
+                            }
+                        }
+                    }
                     Section {
+                        if let incoming = request.incomingMedia {
+                            Text(incoming.name).foregroundStyle(.secondary)
+                            Button(AppText.localized("受け取ったメディアを挿入")) { insertMedia(incoming.url) }
+                                .accessibilityIdentifier("note-insert-received-media")
+                        }
                         Button(AppText.localized("保存せずにプレビュー"), systemImage: "eye") { draftPreview = true }.accessibilityIdentifier("note-preview")
                         Button(AppText.localized("このノートを複製"), systemImage: "doc.on.doc") { copied = EditorRequest(deckID: current.deckID, copiedDocument: current) }
                     }
@@ -140,8 +168,8 @@ struct NoteEditorView: View {
             }
             .studyThemeSurface().navigationTitle(request.isNew ? AppText.localized("ノートを追加") : AppText.localized("ノートを編集"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button(request.isNew ? AppText.localized("閉じる") : AppText.localized("キャンセル")) { if dirty { showDiscard = true } else { dismiss() } }.accessibilityIdentifier("note-close") }
-                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("保存")) { save() }.disabled(document == nil || busy).accessibilityIdentifier("note-save") }
+                ToolbarItem(placement: .cancellationAction) { Button(request.isNew ? AppText.localized("閉じる") : AppText.localized("キャンセル")) { if dirty { showDiscard = true } else { dismiss() } }.disabled(busy).accessibilityIdentifier("note-close") }
+                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("保存")) { save() }.disabled(document == nil || busy || !extraFieldIndices.isEmpty).accessibilityIdentifier("note-save") }
             }
             .interactiveDismissDisabled(dirty || busy)
             .confirmationDialog(AppText.localized("変更を破棄しますか？"), isPresented: $showDiscard) { Button(AppText.localized("破棄"), role: .destructive) { dismiss() } }
@@ -158,12 +186,13 @@ struct NoteEditorView: View {
                 Task {
                     defer { busy = false }
                     do {
-                        let cards = try await model.engine.call("NotesService.CardsOfNote", ["nid": current.id])["cids"] as? [String] ?? []
-                        let updated = try await model.engine.noteDocument(cardID: cards.first, noteID: cards.isEmpty ? current.id : nil, typeID: nil, deckID: current.deckID)
+                        let cards = try await engine.call("NotesService.CardsOfNote", ["nid": current.id])["cids"] as? [String] ?? []
+                        let updated = try await engine.noteDocument(cardID: cards.first, noteID: cards.isEmpty ? current.id : nil, typeID: nil, deckID: current.deckID)
                         document = updated
                         typeID = updated.typeID
-                        types = try await model.engine.noteTypes()
-                        isOcclusion = (try? await model.engine.call("ImageOcclusionService.GetImageOcclusionFields", ["notetypeId": updated.typeID]))?["fields"] != nil
+                        types = try await engine.noteTypes()
+                    try Task.checkCancellation()
+                        isOcclusion = (try? await engine.call("ImageOcclusionService.GetImageOcclusionFields", ["notetypeId": updated.typeID]))?["fields"] != nil
                         expandFields(updated)
                         model.refreshAfterEditing()
                     } catch { self.error = error.localizedDescription }
@@ -217,7 +246,7 @@ struct NoteEditorView: View {
             .sheet(item: $copied) { NoteEditorView(model: model, request: $0) }
             .sheet(isPresented: $recordingAudio) {
                 AudioRecorderView { url in
-                    let name = try await model.engine.addMedia(url)
+                    let name = try await engine.addMedia(url)
                     if document?.fields.indices.contains(mediaField) == true { document?.fields[mediaField] += "[sound:\(name)]"; dirty = true }
                 }
             }
@@ -235,53 +264,83 @@ struct NoteEditorView: View {
                 Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
             .task {
+                guard document == nil else { return }
+                busy = true
+                defer { busy = false }
                 do {
-                    types = try await model.engine.noteTypes()
-                    var loaded = try await model.engine.noteDocument(cardID: request.cardID, noteID: request.noteID, typeID: request.copiedDocument?.typeID, deckID: request.deckID)
+                    types = try await engine.noteTypes()
+                    var loaded = try await engine.incomingNoteDocument(request)
+                    try Task.checkCancellation()
                     if let source = request.copiedDocument { loaded.fields = source.fields; loaded.tags = source.tags; dirty = true }
+                    if let draft = request.initialDraft, request.isNew {
+                        for (index, value) in draft.fields.enumerated() where loaded.fields.indices.contains(index) { loaded.fields[index] = value }
+                        if let tags = draft.tags { loaded.tags = tags }
+                        dirty = draft.fields.contains(where: { !$0.isEmpty }) || draft.tags != nil
+                    }
                     typeID = loaded.typeID
                     document = loaded
-                    isOcclusion = (try? await model.engine.call("ImageOcclusionService.GetImageOcclusionFields", ["notetypeId": loaded.typeID]))?["fields"] != nil
+                    preservedNewFields = loaded.fields
+                    isOcclusion = (try? await engine.call("ImageOcclusionService.GetImageOcclusionFields", ["notetypeId": loaded.typeID]))?["fields"] != nil
                     expandFields(loaded)
+                    if let file = request.incomingMedia, request.isNew {
+                        try await prepareMedia(file.url, field: 0)
+                    }
                 } catch { self.error = error.localizedDescription }
             }
     }
     private func load(type: String) {
         guard request.isNew, type != document?.typeID else { return }
+        let generation = UUID()
+        typeLoadGeneration = generation
+        busy = true
         Task {
+            defer { if typeLoadGeneration == generation { busy = false } }
             do {
-                var replacement = try await model.engine.noteDocument(cardID: nil, typeID: type, deckID: document?.deckID ?? request.deckID)
+                var replacement = try await engine.noteDocument(cardID: nil, typeID: type, deckID: document?.deckID ?? request.deckID)
+                guard typeLoadGeneration == generation else { return }
+                var retained = preservedNewFields
                 if let previous = document {
-                    for index in replacement.fields.indices where previous.fields.indices.contains(index) { replacement.fields[index] = previous.fields[index] }
+                    for index in previous.fields.indices {
+                        if retained.indices.contains(index) { retained[index] = previous.fields[index] }
+                        else { retained.append(previous.fields[index]) }
+                    }
                     replacement.tags = previous.tags
                 }
+                for index in replacement.fields.indices where retained.indices.contains(index) { replacement.fields[index] = retained[index] }
+                preservedNewFields = retained
                 document = replacement
                 expandFields(replacement)
                 dirty = true
-            } catch { self.error = error.localizedDescription }
+            } catch {
+                if typeLoadGeneration == generation {
+                    typeID = document?.typeID ?? typeID
+                    self.error = error.localizedDescription
+                }
+            }
         }
     }
     private func expandFields(_ document: NoteDocument) {
         expanded = Set(document.fields.indices.filter { !document.fieldConfigs.indices.contains($0) || document.fieldConfigs[$0]["collapsed"] as? Bool != true })
     }
     private func save(force: Bool = false) {
-        guard let document, !busy else { return }
+        guard let document, !busy, extraFieldIndices.isEmpty else { return }
         busy = true
         Task {
             defer { busy = false }
             do {
                 if !force {
-                    let state = try await model.engine.checkNoteDocument(document)
+                    let state = try await engine.checkNoteDocument(document)
                     let warnings = ["EMPTY": AppText.localized("最初のフィールドが空です。"), "DUPLICATE": AppText.localized("同じ最初のフィールドを持つノートがあります。"), "MISSING_CLOZE": AppText.localized("穴埋めの指定がありません。"), "NOTETYPE_NOT_CLOZE": AppText.localized("このノートタイプでは穴埋めを生成できません。"), "FIELD_NOT_CLOZE": AppText.localized("穴埋めのフィルターを設定していないフィールドに穴埋めがあります。")]
                     if let warning = warnings[state] { fieldWarning = warning; return }
                 }
-                try await model.engine.saveNote(document, isNew: request.isNew)
+                try await engine.saveNote(document, isNew: request.isNew)
                 dirty = false
                 model.refreshAfterEditing()
                 if request.isNew && !closeAfterAdd {
-                    var next = try await model.engine.noteDocument(cardID: nil, typeID: document.typeID, deckID: document.deckID)
+                    var next = try await engine.noteDocument(cardID: nil, typeID: document.typeID, deckID: document.deckID)
                     next.tags = document.tags
                     self.document = next
+                    preservedNewFields = next.fields
                     expandFields(next)
                     added = true
                 } else { dismiss() }
@@ -290,7 +349,7 @@ struct NoteEditorView: View {
     }
     private func openFieldImage(_ reference: FieldImageReference, selection: FieldImageSelection) {
         do {
-            let root = model.engine.media.standardizedFileURL.resolvingSymlinksInPath()
+            let root = engine.media.standardizedFileURL.resolvingSymlinksInPath()
             let url = root.appendingPathComponent(reference.source).standardizedFileURL.resolvingSymlinksInPath()
             guard url.deletingLastPathComponent() == root else { throw EngineError(message: AppText.localized("画像の場所を確認できませんでした。")) }
             let data = try Data(contentsOf: url)
@@ -310,7 +369,7 @@ struct NoteEditorView: View {
         guard document?.fields.indices.contains(field) == true else { throw EngineError(message: AppText.localized("画像の挿入先が見つかりません。")) }
         busy = true
         defer { busy = false }
-        let preferences = try await model.engine.preferences()
+        let preferences = try await engine.preferences()
         let asPNG = (preferences["editing"] as? [String: Any])?["pasteImagesAsPng"] as? Bool ?? false
         guard let data = asPNG ? image.pngData() : image.jpegData(compressionQuality: 0.95) else { throw EngineError(message: AppText.localized("写真を変換できませんでした。")) }
         try await insertImageData(data, extension: asPNG ? "png" : "jpg", field: field, replacing: request)
@@ -325,7 +384,7 @@ struct NoteEditorView: View {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("photo-" + UUID().uuidString + "." + ext)
         defer { try? FileManager.default.removeItem(at: url) }
         try data.write(to: url)
-        let name = try await model.engine.addMedia(url)
+        let name = try await engine.addMedia(url)
         let escaped = name.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;").replacingOccurrences(of: "<", with: "&lt;")
         if let original = request?.originalField, let range = request?.replacementRange {
             guard document?.fields.indices.contains(field) == true, document?.fields[field] == original else { throw EngineError(message: AppText.localized("フィールドが変更されています。画像を選び直してください。")) }
@@ -341,26 +400,31 @@ struct NoteEditorView: View {
         Task {
             defer { busy = false }
             do {
-                let type = UTType(filenameExtension: url.pathExtension)
-                if type?.conforms(to: .image) == true {
-                    let access = url.startAccessingSecurityScopedResource()
-                    defer { if access { url.stopAccessingSecurityScopedResource() } }
-                    let data = try Data(contentsOf: url)
-                    if let source = CGImageSourceCreateWithData(data as CFData, nil), CGImageSourceGetCount(source) == 1,
-                       let image = UIImage(data: data) {
-                        pendingImage = NoteImageEditRequest(image: image, field: field, originalData: data, originalExtension: url.pathExtension)
-                        presentPendingImage()
-                        return
-                    }
-                }
-                let name = try await model.engine.addMedia(url)
-                let encoded = name.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;").replacingOccurrences(of: "<", with: "&lt;")
-                let content: String
-                if type?.conforms(to: .image) == true { content = "<img src=\"\(encoded)\">" }
-                else if type?.conforms(to: .movie) == true { content = "<video controls src=\"\(encoded)\"></video>" }
-                else { content = "[sound:\(name)]" }
-                if document?.fields.indices.contains(field) == true { document?.fields[field] += content; dirty = true }
+                try await prepareMedia(url, field: field)
             } catch { self.error = error.localizedDescription }
         }
+    }
+    private func prepareMedia(_ url: URL, field: Int) async throws {
+        guard document?.fields.indices.contains(field) == true else {
+            throw EngineError(message: AppText.localized("画像の挿入先が見つかりません。"))
+        }
+        let type = UTType(filenameExtension: url.pathExtension.lowercased())
+        let access = url.startAccessingSecurityScopedResource()
+        defer { if access { url.stopAccessingSecurityScopedResource() } }
+        if type?.conforms(to: .image) == true, MediaImagePreparation.canRasterize(url) {
+            let data = try BoundedImageFile.read(url, maximumBytes: MediaImagePreparation.maximumEditableFileBytes)
+            if let image = UIImage(data: data) {
+                pendingImage = NoteImageEditRequest(image: image, field: field, originalData: data, originalExtension: url.pathExtension)
+                presentPendingImage()
+                return
+            }
+        }
+        let name = try await engine.addMedia(url)
+        let encoded = name.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;").replacingOccurrences(of: "<", with: "&lt;")
+        let content: String
+        if type?.conforms(to: .image) == true { content = "<img src=\"\(encoded)\">" }
+        else if type?.conforms(to: .movie) == true { content = "<video controls src=\"\(encoded)\"></video>" }
+        else { content = "[sound:\(name)]" }
+        if document?.fields.indices.contains(field) == true { document?.fields[field] += content; dirty = true }
     }
 }

@@ -41,17 +41,22 @@ targets:
               - public.comma-separated-values-text
               - public.tab-separated-values-text
               - public.plain-text
+              - public.image
+              - public.audio
+              - public.movie
         UTImportedTypeDeclarations:
           - UTTypeIdentifier: local.studyclient.deck-package
             UTTypeDescription: Anki Deck Package
             UTTypeConformsTo: [public.data, public.zip-archive]
             UTTypeTagSpecification:
               public.filename-extension: [apkg]
+              public.mime-type: [application/apkg, application/x-apkg, application/vnd.anki]
           - UTTypeIdentifier: local.studyclient.collection-package
             UTTypeDescription: Anki Collection Package
             UTTypeConformsTo: [public.data, public.zip-archive]
             UTTypeTagSpecification:
               public.filename-extension: [colpkg]
+              public.mime-type: [application/colpkg, application/x-colpkg]
         CFBundleURLTypes:
           - CFBundleTypeRole: Viewer
             CFBundleURLName: local.studyclient.browser
