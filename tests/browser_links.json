@@ -1,0 +1,17 @@
+[
+  {"url":"anki://x-callback-url/browser","recognized":true,"search":null},
+  {"url":"studyclient://x-callback-url/browser?search=","recognized":true,"search":"","matches":["route","japanese"]},
+  {"url":"anki://x-callback-url/browser?search=Route+needle","recognized":true,"search":"Route needle","matches":["route"]},
+  {"url":"anki://x-callback-url/browser?search=%E4%BF%9D%E5%AD%98","recognized":true,"search":"保存","matches":["japanese"]},
+  {"url":"anki://x-callback-url/browser?search=tag%3Aroute","recognized":true,"search":"tag:route","matches":["route"]},
+  {"url":"anki://x-callback-url/browser?search=%22%2B%22","recognized":true,"search":"\"+\"","matches":["route"]},
+  {"url":"anki://x-callback-url/browser?search=%252B","recognized":true,"search":"%2B","matches":[]},
+  {"url":"anki://x-callback-url/browser?search=Route&search=%E4%BF%9D%E5%AD%98","recognized":true,"search":"Route","matches":["route"]},
+  {"url":"anki://x-callback-url/browser?search","recognized":true,"search":"","matches":["route","japanese"]},
+  {"url":"anki://x-callback-url/browser?query=ignored&x-success=https%3A%2F%2Fexample.invalid","recognized":true,"search":null},
+  {"url":"https://x-callback-url/browser?search=Route","recognized":false},
+  {"url":"file:///browser?search=Route","recognized":false},
+  {"url":"javascript:alert(1)","recognized":false},
+  {"url":"anki://x-callback-url/delete?search=Route","recognized":false},
+  {"url":"anki://other/browser?search=Route","recognized":false}
+]
