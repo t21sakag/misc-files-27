@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, all]
 permissions:
   contents: read
 concurrency:
@@ -217,6 +217,9 @@ jobs:
       - name: Test backend language isolation and existing data preservation
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'engine-languages' || env.UI_SUITE == 'languages'))
         run: python3 tests/backend_languages_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test browser route searches against the real collection
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && startsWith(env.UI_SUITE, 'incoming'))
+        run: python3 tests/browser_link_search_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test collection editing, search and card actions
         if: env.CI_MODE == 'full'
         run: python3 tests/collection_smoke.py build/native/host/libankipad_bridge.dylib

@@ -16,7 +16,7 @@ final class LibraryFlowTests: StudyFlowTestSupport {
         let collapse = app.buttons["Hierarchy Parentを折りたたむ"]
         XCTAssertTrue(toggle.waitForExistence(timeout: 20) || collapse.exists)
         if toggle.exists { toggle.tap() }
-        let child = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'deck-' AND label BEGINSWITH 'Nested Child,'")).firstMatch
+        let child = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'deck-' AND label BEGINSWITH 'Nested Child'")).firstMatch
         XCTAssertTrue(child.waitForExistence(timeout: 20))
         let childID = String(child.identifier.dropFirst("deck-".count))
         child.press(forDuration: 1)
@@ -40,7 +40,7 @@ final class LibraryFlowTests: StudyFlowTestSupport {
         search.buttons.firstMatch.tap()
         XCTAssertTrue(toggle.waitForExistence(timeout: 20))
         XCTAssertFalse(child.exists)
-        let parent = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'deck-' AND label BEGINSWITH 'Hierarchy Parent,'")).firstMatch
+        let parent = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'deck-' AND label BEGINSWITH 'Hierarchy Parent'")).firstMatch
         XCTAssertTrue(parent.label.contains("1"), "Parent must count its child's new card")
         parent.tap()
         XCTAssertTrue(app.webViews.staticTexts["Nested review question"].waitForExistence(timeout: 30), app.debugDescription)

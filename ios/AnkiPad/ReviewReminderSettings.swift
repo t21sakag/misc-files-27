@@ -15,7 +15,9 @@ import UserNotifications
     #if DEBUG
     // Read the OS schedule, not reconstructed settings. No mutation/injection.
     static func testSchedule(profileID: String) async throws -> String {
-        let requests = await UNUserNotificationCenter.current().pendingNotificationRequests()
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        let requests = await center.pendingNotificationRequests()
         let records: [[String: Any]] = requests.filter { $0.identifier.hasPrefix(prefix(profileID)) }.map { request in
             let trigger = request.trigger as? UNCalendarNotificationTrigger
             return ["id": request.identifier, "profileID": request.content.userInfo["profileID"] as? String ?? "",
@@ -24,7 +26,9 @@ import UserNotifications
                     "sound": request.content.sound != nil]
         }
         let config = try load(profileID: profileID)
-        let data = try JSONSerialization.data(withJSONObject: ["pending": records, "savedIDs": config.requestIDs], options: [.sortedKeys])
+        let data = try JSONSerialization.data(withJSONObject: ["pending": records, "savedIDs": config.requestIDs,
+            "authorizationStatus": settings.authorizationStatus.rawValue,
+            "alertSetting": settings.alertSetting.rawValue, "soundSetting": settings.soundSetting.rawValue], options: [.sortedKeys])
         return String(decoding: data, as: UTF8.self)
     }
     #endif

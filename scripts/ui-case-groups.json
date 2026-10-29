@@ -129,5 +129,11 @@
   ],
   "LanguageFlowTests": [
     "testLanguageSavesOnRelaunchAndKeepsNoteTextWithTranslatedKeys"
+  ],
+  "IncomingFlowTests": [
+    "testBrowserURLSearchAndExplicitEmptyKeepSavedNotes",
+    "testBrowserURLWaitsForUnsavedEditorAndUsesLatestSearch",
+    "testSharedTextRemainsDraftAndPlainFieldsSaveOnlyExplicitly",
+    "testTextURLHTMLAndTagsSurviveExplicitSaveAndRelaunch"
   ]
 }

@@ -58,6 +58,12 @@ suites = {
     'engine-languages': ['testNoteCanBeCreatedAndFoundInBrowser'],
     'languages': ['testLanguageSavesOnRelaunchAndKeepsNoteTextWithTranslatedKeys', 'testFullSyncWithLocalDataRequiresTypedUploadConfirmation'],
     'language-only': ['testLanguageSavesOnRelaunchAndKeepsNoteTextWithTranslatedKeys'],
+    'incoming-core': ['testBrowserURLSearchAndExplicitEmptyKeepSavedNotes', 'testBrowserURLWaitsForUnsavedEditorAndUsesLatestSearch', 'testSharedTextRemainsDraftAndPlainFieldsSaveOnlyExplicitly', 'testTextURLHTMLAndTagsSurviveExplicitSaveAndRelaunch'],
+    'incoming-browser': ['testBrowserURLSearchAndExplicitEmptyKeepSavedNotes', 'testBrowserURLWaitsForUnsavedEditorAndUsesLatestSearch'],
+    'incoming-deferred': ['testBrowserURLWaitsForUnsavedEditorAndUsesLatestSearch'],
+    'incoming-text': ['testSharedTextRemainsDraftAndPlainFieldsSaveOnlyExplicitly', 'testTextURLHTMLAndTagsSurviveExplicitSaveAndRelaunch'],
+    'incoming-text-cancel': ['testSharedTextRemainsDraftAndPlainFieldsSaveOnlyExplicitly'],
+    'incoming-text-save': ['testTextURLHTMLAndTagsSurviveExplicitSaveAndRelaunch'],
     'all': [],
 }
 suite, mode = sys.argv[1:]
