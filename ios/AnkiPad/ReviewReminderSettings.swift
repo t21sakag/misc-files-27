@@ -185,7 +185,7 @@ struct ReviewReminderSettingsView: View {
         }
         .accessibilityIdentifier("reminder-form")
         .disabled(!loaded || busy)
-        .navigationTitle("学習リマインダー")
+        .studyThemeSurface().navigationTitle("学習リマインダー")
         .task {
             loaded = false
             #if DEBUG

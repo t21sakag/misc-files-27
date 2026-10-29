@@ -25,7 +25,7 @@ struct NoteTypeManagerView: View {
                 }
                 if busy { ProgressView() }
             }
-            .navigationTitle("ノートタイプ")
+            .studyThemeSurface().navigationTitle("ノートタイプ")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss(); model.refreshAfterEditing() } }
                 ToolbarItem(placement: .primaryAction) { Button { name = ""; adding = true } label: { Image(systemName: "plus") }.disabled(busy).accessibilityIdentifier("notetype-add") }
@@ -43,7 +43,7 @@ struct NoteTypeManagerView: View {
                             Text("穴埋め").tag("KIND_CLOZE")
                             Text("画像穴埋め").tag("KIND_IMAGE_OCCLUSION")
                         }
-                    }.navigationTitle("ノートタイプを追加")
+                    }.studyThemeSurface().navigationTitle("ノートタイプを追加")
                     .alert("作成できませんでした", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
                         Button("閉じる", role: .cancel) { error = nil }
                     } message: { Text(error ?? "") }
@@ -137,7 +137,7 @@ struct NoteTypeEditorView: View {
                 } else { ProgressView() }
             }
             .disabled(busy)
-            .navigationTitle("ノートタイプを編集")
+            .studyThemeSurface().navigationTitle("ノートタイプを編集")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { if dirty { discarding = true } else { dismiss() } } }
                 ToolbarItemGroup(placement: .confirmationAction) {
@@ -196,7 +196,7 @@ struct NoteFieldEditor: View {
             Toggle("検索対象から除外", isOn: boolean("excludeFromSearch"))
             Toggle("削除から保護", isOn: boolean("preventDeletion"))
             TextField("説明", text: text("description"), axis: .vertical)
-        }.navigationTitle("フィールド")
+        }.studyThemeSurface().navigationTitle("フィールド")
     }
     private func text(_ key: String, config: Bool = true) -> Binding<String> {
         Binding(get: { (config ? value["config"] as? [String: Any] ?? [:] : value)[key] as? String ?? "" }, set: { updated in

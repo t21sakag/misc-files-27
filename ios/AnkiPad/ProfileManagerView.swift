@@ -32,7 +32,7 @@ struct ProfileManagerView: View {
                 if model.busy { ProgressView("切り替えています…") }
             }
             .disabled(model.busy || !model.profilesReady)
-            .navigationTitle("プロファイル")
+            .accessibilityIdentifier("profiles-form").studyThemeSurface().navigationTitle("プロファイル")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() }.disabled(model.busy).accessibilityIdentifier("profiles-close") }
                 ToolbarItem(placement: .primaryAction) {

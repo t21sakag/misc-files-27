@@ -47,7 +47,7 @@ struct SelectionExportView: View {
                 if busy { ProgressView("書き出し中…") }
             }
             .disabled(busy)
-            .navigationTitle("選択したカードを書き出す")
+            .studyThemeSurface().navigationTitle("選択したカードを書き出す")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() }.disabled(busy) }
                 ToolbarItem(placement: .confirmationAction) { Button("書き出す") { export() }.disabled(busy || request.cardIDs.isEmpty) }

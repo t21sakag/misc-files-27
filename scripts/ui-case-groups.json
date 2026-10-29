@@ -120,5 +120,8 @@
   ],
   "DeckBackgroundStorageTests": [
     "testRejectedReplacementKeepsSavedBackgroundAndProfilesStayIndependent"
+  ],
+  "ThemePanelFlowTests": [
+    "testDarkAndBlackThemesReachAccountProfilesEditorAndMaintenance"
   ]
 }

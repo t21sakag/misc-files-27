@@ -30,7 +30,7 @@ struct AppNavigationDrawerView: View {
                 }
                 NavigationLink("ライセンスとソース") { OpenSourceLicensesView() }
             }
-            .navigationTitle("ナビゲーション")
+            .studyThemeSurface().navigationTitle("ナビゲーション")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("閉じる") { model.showingNavigationDrawer = false } } }
         }
     }

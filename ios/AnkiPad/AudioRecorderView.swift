@@ -143,7 +143,7 @@ struct AudioRecorderView: View {
                 if saving { ProgressView() }
             }
             .disabled(saving).padding()
-            .navigationTitle("音声を録音")
+            .studyThemeSurface().navigationTitle("音声を録音")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { recorder.discard(); dismiss() }.disabled(saving) }
                 ToolbarItem(placement: .confirmationAction) { Button("挿入") {
@@ -227,7 +227,7 @@ struct ReviewVoiceView: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
             .padding()
-            .navigationTitle("自分の声")
+            .studyThemeSurface().navigationTitle("自分の声")
             .overlay { keyboardCommands }
             .sheet(item: model.speechRequestBinding(inVoice: true), onDismiss: model.finishSpeechChoice) { request in
                 ReviewSpeechVoiceView(model: model, request: request)

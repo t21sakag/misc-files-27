@@ -32,7 +32,7 @@ struct FindReplaceView: View {
                 if busy { ProgressView() }
             }
             .disabled(busy)
-            .navigationTitle("検索と置換")
+            .studyThemeSurface().navigationTitle("検索と置換")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() }.disabled(busy) }
                 ToolbarItem(placement: .confirmationAction) { Button("置換") { confirming = true }.disabled(search.isEmpty || busy) }

@@ -58,7 +58,7 @@ struct ReviewGestureSettingsView: View {
                 Text("手書き中はスワイプ操作を停止します。評価だけを割り当てた操作は、解答表示後に使えます。画面を3回タップすると全画面表示を解除できます。")
                 Button("初期設定に戻す") { configuration = ReviewGestureConfiguration() }
             }
-        }.navigationTitle("スワイプの割り当て")
+        }.studyThemeSurface().navigationTitle("スワイプの割り当て")
     }
     private func actionPicker(_ title: String, value: Binding<ReviewGestureAction>) -> some View {
         Picker(title, selection: value) { ForEach(ReviewGestureAction.allCases) { Text($0.title).tag($0) } }

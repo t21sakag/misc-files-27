@@ -41,7 +41,7 @@ struct ReviewToolbarSettingsView: View {
                 Button("初期設定に戻す") { configuration = ReviewToolbarConfiguration() }
             }
         }
-        .navigationTitle("操作バーの設定")
+        .studyThemeSurface().navigationTitle("操作バーの設定")
         .toolbar { EditButton() }
     }
 }

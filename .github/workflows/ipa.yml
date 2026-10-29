@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, all]
 permissions:
   contents: read
 concurrency:
@@ -25,7 +25,7 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_27.app/Contents/Developer
       CI_MODE: ${{ inputs.mode || 'full' }}
       UI_SUITE: ${{ inputs.ui_suite || 'all' }}
-    timeout-minutes: ${{ (inputs.mode == 'compile' && 30) || (inputs.mode == 'ipa' && 30) || (inputs.mode == 'ui' && inputs.ui_suite == 'automatic' && 60) || (inputs.mode == 'ui' && inputs.ui_suite != 'all' && 40) || 120 }}
+    timeout-minutes: ${{ (inputs.mode == 'compile' && 30) || (inputs.mode == 'ipa' && 30) || (inputs.mode == 'ui' && inputs.ui_suite == 'automatic' && 60) || (inputs.mode == 'ui' && inputs.ui_suite != 'all' && 40) || 150 }}
     steps:
       - uses: actions/checkout@v4
         with:

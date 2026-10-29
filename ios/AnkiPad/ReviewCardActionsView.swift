@@ -37,7 +37,7 @@ struct ReviewCardActionsView: View {
                 if busy { ProgressView() }
             }
             .disabled(busy || !loaded)
-            .navigationTitle(title)
+            .studyThemeSurface().navigationTitle(title)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { dismiss() }.disabled(busy) }
                 ToolbarItem(placement: .confirmationAction) { Button("適用") { save() }.disabled(busy || !loaded).accessibilityIdentifier("card-action-apply") }

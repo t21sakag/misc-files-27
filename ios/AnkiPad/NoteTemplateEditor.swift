@@ -62,7 +62,7 @@ struct NoteTemplateEditor: View {
             }
         }
         .disabled(busy)
-        .navigationTitle("カードテンプレート")
+        .studyThemeSurface().navigationTitle("カードテンプレート")
         .confirmationDialog("ブラウザー表示のテンプレートをリセットしますか？", isPresented: $restoreBrowser) {
             Button("既定に戻す", role: .destructive) { text("qFormatBrowser").wrappedValue = ""; text("aFormatBrowser").wrappedValue = "" }
         }
@@ -113,7 +113,7 @@ struct NoteTemplatePreviewView: View {
                 } else if let error { Text(error).padding() }
                 else { ProgressView() }
             }
-            .navigationTitle("プレビュー")
+            .studyThemeSurface().navigationTitle("プレビュー")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("閉じる") { audio.stop(); dismiss() } } }
             .onDisappear { audio.stop() }
             .task { do { rendered = try await model.engine.templatePreview(typeID: typeID, ordinal: ordinal, document: document) } catch { self.error = error.localizedDescription } }

@@ -25,7 +25,7 @@ struct ImageOcclusionEntryView: View {
                 if busy { ProgressView() }
             }
             .disabled(busy)
-            .navigationTitle("画像穴埋め")
+            .studyThemeSurface().navigationTitle("画像穴埋め")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() }.accessibilityIdentifier("occlusion-entry-close") } }
             .fileImporter(isPresented: $picking, allowedContentTypes: [.image]) { result in
                 switch result {

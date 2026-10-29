@@ -138,7 +138,7 @@ struct NoteEditorView: View {
             .safeAreaInset(edge: .top) {
                 if added { Text("ノートを追加しました").foregroundStyle(.green).padding(8).accessibilityIdentifier("note-added") }
             }
-            .navigationTitle(request.isNew ? "ノートを追加" : "ノートを編集")
+            .studyThemeSurface().navigationTitle(request.isNew ? "ノートを追加" : "ノートを編集")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(request.isNew ? "閉じる" : "キャンセル") { if dirty { showDiscard = true } else { dismiss() } }.accessibilityIdentifier("note-close") }
                 ToolbarItem(placement: .confirmationAction) { Button("保存") { save() }.disabled(document == nil || busy).accessibilityIdentifier("note-save") }
@@ -197,7 +197,7 @@ struct NoteEditorView: View {
                         Button(image.source) { openFieldImage(image, selection: selection) }.accessibilityIdentifier("field-image-\(image.id)")
                     }
                     .overlay { if selection.images.isEmpty { ContentUnavailableView("編集できる画像がありません", systemImage: "photo") } }
-                    .navigationTitle("画像を選択")
+                    .studyThemeSurface().navigationTitle("画像を選択")
                     .alert("画像を開けませんでした", isPresented: Binding(get: { imageSelectionError != nil }, set: { if !$0 { imageSelectionError = nil } })) {
                         Button("閉じる", role: .cancel) { imageSelectionError = nil }
                     } message: { Text(imageSelectionError ?? "") }

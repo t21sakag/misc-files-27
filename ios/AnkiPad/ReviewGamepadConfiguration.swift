@@ -44,7 +44,7 @@ struct ReviewGamepadSettingsView: View {
                 Text("iPadの設定で接続した対応コントローラーを使います。機種によってボタンの名前が異なります。")
                 Button("初期設定に戻す") { configuration = ReviewGamepadConfiguration() }
             }
-        }.navigationTitle("ゲームパッドの割り当て")
+        }.studyThemeSurface().navigationTitle("ゲームパッドの割り当て")
     }
 }
 

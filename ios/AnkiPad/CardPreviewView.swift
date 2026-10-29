@@ -106,7 +106,7 @@ struct CardPreviewView: View {
                         .onTapGesture { clearToast() }
                 }
             }
-            .navigationTitle("プレビュー \(request.ids.isEmpty ? 0 : index + 1) / \(request.ids.count)")
+            .studyThemeSurface().navigationTitle("プレビュー \(request.ids.isEmpty ? 0 : index + 1) / \(request.ids.count)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("閉じる") { visible = false; loadGeneration = UUID(); stopScriptAudio(); audio.stop(); dismiss() }.accessibilityIdentifier("preview-close") }

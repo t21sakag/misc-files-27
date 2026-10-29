@@ -39,7 +39,7 @@ struct CustomStudyView: View {
                 if busy { ProgressView() }
             }
             .disabled(busy)
-            .navigationTitle("カスタム学習")
+            .studyThemeSurface().navigationTitle("カスタム学習")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { dismiss() }.disabled(busy) }
                 ToolbarItem(placement: .confirmationAction) { Button("作成") { perform() }.disabled(busy) }
@@ -124,7 +124,7 @@ struct FilteredDeckView: View {
                 if busy { ProgressView() }
             }
             .disabled(busy || !loaded)
-            .navigationTitle("フィルターデッキ")
+            .studyThemeSurface().navigationTitle("フィルターデッキ")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { dismiss() }.disabled(busy) }
                 ToolbarItem(placement: .confirmationAction) { Button("構築") { save() }.disabled(busy || !loaded || name.isEmpty) }

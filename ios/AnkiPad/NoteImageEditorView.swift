@@ -84,7 +84,7 @@ struct NoteImageEditorView: View {
                 }.buttonStyle(.bordered)
             }
             .padding().disabled(saving)
-            .navigationTitle("画像を編集")
+            .studyThemeSurface().navigationTitle("画像を編集")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { dismiss() }.disabled(saving) }
                 ToolbarItem(placement: .confirmationAction) { Button("挿入") {

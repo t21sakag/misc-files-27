@@ -32,7 +32,7 @@ struct DeckDescriptionView: View {
                                     schedulingRequest: { _, _ in throw EngineError(message: "説明では学習予定を変更できません。") }, schedulingError: { _ in })
                 }
             }
-            .navigationTitle(request.deck.name)
+            .studyThemeSurface().navigationTitle(request.deck.name)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("閉じる") { if editing { discard = true } else { dismiss() } }.disabled(busy) }
                 if !request.deck.filtered {

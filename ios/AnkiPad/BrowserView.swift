@@ -186,7 +186,7 @@ struct BrowserView: View {
                     List { ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in
                         VStack(alignment: .leading) { Text(name); Text(config.savedSearches[name] ?? "").font(.caption).foregroundStyle(.secondary) }
                     }.onDelete { offsets in let names = config.savedSearches.keys.sorted(); for index in offsets { config.savedSearches.removeValue(forKey: names[index]) } } }
-                    .navigationTitle("保存した検索").toolbar { ToolbarItem(placement: .confirmationAction) { Button("閉じる") { manageSearches = false } } }
+                    .studyThemeSurface().navigationTitle("保存した検索").toolbar { ToolbarItem(placement: .confirmationAction) { Button("閉じる") { manageSearches = false } } }
                 }
             }
             .sheet(isPresented: $repositionPrompt) {
@@ -195,7 +195,7 @@ struct BrowserView: View {
                         Stepper("開始位置: \(position)", value: $position, in: 0...1_000_000)
                         Stepper("増分: \(positionStep)", value: $positionStep, in: 1...1000)
                         Toggle("無作為に並べる", isOn: $randomPosition); Toggle("既存カードを後ろにずらす", isOn: $shiftPosition)
-                    }.navigationTitle("新規カードの順番")
+                    }.studyThemeSurface().navigationTitle("新規カードの順番")
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { repositionPrompt = false } }
                         ToolbarItem(placement: .confirmationAction) { Button("適用") { repositionPrompt = false; performCards { try await model.engine.reposition($0, start: position, step: positionStep, random: randomPosition, shift: shiftPosition) } } }
@@ -299,7 +299,7 @@ struct BrowserColumnPicker: View {
                 Section("追加できる列") {
                     ForEach(columns.filter { !config.columns.contains($0.id) }) { column in Button(label(column.id)) { config.columns.append(column.id) } }
                 }
-            }.navigationTitle("ブラウザーの列")
+            }.studyThemeSurface().navigationTitle("ブラウザーの列")
             .toolbar { ToolbarItem(placement: .cancellationAction) { EditButton() }; ToolbarItem(placement: .confirmationAction) { Button("保存") { dismiss() } } }
         }
     }

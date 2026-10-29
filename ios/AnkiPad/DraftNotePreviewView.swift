@@ -18,7 +18,7 @@ struct DraftNotePreviewView: View {
                 if templates.isEmpty { Text("プレビューするカードテンプレートを読み込んでいます。") }
                 if let error { Text(error).foregroundStyle(.red) }
             }
-            .navigationTitle("カードのプレビュー")
+            .studyThemeSurface().navigationTitle("カードのプレビュー")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() } } }
             .sheet(isPresented: $selected) { NoteTemplatePreviewView(model: model, typeID: document.typeID, ordinal: ordinal, document: document) }
             .task {

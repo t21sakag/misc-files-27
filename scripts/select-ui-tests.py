@@ -50,6 +50,7 @@ suites = {
     'background-ui': ['testBackgroundImagePersistsAndCancellingSelectionOrRemovalKeepsSavedImage'],
     'background-storage': ['testRejectedReplacementKeepsSavedBackgroundAndProfilesStayIndependent'],
     'background-selection': ['testCurrentDeckHighlightMovesPersistsAndStaysTranslucentOverBackground'],
+    'theme-panels': ['testDarkAndBlackThemesReachAccountProfilesEditorAndMaintenance'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

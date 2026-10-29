@@ -67,7 +67,7 @@ struct ReviewKeyboardSettingsView: View {
                 Text("文字入力を求めるカードの表面では、Return以外の割り当てを停止します。編集画面やダイアログの表示中も停止します。")
                 Button("初期設定に戻す") { configuration = ReviewKeyboardConfiguration() }
             }
-        }.navigationTitle("キーボードの割り当て")
+        }.studyThemeSurface().navigationTitle("キーボードの割り当て")
     }
 }
 

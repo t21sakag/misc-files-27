@@ -77,7 +77,7 @@ struct TagManagerView: View {
             }
             .disabled(busy)
             .searchable(text: $search, prompt: "タグを検索")
-            .navigationTitle("タグ管理")
+            .studyThemeSurface().navigationTitle("タグ管理")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() }.disabled(busy) }
                 ToolbarItem(placement: .primaryAction) {
@@ -162,7 +162,7 @@ private struct TagEditForm: View {
                 Text("子タグとノートに付いているタグも変更します。")
                 if busy { ProgressView() }
             }.disabled(busy)
-            .navigationTitle(request.moving ? "タグを移動" : "タグ名を変更")
+            .studyThemeSurface().navigationTitle(request.moving ? "タグを移動" : "タグ名を変更")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { dismiss() }.disabled(busy) }
                 ToolbarItem(placement: .confirmationAction) { Button("適用") {

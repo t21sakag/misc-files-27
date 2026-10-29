@@ -43,7 +43,7 @@ struct ReviewSpeechVoiceView: View {
                 }
             }
             .accessibilityIdentifier("speech-voices-list")
-            .navigationTitle("読み上げ音声")
+            .studyThemeSurface().navigationTitle("読み上げ音声")
             .safeAreaInset(edge: .bottom) {
                     TimelineView(.periodic(from: .now, by: 0.2)) { _ in
                         Button(model.audio.isPlaying ? "試聴を停止" : "試聴", systemImage: model.audio.isPlaying ? "stop.circle" : "play.circle") {

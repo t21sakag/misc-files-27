@@ -254,7 +254,7 @@ struct ContentView: View {
                 }
             }
             .accessibilityIdentifier("reviewer-options-list")
-            .navigationTitle("カードの操作")
+            .studyThemeSurface().navigationTitle("カードの操作")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("閉じる") { model.showingReviewerOptions = false } } }
         }
     }
@@ -290,7 +290,7 @@ struct ContentView: View {
                     model.showingTemplateActions = false
                 }.accessibilityIdentifier("template-action-\(number)")
             }
-            .navigationTitle("ユーザー操作")
+            .studyThemeSurface().navigationTitle("ユーザー操作")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { model.showingTemplateActions = false } } }
         }
     }

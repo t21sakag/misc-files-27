@@ -58,7 +58,7 @@ struct MaintenanceView: View {
                         .font(.footnote).foregroundStyle(.secondary)
                 }
             }
-            .navigationTitle("バックアップとチェック")
+            .accessibilityIdentifier("maintenance-form").studyThemeSurface().navigationTitle("バックアップとチェック")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("閉じる") { dismiss(); model.refreshAfterEditing() }.accessibilityIdentifier("maintenance-close").disabled(busy) } }
             .interactiveDismissDisabled(busy)
             .sheet(item: $sharing, onDismiss: { releaseSharedBackup() }) { export in

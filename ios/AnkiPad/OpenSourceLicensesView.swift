@@ -18,11 +18,11 @@ struct OpenSourceLicensesView: View {
         List {
             ForEach(entries, id: \.1) { entry in
                 NavigationLink(entry.0) {
-                    LicenseDocumentView(name: entry.1, ext: entry.2, backend: entry.3).navigationTitle(entry.0).navigationBarTitleDisplayMode(.inline)
+                    LicenseDocumentView(name: entry.1, ext: entry.2, backend: entry.3).studyThemeSurface().navigationTitle(entry.0).navigationBarTitleDisplayMode(.inline)
                 }
             }
             Link("ソースコード", destination: sourceURL)
-        }.navigationTitle("ライセンスとソース")
+        }.studyThemeSurface().navigationTitle("ライセンスとソース")
     }
 }
 private struct LicenseDocumentView: View {
@@ -41,6 +41,8 @@ private struct LicenseDocumentView: View {
     }
 }
 private struct ReadOnlyLicenseText: UIViewRepresentable {
+    @AppStorage("dayTheme") private var day = "1"
+    @AppStorage("nightTheme") private var night = "3"
     let text: String
     func makeUIView(context: Context) -> UITextView {
         let view = UITextView()
@@ -50,5 +52,10 @@ private struct ReadOnlyLicenseText: UIViewRepresentable {
         view.textContainerInset = UIEdgeInsets(top: 16, left: 12, bottom: 16, right: 12)
         return view
     }
-    func updateUIView(_ view: UITextView, context: Context) { if view.text != text { view.text = text } }
+    func updateUIView(_ view: UITextView, context: Context) {
+        if view.text != text { view.text = text }
+        let theme = StudyTheme.resolve(dark: view.traitCollection.userInterfaceStyle == .dark, day: day, night: night)
+        view.backgroundColor = theme.nativeBackground
+        view.textColor = .label
+    }
 }
