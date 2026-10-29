@@ -55,6 +55,7 @@ suites = {
     'batch-check': ['testAnkiWebLoginAndTokenSurviveRelaunch', 'testZImageOcclusionCanBeCreatedFromPhoto'],
     'web-themes': ['testBundledPagesUseNativeNightThemeAndRemainInteractive', 'testZZSharedDeckCanBeDownloadedAndImported'],
     'web-theme-only': ['testBundledPagesUseNativeNightThemeAndRemainInteractive'],
+    'engine-languages': ['testNoteCanBeCreatedAndFoundInBrowser'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

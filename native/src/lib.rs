@@ -42,11 +42,26 @@ fn encode(name: &str, json: &str) -> Result<DynamicMessage, String> {
 
 #[no_mangle]
 pub unsafe extern "C" fn ap_open(error_out: *mut *mut c_char) -> *mut c_void {
+    open_backend(None, error_out)
+}
+
+/// The JSON array configures only this handle's translations. It does not
+/// rename existing collection entities or change a running handle's language.
+#[no_mangle]
+pub unsafe extern "C" fn ap_open_with_languages(languages_json: *const c_char, error_out: *mut *mut c_char) -> *mut c_void {
+    open_backend(Some(languages_json), error_out)
+}
+
+unsafe fn open_backend(languages_json: Option<*const c_char>, error_out: *mut *mut c_char) -> *mut c_void {
     if !error_out.is_null() { *error_out = std::ptr::null_mut(); }
     fn assert_threadsafe<T: Send + Sync>() {}
     assert_threadsafe::<Backend>();
     let result = catch_unwind(AssertUnwindSafe(|| {
-        let init = encode("anki.backend.BackendInit", r#"{"preferredLangs":["ja","en"]}"#)?;
+        let languages: Vec<String> = match languages_json {
+            None => vec!["ja".to_owned(), "en".to_owned()],
+            Some(value) => serde_json::from_str(string(value)?).map_err(|e| e.to_string())?,
+        };
+        let init = encode("anki.backend.BackendInit", &json!({"preferredLangs": languages}).to_string())?;
         init_backend(&init.encode_to_vec())
     })).unwrap_or_else(|_| Err("Anki initialization panicked".into()));
     match result {

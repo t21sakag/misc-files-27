@@ -31,4 +31,6 @@ with tempfile.TemporaryDirectory() as directory:
         selected_file.write_text(result)
         actual_workers = subprocess.check_output(['python3', str(root / 'scripts/select-ui-workers.py'), str(selected_file)], text=True).strip()
         assert actual_workers == str(workers), (suite, actual_workers)
+language_scope = subprocess.check_output(['python3', str(root / 'scripts/select-ui-tests.py'), 'engine-languages', 'ui'], text=True).splitlines()
+assert language_scope == ['-only-testing:AnkiPadUITests/LibraryFlowTests/testNoteCanBeCreatedAndFoundInBrowser']
 print(f'PASS: {len(actual)} original cases occur once; all selected suites address their actual XCTest classes')

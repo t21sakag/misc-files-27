@@ -28,6 +28,7 @@ struct StudyCard {
 }
 
 actor Engine {
+    private let preferredLanguages: [String]?
     private var transport: BackendTransport?
     private var opened = false
     private var syncAbortRequested = false
@@ -36,7 +37,8 @@ actor Engine {
     nonisolated let root: URL
     nonisolated var media: URL { root.appendingPathComponent("collection.media", isDirectory: true) }
 
-    init(root profileRoot: URL? = nil) {
+    init(root profileRoot: URL? = nil, preferredLanguages: [String]? = nil) {
+        self.preferredLanguages = preferredLanguages
         root = profileRoot ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("AnkiPad", isDirectory: true)
     }
@@ -48,7 +50,7 @@ actor Engine {
     private func start() throws {
         guard !opened else { return }
         try FileManager.default.createDirectory(at: media, withIntermediateDirectories: true)
-        if transport == nil { transport = try BackendTransport() }
+        if transport == nil { transport = try BackendTransport(preferredLanguages: preferredLanguages) }
         _ = try raw("CollectionService.OpenCollection", [
             "collectionPath": root.appendingPathComponent("collection.anki2").path,
             "mediaFolderPath": media.path,
@@ -248,9 +250,14 @@ actor Engine {
 // throughout network work; only progress/abort calls run concurrently with it.
 final class BackendTransport: @unchecked Sendable {
     private let handle: UnsafeMutableRawPointer
-    init() throws {
+    init(preferredLanguages: [String]? = nil) throws {
         var error: UnsafeMutablePointer<CChar>?
-        guard let handle = ap_open(&error) else {
+        let opened: UnsafeMutableRawPointer?
+        if let preferredLanguages {
+            let data = try JSONEncoder().encode(preferredLanguages)
+            opened = String(decoding: data, as: UTF8.self).withCString { ap_open_with_languages($0, &error) }
+        } else { opened = ap_open(&error) }
+        guard let handle = opened else {
             let message = error.map { String(cString: $0) } ?? "学習エンジンを起動できませんでした。"
             if let error { ap_string_free(error) }
             throw EngineError(message: message)

@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, all]
 permissions:
   contents: read
 concurrency:
@@ -200,6 +200,9 @@ jobs:
       - name: Test real package import, rendering, scheduling, undo and persistence
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
         run: python3 tests/engine_smoke.py build/native/host/libankipad_bridge.dylib build/fixture.apkg
+      - name: Test backend language isolation and existing data preservation
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'engine-languages')
+        run: python3 tests/backend_languages_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test collection editing, search and card actions
         if: env.CI_MODE == 'full'
         run: python3 tests/collection_smoke.py build/native/host/libankipad_bridge.dylib
@@ -269,7 +272,7 @@ jobs:
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'collapse')
         run: python3 tests/deck_collapse_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test authenticated data and media sync
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'network' || env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair' || env.UI_SUITE == 'collapse'))
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'network' || env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair' || env.UI_SUITE == 'engine-languages' || env.UI_SUITE == 'collapse'))
         run: python3 tests/sync_smoke.py build/native/host/libankipad_bridge.dylib build/native/host/sync_test_server
       - name: Test interrupted download preservation and retry
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'network' || env.UI_SUITE == 'sync' || env.UI_SUITE == 'automatic' || env.UI_SUITE == 'repair'))
