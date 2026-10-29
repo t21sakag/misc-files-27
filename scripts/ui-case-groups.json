@@ -110,5 +110,8 @@
   ],
   "ButtonTimingFlowTests": [
     "testRevealHoldPersistsCancelsOutsideAndAcceptsSustainedPress"
+  ],
+  "MotionFlowTests": [
+    "testMotionSettingPersistsCancelsAndControlsNativePresentation"
   ]
 }

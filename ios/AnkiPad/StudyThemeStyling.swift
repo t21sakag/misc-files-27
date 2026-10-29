@@ -21,14 +21,26 @@ extension StudyTheme {
 struct StudyThemeContainer<Content: View>: View {
     @AppStorage("dayTheme") private var day = "1"
     @AppStorage("nightTheme") private var night = "3"
+    @AppStorage("safeDisplay") private var removeAnimations = false
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @ViewBuilder var content: () -> Content
     var body: some View {
         let theme = StudyTheme.resolve(dark: scheme == .dark, day: day, night: night)
         content().tint(theme.accent)
             .background(Color(uiColor: theme.nativeBackground).ignoresSafeArea())
+            .background(alignment: .bottomLeading) {
+                #if DEBUG
+                if UITestIsolation.namespace() != nil {
+                    StudyMotionTransactionProbe().frame(width: 1, height: 1).allowsHitTesting(false)
+                }
+                #endif
+            }
             .transaction { transaction in
-                if theme == .eink { transaction.animation = nil; transaction.disablesAnimations = true }
+                if StudyMotionPolicy.disablesAnimations(appSetting: removeAnimations, systemReduceMotion: systemReduceMotion, theme: theme) {
+                    transaction.animation = nil
+                    transaction.disablesAnimations = true
+                }
             }
     }
 }

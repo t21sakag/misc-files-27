@@ -44,16 +44,15 @@ import UniformTypeIdentifiers
         finishVideo(continueQueue: false)
     }
     private func finishVideo(continueQueue: Bool) {
-        guard video != nil else { return }
+        guard let old = video else { return }
         if let videoObserver { NotificationCenter.default.removeObserver(videoObserver) }
         videoObserver = nil
         let playbackGeneration = generation
-        let old = video
         video = nil; videoDelegate = nil
-        old?.delegate = nil
-        old?.player?.pause()
-        if old?.presentingViewController != nil {
-            old?.dismiss(animated: true) { [weak self] in
+        old.delegate = nil
+        old.player?.pause()
+        if old.presentingViewController != nil {
+            StudyMotion.dismiss(old) { [weak self] in
                 guard let self, self.generation == playbackGeneration else { return }
                 if continueQueue { self.advance() }
             }
@@ -80,7 +79,7 @@ import UniformTypeIdentifiers
                 self.finishVideo(continueQueue: true)
             }
         }
-        presenter.present(controller, animated: true) { avPlayer.play() }
+        StudyMotion.present(controller, from: presenter) { avPlayer.play() }
         return true
     }
     private final class VideoDelegate: NSObject, AVPlayerViewControllerDelegate {

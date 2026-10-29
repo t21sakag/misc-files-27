@@ -44,6 +44,8 @@ suites = {
     'themes': ['testDayAndNightThemeChoicesPersistAndStyleNativeAndCardSurfaces'],
     'milestone-repair': ['testPreviewCardAPIReadsAndRestoresFlag', 'testUnsafeCollectionAPIRequiresExplicitSetting', 'testReminderNativeSchedulePersistsReplacesAndCancels', 'testAutomaticSpeechChoiceAndNestedReferencePickerCanCancelAndResume'],
     'button-timing': ['testRevealHoldPersistsCancelsOutsideAndAcceptsSustainedPress'],
+    'motion': ['testMotionSettingPersistsCancelsAndControlsNativePresentation', 'testJavaScriptDialogsReturnNativeInputAndDecisions'],
+    'motion-only': ['testMotionSettingPersistsCancelsAndControlsNativePresentation'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

@@ -55,13 +55,13 @@ import WebKit
         dialog.addAction(UIAlertAction(title: "許可", style: .default) { [weak self] _ in self?.resolveConsent(true) })
         dialog.addAction(UIAlertAction(title: "キャンセル", style: .cancel) { [weak self] _ in self?.resolveConsent(false) })
         alert = dialog
-        presenter.present(dialog, animated: true)
+        StudyMotion.present(dialog, from: presenter)
     }
     private func resolveConsent(_ accepted: Bool) {
         let token = generation
-        let dialog = alert
+        guard let dialog = alert else { return }
         alert = nil
-        dialog?.dismiss(animated: true) { [weak self] in
+        StudyMotion.dismiss(dialog) { [weak self] in
             guard let self, self.generation == token, self.completion != nil else { return }
             if accepted { self.requestMicrophone(persistConsent: true) }
             else { self.declined = true; self.finish(.deny) }

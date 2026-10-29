@@ -199,7 +199,7 @@ struct BackendWebView: UIViewRepresentable {
                 let alert = UIAlertController(title: title, message: text, preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in continuation.resume(returning: true) })
                 if confirm { alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel) { _ in continuation.resume(returning: false) }) }
-                presenter.present(alert, animated: true)
+                StudyMotion.present(alert, from: presenter)
             }
         }
         func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {

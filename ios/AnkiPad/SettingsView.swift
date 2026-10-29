@@ -33,6 +33,7 @@ struct SettingsView: View {
     @State private var appearance: String = UserDefaults.standard.object(forKey: "appearance") as? String ?? "system"
     @State private var dayTheme = StudyDayTheme(rawValue: UserDefaults.standard.string(forKey: "dayTheme") ?? "1") ?? .light
     @State private var nightTheme = StudyNightTheme(rawValue: UserDefaults.standard.string(forKey: "nightTheme") ?? "3") ?? .black
+    @State private var removeAnimations = UserDefaults.standard.bool(forKey: "safeDisplay")
     @State private var reviewZoom: Double = UserDefaults.standard.object(forKey: "reviewZoom") as? Double ?? 1.0
     @State private var keepScreenOn: Bool = UserDefaults.standard.object(forKey: "keepScreenOn") as? Bool ?? true
     @State private var gestureConfiguration = ReviewGestureConfiguration.load()
@@ -80,6 +81,9 @@ struct SettingsView: View {
                         Picker("夜のテーマ", selection: $nightTheme) {
                             ForEach(StudyNightTheme.allCases) { Text($0.title).tag($0) }
                         }.accessibilityIdentifier("night-theme")
+                        Toggle("アプリのアニメーションを無効にする", isOn: $removeAnimations).accessibilityIdentifier("remove-app-animations")
+                        Text("iPadの「視差効果を減らす」やE Inkテーマが有効な場合も、アプリの画面遷移を抑制します。")
+                            .font(.caption).foregroundStyle(.secondary)
                         VStack(alignment: .leading) { Text("カードの拡大率: \(Int(reviewZoom * 100))%"); Slider(value: $reviewZoom, in: 0.5...2.5, step: 0.05) }
                         Stepper("画像の拡大率: \(imageZoom)%", value: $imageZoom, in: 50...300, step: 10)
                             .accessibilityIdentifier("image-zoom")
@@ -209,6 +213,7 @@ struct SettingsView: View {
                             UserDefaults.standard.set(interval, forKey: "doubleTapTimeout")
                             UserDefaults.standard.set(dayTheme.rawValue, forKey: "dayTheme")
                             UserDefaults.standard.set(nightTheme.rawValue, forKey: "nightTheme")
+                            UserDefaults.standard.set(removeAnimations, forKey: "safeDisplay")
                             networkPreferences.save()
                             model.setAutomaticSyncEnabled(automaticSync)
                             ReviewSpeechPreferences.setEnabled(automaticTTS, profileID: model.currentProfileID)

@@ -35,11 +35,11 @@ import WebKit
             dialog.addAction(UIAlertAction(title: "キャンセル", style: .cancel) { [weak self] _ in self?.resolve(text: nil, accepted: false) })
         }
         notifyPresented()
-        presenter.present(dialog, animated: true)
+        StudyMotion.present(dialog, from: presenter)
     }
     private func resolve(text: String?, accepted: Bool) {
         guard let alert else { finish(text: text, accepted: accepted); return }
-        alert.dismiss(animated: true) { [weak self] in self?.finish(text: text, accepted: accepted) }
+        StudyMotion.dismiss(alert) { [weak self] in self?.finish(text: text, accepted: accepted) }
     }
     private func finish(text: String?, accepted: Bool) {
         guard let completion = pending else { return }
