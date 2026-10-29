@@ -35,7 +35,7 @@ class StudyFlowTestSupport: XCTestCase {
     }
 
     func revealFormControl(_ item: XCUIElement, in form: XCUIElement,
-                           topInset: CGFloat = 150, bottomInset: CGFloat = 80, maximumAttempts: Int = 40) {
+                           topInset: CGFloat = 150, bottomInset: CGFloat = 80, maximumAttempts: Int = 40, searchUpward: Bool = true) {
         XCTAssertTrue(form.waitForExistence(timeout: 20))
         for attempt in 0..<maximumAttempts {
             let viewport = form.frame
@@ -46,7 +46,7 @@ class StudyFlowTestSupport: XCTestCase {
                 print("UI reveal \(item.identifier): \(attempt) drags")
                 return
             }
-            let upward = !located || frame.maxY > lower
+            let upward = located ? frame.maxY > lower : searchUpward
             // Large steps retain at least 80pt of overlap in the usable area;
             // when the row is known, stop near it rather than overshooting.
             let far = min(0.45, max(0.1, (lower - upper - 80) / viewport.height))

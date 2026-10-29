@@ -71,6 +71,7 @@ suites = {
     'notification-baseline': ['testActualNotificationAuthorizationAndScheduleReplacement'],
     'recovery-baseline': ['testActualNotificationAuthorizationAndScheduleReplacement', 'testZZSharedDeckCanBeDownloadedAndImported'],
     'incoming-milestone': ['testReceivedTextDocumentCancelPreservesOriginalAndCollection', 'testReceivedAnimatedImageAttachesOriginalAndPersistsOnNote', 'testIncomingImagePreparationBoundsPreviewAndPreservesAnimation', 'testActualNotificationAuthorizationAndScheduleReplacement', 'testZZSharedDeckCanBeDownloadedAndImported'],
+    'incoming-repair': ['testReceivedAnimatedImageAttachesOriginalAndPersistsOnNote', 'testActualNotificationAuthorizationAndScheduleReplacement', 'testZZSharedDeckCanBeDownloadedAndImported'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

@@ -7,15 +7,17 @@ final class NotificationAuthorizationFlowTests: StudyFlowTestSupport {
         app.launchArguments = ["--uitest-reminders"]
         app.launch()
         func open() {
-            XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
-            app.buttons["collection-menu"].tap(); app.buttons["設定"].tap()
+            if !app.navigationBars["設定"].exists {
+                XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
+                app.buttons["collection-menu"].tap(); app.buttons["設定"].tap()
+            }
             let link = app.buttons["reminder-open"]
             revealSettingsControl(link, in: app); link.tap()
             XCTAssertTrue(app.collectionViews["reminder-form"].waitForExistence(timeout: 20))
         }
         func toggle(_ id: String, _ desired: Bool) {
             let outer = app.switches[id]
-            revealFormControl(outer, in: app.collectionViews["reminder-form"], topInset: 40, bottomInset: 10)
+            revealFormControl(outer, in: app.collectionViews["reminder-form"], topInset: 40, bottomInset: 10, searchUpward: false)
             let control = outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
             if (control.value as? String == "1") != desired { control.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap() }
             XCTAssertEqual(control.value as? String, desired ? "1" : "0", app.debugDescription)
@@ -42,14 +44,11 @@ final class NotificationAuthorizationFlowTests: StudyFlowTestSupport {
             return ids
         }
         open(); toggle("reminder-enabled", true); save()
-        app.buttons["settings-save"].tap()
         open(); let initial = try snapshot(); XCTAssertEqual(initial.count, 7)
         toggle("reminder-sound", false); save()
-        app.buttons["settings-save"].tap()
         open(); let replaced = try snapshot(); XCTAssertEqual(replaced.count, 7)
         XCTAssertTrue(replaced.isDisjoint(with: initial))
         toggle("reminder-enabled", false); save()
-        app.buttons["settings-save"].tap()
         open(); XCTAssertTrue(try snapshot().isEmpty)
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }

@@ -56,7 +56,9 @@ final class IncomingFileFlowTests: StudyFlowTestSupport {
         let loaded = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value CONTAINS %@", ".gif"), object: front)
         XCTAssertEqual(XCTWaiter.wait(for: [loaded], timeout: 20), .completed, app.debugDescription)
         XCTAssertTrue((front.value as? String ?? "").contains("<img"))
-        XCTAssertTrue(app.buttons["note-insert-received-media"].exists)
+        let insert = app.buttons["note-insert-received-media"]
+        revealFormControl(insert, in: app.collectionViews["note-form"], topInset: 40, bottomInset: 20)
+        XCTAssertTrue(insert.exists, app.debugDescription)
         XCTAssertEqual(try Data(contentsOf: file), bytes)
         app.buttons["note-save"].tap()
         XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30), app.debugDescription)

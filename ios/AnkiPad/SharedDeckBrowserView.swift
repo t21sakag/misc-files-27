@@ -113,6 +113,18 @@ struct SharedDeckWebView: UIViewRepresentable {
             }
         }
         private var destination: URL?
+        // WebKit reports a frame-policy interruption when navigation becomes a
+        // download. Keep this scoped to a policy we actually selected; genuine
+        // navigation and WKDownload failures must still reach the user.
+        private var downloadNavigationURL: URL?
+        private func expectedDownloadInterruption(_ error: Error) -> Bool {
+            let error = error as NSError
+            guard error.domain == "WebKitErrorDomain", error.code == 102,
+                  let expected = downloadNavigationURL else { return false }
+            let failing = (error.userInfo[NSURLErrorFailingURLErrorKey] as? URL)
+                ?? (error.userInfo[NSURLErrorFailingURLStringErrorKey] as? String).flatMap(URL.init(string:))
+            return failing == nil || failing == expected
+        }
         init(state: SharedDeckBrowserState, downloaded: @escaping (URL) -> Void, failed: @escaping (String) -> Void) { self.state = state; self.downloaded = downloaded; self.failed = failed }
         func cancel() {
             let download = active
@@ -159,21 +171,28 @@ struct SharedDeckWebView: UIViewRepresentable {
             #if DEBUG
             trusted = trusted || (ProcessInfo.processInfo.arguments.contains("--uitest-shared-decks") && target.host == "127.0.0.1" && target.port == 18892)
             #endif
-            if trusted { decisionHandler(action.shouldPerformDownload ? .download : .allow) }
+            if trusted {
+                if action.shouldPerformDownload { downloadNavigationURL = target }
+                decisionHandler(action.shouldPerformDownload ? .download : .allow)
+            }
             else { if action.navigationType == .linkActivated && ["http", "https"].contains(scheme) { UIApplication.shared.open(target) }; decisionHandler(.cancel) }
         }
         func webView(_ webView: WKWebView, decidePolicyFor response: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+            if !response.canShowMIMEType { downloadNavigationURL = response.response.url }
             decisionHandler(response.canShowMIMEType ? .allow : .download)
         }
-        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) { state.loading = true }
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+            if webView.url != downloadNavigationURL { downloadNavigationURL = nil }
+            state.loading = true
+        }
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { state.loading = false; state.canGoBack = webView.canGoBack }
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
             state.loading = false
-            if (error as NSError).code != NSURLErrorCancelled { failed(error.localizedDescription) }
+            if !expectedDownloadInterruption(error), !((error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled) { failed(error.localizedDescription) }
         }
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
             state.loading = false
-            if (error as NSError).code != NSURLErrorCancelled { failed(error.localizedDescription) }
+            if !expectedDownloadInterruption(error), !((error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled) { failed(error.localizedDescription) }
         }
         func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? { if action.targetFrame == nil { webView.load(action.request) }; return nil }
         func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) { dialogs.webView(webView, runJavaScriptAlertPanelWithMessage: message, initiatedByFrame: frame, completionHandler: completionHandler) }
