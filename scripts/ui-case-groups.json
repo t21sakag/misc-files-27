@@ -135,5 +135,13 @@
     "testBrowserURLWaitsForUnsavedEditorAndUsesLatestSearch",
     "testSharedTextRemainsDraftAndPlainFieldsSaveOnlyExplicitly",
     "testTextURLHTMLAndTagsSurviveExplicitSaveAndRelaunch"
+  ],
+  "IncomingFileFlowTests": [
+    "testReceivedTextDocumentCancelPreservesOriginalAndCollection",
+    "testReceivedAnimatedImageAttachesOriginalAndPersistsOnNote",
+    "testIncomingImagePreparationBoundsPreviewAndPreservesAnimation"
+  ],
+  "NotificationAuthorizationFlowTests": [
+    "testActualNotificationAuthorizationAndScheduleReplacement"
   ]
 }

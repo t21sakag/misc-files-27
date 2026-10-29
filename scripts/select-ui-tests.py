@@ -64,6 +64,13 @@ suites = {
     'incoming-text': ['testSharedTextRemainsDraftAndPlainFieldsSaveOnlyExplicitly', 'testTextURLHTMLAndTagsSurviveExplicitSaveAndRelaunch'],
     'incoming-text-cancel': ['testSharedTextRemainsDraftAndPlainFieldsSaveOnlyExplicitly'],
     'incoming-text-save': ['testTextURLHTMLAndTagsSurviveExplicitSaveAndRelaunch'],
+    'incoming-files': ['testReceivedTextDocumentCancelPreservesOriginalAndCollection', 'testReceivedAnimatedImageAttachesOriginalAndPersistsOnNote', 'testIncomingImagePreparationBoundsPreviewAndPreservesAnimation'],
+    'incoming-file-cancel': ['testReceivedTextDocumentCancelPreservesOriginalAndCollection'],
+    'incoming-image': ['testReceivedAnimatedImageAttachesOriginalAndPersistsOnNote'],
+    'incoming-raster': ['testIncomingImagePreparationBoundsPreviewAndPreservesAnimation'],
+    'notification-baseline': ['testActualNotificationAuthorizationAndScheduleReplacement'],
+    'recovery-baseline': ['testActualNotificationAuthorizationAndScheduleReplacement', 'testZZSharedDeckCanBeDownloadedAndImported'],
+    'incoming-milestone': ['testReceivedTextDocumentCancelPreservesOriginalAndCollection', 'testReceivedAnimatedImageAttachesOriginalAndPersistsOnNote', 'testIncomingImagePreparationBoundsPreviewAndPreservesAnimation', 'testActualNotificationAuthorizationAndScheduleReplacement', 'testZZSharedDeckCanBeDownloadedAndImported'],
     'all': [],
 }
 suite, mode = sys.argv[1:]
