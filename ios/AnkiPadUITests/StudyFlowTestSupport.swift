@@ -20,6 +20,15 @@ class StudyFlowTestSupport: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: timeout), .completed)
     }
 
+    func tapScreenFrame(_ element: XCUIElement, in app: XCUIApplication) {
+        waitUntilHittable(element)
+        let frame = element.frame, origin = app.frame.origin
+        // WebKit can add its content offset again to element-relative taps.
+        // Anchor at the native app instead of using the Web accessibility node.
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+            .withOffset(CGVector(dx: frame.midX - origin.x, dy: frame.midY - origin.y)).tap()
+    }
+
     func revealSettingsControl(_ item: XCUIElement, in app: XCUIApplication) {
         let form = app.collectionViews["settings-form"]
         XCTAssertTrue(form.waitForExistence(timeout: 20))

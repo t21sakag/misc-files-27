@@ -45,7 +45,7 @@ final class ThemeFlowTests: StudyFlowTestSupport {
             app.buttons["deck-1"].tap()
             let inspect = app.webViews.buttons["Inspect card theme"]
             XCTAssertTrue(inspect.waitForExistence(timeout: 30)); waitUntilHittable(inspect)
-            inspect.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            tapScreenFrame(inspect, in: app)
             XCTAssertTrue(app.webViews.staticTexts["Theme verified " + expected].waitForExistence(timeout: 20), app.debugDescription)
             app.buttons["デッキ"].tap()
         }
