@@ -27,17 +27,18 @@ struct StudyThemeContainer<Content: View>: View {
     @ViewBuilder var content: () -> Content
     var body: some View {
         let theme = StudyTheme.resolve(dark: scheme == .dark, day: day, night: night)
+        let motionDisabled = StudyMotionPolicy.disablesAnimations(appSetting: removeAnimations, systemReduceMotion: systemReduceMotion, theme: theme)
         content().tint(theme.accent)
             .background(Color(uiColor: theme.nativeBackground).ignoresSafeArea())
             .background(alignment: .bottomLeading) {
                 #if DEBUG
                 if UITestIsolation.namespace() != nil {
-                    StudyMotionTransactionProbe().frame(width: 1, height: 1).allowsHitTesting(false)
+                    StudyMotionTransactionProbe(policyDisabled: motionDisabled).frame(width: 1, height: 1).allowsHitTesting(false)
                 }
                 #endif
             }
             .transaction { transaction in
-                if StudyMotionPolicy.disablesAnimations(appSetting: removeAnimations, systemReduceMotion: systemReduceMotion, theme: theme) {
+                if motionDisabled {
                     transaction.animation = nil
                     transaction.disablesAnimations = true
                 }

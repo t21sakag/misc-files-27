@@ -16,7 +16,7 @@ final class MotionFlowTests: StudyFlowTestSupport {
         let probe = app.otherElements["motion-transaction"]
         func observation(_ fragment: String) {
             let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND value CONTAINS %@", fragment), object: probe)
-            XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed, app.debugDescription)
+            XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed, "Observed: \(String(describing: probe.value))\n" + app.debugDescription)
         }
         func settings() {
             XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
@@ -61,8 +61,13 @@ final class MotionFlowTests: StudyFlowTestSupport {
         checkDialog(animated: false)
         settings(); XCTAssertEqual(animationToggle().value as? String, "1", "Saved choice must survive relaunch")
         setReduced(false); save()
-        observation("transaction=normal")
+        // The last update can be the settings dismissal under the previous
+        // transaction. Check the current policy and an actual new presentation.
+        observation("policy=normal")
         checkDialog(animated: true)
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["deck-1"].waitForExistence(timeout: 30))
+        observation("policy=normal;transaction=normal")
         settings()
         let appearance = app.buttons["app-theme-mode"]
         revealSettingsControl(appearance, in: app); appearance.tap(); app.buttons["ライト"].firstMatch.tap()
