@@ -23,6 +23,13 @@ struct ContentView: View {
     @State private var deckBackgroundRoot: URL?
     @State private var deckBackgroundError: String?
     @ObservedObject private var notificationRoute = ReviewNotificationRoute.shared
+    @State private var browserLinks = BrowserLinkInbox()
+    @State private var browserLinkSearch: String?
+    @State private var browserSessionActive = false
+    @State private var openingReminder = false
+    @State private var incomingFiles: [IncomingImportFile] = []
+    @State private var incomingFileReview: IncomingImportFile?
+    @State private var incomingFileCopies = 0
     @State private var importing = false
     #if DEBUG
     @State private var lastReviewSwipe = "none"
@@ -69,6 +76,15 @@ struct ContentView: View {
     private let ratings: [(String, Color)] = [(AppText.localized("もう一度"), .red), (AppText.localized("難しい"), .orange), (AppText.localized("普通"), .green), (AppText.localized("簡単"), .blue)]
     var body: some View {
         NavigationStack { observedContent }
+            .safeAreaInset(edge: .bottom) {
+                if !incomingFiles.isEmpty || browserLinks.pending != nil {
+                    Button(AppText.localized("受け取りを開く"), action: openPendingExternalRequest)
+                        .disabled(!canPresentExternalRequest).padding(8)
+                        .accessibilityIdentifier("received-open")
+                } else if incomingFileCopies > 0 {
+                    ProgressView(AppText.localized("ファイルを受信しています…")).padding(8)
+                }
+            }
             .onChange(of: model.selected?.id, initial: true) { _, _ in loadWhiteboard() }
             .task(id: BackgroundRequest(root: model.profilesReady ? model.engine.root : nil, settingsOpen: model.showingSettings)) {
                 guard model.profilesReady, !model.showingSettings else { return }
@@ -301,29 +317,39 @@ struct ContentView: View {
     }
     private var sheetContent: some View {
         navigationContent
-        .sheet(isPresented: $model.showingNavigationDrawer, onDismiss: model.finishNavigationSelection) { AppNavigationDrawerView(model: model) }
+        .sheet(isPresented: $model.showingNavigationDrawer, onDismiss: { model.finishNavigationSelection(); openPendingExternalRequest() }) { AppNavigationDrawerView(model: model) }
         .sheet(isPresented: $model.showingReviewVoice, onDismiss: {
             model.stopCardAudioForRecognition(); model.reviewVoice.finish()
+            openPendingExternalRequest()
         }) { ReviewVoiceView(model: model, recorder: model.reviewVoice) }
-        .sheet(item: model.speechRequestBinding(inVoice: false), onDismiss: model.finishSpeechChoice) { request in
+        .sheet(item: model.speechRequestBinding(inVoice: false), onDismiss: { model.finishSpeechChoice(); openPendingExternalRequest() }) { request in
             ReviewSpeechVoiceView(model: model, request: request)
         }
-        .sheet(isPresented: $model.showingTemplateActions, onDismiss: finishTemplateAction) { templateActionPicker }
-        .sheet(isPresented: $model.showingReviewerOptions, onDismiss: finishReviewerPanelAction) { reviewerOptionsPanel }
-        .sheet(isPresented: $model.showingNoteTypes) { NoteTypeManagerView(model: model) }
-        .sheet(isPresented: $model.showingSettings) { SettingsView(model: model) }
-        .sheet(isPresented: $model.showingMaintenance) { MaintenanceView(model: model) }
-        .sheet(item: $model.backendPage) { BackendPageView(model: model, request: $0) }
-        .sheet(item: $model.editorRequest) { NoteEditorView(model: model, request: $0) }
-        .sheet(isPresented: $model.showingProfiles) { ProfileManagerView(model: model) }
-        .sheet(isPresented: $model.showingSharedDecks) { SharedDeckBrowserView(model: model) }
-        .sheet(isPresented: $model.showingBrowser) { BrowserView(model: model) }
-        .sheet(item: $model.cardActionRequest) { ReviewCardActionsView(model: model, request: $0) }
-        .sheet(item: $deckDescription) { DeckDescriptionView(model: model, request: $0) }
-        .sheet(item: $customStudy) { CustomStudyView(model: model, request: $0) }
-        .sheet(item: $filteredDeck) { FilteredDeckView(model: model, request: $0) }
-        .sheet(isPresented: $addingOcclusion) { ImageOcclusionEntryView(model: model) }
-        .sheet(isPresented: $model.showingAccount) { AccountView(model: model) }
+        .sheet(isPresented: $model.showingTemplateActions, onDismiss: { finishTemplateAction(); openPendingExternalRequest() }) { templateActionPicker }
+        .sheet(isPresented: $model.showingReviewerOptions, onDismiss: { finishReviewerPanelAction(); openPendingExternalRequest() }) { reviewerOptionsPanel }
+        .sheet(isPresented: $model.showingNoteTypes, onDismiss: openPendingExternalRequest) { NoteTypeManagerView(model: model) }
+        .sheet(isPresented: $model.showingSettings, onDismiss: openPendingExternalRequest) { SettingsView(model: model) }
+        .sheet(isPresented: $model.showingMaintenance, onDismiss: openPendingExternalRequest) { MaintenanceView(model: model) }
+        .sheet(item: $model.backendPage, onDismiss: openPendingExternalRequest) { BackendPageView(model: model, request: $0) }
+        .sheet(item: $model.editorRequest, onDismiss: openPendingExternalRequest) { NoteEditorView(model: model, request: $0) }
+        .sheet(isPresented: $model.showingProfiles, onDismiss: openPendingExternalRequest) { ProfileManagerView(model: model) }
+        .sheet(isPresented: $model.showingSharedDecks, onDismiss: openPendingExternalRequest) { SharedDeckBrowserView(model: model) }
+        .sheet(isPresented: $model.showingBrowser, onDismiss: {
+            browserLinkSearch = nil; browserSessionActive = false; openPendingExternalRequest()
+        }) { BrowserView(model: model, initialSearch: browserLinkSearch).onAppear { browserSessionActive = true } }
+        .sheet(item: $model.cardActionRequest, onDismiss: openPendingExternalRequest) { ReviewCardActionsView(model: model, request: $0) }
+        .sheet(item: $deckDescription, onDismiss: openPendingExternalRequest) { DeckDescriptionView(model: model, request: $0) }
+        .sheet(item: $customStudy, onDismiss: openPendingExternalRequest) { CustomStudyView(model: model, request: $0) }
+        .sheet(item: $filteredDeck, onDismiss: openPendingExternalRequest) { FilteredDeckView(model: model, request: $0) }
+        .sheet(isPresented: $addingOcclusion, onDismiss: openPendingExternalRequest) { ImageOcclusionEntryView(model: model) }
+        .sheet(isPresented: $model.showingAccount, onDismiss: openPendingExternalRequest) { AccountView(model: model) }
+        .sheet(item: $incomingFileReview, onDismiss: openPendingExternalRequest) { file in
+            IncomingImportView(model: model, file: file) {
+                guard model.profilesReady, !model.busy, !model.isSyncing else { return }
+                model.importFile(file.url, retaining: file)
+                incomingFileReview = nil
+            }
+        }
     }
     private var deckDialogContent: some View {
         sheetContent
@@ -379,7 +405,7 @@ struct ContentView: View {
         .confirmationDialog(AppText.localized("コレクションを置き換えますか？"), isPresented: Binding(get: { model.pendingCollectionImport != nil }, set: { if !$0 { model.pendingCollectionImport = nil } })) {
             if let url = model.pendingCollectionImport { Button(AppText.localized("バックアップして置き換える"), role: .destructive) { model.importFile(url); model.pendingCollectionImport = nil } }
         } message: { Text(AppText.localized("現在のコレクションを読み込むファイルで置き換えます。現在のデータはバックアップに保存します。")) }
-        .sheet(isPresented: Binding(get: { model.exportURL != nil }, set: { if !$0 { model.exportURL = nil } })) {
+        .sheet(isPresented: Binding(get: { model.exportURL != nil }, set: { if !$0 { model.exportURL = nil } }), onDismiss: openPendingExternalRequest) {
             if let url = model.exportURL { ShareSheet(url: url) }
         }
     }
@@ -396,16 +422,55 @@ struct ContentView: View {
             model.error = AppText.localized("通知のプロファイルが見つかりません。削除済みの可能性があります。")
             return
         }
+        openingReminder = true
         Task {
+            defer { openingReminder = false; openPendingExternalRequest() }
             do {
                 try await model.switchProfile(id)
                 if model.selected != nil { model.leave() }
             } catch { model.error = error.localizedDescription }
         }
     }
+    private var canPresentExternalRequest: Bool {
+        model.profilesReady && !model.busy && !model.isSyncing && phase == .active
+            && !model.reviewingInteractionBlocked && !localCollectionPresentationActive
+            && !model.chooseFullSync && model.confirmDirection == nil && !model.meteredSyncPrompt
+            && !openingReminder && !browserSessionActive && notificationRoute.profileID == nil
+    }
+    private func openPendingExternalRequest() {
+        guard !incomingFiles.isEmpty || browserLinks.pending != nil,
+              canPresentExternalRequest else { return }
+        let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows).first(where: \.isKeyWindow)
+        // Model bindings can clear before a sheet's dismissal animation ends.
+        // Its onDismiss retries after the real controller has gone away.
+        guard let root = window?.rootViewController, root.presentedViewController == nil else { return }
+        if !incomingFiles.isEmpty {
+            incomingFileReview = incomingFiles.removeFirst()
+            return
+        }
+        guard incomingFileCopies == 0, let request = browserLinks.take(canPresent: true) else { return }
+        browserLinkSearch = request.search
+        model.showingBrowser = true
+    }
+    private func receiveExternalURL(_ url: URL) {
+        if url.isFileURL {
+            incomingFileCopies += 1
+            Task {
+                do {
+                    let file = try await IncomingImportStager.shared.copy(url)
+                    incomingFiles.append(file)
+                } catch { model.error = error.localizedDescription }
+                incomingFileCopies -= 1
+                openPendingExternalRequest()
+            }
+        } else if browserLinks.receive(url) { openPendingExternalRequest() }
+    }
     private var observedContent: some View {
         errorContent
-        .task { model.bootstrap(); openPendingReminder(); model.requestAutomaticSync(.foreground) }
+        .task { model.bootstrap(); openPendingReminder(); openPendingExternalRequest(); model.requestAutomaticSync(.foreground) }
+        .onOpenURL(perform: receiveExternalURL)
+        .onChange(of: canPresentExternalRequest) { _, ready in if ready { openPendingExternalRequest() } }
         .onChange(of: model.currentProfileID) { _, _ in model.requestAutomaticSync(.foreground) }
         .onChange(of: localCollectionPresentationActive) { _, active in
             model.collectionPresentationActive = active
@@ -430,7 +495,7 @@ struct ContentView: View {
     }
     private var localCollectionPresentationActive: Bool {
         importing || addingOcclusion || customStudy != nil || filteredDeck != nil || deckDescription != nil
-            || namingDeck || deletingDeck != nil || model.pendingCollectionImport != nil
+            || namingDeck || deletingDeck != nil || model.pendingCollectionImport != nil || incomingFileReview != nil
     }
     private var deckList: some View {
         themedDeckList.scrollContentBackground(.hidden).background {

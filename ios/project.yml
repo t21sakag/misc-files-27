@@ -30,6 +30,32 @@ targets:
       path: ../build/AnkiPad-Info.plist
       properties:
         AnkiPadSourceCommit: $(ANKIPAD_SOURCE_COMMIT)
+        LSSupportsOpeningDocumentsInPlace: true
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Study Documents
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - local.studyclient.deck-package
+              - local.studyclient.collection-package
+              - public.comma-separated-values-text
+              - public.tab-separated-values-text
+              - public.plain-text
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: local.studyclient.deck-package
+            UTTypeDescription: Anki Deck Package
+            UTTypeConformsTo: [public.data, public.zip-archive]
+            UTTypeTagSpecification:
+              public.filename-extension: [apkg]
+          - UTTypeIdentifier: local.studyclient.collection-package
+            UTTypeDescription: Anki Collection Package
+            UTTypeConformsTo: [public.data, public.zip-archive]
+            UTTypeTagSpecification:
+              public.filename-extension: [colpkg]
+        CFBundleURLTypes:
+          - CFBundleTypeRole: Viewer
+            CFBundleURLName: local.studyclient.browser
+            CFBundleURLSchemes: [studyclient, anki]
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
           NSAllowsArbitraryLoadsInWebContent: true

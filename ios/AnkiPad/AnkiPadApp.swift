@@ -34,6 +34,7 @@ import AVFoundation
     @Published var profilesReady = false
     @Published var showingProfiles = false
     private var deferredProfileImport: URL?
+    private var deferredProfileImportLease: IncomingImportFile?
     let audio = CardAudio()
     let cardSpeech = CardScriptSpeech()
     let cardRecognition = CardScriptRecognition()
@@ -246,7 +247,11 @@ import AVFoundation
         automaticSyncEnabled = UserDefaults.standard.object(forKey: profilePreferenceKey("automaticSync")) as? Bool ?? true
         mediaSyncPending = UserDefaults.standard.bool(forKey: profilePreferenceKey("syncMediaPending"))
         showInterruptedSyncIfNeeded()
-        if let deferredProfileImport { self.deferredProfileImport = nil; importFile(deferredProfileImport); return }
+        if let deferredProfileImport {
+            let lease = deferredProfileImportLease
+            self.deferredProfileImport = nil; deferredProfileImportLease = nil
+            importFile(deferredProfileImport, retaining: lease); return
+        }
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--uitest-fixture"),
            let fixture = Bundle.main.url(forResource: "fixture", withExtension: "apkg") {
@@ -651,9 +656,10 @@ import AVFoundation
             self.decks = try await self.engine.decks()
         }
     }
-    func importFile(_ url: URL) {
-        guard profilesReady else { deferredProfileImport = url; return }
+    func importFile(_ url: URL, retaining lease: IncomingImportFile? = nil) {
+        guard profilesReady else { deferredProfileImport = url; deferredProfileImportLease = lease; return }
         run {
+            defer { withExtendedLifetime(lease) {} }
             self.audio.stop()
             self.cardSpeech.stop()
             self.cardRecognition.cancel()

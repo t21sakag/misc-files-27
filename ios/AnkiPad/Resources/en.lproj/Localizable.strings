@@ -754,3 +754,9 @@
 "音声・言語を検索" = "Search voices and languages";
 "音声再生ボタンを隠す" = "Hide audio play buttons";
 "（空のフィールド）" = "(Empty field)";
+"ファイル" = "File";
+"取り込み先" = "Import into";
+"対応していない取り込みファイルです。" = "This import file type is not supported.";
+"通常のファイルを選んでください。" = "Choose a regular file.";
+"受け取りを開く" = "Open received item";
+"ファイルを受信しています…" = "Receiving file…";

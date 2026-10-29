@@ -10,6 +10,7 @@ struct BrowserView: View {
     @ScaledMetric(relativeTo: .caption2) private var metadataSize: CGFloat = 11
     private var fontScale: CGFloat { CGFloat(max(10, min(200, fontPercent))) / 100 }
     @State private var query: String
+    private let hasExplicitInitialSearch: Bool
     @State private var config = BrowserConfiguration(notesMode: false, columns: ["noteFld", "template", "cardDue", "deck"], sortColumn: "noteFld", backwards: false, savedSearches: [:])
     @State private var columns: [BrowserColumn] = []
     @State private var tags: [String] = []
@@ -44,7 +45,11 @@ struct BrowserView: View {
     @State private var randomPosition = false
     @State private var shiftPosition = true
     @State private var revision = 0
-    init(model: StudyModel) { self.model = model; _query = State(initialValue: model.browserSearch) }
+    init(model: StudyModel, initialSearch: String? = nil) {
+        self.model = model
+        hasExplicitInitialSearch = initialSearch != nil
+        _query = State(initialValue: initialSearch ?? model.browserSearch)
+    }
     var body: some View {
         NavigationStack { dialogs }
             .environment(\.editMode, $editMode)
@@ -241,7 +246,7 @@ struct BrowserView: View {
             columns = try await model.engine.browserColumns()
             tags = try await model.engine.call("TagsService.AllTags")["vals"] as? [String] ?? []
             types = try await model.engine.noteTypes()
-            if query.isEmpty {
+            if query.isEmpty && !hasExplicitInitialSearch {
                 let defaultQuery = try await model.engine.call("ConfigService.GetConfigString", ["key": "DEFAULT_SEARCH_TEXT"])["val"] as? String ?? ""
                 let restore = try await model.engine.call("ConfigService.GetConfigBool", ["key": "RESTORE_POSITION_BROWSER"])["val"] as? Bool ?? false
                 query = !defaultQuery.isEmpty ? defaultQuery : restore ? UserDefaults.standard.string(forKey: model.profilePreferenceKey("lastBrowserSearch")) ?? "" : ""
