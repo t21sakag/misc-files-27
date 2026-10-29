@@ -12,12 +12,13 @@ struct ReviewRevealButton<Label: View>: View {
     var body: some View {
         Button { if hold == 0 { action() } } label: { label() }
             .disabled(!enabled)
+            .accessibilityAction { if enabled { action() } }
             .overlay {
                 if hold > 0 {
                     RevealHoldCapture(milliseconds: hold, enabled: enabled, cardKey: cardKey, action: action)
+                        .accessibilityHidden(true)
                 }
             }
-            .accessibilityAction { if enabled { action() } }
     }
 }
 
