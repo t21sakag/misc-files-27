@@ -32,7 +32,7 @@ class StudyFlowTestSupport: XCTestCase {
     func revealSettingsControl(_ item: XCUIElement, in app: XCUIApplication) {
         let form = app.collectionViews["settings-form"]
         XCTAssertTrue(form.waitForExistence(timeout: 20))
-        for _ in 0..<32 {
+        for _ in 0..<40 {
             let lower = form.frame.maxY - 80, upper = form.frame.minY + 150
             if item.exists && item.isHittable && item.frame.minY >= upper && item.frame.maxY <= lower { return }
             let upward = !item.exists || item.frame.maxY > lower
@@ -176,16 +176,16 @@ class StudyFlowTestSupport: XCTestCase {
         let menu = app.buttons["collection-menu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 30))
         menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        app.buttons["設定"].tap()
+        tapScreenFrame(app.buttons["設定"], in: app)
         let toggle = app.switches["allow-collection-card-api"]
-        for _ in 0..<12 {
-            if toggle.exists && toggle.isHittable { break }
-            app.collectionViews["settings-form"].swipeUp()
+        revealSettingsControl(toggle, in: app)
+        let control = toggle.switches.firstMatch.exists ? toggle.switches.firstMatch : toggle
+        if (control.value as? String == "1") != enabled {
+            control.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
         }
-        XCTAssertTrue(toggle.waitForExistence(timeout: 15), app.debugDescription)
-        let control = toggle.switches.firstMatch
-        if (control.value as? String == "1") != enabled { control.tap() }
+        XCTAssertEqual(control.value as? String, enabled ? "1" : "0")
         app.buttons["settings-save"].tap()
+        XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30))
     }
 
 }

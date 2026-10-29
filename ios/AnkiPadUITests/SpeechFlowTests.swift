@@ -21,10 +21,8 @@ final class SpeechFlowTests: StudyFlowTestSupport {
     private func enableTTS(_ app: XCUIApplication) {
         let menu = app.buttons["collection-menu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 30)); menu.tap(); app.buttons["設定"].tap()
-        let form = app.collectionViews["settings-form"]
         let outer = app.switches["tts-enabled"]
-        for _ in 0..<12 { if outer.exists && outer.isHittable { break }; form.swipeUp() }
-        XCTAssertTrue(outer.waitForExistence(timeout: 20))
+        revealSettingsControl(outer, in: app)
         let inner = outer.switches.firstMatch
         let item = inner.exists ? inner : outer
         if item.value as? String != "1" {
@@ -33,7 +31,7 @@ final class SpeechFlowTests: StudyFlowTestSupport {
         let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '1'"), object: item)
         XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 10), .completed)
         app.buttons["settings-save"].tap()
-        XCTAssertTrue(menu.waitForExistence(timeout: 30))
+        XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30))
     }
     private func openChoice(_ app: XCUIApplication) {
         let menu = app.buttons["reviewer-menu"]

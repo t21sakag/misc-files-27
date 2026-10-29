@@ -12,14 +12,8 @@ final class ReminderFlowTests: StudyFlowTestSupport {
         }
         func openReminder() {
             let link = app.buttons["reminder-open"]
-            let form = app.collectionViews["settings-form"]
-            XCTAssertTrue(form.waitForExistence(timeout: 20))
-            for _ in 0..<16 {
-                if link.exists && link.isHittable { break }
-                form.swipeUp()
-            }
-            waitUntilHittable(link)
-            link.tap()
+            revealSettingsControl(link, in: app)
+            tapScreenFrame(link, in: app)
             XCTAssertTrue(app.collectionViews["reminder-form"].waitForExistence(timeout: 20))
         }
         func control(_ id: String) -> XCUIElement {

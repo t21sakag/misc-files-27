@@ -42,6 +42,7 @@ suites = {
     'script-dialogs': ['testJavaScriptDialogsReturnNativeInputAndDecisions'],
     'browser-appearance': ['testBrowserFontAndSoundNamesPersistAfterRelaunch'],
     'themes': ['testDayAndNightThemeChoicesPersistAndStyleNativeAndCardSurfaces'],
+    'milestone-repair': ['testPreviewCardAPIReadsAndRestoresFlag', 'testUnsafeCollectionAPIRequiresExplicitSetting', 'testReminderNativeSchedulePersistsReplacesAndCancels', 'testAutomaticSpeechChoiceAndNestedReferencePickerCanCancelAndResume'],
     'all': [],
 }
 suite, mode = sys.argv[1:]
