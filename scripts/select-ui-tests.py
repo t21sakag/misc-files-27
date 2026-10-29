@@ -52,6 +52,7 @@ suites = {
     'background-selection': ['testCurrentDeckHighlightMovesPersistsAndStaysTranslucentOverBackground'],
     'theme-panels': ['testDarkAndBlackThemesReachAccountProfilesEditorAndMaintenance'],
     'theme-repair': ['testImageOcclusionMaskCopyPersistsAndDiscardPreservesSavedMasks', 'testReminderNativeSchedulePersistsReplacesAndCancels', 'testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],
+    'batch-check': ['testAnkiWebLoginAndTokenSurviveRelaunch', 'testZImageOcclusionCanBeCreatedFromPhoto'],
     'all': [],
 }
 suite, mode = sys.argv[1:]
