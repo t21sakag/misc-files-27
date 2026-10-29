@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ReviewRevealButton<Label: View>: View {
     let milliseconds: Int
@@ -6,41 +7,67 @@ struct ReviewRevealButton<Label: View>: View {
     let cardKey: String
     let action: () -> Void
     @ViewBuilder var label: () -> Label
-    @GestureState private var touching = false
-    @State private var size = CGSize.zero
-    @State private var began = false
-    @State private var pending: Task<Void, Never>?
     private var hold: Int { max(0, min(2000, milliseconds)) }
 
     var body: some View {
         Button { if hold == 0 { action() } } label: { label() }
             .disabled(!enabled)
-            .background {
-                GeometryReader { geometry in
-                    Color.clear.onAppear { size = geometry.size }.onChange(of: geometry.size) { _, next in size = next }
+            .overlay {
+                if hold > 0 {
+                    RevealHoldCapture(milliseconds: hold, enabled: enabled, cardKey: cardKey, action: action)
                 }
             }
-            .simultaneousGesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
-                .updating($touching) { _, state, _ in state = true }
-                .onChanged { value in
-                    guard hold > 0, enabled else { return }
-                    guard CGRect(origin: .zero, size: size).contains(value.location) else { pending?.cancel(); return }
-                    guard !began else { return }
-                    began = true
-                    let delay = hold
-                    pending = Task { @MainActor in
-                        do { try await Task.sleep(nanoseconds: UInt64(delay) * 1_000_000) }
-                        catch { return }
-                        guard touching, enabled, !Task.isCancelled else { return }
-                        action()
-                    }
-                }
-                .onEnded { _ in cancel() }, including: hold > 0 ? .all : .none)
-            .onChange(of: touching) { _, next in if !next { cancel() } }
-            .onChange(of: enabled) { _, next in if !next { cancel() } }
-            .onChange(of: cardKey) { _, _ in cancel() }
-            .onDisappear { cancel() }
             .accessibilityAction { if enabled { action() } }
     }
-    private func cancel() { pending?.cancel(); pending = nil; began = false }
+}
+
+private struct RevealHoldCapture: UIViewRepresentable {
+    let milliseconds: Int
+    let enabled: Bool
+    let cardKey: String
+    let action: () -> Void
+    func makeUIView(context: Context) -> RevealHoldView { RevealHoldView() }
+    func updateUIView(_ view: RevealHoldView, context: Context) {
+        if view.cardKey != cardKey || view.milliseconds != milliseconds || !enabled { view.cancel() }
+        view.cardKey = cardKey
+        view.milliseconds = milliseconds
+        view.action = action
+        view.isUserInteractionEnabled = enabled
+    }
+    static func dismantleUIView(_ view: RevealHoldView, coordinator: ()) { view.cancel() }
+}
+
+private final class RevealHoldView: UIView {
+    var cardKey = ""
+    var milliseconds = 0
+    var action: (() -> Void)?
+    private var pending: Task<Void, Never>?
+    private var holding = false
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .clear
+        isAccessibilityElement = false
+        accessibilityElementsHidden = true
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) is unavailable") }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        cancel()
+        guard touches.count == 1, let touch = touches.first, bounds.contains(touch.location(in: self)) else { return }
+        holding = true
+        let delay = milliseconds
+        pending = Task { @MainActor [weak self] in
+            do { try await Task.sleep(nanoseconds: UInt64(delay) * 1_000_000) }
+            catch { return }
+            guard let self, self.holding, self.isUserInteractionEnabled, self.window != nil, !Task.isCancelled else { return }
+            self.holding = false
+            self.action?()
+        }
+    }
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if touches.contains(where: { !bounds.contains($0.location(in: self)) }) { cancel() }
+    }
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) { cancel() }
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { cancel() }
+    override func didMoveToWindow() { super.didMoveToWindow(); if window == nil { cancel() } }
+    func cancel() { pending?.cancel(); pending = nil; holding = false }
 }
