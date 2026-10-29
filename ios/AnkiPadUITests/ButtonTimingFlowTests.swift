@@ -21,8 +21,10 @@ final class ButtonTimingFlowTests: StudyFlowTestSupport {
         func enter(_ id: String, _ value: String) {
             let field = app.textFields[id]
             revealSettingsControl(field, in: app)
-            let previous = field.value as? String ?? ""
-            field.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap(); field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count) + value)
+            field.doubleTap()
+            let selectAll = app.descendants(matching: .any).matching(NSPredicate(format: "label IN %@", ["Select All", "すべてを選択", "全てを選択"])).firstMatch
+            if selectAll.waitForExistence(timeout: 3) { selectAll.tap() }
+            field.typeText(value)
             XCTAssertEqual(field.value as? String, value)
         }
         settings()
