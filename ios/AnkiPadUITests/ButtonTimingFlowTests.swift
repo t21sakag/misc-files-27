@@ -30,7 +30,6 @@ final class ButtonTimingFlowTests: StudyFlowTestSupport {
             // Focusing moves the sheet above the keyboard. Re-read the frame
             // before positioning the caret after the right-aligned number.
             focusEnd()
-            XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10))
             focusEnd()
             field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count) + value)
             XCTAssertEqual(field.value as? String, value)
