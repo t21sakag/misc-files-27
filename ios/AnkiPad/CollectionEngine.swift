@@ -35,6 +35,8 @@ struct EditorRequest: Identifiable {
     var isNew: Bool { cardID == nil && noteID == nil }
     var deckID: String = "0"
     var copiedDocument: NoteDocument?
+    var initialDraft: IncomingNoteDraft?
+    var incomingMedia: IncomingImportFile?
 }
 
 extension Engine {
@@ -142,7 +144,7 @@ extension Engine {
         defer { if access { url.stopAccessingSecurityScopedResource() } }
         let preferences = try call("ConfigService.GetPreferences")
         let editing = preferences["editing"] as? [String: Any] ?? [:]
-        if editing["pasteImagesAsPng"] as? Bool == true,
+        if editing["pasteImagesAsPng"] as? Bool == true, MediaImagePreparation.canRasterize(url),
            let image = UIImage(contentsOfFile: url.path), let data = image.pngData() {
             let name = url.deletingPathExtension().lastPathComponent + ".png"
             return try call("MediaService.AddMediaFile", ["desiredName": name, "data": data.base64EncodedString()])["val"] as? String ?? name
