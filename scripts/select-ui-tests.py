@@ -57,6 +57,7 @@ suites = {
     'web-theme-only': ['testBundledPagesUseNativeNightThemeAndRemainInteractive'],
     'engine-languages': ['testNoteCanBeCreatedAndFoundInBrowser'],
     'languages': ['testLanguageSavesOnRelaunchAndKeepsNoteTextWithTranslatedKeys', 'testFullSyncWithLocalDataRequiresTypedUploadConfirmation'],
+    'language-only': ['testLanguageSavesOnRelaunchAndKeepsNoteTextWithTranslatedKeys'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

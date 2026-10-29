@@ -43,7 +43,7 @@ final class LanguageFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.buttons["deck-1"].waitForExistence(timeout: 30))
 
         app.buttons["collection-menu"].tap(); app.buttons["browser-open"].tap()
-        let search = app.searchFields.firstMatch
+        let search = app.searchFields.matching(NSPredicate(format: "placeholderValue BEGINSWITH %@", "Search (")).firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 20), app.debugDescription)
         XCTAssertTrue(search.placeholderValue?.hasPrefix("Search (") == true, app.debugDescription)
         search.tap(); search.typeText("保存")
