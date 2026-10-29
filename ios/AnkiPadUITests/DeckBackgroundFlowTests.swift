@@ -6,6 +6,13 @@ final class DeckBackgroundFlowTests: StudyFlowTestSupport {
         let app = makeApplication(); app.launchArguments = []; app.launch()
         let first = app.buttons["deck-1"]
         XCTAssertTrue(first.waitForExistence(timeout: 30))
+        // The backend omits an empty default deck once another deck exists.
+        // Keep both rows visible while checking selection moves between them.
+        app.buttons["add-note"].tap()
+        let front = app.textViews["note-field-0"]
+        XCTAssertTrue(front.waitForExistence(timeout: 20)); front.tap(); front.typeText("Current deck selection verification")
+        app.buttons["note-save"].tap()
+        XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30)); app.buttons["note-close"].tap()
         func selected(_ item: XCUIElement, _ expected: Bool) {
             let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND selected == %@", NSNumber(value: expected)), object: item)
             XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed, app.debugDescription)
