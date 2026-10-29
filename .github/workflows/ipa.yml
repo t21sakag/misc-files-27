@@ -98,6 +98,8 @@ jobs:
         run: |
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/WhiteboardPreferences.swift tests/whiteboard_preferences_smoke.swift -o build/whiteboard-preferences-smoke
           build/whiteboard-preferences-smoke
+      - name: Test fixture scope against actual XCTest ports
+        run: python3 tests/sync_fixture_scope_smoke.py
       - name: Test owned simulator lifecycle
         run: python3 tests/ci_simulator_smoke.py
       - name: Test cache input selection
@@ -382,9 +384,12 @@ jobs:
           SIMULATOR_ID: ${{ steps.ui-simulator.outputs.simulator }}
         run: |
           if [ "$CI_MODE" = ui ] && [ "$UI_SUITE" != batch-check ] && [ "$UI_SUITE" != all ]; then
-            if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = changed ] || [ "$UI_SUITE" = profiles ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = milestone ] || [ "$UI_SUITE" = languages ] || [ "$UI_SUITE" = regression-repair ] || [ "$UI_SUITE" = upload-only ] || [ "$UI_SUITE" = network ] || [ "$UI_SUITE" = sync ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then
-              sync_ports=(18891)
-              if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = automatic ] || [ "$UI_SUITE" = repair ] || [ "$UI_SUITE" = all ]; then sync_ports+=(18901); fi
+            python3 scripts/select-sync-fixtures.py build/ui-test-arguments.txt > build/ui-sync-ports.txt
+            sync_ports=()
+            while IFS= read -r sync_port; do
+              if [ -n "$sync_port" ]; then sync_ports+=("$sync_port"); fi
+            done < build/ui-sync-ports.txt
+            if [ "${#sync_ports[@]}" -gt 0 ]; then
               for sync_port in "${sync_ports[@]}"; do
                 SYNC_USER1='fixture@example.test:fixture-password' SYNC_USER2='empty@example.test:fixture-password' SYNC_HOST=127.0.0.1 SYNC_PORT="$sync_port" SYNC_BASE="$RUNNER_TEMP/ui-sync-server-$sync_port" build/native/host/sync_test_server > "build/ui-sync-server-$sync_port.log" 2>&1 &
                 python3 tests/seed_ui_sync.py build/native/host/libankipad_bridge.dylib build/fixture.apkg "$sync_port"
