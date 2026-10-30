@@ -20,6 +20,10 @@ extension StudyModel {
             do {
                 try await Task.sleep(nanoseconds: 300_000_000)
                 guard let self, self.widgetRefreshGeneration == generation, !self.busy else { return }
+                // Widgets can run before, or without, visiting the share inbox.
+                // Publish their language and Debug data scope before reloading
+                // a timeline; the inbox controller is not a prerequisite.
+                try SharedClientSettings.save(language: AppText.language, in: container, testingNamespace: namespace)
                 let previous = try? store.load()
                 let profiles = registry.profiles.map { WidgetProfileSnapshot(id: $0.id, name: $0.name, collection: nil) }
                 // Publish the committed registry before a possibly failing

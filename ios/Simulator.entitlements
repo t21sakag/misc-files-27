@@ -2,15 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>com.apple.developer.team-identifier</key>
+	<string>SIMULATOR0</string>
 	<key>application-identifier</key>
-	<string>SIMULATOR.com.localtools.studyclient</string>
+	<string>SIMULATOR0.com.localtools.studyclient</string>
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>$(STUDY_SHARED_GROUP)</string>
 	</array>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>SIMULATOR.com.localtools.studyclient</string>
+		<string>SIMULATOR0.com.localtools.studyclient</string>
 	</array>
 </dict>
 </plist>

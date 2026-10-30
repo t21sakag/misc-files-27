@@ -72,6 +72,17 @@ while True: time.sleep(1)
         collection = json.loads((destination/'collection.json').read_text())
         assert collection['container_found'] and collection['probe_found'] and collection['log_exit'] == 149
         assert (destination/'widget-probe.json').read_bytes() == probe.read_bytes()
+        # Some simulator extension processes use the device home, with the
+        # bundle-prefixed filename. Collect only this device and exact bundle.
+        content = probe.read_bytes(); probe.unlink()
+        shared_probe = data/'Library/Application Support'/(bundle+'-widget-probe.json')
+        shared_probe.parent.mkdir(parents=True)
+        shared_probe.write_bytes(content)
+        result = subprocess.run([sys.executable, str(ROOT/'scripts/collect-widget-diagnostics.py'), '--simulator', simulator,
+            '--settings', str(settings), '--output', str(destination)], env=dict(os.environ, HOME=str(home)), capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+        assert json.loads((destination/'collection.json').read_text())['probe_location'] == 'owned-device-home'
+        assert (destination/'widget-probe.json').read_bytes() == content
     finally:
         os.environ.clear()
         os.environ.update(previous)

@@ -40,6 +40,7 @@ jobs:
           mkdir -p build
           python3 scripts/select-ui-tests.py "$UI_SUITE" "$CI_MODE" > build/ui-test-arguments.txt
           python3 tests/ui_failure_review_smoke.py
+          python3 tests/simulator_identity_smoke.py
       - name: Review repeated validation failures
         if: env.CI_MODE == 'ui' || env.CI_MODE == 'full'
         env:

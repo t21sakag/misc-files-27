@@ -35,13 +35,22 @@ try:
             if identifier != bundle:
                 continue
             report['container_found'] = True
-            for relative in ['Library/Application Support/widget-probe.json', 'tmp/widget-probe.json']:
+            for relative in ['Library/Application Support/'+bundle+'-widget-probe.json', 'Library/Application Support/widget-probe.json', 'tmp/widget-probe.json']:
                 probe = container/relative
                 if probe.is_file() and not probe.is_symlink() and probe.stat().st_size <= 16384:
                     shutil.copy2(probe, args.output/'widget-probe.json')
                     report['probe_found'] = True
                     report['probe_location'] = relative
                     break
+        # Simulator extension services may use the owned device's home instead
+        # of a PluginKitPlugin home. The exact bundle-prefixed name prevents
+        # another extension's probe from becoming evidence for this target.
+        if not report['probe_found']:
+            probe = data/'Library/Application Support'/(bundle+'-widget-probe.json')
+            if probe.is_file() and not probe.is_symlink() and probe.stat().st_size <= 16384:
+                shutil.copy2(probe, args.output/'widget-probe.json')
+                report['probe_found'] = True
+                report['probe_location'] = 'owned-device-home'
         predicate = 'process == "StudyWidgets" OR eventMessage CONTAINS ' + json.dumps(bundle)
         with (args.output/'system.log').open('w') as stream:
             try:

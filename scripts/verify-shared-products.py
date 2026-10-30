@@ -5,6 +5,7 @@ from pathlib import Path
 import plistlib
 import subprocess
 import struct
+from simulator_identity import validate as validate_identity
 
 parser = argparse.ArgumentParser()
 parser.add_argument('app', type=Path)
@@ -38,6 +39,7 @@ def entitlements(bundle):
                         size, offset = struct.unpack_from('<QI', data, section+40)
                         assert 0 < size <= len(data)-offset
                         value = plistlib.loads(data[offset:offset+size])
+                        validate_identity(value, info(bundle)['CFBundleIdentifier'])
                         groups.append(value['com.apple.security.application-groups'])
             position += length
         assert position == end

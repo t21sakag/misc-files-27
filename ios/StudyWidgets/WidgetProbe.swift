@@ -11,7 +11,7 @@ enum WidgetProbe {
         // its simulator, before CI can inspect the owning container.
         guard let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let file = directory.appendingPathComponent("widget-probe.json")
+        let file = directory.appendingPathComponent((Bundle.main.bundleIdentifier ?? "StudyWidgets") + "-widget-probe.json")
         let size = (try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
         let previous = size <= 16384 ? try? Data(contentsOf: file) : nil
         var events = (previous.flatMap { try? JSONDecoder().decode([[String: String]].self, from: $0) } ?? [])
