@@ -441,7 +441,7 @@ jobs:
             fi
           fi
           cp build/fixture.apkg ios/AnkiPad/Resources/fixture.apkg
-          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = images ] || [ "$UI_SUITE" = occlusion ] || [ "$UI_SUITE" = background ] || [ "$UI_SUITE" = background-ui ] || [ "$UI_SUITE" = background-selection ] || [ "$UI_SUITE" = theme-repair ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = all ]; then
+          if [ "$CI_MODE" = full ] || [ "$UI_SUITE" = share-image ] || [ "$UI_SUITE" = share-milestone ] || [ "$UI_SUITE" = images ] || [ "$UI_SUITE" = occlusion ] || [ "$UI_SUITE" = background ] || [ "$UI_SUITE" = background-ui ] || [ "$UI_SUITE" = background-selection ] || [ "$UI_SUITE" = theme-repair ] || [ "$UI_SUITE" = p1-next ] || [ "$UI_SUITE" = all ]; then
             python3 tests/make_occlusion_image.py build/occlusion-fixture.png
           fi
           cd ios

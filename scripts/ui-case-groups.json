@@ -157,6 +157,6 @@
   ],
   "ShareExtensionFlowTests": [
     "testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel",
-    "testSafariImageShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia"
+    "testPhotoShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia"
   ]
 }

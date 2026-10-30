@@ -5,7 +5,6 @@ import http.server
 import json
 import sys
 import tempfile
-import subprocess
 from urllib.parse import urlsplit, parse_qs
 
 output = Path(sys.argv[2]).resolve()
@@ -22,20 +21,9 @@ with tempfile.TemporaryDirectory() as directory:
     engine.call('ImportExportService.ExportAnkiPackage', {'outPath': str(output), 'options': {'withMedia': True}, 'limit': {'wholeCollection': {}}})
     engine.close()
 package = output.read_bytes()
-photo = output.with_name('shared-photo.png')
-subprocess.run([sys.executable, str(Path(__file__).with_name('make_occlusion_image.py')), str(photo)], check=True)
-photo_bytes = photo.read_bytes()
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/share-photo':
-            body = b'<!doctype html><html><head><title>Picture share fixture</title><meta name="viewport" content="width=device-width"></head><body><img alt="Shared picture fixture" src="/share-photo.png" width="512" height="384"></body></html>'
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html; charset=utf-8')
-        elif self.path == '/share-photo.png':
-            body = photo_bytes
-            self.send_response(200)
-            self.send_header('Content-Type', 'image/png')
-        elif self.path == '/share-note':
+        if self.path == '/share-note':
             body = b'<!doctype html><html><head><title>Share route fixture</title><meta name="viewport" content="width=device-width"></head><body><h1>Share route fixture</h1><p>Public synthetic text for the OS share service.</p></body></html>'
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')

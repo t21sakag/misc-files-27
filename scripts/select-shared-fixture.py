@@ -15,7 +15,7 @@ def needed(arguments):
         if not argument.startswith(prefix) or argument[len(prefix):] not in cases:
             raise ValueError('Invalid fixture selection: '+argument)
         name, method = argument[len(prefix):].split('/')
-        required |= name == 'ShareExtensionFlowTests' or method == 'testZZSharedDeckCanBeDownloadedAndImported'
+        required |= method in {'testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel', 'testZZSharedDeckCanBeDownloadedAndImported'}
     return required
 
 if __name__ == '__main__':

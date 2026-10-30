@@ -9,7 +9,7 @@ def scope(suite):
     return subprocess.check_output(['python3',str(root/'scripts/select-ui-tests.py'),suite,'ui'],text=True).splitlines()
 for suite in ['share-text','shared','changed','incoming-milestone','web-themes']:
     assert needed(scope(suite)),suite
-for suite in ['incoming-core','reminder-repair','incoming-image','upload-only']:
+for suite in ['incoming-core','reminder-repair','incoming-image','upload-only','share-image']:
     assert not needed(scope(suite)),suite
 assert needed([])
 try:

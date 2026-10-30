@@ -71,42 +71,37 @@ final class ShareExtensionFlowTests: StudyFlowTestSupport {
         XCTAssertFalse(inbox.exists, app.debugDescription)
         assertBrowserContains(app, text: "Safari shared sentinel", exists: true)
     }
-    func testSafariImageShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia() {
+    func testPhotoShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia() {
         let app = makeApplication()
         app.launchArguments = []
         app.launch()
         XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
-        let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
-        defer { if safari.state != .notRunning { safari.terminate() } }
-        XCUIDevice.shared.system.open(URL(string: "http://127.0.0.1:18892/share-photo")!)
-        XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 20))
-        for title in ["Continue", "続ける", "Not Now", "今はしない"] {
-            let button = safari.buttons[title].firstMatch
-            if button.waitForExistence(timeout: 2) && button.isHittable { button.tap() }
+        let photos = XCUIApplication(bundleIdentifier: "com.apple.mobileslideshow")
+        defer { if photos.state != .notRunning { photos.terminate() } }
+        photos.launch()
+        for title in ["Continue", "Get Started", "Not Now", "続ける", "はじめる", "今はしない"] {
+            let button = photos.buttons[title].firstMatch
+            if button.waitForExistence(timeout: 1) && button.isHittable { button.tap() }
         }
-        let image = safari.webViews.images["Shared picture fixture"].firstMatch
-        XCTAssertTrue(image.waitForExistence(timeout: 20), safari.debugDescription)
-        let imageFrame = image.frame, origin = safari.frame.origin
-        safari.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
-            .withOffset(CGVector(dx: imageFrame.midX-origin.x, dy: imageFrame.midY-origin.y)).press(forDuration: 1)
-        // The toolbar's ShareButton is already visible before a context menu
-        // opens. Wait for the image-specific action instead of sharing the page.
-        let imageShare = safari.buttons.matching(NSPredicate(format: "(label BEGINSWITH %@ OR label BEGINSWITH %@) AND identifier != %@", "Share", "共有", "ShareButton")).firstMatch
-        XCTAssertTrue(imageShare.waitForExistence(timeout: 15), safari.debugDescription)
-        imageShare.tap()
-        let service = safari.cells.matching(NSPredicate(format: "label == %@", "AnkiPad")).firstMatch
-        XCTAssertTrue(service.waitForExistence(timeout: 20), safari.debugDescription)
+        let image = photos.images.matching(identifier: "PXGGridLayout-Info").firstMatch
+        XCTAssertTrue(image.waitForExistence(timeout: 25), photos.debugDescription)
+        image.tap()
+        let share = photos.buttons.matching(NSPredicate(format: "label IN %@", ["Share", "共有"])).firstMatch
+        XCTAssertTrue(share.waitForExistence(timeout: 15), photos.debugDescription)
+        share.tap()
+        let service = photos.cells.matching(NSPredicate(format: "label == %@", "AnkiPad")).firstMatch
+        XCTAssertTrue(service.waitForExistence(timeout: 20), photos.debugDescription)
         service.tap()
-        XCTAssertTrue(safari.staticTexts["share-file-0"].waitForExistence(timeout: 20), safari.debugDescription)
-        let subject = safari.textFields["share-subject"]
-        XCTAssertTrue(subject.waitForExistence(timeout: 20), safari.debugDescription)
+        XCTAssertTrue(photos.staticTexts["share-file-0"].waitForExistence(timeout: 20), photos.debugDescription)
+        let subject = photos.textFields["share-subject"]
+        XCTAssertTrue(subject.waitForExistence(timeout: 20), photos.debugDescription)
         subject.tap()
         let old = subject.value as? String ?? ""
         subject.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count)+"Shared picture sentinel")
-        let send = safari.buttons["share-submit"]
+        let send = photos.buttons["share-submit"]
         waitUntilHittable(send); send.tap()
-        let complete = safari.buttons["share-complete"]
-        XCTAssertTrue(complete.waitForExistence(timeout: 20), safari.debugDescription)
+        let complete = photos.buttons["share-complete"]
+        XCTAssertTrue(complete.waitForExistence(timeout: 20), photos.debugDescription)
         complete.tap()
         app.activate()
         let cancel = app.buttons["incoming-import-cancel"]
@@ -115,9 +110,9 @@ final class ShareExtensionFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(cancel.waitForNonExistence(timeout: 15))
         let inbox = app.buttons["shared-inbox-open"]
         XCTAssertTrue(inbox.waitForExistence(timeout: 15), app.debugDescription)
-        // No provider or Safari process is alive when the durable file is read
+        // No provider or Photos process is alive when the durable file is read
         // again. Cancelling the confirmation did not consume it.
-        safari.terminate(); app.terminate(); app.launch()
+        photos.terminate(); app.terminate(); app.launch()
         let attach = app.buttons["incoming-image-note"]
         revealFormControl(attach, in: app.collectionViews["incoming-import-form"], topInset: 40, bottomInset: 20)
         attach.tap()
