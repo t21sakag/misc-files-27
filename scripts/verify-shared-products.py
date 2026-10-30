@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 import plistlib
 import subprocess
+import struct
 
 parser = argparse.ArgumentParser()
 parser.add_argument('app', type=Path)
@@ -12,8 +13,37 @@ args = parser.parse_args()
 def info(bundle):
     return plistlib.loads((bundle/'Info.plist').read_bytes())
 def entitlements(bundle):
-    result = subprocess.run(['codesign', '-d', '--entitlements', ':-', str(bundle)], check=True, capture_output=True)
-    return plistlib.loads(result.stdout)
+    # Xcode places simulator entitlements in __TEXT,__entitlements. The
+    # ad-hoc code signature itself correctly has an empty entitlement plist.
+    # Debug builds may load application code from the adjacent debug dylib.
+    candidates = [bundle/info(bundle)['CFBundleExecutable'], *bundle.glob('*.debug.dylib')]
+    groups = []
+    for binary in candidates:
+        data = binary.read_bytes()
+        assert data[:4] == b'\xcf\xfa\xed\xfe'
+        count, size = struct.unpack_from('<II', data, 16)
+        position, end = 32, 32+size
+        assert end <= len(data)
+        for _ in range(count):
+            command, length = struct.unpack_from('<II', data, position)
+            assert length >= 8 and position+length <= end
+            if command == 0x19:  # LC_SEGMENT_64; public mach-o/loader.h.
+                assert length >= 72
+                sections = struct.unpack_from('<I', data, position+64)[0]
+                assert 72+80*sections <= length
+                for index in range(sections):
+                    section = position+72+80*index
+                    name, segment = struct.unpack_from('<16s16s', data, section)
+                    if name.rstrip(b'\0') == b'__entitlements' and segment.rstrip(b'\0') == b'__TEXT':
+                        size, offset = struct.unpack_from('<QI', data, section+40)
+                        assert 0 < size <= len(data)-offset
+                        value = plistlib.loads(data[offset:offset+size])
+                        groups.append(value['com.apple.security.application-groups'])
+            position += length
+        assert position == end
+    assert groups, 'Simulator entitlement section missing: '+str(bundle)
+    assert all(value == groups[0] for value in groups), 'Inconsistent simulator entitlement sections'
+    return {'com.apple.security.application-groups':groups[0]}
 app = info(args.app)
 extensions = list((args.app/'PlugIns').glob('*.appex'))
 assert len(extensions) == 1, extensions
@@ -39,4 +69,4 @@ for bundle, value in [(args.app,app),(extension,share)]:
 assert not list(extension.rglob('*.anki2'))
 assert not list(extension.rglob('*.apkg'))
 assert not list(extension.rglob('backend'))
-print('PASS: embedded share service, principal class, activation, source/version, localized resources and matching real signed group entitlements')
+print('PASS: embedded share service, principal class, activation, source/version, localized resources and matching embedded simulator group entitlements and valid signatures')

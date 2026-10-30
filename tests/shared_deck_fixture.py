@@ -23,7 +23,11 @@ with tempfile.TemporaryDirectory() as directory:
 package = output.read_bytes()
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path in ('/shared', '/details'):
+        if self.path == '/share-note':
+            body = b'<!doctype html><html><head><title>Share route fixture</title><meta name="viewport" content="width=device-width"></head><body><h1>Share route fixture</h1><p>Public synthetic text for the OS share service.</p></body></html>'
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+        elif self.path in ('/shared', '/details'):
             details = '<h1>Shared deck fixture</h1><a href="/svc/shared/download-deck/1?t=fixture-key">Download fixture deck</a>'
             listing = '<h1>Shared deck search</h1><a href="/details" onclick="showDeck();return false;">View fixture deck</a>'
             script = '<script>function showDeck(){history.pushState({},"","/details");document.body.innerHTML=' + json.dumps(details) + ';}window.onpopstate=()=>location.reload();</script>'

@@ -154,5 +154,8 @@
     "testReceivedCOLPKGReplacesOnlyAfterConfirmationAndBackupRestoresPreviousNotes",
     "testReceivedTSVSurvivesSourceRemovalAndImportsThroughBundledWebInterface",
     "testInvalidReceivedPackageReportsFailureAndKeepsPreviousCollection"
+  ],
+  "ShareExtensionFlowTests": [
+    "testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel"
   ]
 }
