@@ -33,8 +33,7 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
         browser("", count: 2, in: app)
         tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
         tapTestControl(app.buttons.matching(identifier: "browser-create-filtered"), in: app)
-        guard let empty = waitForTestControl(app.textFields.matching(identifier: "filtered-search"), in: app, purpose: .observation) else { return }
-        XCTAssertEqual(empty.value as? String, "", "Explicit empty search must not become is:due")
+        guard typeInEmptyTestField(app.textFields.matching(identifier: "filtered-search"), text: "EmptySearchSentinel", in: app) != nil else { return }
         tapTestControl(app.buttons.matching(identifier: "filtered-cancel"), in: app)
         closeBrowser(app)
         XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier MATCHES %@", "deck-[0-9]+" )).count, 1)
@@ -51,6 +50,8 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.textFields["filtered-search"].waitForNonExistence(timeout: 30), app.debugDescription)
         closeBrowser(app)
         let deck = app.buttons.matching(NSPredicate(format: "identifier MATCHES %@ AND label BEGINSWITH %@", "deck-[0-9]+", deckName))
+        guard let built = waitForTestControl(deck, in: app) else { return }
+        XCTAssertTrue(built.label.hasSuffix("、1、0、0"), "The inherited second search must not pull in the other card: " + built.label)
         tapTestControl(deck, in: app)
         XCTAssertTrue(app.buttons["reveal"].waitForExistence(timeout: 30), app.debugDescription)
         XCTAssertTrue(app.webViews.staticTexts["Browser Needle"].waitForExistence(timeout: 20), app.debugDescription)

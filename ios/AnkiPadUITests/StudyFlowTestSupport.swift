@@ -56,7 +56,9 @@ class StudyFlowTestSupport: XCTestCase {
     @discardableResult
     func dismissTestKeyboard(in app: XCUIApplication) -> Bool {
         func visible() -> Bool {
-            app.keyboards.firstMatch.exists && app.keyboards.firstMatch.frame.intersection(app.frame).height > 1
+            // A keyboard can disappear between exists and frame. Resolve the
+            // collection in one query, without dereferencing a vanishing node.
+            app.keyboards.count > 0
         }
         guard visible() else { return true }
         let hide = app.buttons.matching(NSPredicate(format: "label IN %@", ["Hide keyboard", "キーボードを隠す"]))
@@ -114,6 +116,24 @@ class StudyFlowTestSupport: XCTestCase {
         let actions = alert.descendants(matching: .other).children(matching: .button)
             .matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(titles)))
         return tapTestControl(actions, in: application, keyboard: .keep)
+    }
+
+    /// Native empty fields may export their placeholder as value. Prove the
+    /// initial content by inserting a sentinel and checking the entire result;
+    /// accepting value == placeholder alone would also accept literal content.
+    @discardableResult
+    func typeInEmptyTestField(_ query: XCUIElementQuery, text: String, in app: XCUIApplication,
+                              form: XCUIElement? = nil) -> XCUIElement? {
+        guard !text.isEmpty, let field = tapTestControl(query, in: app, form: form) else { return nil }
+        let value = field.value as? String
+        guard value == "" || (field.placeholderValue != nil && value == field.placeholderValue) else {
+            controlFailure(query, in: app, reason: "Expected an empty field before inserting test text"); return nil
+        }
+        field.typeText(text)
+        guard field.value as? String == text else {
+            controlFailure(query, in: app, reason: "Field did not contain exactly the inserted test text"); return nil
+        }
+        return field
     }
 
     /// Readiness is also required before reading a value: remote widgets can

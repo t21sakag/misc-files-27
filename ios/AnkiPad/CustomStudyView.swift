@@ -148,7 +148,11 @@ struct FilteredDeckView: View {
             if terms.count > 1 { let term = terms[1]; secondEnabled = true; secondQuery = term["search"] as? String ?? ""; secondLimit = term["limit"] as? Int ?? 100; secondOrder = orders.firstIndex(of: term["order"] as? String ?? "") ?? 0 }
             // An explicit empty browser search means all cards; nil keeps the
             // engine defaults. Never replace an existing deck's stored query.
-            if request.deckID == "0", let initialSearch = request.initialSearch { query = initialSearch }
+            if request.deckID == "0", let initialSearch = request.initialSearch {
+                query = initialSearch
+                secondEnabled = false
+                secondQuery = ""
+            }
             reschedule = config["reschedule"] as? Bool ?? false
             again = config["previewAgainSecs"] as? Int ?? 0; hard = config["previewHardSecs"] as? Int ?? 0; good = config["previewGoodSecs"] as? Int ?? 0
             loaded = true
