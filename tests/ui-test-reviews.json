@@ -1777,6 +1777,218 @@
         }
       ],
       "checked_at": "2026-10-30T16:07:50.550209+00:00"
+    },
+    {
+      "id": "20261031-widget-decks-array-presenter",
+      "covers": [
+        [
+          41103483537,
+          1
+        ],
+        [
+          41099045352,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41099045352,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Literal query predicate used hittable, which XCTest rejects with XCTElementQueryInvalidPredicate before selecting an element. Widget/settings defects are not established by this failure."
+        },
+        {
+          "attempt": [
+            41103483537,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Object readiness now works and opens the multi-select presenter. Actual picker is a Table with Cell containing StaticText既定 · 既定 at(120,378,580,45), not a Button/MenuItem. Done Button exists at(650,274,36,36). Separate first watch HTTP502 was recovered on the same run, not a CI restart."
+        }
+      ],
+      "root_cause": "The test used an unsupported query key, then assumed single-select and array-select entity presenters export the same role. The actual query API and multi-select hierarchy require different scoping, while strict live-data postconditions remain unchanged.",
+      "common_resolution": "Run a bounded local lint for known unsupported literal query keys; retain isHittable in common object readiness. For this observed array presenter, select Table Cell containing exact entity StaticText via the shared unique/actionable resolver. Keep actual Done, measured empty-background close and owned Home row identity/value checks. Recover transient watch API failure inside the monitor without waking the model or starting a CI run.",
+      "rule_review": {
+        "semantic_labels": "Entity label comes from the stored profile/deck names and matches the actual StaticText既定 · 既定. Keep full title equality via containing a known child; no substring or unrelated element fallback.",
+        "foreground_scope": "Observed Table Cell contains the entity StaticText. Scope to home.tables.cells.containing(.staticText, identifier: exact entity name), not profile-menu Buttons. Actual Done Button is already observed.",
+        "unique_reads_and_actions": "Parameter is the intent’s one value Button and common readiness checks uniqueness/enabled/isHittable. No hittable key in matching predicates; early direct-literal lint and its boundary tests pass. Home row is ownedID+label+actualvalue inside the WidgetIcon, and native tap remains unchanged.",
+        "live_state": "Keep empty-setting prompt, actual array choice, Done, current stored count description/leaf name and per-row native Link leading to review. Do not auto-populate default[] or accept registration/placeholder as success.",
+        "keyboard_and_scroll": "Keep existing shared keyboard/reveal handling. Gallery controls keep the keyboard only when the actual target is actionable. No speculative scroll or coordinate fallback. Background hold uses measured margin and excludes occupied icons.",
+        "environment": "Fixture, Apple build and shared group prerequisites passed. Watch HTTP502 is an observer failure: verified actual run in progress and reattached same-ID watch, then confirmed terminal failure. No job rerun or environment reset.",
+        "first_failure_evidence": "Latest terminal AX755169F4 and image1DFF7E78 show Table/Cell/entity text and Done frames. Prior test-summary records the invalid predicate exception. Immediate loading capture alone does not show a persistent loading failure. Live logs and recordings retained with their run artifacts.",
+        "failure_classification": "Both assertion failures are harness/API or role assumptions. Neither proves app failure in array persistence or row navigation; those were not reached. Separate observer HTTP502 from test failure.",
+        "runtime_warnings": "Both actual summaries runtimeWarnings=[]; keep widget warning rejection.",
+        "device_evidence": "Simulator decklist-medium only, not every family, ordering across multiple selections, zero-count options, physical signing or voice output."
+      },
+      "evidence": [
+        {
+          "attempt": [
+            41099045352,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41099045352",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "33e2fddf2e1a3bde79fd485075df7b79cbff9d461ae1170e7972505e40ef4c63"
+        },
+        {
+          "attempt": [
+            41099045352,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41099045352",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/B679067A-0841-4642-A82C-FA93E8B8A226.txt",
+          "sha256": "3f9245765463e6d4641ad1b457885e0f7081b8ef1ef298790a40069d3b5fa5ec"
+        },
+        {
+          "attempt": [
+            41099045352,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41099045352",
+          "artifact_name": "screenshots",
+          "artifact_entry": "F52334DC-6544-41BC-8CC5-667A0FCD85B4.png",
+          "sha256": "e573a6b5ea7bef180ddeab4ec2af0ef84630a45e2c9850f08cf27dac3a59b6bc"
+        },
+        {
+          "attempt": [
+            41103483537,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41103483537",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "8d7f815bff10ce9710e926e027cbcab041e7ac2adf5d2bf570ec873f39e4e2ea"
+        },
+        {
+          "attempt": [
+            41103483537,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41103483537",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/755169F4-AF6C-4D89-8395-1C8EAF94B912.txt",
+          "sha256": "92fb30de3a87400b09392aef6daf5f945e7d61f42b192a210b9af4fd6c11f46d"
+        },
+        {
+          "attempt": [
+            41103483537,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41103483537",
+          "artifact_name": "screenshots",
+          "artifact_entry": "1DFF7E78-68C9-4399-8029-F207F882C914.png",
+          "sha256": "d87ac6ba7fcd9bd8a232752237503ab0e8edd9ccd3a256f088e0286c16e54dde"
+        }
+      ],
+      "next_scope": [
+        "WidgetGalleryFlowTests/testDeckListWidgetSelectsDeckAndOpensItsReview"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "394e1d59249af032a79f59d08a8500897a8de11c8ea12c146613d1d6314922cf",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "bde897f48bcc4c211c49eb1e84247a93f9441c482202e55a9d53c06e3dbd90f2",
+        "ios/AnkiPadUITests/ControlLabelMatch.swift": "48027c8ba45064cc037cdeb9c2a15186e6fd78c6879f5bd50ff6077b0361ea9a",
+        "ios/AnkiPadUITests/WidgetGalleryFlowTests.swift": "1e56bd1515ea6a1e90f8f2467b144fa3f22d51f0981bce14584d40aa63adea89",
+        "ios/StudyWidgets/WidgetData.swift": "b8df797573c895203c0990358c0af96b9de8d4f1ff7217a4184c57d469a44389",
+        "ios/StudyWidgets/WidgetProbe.swift": "dfb63b0ad83f4a63b9a83d22e23b5ef8be3947962356e19536008d8c81b70012",
+        "scripts/collect-widget-diagnostics.py": "4533869e9ebe636bb6ae095c3062c39c6b54423ebc1d44ef72dabdb7656adf21",
+        "scripts/ui-failure-review.py": "34b2815cd0f9aa9acc1a1e5afa51df55127936f3f60ca8989baa47264634f649",
+        "tests/ipa_packaging_smoke.py": "b47b910c3cb31ed78411aaf9c98ce23d645d8c1551fa04d5b7e25e8437f75410",
+        "scripts/run-ui-with-diagnostics.py": "9b3df49c3d5413ecaa6021c37fa7011ffcccb7d553cf65ade222dde546010221",
+        "tests/widget_diagnostics_smoke.py": "66ff8f965b782db003908134a4ff31b0d31c11460120bad618b6d0984a24c98d",
+        ".github/workflows/ipa.yml": "e78335deb5911fdad538df2c4d32e9e8a66863918ce7e8fdbf745aaad05c0d2b",
+        "ios/AnkiPad/WidgetPublishing.swift": "d57853579c56ec1d65e92a3ad8fd53e7c326b8213c8471878aadaa3989494191",
+        "ios/SharedClient/SharedClientSettings.swift": "ccaaa4ed67593807f434e0f81d0eb53bcd1a1d70106f1273a0c67b19f10bea61",
+        "ios/Simulator.entitlements": "5e876fd1300d7499097c67244162267c17825a6e3499d9c8b486889d9b0b3d1b",
+        "ios/ShareSimulator.entitlements": "4c4be6ad55da9e845f25c9ac9f312a56171fbe6a003a33e8ffa01fafe7a680dd",
+        "scripts/simulator_identity.py": "00be6b4984339aa0bf81be7debb35c507c17b06d1f944320d59341586c73df6b",
+        "scripts/verify-shared-products.py": "8a62839f9c7558e8b5ebe5bad637de275e85131a023d578e5707b41ee4a208ce",
+        "tests/simulator_identity_smoke.py": "8a9daf9186c51be8778f9c864791180b4bf305b446a50cb55f7f76a8b0ebdc7e",
+        "ios/SharedClient/WidgetSnapshot.swift": "8cdf06767474495f254322f00ef6a64611f6c94e291d57242ccfce00287a923b",
+        "ios/StudyWidgets/StudyWidgets.swift": "e2f04fdc56869d1d35b9d16ebb39fef835315d90cc7352a114680eceadc3ad82",
+        "scripts/select-ui-tests.py": "abf9584baf8c9bc7bd8850df0f03c7521dbe67e9bbaadc8f4c9d76139dc00962",
+        "scripts/ui-case-groups.json": "eaaec3105e2e48a8e186e37e164339ec4aa024f1ebc17f6235ad8c147a47b3c3",
+        "scripts/check-ui-query-predicates.py": "e79d193db719be33bd64db9390c1bec5aef8ee53f7355003692c7bfb3c3661d6",
+        "tests/query_predicate_smoke.py": "277e8a4bde14083d5697b61b990f121b6dc7c6af59747e6617c875d53ec7c347"
+      },
+      "checks": [
+        {
+          "name": "Review gate regression",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Swift syntax only; Apple SDK typecheck pending",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "fa1a4728bed6860227c290b388fa8969a947ec838fb81d28d22c0b423705b889"
+        },
+        {
+          "name": "UI case scope",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "561d6bb67f5732cdf54f16c0cdb00064c26ab5d83dcda7ff67765f54fa4ebad1"
+        },
+        {
+          "name": "Complete disjoint batch scope",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "020acd97462b84b0f9934f94ea5783374dcc7ae0b867178df465782c7cf3d5ce"
+        },
+        {
+          "name": "All published workflow shell blocks parse",
+          "argv": [
+            "python3",
+            "-c",
+            "import re,subprocess,yaml; from pathlib import Path; w=yaml.safe_load(Path('.github/workflows/ipa.yml').read_text()); steps=[s for j in w['jobs'].values() for s in j.get('steps',[]) if 'run' in s]; [subprocess.run(['bash','-n'],input=re.sub(r'\\$\\{\\{.*?\\}\\}', 'REVIEW_VALUE',s['run']),text=True,check=True) for s in steps]; print('PASS:',len(steps),'workflow shell blocks')"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "586a530bdc774eb66c3d30ff2ae97627a123020184c485fb30d27358c2c0b5dc"
+        },
+        {
+          "name": "Literal query key boundary regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "3d7068949e5031a980b53d913335f7f15f132ecedce88b471203a198d0c894e7"
+        },
+        {
+          "name": "Known unsupported query keys across actual UI source",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "f6ac78aa58787a1c8913513ca31ca277153f909cb519ce4c299f6fd5d0781109"
+        }
+      ],
+      "checked_at": "2026-10-30T18:32:16.265312+00:00"
     }
   ]
 }

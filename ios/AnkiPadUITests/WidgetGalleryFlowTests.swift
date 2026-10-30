@@ -288,7 +288,10 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         let parameter = home.buttons
         guard tapTestControl(parameter, in: home, keyboard: .keep) != nil else { return }
         capture("Deck list available choices", in: home)
-        tapChoice([profileName + " · " + name], in: home)
+        // The observed multi-select presenter uses Table Cells containing the
+        // entity's StaticText, unlike the single-profile Button menu.
+        let choice = home.tables.cells.containing(.staticText, identifier: profileName + " · " + name)
+        guard tapTestControl(choice, in: home, keyboard: .keep) != nil else { return }
         capture("Deck list selected choice", in: home)
         tapChoice(["Done", "完了"], in: home)
         capture("Deck list configuration after choice", in: home)
