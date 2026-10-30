@@ -35,6 +35,7 @@ import AVFoundation
     @Published var showingProfiles = false
     private var deferredProfileImport: URL?
     private var deferredProfileImportLease: IncomingImportFile?
+    private var deferredProfileImportReceipt: SharedInboxReceipt?
     let audio = CardAudio()
     let cardSpeech = CardScriptSpeech()
     let cardRecognition = CardScriptRecognition()
@@ -248,9 +249,9 @@ import AVFoundation
         mediaSyncPending = UserDefaults.standard.bool(forKey: profilePreferenceKey("syncMediaPending"))
         showInterruptedSyncIfNeeded()
         if let deferredProfileImport {
-            let lease = deferredProfileImportLease
-            self.deferredProfileImport = nil; deferredProfileImportLease = nil
-            importFile(deferredProfileImport, retaining: lease); return
+            let lease = deferredProfileImportLease, receipt = deferredProfileImportReceipt
+            self.deferredProfileImport = nil; deferredProfileImportLease = nil; deferredProfileImportReceipt = nil
+            importFile(deferredProfileImport, retaining: lease, sharedReceipt: receipt); return
         }
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--uitest-fixture"),
@@ -656,10 +657,19 @@ import AVFoundation
             self.decks = try await self.engine.decks()
         }
     }
-    func importFile(_ url: URL, retaining lease: IncomingImportFile? = nil) {
-        guard profilesReady else { deferredProfileImport = url; deferredProfileImportLease = lease; return }
+    func importFile(_ url: URL, retaining lease: IncomingImportFile? = nil, sharedReceipt: SharedInboxReceipt? = nil) {
+        guard profilesReady else {
+            deferredProfileImportReceipt?.deferUntilRequested()
+            deferredProfileImport = url; deferredProfileImportLease = lease; deferredProfileImportReceipt = sharedReceipt
+            return
+        }
+        guard !busy else { sharedReceipt?.deferUntilRequested(); return }
         run {
-            defer { withExtendedLifetime(lease) {} }
+            var handedToWebPage = false
+            defer {
+                withExtendedLifetime(lease) {}
+                if !handedToWebPage { sharedReceipt?.deferUntilRequested() }
+            }
             self.audio.stop()
             self.cardSpeech.stop()
             self.cardRecognition.cancel()
@@ -675,8 +685,12 @@ import AVFoundation
                 var allowed = CharacterSet.urlPathAllowed
                 allowed.remove(charactersIn: "/")
                 let path = local.path.addingPercentEncoding(withAllowedCharacters: allowed) ?? ""
-                self.backendPage = BackendPageRequest(path: "import-csv/" + path, title: AppText.localized("テキストを取り込む"))
+                self.backendPage = BackendPageRequest(path: "import-csv/" + path, title: AppText.localized("テキストを取り込む"), sharedReceipt: sharedReceipt)
+                handedToWebPage = true
             default: try await self.engine.importPackage(url)
+            }
+            if !handedToWebPage, let sharedReceipt, !(await sharedReceipt.accept()) {
+                self.error = AppText.localized("取り込みは完了しましたが、共有の受信トレイに元のファイルが残っています。")
             }
             self.decks = try await self.engine.decks()
         }

@@ -790,3 +790,5 @@
 "次にAnkiPadを開くと編集できます。" = "Open AnkiPad next to edit this content.";
 "読み込めない共有内容があります。" = "Some shared content could not be read.";
 "送信" = "Send";
+"ファイルは1つずつ共有してください。" = "Share one file at a time.";
+"取り込みは完了しましたが、共有の受信トレイに元のファイルが残っています。" = "The import completed, but the original file remains in the shared inbox.";

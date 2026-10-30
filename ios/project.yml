@@ -118,6 +118,9 @@ targets:
             NSExtensionActivationRule:
               NSExtensionActivationSupportsText: true
               NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsFileWithMaxCount: 1
+              NSExtensionActivationSupportsImageWithMaxCount: 1
+              NSExtensionActivationSupportsMovieWithMaxCount: 1
     sources:
       - path: ShareExtension
       - path: SharedClient

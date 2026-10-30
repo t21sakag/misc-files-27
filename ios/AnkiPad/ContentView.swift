@@ -30,12 +30,19 @@ struct ContentView: View {
     @State private var browserLinkSearch: String?
     @State private var browserSessionActive = false
     @State private var openingReminder = false
-    @State private var incomingFiles: [IncomingImportFile] = []
-    @State private var incomingFileReview: IncomingImportFile?
+    private struct ReceivedRequest: Identifiable {
+        var id: UUID { file.id }
+        let file: IncomingImportFile
+        var receipt: SharedInboxReceipt?
+        var draft: IncomingNoteDraft?
+    }
+    @State private var incomingFiles: [ReceivedRequest] = []
+    @State private var incomingFileReview: ReceivedRequest?
+    @State private var activeIncomingReceipt: SharedInboxReceipt?
     @State private var incomingFileCopies = 0
-    private enum PendingNoteAction { case edit(EditorRequest), occlusion(IncomingImportFile) }
+    private enum PendingNoteAction { case edit(EditorRequest), occlusion(ReceivedRequest) }
     @State private var pendingNoteActions: [PendingNoteAction] = []
-    @State private var receivedOcclusionFile: IncomingImportFile?
+    @State private var receivedOcclusionFile: ReceivedRequest?
     @State private var addingTextNote = false
     @State private var importing = false
     #if DEBUG
@@ -352,7 +359,7 @@ struct ContentView: View {
         .sheet(isPresented: $showingSharedInbox, onDismiss: openPendingExternalRequest) {
             SharedInboxView(inbox: sharedInbox, profileName: model.currentProfile.name) { entry in
                 guard model.profilesReady, !model.busy, !model.isSyncing else { return }
-                prepareSharedText(entry)
+                prepareSharedEntry(entry)
                 showingSharedInbox = false
             }
         }
@@ -366,8 +373,9 @@ struct ContentView: View {
         .sheet(item: $customStudy, onDismiss: openPendingExternalRequest) { CustomStudyView(model: model, request: $0) }
         .sheet(item: $filteredDeck, onDismiss: openPendingExternalRequest) { FilteredDeckView(model: model, request: $0) }
         .sheet(isPresented: $addingOcclusion, onDismiss: {
+            receivedOcclusionFile?.receipt?.deferUntilRequested()
             receivedOcclusionFile = nil; openPendingExternalRequest()
-        }) { ImageOcclusionEntryView(model: model, initialFile: receivedOcclusionFile) }
+        }) { ImageOcclusionEntryView(model: model, initialFile: receivedOcclusionFile?.file, sharedReceipt: receivedOcclusionFile?.receipt) }
         .sheet(isPresented: $addingTextNote, onDismiss: openPendingExternalRequest) {
             SharedTextEntryView { draft in
                 guard addingTextNote else { return }
@@ -376,20 +384,25 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $model.showingAccount, onDismiss: openPendingExternalRequest) { AccountView(model: model) }
-        .sheet(item: $incomingFileReview, onDismiss: openPendingExternalRequest) { file in
-            IncomingImportView(model: model, file: file) { action in
+        .sheet(item: $incomingFileReview, onDismiss: {
+            activeIncomingReceipt?.deferUntilRequested(); activeIncomingReceipt = nil
+            openPendingExternalRequest()
+        }) { request in
+            IncomingImportView(model: model, file: request.file) { action in
+                let file = request.file
                 guard incomingFileReview?.id == file.id, model.profilesReady, !model.busy, !model.isSyncing else { return }
                 switch action {
                 case .importDocument:
                     guard [.deck, .collection, .text].contains(file.kind) else { return }
-                    model.importFile(file.url, retaining: file)
+                    model.importFile(file.url, retaining: file, sharedReceipt: request.receipt)
                 case .attachToNote:
                     guard [.image, .audio, .video].contains(file.kind) else { return }
-                    pendingNoteActions.append(.edit(EditorRequest(incomingMedia: file)))
+                    pendingNoteActions.append(.edit(EditorRequest(initialDraft: request.draft, incomingMedia: file, sharedReceipt: request.receipt)))
                 case .imageOcclusion:
                     guard file.kind == .image else { return }
-                    pendingNoteActions.append(.occlusion(file))
+                    pendingNoteActions.append(.occlusion(request))
                 }
+                activeIncomingReceipt = nil // Ownership moves to the import/editor.
                 incomingFileReview = nil
             }
         }
@@ -481,7 +494,7 @@ struct ContentView: View {
             && !openingReminder && !browserSessionActive && notificationRoute.profileID == nil
     }
     private func openPendingExternalRequest() {
-        guard !incomingFiles.isEmpty || !pendingNoteActions.isEmpty || browserLinks.pending != nil || sharedInbox.nextAutomaticText != nil,
+        guard !incomingFiles.isEmpty || !pendingNoteActions.isEmpty || browserLinks.pending != nil || sharedInbox.nextAutomaticEntry != nil,
               canPresentExternalRequest else { return }
         let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
             .flatMap(\.windows).first(where: \.isKeyWindow)
@@ -496,23 +509,39 @@ struct ContentView: View {
             return
         }
         if !incomingFiles.isEmpty {
-            incomingFileReview = incomingFiles.removeFirst()
+            let request = incomingFiles.removeFirst()
+            activeIncomingReceipt = request.receipt
+            incomingFileReview = request
             return
         }
         guard incomingFileCopies == 0 else { return }
         if let request = browserLinks.take(canPresent: true) {
             browserLinkSearch = request.search
             model.showingBrowser = true
-        } else if let entry = sharedInbox.nextAutomaticText {
-            prepareSharedText(entry)
+        } else if let entry = sharedInbox.nextAutomaticEntry {
+            prepareSharedEntry(entry)
             openPendingExternalRequest()
         }
     }
-    private func prepareSharedText(_ entry: SharedInboxEntry) {
-        guard entry.transfer.attachments.isEmpty, let text = entry.transfer.text,
-              let receipt = sharedInbox.begin(entry) else { return }
-        let draft = IncomingNoteDraft(subject: text.subject, text: text.text, tags: text.tags, isHTML: text.isHTML)
-        pendingNoteActions.append(.edit(EditorRequest(initialDraft: draft, sharedReceipt: receipt)))
+    private func prepareSharedEntry(_ entry: SharedInboxEntry) {
+        guard entry.transfer.attachments.count <= 1, let receipt = sharedInbox.begin(entry) else { return }
+        let draft = entry.transfer.text.map { IncomingNoteDraft(subject: $0.subject, text: $0.text, tags: $0.tags, isHTML: $0.isHTML) }
+        guard let attachment = entry.transfer.attachments.first else {
+            if let draft { pendingNoteActions.append(.edit(EditorRequest(initialDraft: draft, sharedReceipt: receipt))) }
+            else { receipt.deferUntilRequested() }
+            return
+        }
+        incomingFileCopies += 1
+        Task {
+            defer { incomingFileCopies -= 1; openPendingExternalRequest() }
+            do {
+                let file = try await IncomingImportStager.shared.copy(entry.file(attachment), name: attachment.originalName, typeIdentifier: attachment.typeIdentifier)
+                incomingFiles.append(ReceivedRequest(file: file, receipt: receipt, draft: draft))
+            } catch {
+                receipt.deferUntilRequested()
+                model.error = error.localizedDescription
+            }
+        }
     }
     private func receiveExternalURL(_ url: URL) {
         if url.isFileURL {
@@ -520,7 +549,7 @@ struct ContentView: View {
             Task {
                 do {
                     let file = try await IncomingImportStager.shared.copy(url)
-                    incomingFiles.append(file)
+                    incomingFiles.append(ReceivedRequest(file: file))
                 } catch { model.error = error.localizedDescription }
                 incomingFileCopies -= 1
                 openPendingExternalRequest()

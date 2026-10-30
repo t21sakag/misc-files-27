@@ -59,6 +59,8 @@ assert share['NSExtension']['NSExtensionPrincipalClass'].endswith('.ShareViewCon
 rule = share['NSExtension']['NSExtensionAttributes']['NSExtensionActivationRule']
 assert rule['NSExtensionActivationSupportsText'] is True
 assert rule['NSExtensionActivationSupportsWebURLWithMaxCount'] == 1
+for key in ['File', 'Image', 'Movie']:
+    assert rule['NSExtensionActivationSupports'+key+'WithMaxCount'] == 1
 for bundle, value in [(args.app,app),(extension,share)]:
     assert value['StudySharedGroup'] == app['StudySharedGroup'] and '$(' not in value['StudySharedGroup']
     assert entitlements(bundle)['com.apple.security.application-groups'] == [app['StudySharedGroup']]

@@ -36,6 +36,12 @@ import Foundation
             precondition(!manager.fileExists(atPath: ownedDirectory.path), name)
             precondition(manager.fileExists(atPath: folder.path))
         }
+        let sharedMedia = folder.appendingPathComponent(UUID().uuidString)
+        try Data("Shared bytes".utf8).write(to: sharedMedia)
+        let staged = try IncomingImportFile.stage(sharedMedia, name: "元の画像.png", typeIdentifier: "public.png")
+        precondition(staged.name == "元の画像.png" && staged.kind == .image && staged.url.lastPathComponent == "元の画像.png")
+        let stagedData = try Data(contentsOf: staged.url)
+        precondition(stagedData == Data("Shared bytes".utf8))
         let unsupported = folder.appendingPathComponent("unrecognized.zzztest")
         try Data([1, 2, 3]).write(to: unsupported)
         do { _ = try IncomingImportFile.stage(unsupported); preconditionFailure("accepted unsupported document") }

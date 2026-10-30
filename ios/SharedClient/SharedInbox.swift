@@ -5,7 +5,7 @@ struct SharedTextContent: Codable, Equatable, Sendable {
     var text: String
     var tags: String?
     var isHTML: Bool
-    var isEmpty: Bool { subject.isEmpty && text.isEmpty }
+    var isEmpty: Bool { subject.isEmpty && text.isEmpty && tags?.isEmpty != false }
 }
 struct SharedIncomingFile: Sendable {
     let url: URL

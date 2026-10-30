@@ -1,35 +1,6 @@
 import Foundation
 import SwiftUI
 
-@MainActor final class SharedInboxReceipt {
-    let id: UUID
-    private let inbox: SharedInbox
-    private let resolved: (UUID, Bool) -> Void
-    private var finished = false
-    private var accepted = false
-    init(id: UUID, inbox: SharedInbox, resolved: @escaping (UUID, Bool) -> Void) {
-        self.id = id; self.inbox = inbox; self.resolved = resolved
-    }
-    func accept() async -> Bool {
-        if finished { return accepted }
-        let inbox = inbox, id = id
-        do {
-            try await Task.detached(priority: .utility) { try inbox.finish(id) }.value
-            finished = true; accepted = true; resolved(id, true)
-            return true
-        } catch {
-            // The note may already be saved. Preserve the original share and
-            // tell the editor instead of turning a storage failure into retry.
-            finished = true; resolved(id, false)
-            return false
-        }
-    }
-    func deferUntilRequested() {
-        guard !finished else { return }
-        finished = true; resolved(id, false)
-    }
-}
-
 @MainActor final class SharedInboxController: ObservableObject {
     @Published private(set) var entries: [SharedInboxEntry] = []
     @Published private(set) var invalid: [UUID] = []
@@ -39,8 +10,8 @@ import SwiftUI
     private var active = Set<UUID>()
     private var deferred = Set<UUID>()
     private var generation = UUID()
-    var nextAutomaticText: SharedInboxEntry? {
-        entries.first { !deferred.contains($0.id) && $0.transfer.attachments.isEmpty && $0.transfer.text != nil }
+    var nextAutomaticEntry: SharedInboxEntry? {
+        entries.first { !deferred.contains($0.id) && $0.transfer.attachments.count <= 1 }
     }
     func refresh() {
         let request = UUID(); generation = request
@@ -109,8 +80,8 @@ struct SharedInboxView: View {
                             Text(text.text).lineLimit(5)
                         }
                         ForEach(entry.transfer.attachments, id: \.storedName) { Text($0.originalName) }
-                        Button(AppText.localized("ノートとして開く")) { open(entry) }
-                            .disabled(!entry.transfer.attachments.isEmpty)
+                        Button(entry.transfer.attachments.isEmpty ? AppText.localized("ノートとして開く") : AppText.localized("取り込みを確認")) { open(entry) }
+                            .disabled(entry.transfer.attachments.count > 1)
                             .accessibilityIdentifier("shared-inbox-open-" + entry.id.uuidString)
                         Button(AppText.localized("削除"), role: .destructive) { deleting = entry.id }
                     }

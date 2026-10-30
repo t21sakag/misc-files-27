@@ -6,6 +6,7 @@ struct BackendPageRequest: Identifiable {
     let path: String
     let title: String
     var noteIDs: [String] = []
+    var sharedReceipt: SharedInboxReceipt?
 }
 struct BackendPageView: View {
     @ObservedObject var model: StudyModel
@@ -23,7 +24,7 @@ struct BackendPageView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if let url { BackendWebView(url: url, model: model, noteIDs: request.noteIDs, close: finish, ready: { closeRequest = $0 }, saveReady: { saveRequest = $0 }, inspection: themeInspection, themeObserved: { themeReport = $0 }) }
+                if let url { BackendWebView(url: url, model: model, noteIDs: request.noteIDs, close: finish, sharedReceipt: request.sharedReceipt, ready: { closeRequest = $0 }, saveReady: { saveRequest = $0 }, inspection: themeInspection, themeObserved: { themeReport = $0 }) }
                 else if let error { ContentUnavailableView(AppText.localized("画面を開けませんでした"), systemImage: "exclamationmark.triangle", description: Text(error)) }
                 else { ProgressView() }
             }
@@ -59,7 +60,7 @@ struct BackendPageView: View {
                     url = URL(string: "/" + request.path, relativeTo: base)?.absoluteURL
                 } catch { self.error = error.localizedDescription }
             }
-        }
+        }.onDisappear { request.sharedReceipt?.deferUntilRequested() }
     }
     private func finish() {
         if let onClose { onClose() } else { dismiss() }
@@ -75,12 +76,13 @@ struct BackendWebView: UIViewRepresentable {
     let model: StudyModel
     let noteIDs: [String]
     let close: () -> Void
+    var sharedReceipt: SharedInboxReceipt? = nil
     let ready: (@escaping () -> Void) -> Void
     let saveReady: (@escaping () -> Void) -> Void
     var inspection = 0
     var themeObserved: ((String) -> Void)? = nil
     private var theme: StudyTheme { StudyTheme.resolve(dark: colorScheme == .dark, day: dayTheme, night: nightTheme) }
-    func makeCoordinator() -> Coordinator { Coordinator(model: model, origin: url, noteIDs: noteIDs, close: close) }
+    func makeCoordinator() -> Coordinator { Coordinator(model: model, origin: url, noteIDs: noteIDs, close: close, sharedReceipt: sharedReceipt) }
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.userContentController.addScriptMessageHandler(context.coordinator, contentWorld: .page, name: "ankiBackend")
@@ -163,13 +165,21 @@ struct BackendWebView: UIViewRepresentable {
         var theme: StudyTheme?
         var inspection = 0
         private let completeClose: () -> Void
+        private let sharedReceipt: SharedInboxReceipt?
         private var closed = false
         func close() {
             guard !closed else { return }
             closed = true
             completeClose()
         }
-        init(model: StudyModel, origin: URL, noteIDs: [String], close: @escaping () -> Void) { self.model = model; self.origin = origin; self.noteIDs = noteIDs; self.completeClose = close }
+        init(model: StudyModel, origin: URL, noteIDs: [String], close: @escaping () -> Void, sharedReceipt: SharedInboxReceipt?) {
+            self.model = model; self.origin = origin; self.noteIDs = noteIDs; self.completeClose = close; self.sharedReceipt = sharedReceipt
+        }
+        private func acceptSharedContent() async {
+            if let sharedReceipt, !(await sharedReceipt.accept()) {
+                model.error = AppText.localized("取り込みは完了しましたが、共有の受信トレイに元のファイルが残っています。")
+            }
+        }
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage, replyHandler: @escaping (Any?, String?) -> Void) {
             guard message.frameInfo.isMainFrame,
                   message.frameInfo.request.url?.host == origin.host,
@@ -188,7 +198,8 @@ struct BackendWebView: UIViewRepresentable {
             Task { @MainActor in
                 do {
                     if method == "deck_options_ready" { replyHandler("", nil); return }
-                    if ["deck_options_require_close", "import_done", "import_dialog_require_close", "close_edit_current", "close_add_cards"].contains(method) { close(); replyHandler("", nil); return }
+                    if method == "import_done" { await acceptSharedContent(); close(); replyHandler("", nil); return }
+                    if ["deck_options_require_close", "import_dialog_require_close", "close_edit_current", "close_add_cards"].contains(method) { close(); replyHandler("", nil); return }
                     if method == "ask_user" || method == "show_message_box" {
                         let request = try await model.engine.call("_decode/" + method, ["data": input])
                         let response = await dialog(title: request["title"] as? String ?? "AnkiPad", text: request["text"] as? String ?? "", confirm: method == "ask_user")
@@ -233,6 +244,7 @@ struct BackendWebView: UIViewRepresentable {
                     }
                     if ["update_deck_configs", "update_image_occlusion_note"].contains(method) { try await model.engine.backup() }
                     let output = try await model.engine.webProtobuf(method, input: input)
+                    if method == "add_image_occlusion_note" { await acceptSharedContent() }
                     replyHandler(output, nil)
                     if ["update_deck_configs", "add_image_occlusion_note", "update_image_occlusion_note"].contains(method) { close() }
                 } catch { replyHandler(nil, error.localizedDescription) }

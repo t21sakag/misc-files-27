@@ -48,7 +48,7 @@ jobs:
           swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/AnkiPad/AppText.swift tests/app_text_smoke.swift -o build/app-text-smoke
           build/app-text-smoke ios/AnkiPad/Resources
       - name: Test incoming request contracts and owned file lifetime
-        if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && startsWith(env.UI_SUITE, 'incoming'))
+        if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (startsWith(env.UI_SUITE, 'incoming') || startsWith(env.UI_SUITE, 'share')))
         run: |
           swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/AnkiPad/BrowserLink.swift tests/browser_link_smoke.swift -o build/browser-link-smoke
           build/browser-link-smoke tests/browser_links.json
@@ -65,6 +65,10 @@ jobs:
           cp build/shared-inbox-smoke build/shared-group-probe
           codesign --force --sign - --timestamp=none --entitlements tests/shared_group_probe.entitlements build/shared-group-probe
           build/shared-inbox-smoke build/shared-group-probe
+          swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/SharedClient/SharedInbox.swift ios/SharedClient/SharedInboxReceipt.swift tests/shared_inbox_receipt_smoke.swift -o build/shared-receipt-smoke
+          build/shared-receipt-smoke
+          swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/SharedClient/SharedInbox.swift ios/ShareExtension/ShareProviderFile.swift tests/shared_provider_file_smoke.swift -o build/shared-provider-smoke
+          build/shared-provider-smoke
       - name: Test full sync direction safety
         run: |
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/sync-decision-smoke
@@ -244,7 +248,7 @@ jobs:
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'engine-languages' || env.UI_SUITE == 'languages'))
         run: python3 tests/backend_languages_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test browser route searches against the real collection
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && startsWith(env.UI_SUITE, 'incoming'))
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (startsWith(env.UI_SUITE, 'incoming') || startsWith(env.UI_SUITE, 'share')))
         run: python3 tests/browser_link_search_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test collection editing, search and card actions
         if: env.CI_MODE == 'full'

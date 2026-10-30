@@ -26,7 +26,7 @@ final class IncomingImportFile: Identifiable, @unchecked Sendable {
     static func kind(for url: URL) -> Kind? {
         format(for: url)?.kind
     }
-    private static func format(for url: URL) -> (kind: Kind, ext: String)? {
+    private static func format(for url: URL, typeIdentifier: String? = nil) -> (kind: Kind, ext: String)? {
         guard url.isFileURL else { return nil }
         func documentKind(_ ext: String) -> Kind? {
             switch ext {
@@ -40,7 +40,7 @@ final class IncomingImportFile: Identifiable, @unchecked Sendable {
         if let kind = documentKind(supplied) { return (kind, supplied) }
         let declared = supplied.isEmpty ? nil : UTType(filenameExtension: supplied)
         let provided = (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType
-        for type in [declared, provided].compactMap({ $0 }) {
+        for type in [declared, typeIdentifier.flatMap { UTType($0) }, provided].compactMap({ $0 }) {
             let ext = (type == declared && !supplied.isEmpty ? supplied : type.preferredFilenameExtension) ?? ""
             guard !ext.isEmpty else { continue }
             if let kind = documentKind(ext) { return (kind, ext) }
@@ -50,7 +50,7 @@ final class IncomingImportFile: Identifiable, @unchecked Sendable {
         }
         return nil
     }
-    static func stage(_ source: URL) throws -> IncomingImportFile {
+    static func stage(_ source: URL, name displayName: String? = nil, typeIdentifier: String? = nil) throws -> IncomingImportFile {
         guard source.isFileURL else {
             throw ImportError(message: AppText.localized("対応していない取り込みファイルです。"))
         }
@@ -63,7 +63,7 @@ final class IncomingImportFile: Identifiable, @unchecked Sendable {
                 guard try readable.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true else {
                     throw ImportError(message: AppText.localized("通常のファイルを選んでください。"))
                 }
-                guard let format = Self.format(for: source) ?? Self.format(for: readable) else {
+                guard let format = Self.format(for: source, typeIdentifier: typeIdentifier) ?? Self.format(for: readable, typeIdentifier: typeIdentifier) else {
                     throw ImportError(message: AppText.localized("対応していない取り込みファイルです。"))
                 }
                 let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Received-" + UUID().uuidString, isDirectory: true)
@@ -71,17 +71,18 @@ final class IncomingImportFile: Identifiable, @unchecked Sendable {
                 do {
                     // Keep a useful media name, but only as one filename inside
                     // our own directory; never accept path separators from it.
-                    let sanitized = source.lastPathComponent
+                    let originalName = displayName ?? source.lastPathComponent
+                    let sanitized = originalName
                         .replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "\\", with: "_")
                         .replacingOccurrences(of: ":", with: "_").replacingOccurrences(of: "\0", with: "_")
                         .components(separatedBy: .controlCharacters).joined()
                     let stem = (sanitized as NSString).deletingPathExtension
-                    let candidate = source.pathExtension.lowercased() == format.ext ? sanitized : stem + "." + format.ext
+                    let candidate = (originalName as NSString).pathExtension.lowercased() == format.ext ? sanitized : stem + "." + format.ext
                     let name = candidate.isEmpty || candidate.utf8.count > 240 ? "source." + format.ext : candidate
                     let local = folder.appendingPathComponent(name, isDirectory: false)
                     try FileManager.default.copyItem(at: readable, to: local)
                     let bytes = (try FileManager.default.attributesOfItem(atPath: local.path)[.size] as? NSNumber)?.int64Value ?? 0
-                    return IncomingImportFile(name: source.lastPathComponent, url: local, directory: folder, kind: format.kind, byteCount: bytes)
+                    return IncomingImportFile(name: originalName, url: local, directory: folder, kind: format.kind, byteCount: bytes)
                 } catch {
                     try? FileManager.default.removeItem(at: folder)
                     throw error
@@ -96,5 +97,7 @@ final class IncomingImportFile: Identifiable, @unchecked Sendable {
 
 actor IncomingImportStager {
     static let shared = IncomingImportStager()
-    func copy(_ source: URL) throws -> IncomingImportFile { try IncomingImportFile.stage(source) }
+    func copy(_ source: URL, name: String? = nil, typeIdentifier: String? = nil) throws -> IncomingImportFile {
+        try IncomingImportFile.stage(source, name: name, typeIdentifier: typeIdentifier)
+    }
 }

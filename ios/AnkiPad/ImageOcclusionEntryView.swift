@@ -5,6 +5,7 @@ import PhotosUI
 struct ImageOcclusionEntryView: View {
     @ObservedObject var model: StudyModel
     let initialFile: IncomingImportFile?
+    let sharedReceipt: SharedInboxReceipt?
     private let engine: Engine
     @Environment(\.dismiss) private var dismiss
     @State private var picking = false
@@ -17,8 +18,8 @@ struct ImageOcclusionEntryView: View {
     @State private var error: String?
     @State private var busy = false
     @State private var receivedImageOpened = false
-    init(model: StudyModel, initialFile: IncomingImportFile? = nil) {
-        self.model = model; self.initialFile = initialFile; engine = model.engine
+    init(model: StudyModel, initialFile: IncomingImportFile? = nil, sharedReceipt: SharedInboxReceipt? = nil) {
+        self.model = model; self.initialFile = initialFile; self.sharedReceipt = sharedReceipt; engine = model.engine
         _deckID = State(initialValue: model.selected?.id ?? model.decks.first(where: { $0.isSelected })?.id ?? model.decks.first?.id ?? "1")
     }
     var body: some View {
@@ -106,6 +107,6 @@ struct ImageOcclusionEntryView: View {
         try await engine.select(deckID)
         try Task.checkCancellation()
         guard let path = local.path.addingPercentEncoding(withAllowedCharacters: .alphanumerics) else { throw EngineError(message: AppText.localized("画像のパスを作成できませんでした。")) }
-        page = BackendPageRequest(path: "image-occlusion/" + path, title: AppText.localized("画像穴埋め"))
+        page = BackendPageRequest(path: "image-occlusion/" + path, title: AppText.localized("画像穴埋め"), sharedReceipt: sharedReceipt)
     }
 }
