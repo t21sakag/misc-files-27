@@ -119,6 +119,28 @@ class StudyFlowTestSupport: XCTestCase {
         return tapTestControl(actions, in: application, keyboard: .keep)
     }
 
+    /// SwiftUI can export a labelled full-row Switch wrapping the native
+    /// thumb. Activate its unique direct Switch child, not the row's centre.
+    @discardableResult
+    func setTestSwitch(_ query: XCUIElementQuery, enabled: Bool, in app: XCUIApplication) -> Bool {
+        guard waitForTestControl(query, in: app, purpose: .observation) != nil else { return false }
+        let children = query.children(matching: .switch)
+        let native = children.count > 0 ? children : query
+        guard let control = waitForTestControl(native, in: app) else { return false }
+        let desired = enabled ? "1" : "0"
+        guard ["0", "1"].contains(control.value as? String ?? "") else {
+            controlFailure(native, in: app, reason: "Switch does not expose an on/off value"); return false
+        }
+        if control.value as? String != desired {
+            guard tapTestControl(native, in: app) != nil else { return false }
+        }
+        let changed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in control.value as? String == desired }, object: nil)
+        guard XCTWaiter.wait(for: [changed], timeout: 10) == .completed else {
+            controlFailure(native, in: app, reason: "Native switch did not reach the requested state"); return false
+        }
+        return true
+    }
+
     /// Native empty fields may export their placeholder as value. Prove the
     /// initial content by inserting a sentinel and checking the entire result;
     /// accepting value == placeholder alone would also accept literal content.

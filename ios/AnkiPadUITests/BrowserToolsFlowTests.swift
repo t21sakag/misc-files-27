@@ -41,12 +41,7 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
         _ = waitForTestControl(app.buttons.matching(identifier: "browser-options-save"), in: app)
     }
     private func setOption(_ identifier: String, enabled: Bool, in app: XCUIApplication) {
-        let query = app.switches.matching(identifier: identifier)
-        guard let control = waitForTestControl(query, in: app) else { return }
-        let desired = enabled ? "1" : "0"
-        if control.value as? String != desired { tapTestControl(query, in: app) }
-        let changed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in control.value as? String == desired }, object: nil)
-        XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 10), .completed, app.debugDescription)
+        setTestSwitch(app.switches.matching(identifier: identifier), enabled: enabled, in: app)
     }
     func testBrowserTruncationCancelsSavesAndRestoresFullRowsAfterRelaunch() {
         let app = makeApplication(); app.launchArguments = []; app.launch()
