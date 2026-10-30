@@ -123,7 +123,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         let parameter = home.buttons.matching(label(["現在のプロファイル", "Current profile"]))
         guard tapTestControl(parameter, in: home, keyboard: .keep) != nil else { return }
         capture("Summary profile choices", in: home)
-        let fixed = home.staticTexts.matching(label(["既定"]))
+        let fixed = home.collectionViews.buttons.matching(label(["既定"]))
         guard tapTestControl(fixed, in: home, keyboard: .keep) != nil else { return }
         capture("Summary fixed profile chosen", in: home)
         // Apple's configuration sheet commits by tapping empty Home background.
