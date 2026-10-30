@@ -91,29 +91,39 @@ class StudyFlowTestSupport: XCTestCase {
     @discardableResult
     func tapTestControl(_ query: XCUIElementQuery, in app: XCUIApplication, form: XCUIElement? = nil,
                         keyboard: TestKeyboardPolicy = .dismiss, alreadySatisfied: (() -> Bool)? = nil) -> XCUIElement? {
+        guard let element = waitForTestControl(query, in: app, form: form, keyboard: keyboard, alreadySatisfied: alreadySatisfied) else { return nil }
+        XCTContext.runActivity(named: "Tap native control: " + element.identifier + " " + String(describing: element.frame)) { _ in
+            element.tap()
+        }
+        return element
+    }
+
+    /// Readiness is also required before reading a value: remote widgets can
+    /// expose both placeholder/redaction and live nodes with the same ID.
+    @discardableResult
+    func waitForTestControl(_ query: XCUIElementQuery, in app: XCUIApplication, form: XCUIElement? = nil,
+                            keyboard: TestKeyboardPolicy = .dismiss, alreadySatisfied: (() -> Bool)? = nil,
+                            timeout: TimeInterval = 20) -> XCUIElement? {
         if alreadySatisfied?() == true { return nil }
         if case .dismiss = keyboard, !dismissTestKeyboard(in: app) { return nil }
         if let form { revealFormControl(query.firstMatch, in: form, topInset: 40, bottomInset: 20, maximumAttempts: 12) }
-        let exists = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in alreadySatisfied?() == true || query.count > 0 }, object: nil)
-        guard XCTWaiter.wait(for: [exists], timeout: 20) == .completed else {
-            controlFailure(query, in: app, reason: "Control did not appear"); return nil
+        let exists = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in alreadySatisfied?() == true || query.count == 1 }, object: nil)
+        guard XCTWaiter.wait(for: [exists], timeout: timeout) == .completed else {
+            controlFailure(query, in: app, reason: "Control did not settle to one match; scope its foreground container and semantic state"); return nil
         }
         if alreadySatisfied?() == true { return nil }
         guard query.count == 1 else {
             controlFailure(query, in: app, reason: "Control query is ambiguous; scope its container/type explicitly"); return nil
         }
         let element = query.element(boundBy: 0)
-        let predicate = alreadySatisfied.map { satisfied in
-            NSPredicate { _, _ in satisfied() || (element.exists && element.isEnabled && element.isHittable) }
-        } ?? NSPredicate(format: "exists == true AND enabled == true AND hittable == true")
-        let ready = XCTNSPredicateExpectation(predicate: predicate, object: element)
-        guard XCTWaiter.wait(for: [ready], timeout: 20) == .completed else {
+        let predicate = NSPredicate { _, _ in
+            alreadySatisfied?() == true || (query.count == 1 && element.exists && element.isEnabled && element.isHittable)
+        }
+        let ready = XCTNSPredicateExpectation(predicate: predicate, object: nil)
+        guard XCTWaiter.wait(for: [ready], timeout: timeout) == .completed else {
             controlFailure(query, in: app, reason: "Control did not become actionable"); return nil
         }
         if alreadySatisfied?() == true { return nil }
-        XCTContext.runActivity(named: "Tap native control: " + element.identifier + " " + String(describing: element.frame)) { _ in
-            element.tap()
-        }
         return element
     }
 

@@ -90,11 +90,13 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         tapChoice(["Add Widget", "Add Widgets", "ウィジェットを追加"], in: home)
         tapChoice(["Done", "完了"], in: home)
         capture("Home after adding summary", in: home)
-        let remaining = home.staticTexts["widget-summary-remaining"]
-        XCTAssertTrue(remaining.waitForExistence(timeout: 30), home.debugDescription)
-        XCTAssertEqual(remaining.label, "残り\(count)枚", "Must read the app's current group snapshot, not a gallery sample")
+        let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
+        guard let widget = waitForTestControl(widgets, in: home, keyboard: .keep) else { return }
+        let live = widget.staticTexts.matching(NSPredicate(format: "identifier == %@ AND label == %@", "widget-summary-remaining", "残り\(count)枚"))
+        guard let remaining = waitForTestControl(live, in: home, keyboard: .keep, timeout: 30) else { return }
+        XCTAssertEqual(remaining.label, "残り\(count)枚", "Must read the app's current group snapshot, not a gallery sample or redaction")
         capture("Summary on Home", in: home)
-        tapTestControl(home.staticTexts.matching(identifier: "widget-summary-remaining"), in: home, keyboard: .keep)
+        tapTestControl(widgets, in: home, keyboard: .keep)
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20), home.debugDescription)
         XCTAssertTrue(app.buttons["deck-1"].waitForExistence(timeout: 30), app.debugDescription)
         XCTAssertFalse(app.alerts.firstMatch.exists)

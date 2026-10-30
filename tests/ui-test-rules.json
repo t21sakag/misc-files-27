@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "rules": {
+    "semantic_labels": "Normalize only decorative edge whitespace; match the complete semantic title.",
+    "foreground_scope": "Resolve the current foreground container and element type before reading or acting.",
+    "unique_reads_and_actions": "Both reads and actions use a unique query; never select the first duplicate to silence ambiguity.",
+    "live_state": "Wait for the required live data or completed transition, not merely a placeholder or element existence.",
+    "keyboard_and_scroll": "Use shared keyboard and reveal handling; retain explicit postconditions for optional transient UI.",
+    "environment": "Check the selected case's actual fixtures, services, onboarding and dependencies before a long UI run.",
+    "first_failure_evidence": "Compare hierarchy, recording and coordinates before changing an interaction.",
+    "failure_classification": "Separate app defects, harness defects, environment failures and inspection failures; count repeat attempts.",
+    "runtime_warnings": "A passed assertion does not dispose of application runtime warnings.",
+    "device_evidence": "Simulator checks do not prove actual audio, notification delivery, re-signing or device permissions."
+  },
+  "common_implementations": [
+    "ios/AnkiPadUITests/StudyFlowTestSupport.swift",
+    "ios/AnkiPadUITests/ControlLabelMatch.swift",
+    "scripts/ui-prerequisites.py",
+    "scripts/summarize-ui-results.py"
+  ]
+}

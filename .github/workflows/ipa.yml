@@ -15,6 +15,7 @@ on:
         options: [widget-gallery, widgets, widget-core, widget-deferred, share-regression, share-image, share-milestone, share-text, milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, incoming-final-repair, reminder-repair, regression-repair, upload-only, incoming-fields, incoming-commit, incoming-apkg, incoming-colpkg, incoming-tsv, incoming-invalid, incoming-still-note, incoming-commit-repair, all]
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: ipad-${{ github.ref }}
   cancel-in-progress: false
@@ -38,6 +39,12 @@ jobs:
           case "$CI_MODE" in compile|ui|ipa|full) ;; *) exit 2 ;; esac
           mkdir -p build
           python3 scripts/select-ui-tests.py "$UI_SUITE" "$CI_MODE" > build/ui-test-arguments.txt
+          python3 tests/ui_failure_review_smoke.py
+      - name: Review repeated validation failures
+        if: env.CI_MODE == 'ui' || env.CI_MODE == 'full'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/ui-failure-review.py check --selections build/ui-test-arguments.txt
       - name: Install app build tool
         env:
           HOMEBREW_NO_AUTO_UPDATE: '1'
@@ -604,7 +611,9 @@ jobs:
         if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
         with:
           name: screenshots
-          path: build/screenshots/*.png
+          path: |
+            build/screenshots/*.png
+            build/screenshots/*.mp4
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v4
@@ -614,6 +623,7 @@ jobs:
           path: |
             build/test-summary.json
             build/test-tree.json
+            build/ui-review-gate.json
             build/widget-diagnostics
             build/UITests.xcresult/database.sqlite3
             build/booted-before-tests.json
