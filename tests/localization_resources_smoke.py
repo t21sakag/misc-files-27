@@ -36,7 +36,8 @@ for key in ja:
 
 used = set()
 occurrences = 0
-for path in sorted((root/'ios/AnkiPad').glob('*.swift')):
+for path in sorted(path for directory in ['AnkiPad', 'ShareExtension', 'SharedClient']
+                   for path in (root/'ios'/directory).glob('*.swift')):
     text = path.read_text()
     for value in sources.scan(text):
         literal = value['text']

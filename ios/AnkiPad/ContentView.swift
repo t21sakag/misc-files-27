@@ -19,6 +19,9 @@ private enum ReviewerPanelAction: String, CaseIterable, Identifiable {
 struct ContentView: View {
     private struct BackgroundRequest: Hashable { let root: URL?; let settingsOpen: Bool }
     @StateObject private var model = StudyModel()
+    @StateObject private var sharedInbox = SharedInboxController()
+    @State private var showingSharedInbox = false
+    @State private var activeSharedEditorReceipt: SharedInboxReceipt?
     @State private var deckBackgroundImage: UIImage?
     @State private var deckBackgroundRoot: URL?
     @State private var deckBackgroundError: String?
@@ -87,6 +90,9 @@ struct ContentView: View {
                         .accessibilityIdentifier("received-open")
                 } else if incomingFileCopies > 0 {
                     ProgressView(AppText.localized("ファイルを受信しています…")).padding(8)
+                } else if !sharedInbox.entries.isEmpty || !sharedInbox.invalid.isEmpty {
+                    Button(AppText.localized("共有の受信トレイ")) { showingSharedInbox = true }
+                        .disabled(!canPresentExternalRequest).padding(8).accessibilityIdentifier("shared-inbox-open")
                 }
             }
             .onChange(of: model.selected?.id, initial: true) { _, _ in loadWhiteboard() }
@@ -250,6 +256,8 @@ struct ContentView: View {
                     Button(AppText.localized("カードブラウザー"), systemImage: "rectangle.stack") { model.browserSearch = ""; model.showingBrowser = true }.accessibilityIdentifier("browser-open")
                     Button(AppText.localized("テキストからノートを追加"), systemImage: "text.badge.plus") { addingTextNote = true }
                         .accessibilityIdentifier("add-text-note")
+                    Button(AppText.localized("共有の受信トレイ"), systemImage: "tray") { showingSharedInbox = true }
+                        .accessibilityIdentifier("shared-inbox-menu")
                     Button(AppText.localized("プロファイル"), systemImage: "person.2") { model.showingProfiles = true }.accessibilityIdentifier("profiles-open")
                     Button(AppText.localized("共有デッキを取得"), systemImage: "arrow.down.circle") { model.showingSharedDecks = true }.accessibilityIdentifier("shared-decks")
                     Button(AppText.localized("統計"), systemImage: "chart.bar") { model.backendPage = BackendPageRequest(path: "graphs", title: AppText.localized("統計")) }.accessibilityIdentifier("statistics")
@@ -337,7 +345,17 @@ struct ContentView: View {
         .sheet(isPresented: $model.showingSettings, onDismiss: openPendingExternalRequest) { SettingsView(model: model) }
         .sheet(isPresented: $model.showingMaintenance, onDismiss: openPendingExternalRequest) { MaintenanceView(model: model) }
         .sheet(item: $model.backendPage, onDismiss: openPendingExternalRequest) { BackendPageView(model: model, request: $0) }
-        .sheet(item: $model.editorRequest, onDismiss: openPendingExternalRequest) { NoteEditorView(model: model, request: $0) }
+        .sheet(item: $model.editorRequest, onDismiss: {
+            activeSharedEditorReceipt?.deferUntilRequested(); activeSharedEditorReceipt = nil
+            openPendingExternalRequest()
+        }) { NoteEditorView(model: model, request: $0) }
+        .sheet(isPresented: $showingSharedInbox, onDismiss: openPendingExternalRequest) {
+            SharedInboxView(inbox: sharedInbox, profileName: model.currentProfile.name) { entry in
+                guard model.profilesReady, !model.busy, !model.isSyncing else { return }
+                prepareSharedText(entry)
+                showingSharedInbox = false
+            }
+        }
         .sheet(isPresented: $model.showingProfiles, onDismiss: openPendingExternalRequest) { ProfileManagerView(model: model) }
         .sheet(isPresented: $model.showingSharedDecks, onDismiss: openPendingExternalRequest) { SharedDeckBrowserView(model: model) }
         .sheet(isPresented: $model.showingBrowser, onDismiss: {
@@ -463,7 +481,7 @@ struct ContentView: View {
             && !openingReminder && !browserSessionActive && notificationRoute.profileID == nil
     }
     private func openPendingExternalRequest() {
-        guard !incomingFiles.isEmpty || !pendingNoteActions.isEmpty || browserLinks.pending != nil,
+        guard !incomingFiles.isEmpty || !pendingNoteActions.isEmpty || browserLinks.pending != nil || sharedInbox.nextAutomaticText != nil,
               canPresentExternalRequest else { return }
         let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
             .flatMap(\.windows).first(where: \.isKeyWindow)
@@ -472,7 +490,7 @@ struct ContentView: View {
         guard let root = window?.rootViewController, root.presentedViewController == nil else { return }
         if !pendingNoteActions.isEmpty {
             switch pendingNoteActions.removeFirst() {
-            case .edit(let request): model.editorRequest = request
+            case .edit(let request): activeSharedEditorReceipt = request.sharedReceipt; model.editorRequest = request
             case .occlusion(let file): receivedOcclusionFile = file; addingOcclusion = true
             }
             return
@@ -481,9 +499,20 @@ struct ContentView: View {
             incomingFileReview = incomingFiles.removeFirst()
             return
         }
-        guard incomingFileCopies == 0, let request = browserLinks.take(canPresent: true) else { return }
-        browserLinkSearch = request.search
-        model.showingBrowser = true
+        guard incomingFileCopies == 0 else { return }
+        if let request = browserLinks.take(canPresent: true) {
+            browserLinkSearch = request.search
+            model.showingBrowser = true
+        } else if let entry = sharedInbox.nextAutomaticText {
+            prepareSharedText(entry)
+            openPendingExternalRequest()
+        }
+    }
+    private func prepareSharedText(_ entry: SharedInboxEntry) {
+        guard entry.transfer.attachments.isEmpty, let text = entry.transfer.text,
+              let receipt = sharedInbox.begin(entry) else { return }
+        let draft = IncomingNoteDraft(subject: text.subject, text: text.text, tags: text.tags, isHTML: text.isHTML)
+        pendingNoteActions.append(.edit(EditorRequest(initialDraft: draft, sharedReceipt: receipt)))
     }
     private func receiveExternalURL(_ url: URL) {
         if url.isFileURL {
@@ -503,7 +532,8 @@ struct ContentView: View {
     }
     private var observedContent: some View {
         errorContent
-        .task { model.bootstrap(); openPendingReminder(); openPendingExternalRequest(); model.requestAutomaticSync(.foreground) }
+        .task { model.bootstrap(); sharedInbox.refresh(); openPendingReminder(); openPendingExternalRequest(); model.requestAutomaticSync(.foreground) }
+        .onChange(of: sharedInbox.entries.map(\.id)) { _, _ in openPendingExternalRequest() }
         .onOpenURL(perform: receiveExternalURL)
         .onChange(of: canPresentExternalRequest) { _, ready in if ready { openPendingExternalRequest() } }
         .onChange(of: model.currentProfileID) { _, _ in model.requestAutomaticSync(.foreground) }
@@ -517,7 +547,7 @@ struct ContentView: View {
         .onChange(of: phase) { _, value in
             if value == .inactive { model.pauseReviewScene() }
             if value == .background { model.replayStop(); model.requestAutomaticSync(.background) }
-            if value == .active { model.resumeReviewScene(); openPendingReminder(); model.requestAutomaticSync(.foreground) }
+            if value == .active { sharedInbox.refresh(); model.resumeReviewScene(); openPendingReminder(); model.requestAutomaticSync(.foreground) }
         }
         .onChange(of: model.reviewingInteractionBlocked) { _, blocked in
             if blocked { model.pauseReviewInteraction() } else { model.resumeReviewInteraction(); model.scheduleConditionalReminderRefresh(); openPendingReminder(); model.processPendingAutomaticSync() }
@@ -529,7 +559,7 @@ struct ContentView: View {
         .alert(AppText.localized("自動進行"), isPresented: $model.timedReminder) { Button(AppText.localized("閉じる"), role: .cancel) {} } message: { Text(AppText.localized("カードの表示時間が終了しました。解答または評価を選んでください。")) }
     }
     private var localCollectionPresentationActive: Bool {
-        importing || addingOcclusion || addingTextNote || customStudy != nil || filteredDeck != nil || deckDescription != nil
+        importing || addingOcclusion || addingTextNote || showingSharedInbox || customStudy != nil || filteredDeck != nil || deckDescription != nil
             || namingDeck || deletingDeck != nil || model.pendingCollectionImport != nil || incomingFileReview != nil
     }
     private var deckList: some View {

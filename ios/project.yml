@@ -22,6 +22,7 @@ settings:
     MARKETING_VERSION: '0.2.0'
     ANKIPAD_SOURCE_COMMIT: development
     CURRENT_PROJECT_VERSION: '2'
+    STUDY_SHARED_GROUP: group.com.localtools.studyclient.shared
 targets:
   AnkiPad:
     type: application
@@ -30,6 +31,7 @@ targets:
       path: ../build/AnkiPad-Info.plist
       properties:
         AnkiPadSourceCommit: $(ANKIPAD_SOURCE_COMMIT)
+        StudySharedGroup: $(STUDY_SHARED_GROUP)
         LSSupportsOpeningDocumentsInPlace: true
         CFBundleDocumentTypes:
           - CFBundleTypeName: Study Documents
@@ -68,7 +70,11 @@ targets:
         NSSpeechRecognitionUsageDescription: カードの音声入力を文字に変換します。
         NSMicrophoneUsageDescription: 学習中の発音練習、カードへの音声入力、フィールドに挿入する音声の録音にマイクを使います。
         NSLocalNetworkUsageDescription: 独自の同期サーバーやアプリ内の画面に接続します。
+    dependencies:
+      - target: ShareExtension
+        embed: true
     sources:
+      - path: SharedClient
       - path: AnkiPad
         excludes: [Resources]
       - path: AnkiPad/Resources
@@ -81,6 +87,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.localtools.studyclient
         TARGETED_DEVICE_FAMILY: '2'
+        CODE_SIGN_ENTITLEMENTS: App.entitlements
         'CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]': Simulator.entitlements
     scheme:
       testTargets: [AnkiPadUITests]
@@ -95,3 +102,40 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.localtools.studyclient.uitests
         SWIFT_OBJC_BRIDGING_HEADER: ''
         OTHER_LDFLAGS: ['$(inherited)']
+  ShareExtension:
+    type: app-extension
+    platform: iOS
+    info:
+      path: ../build/ShareExtension-Info.plist
+      properties:
+        CFBundleDisplayName: AnkiPad
+        AnkiPadSourceCommit: $(ANKIPAD_SOURCE_COMMIT)
+        StudySharedGroup: $(STUDY_SHARED_GROUP)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+    sources:
+      - path: ShareExtension
+      - path: SharedClient
+      - path: AnkiPad/AppText.swift
+      - path: AnkiPad/Resources/ja.lproj/Localizable.strings
+        buildPhase: resources
+      - path: AnkiPad/Resources/en.lproj/Localizable.strings
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.localtools.studyclient.share
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+        SWIFT_OBJC_BRIDGING_HEADER: ''
+        OTHER_LDFLAGS: []
+        HEADER_SEARCH_PATHS: []
+        LIBRARY_SEARCH_PATHS: []
+        CODE_SIGN_ENTITLEMENTS: Share.entitlements
+        'CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]': ShareSimulator.entitlements
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: NO
+        INFOPLIST_KEY_UILaunchScreen_Generation: NO

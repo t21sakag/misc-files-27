@@ -70,6 +70,17 @@ import Foundation
         precondition(afterConsumedMarker.entries.isEmpty)
         print("PASS: immutable share publication, exact copies, original preservation/removal, relaunch persistence, multiple attachments, failed-write cleanup, hidden staging, malformed isolation, traversal/symlink refusal and completed-request suppression")
 
+        // Extension language follows the main app without sharing preferences,
+        // profiles or any account data.
+        precondition(SharedClientSettings.load(from: base) == nil)
+        try SharedClientSettings.save(language: "en", in: base)
+        precondition(SharedClientSettings.load(from: base)?.language == "en")
+        try SharedClientSettings.save(language: "system", in: base)
+        precondition(SharedClientSettings.load(from: base)?.language == "en")
+        try Data(#"{"version":2,"language":"ja"}"#.utf8).write(to: base.appendingPathComponent("client-settings.json"))
+        precondition(SharedClientSettings.load(from: base) == nil)
+        print("PASS: shared language publication and unsupported version/language handling")
+
         let configured = "group.com.localtools.studyclient.shared"
         let suffixed = configured + ".ABCDEFGHIJ"
         precondition(SharedGroup.candidates(configured: configured, signed: ["group.other", suffixed, suffixed], legacy: [configured]) == [suffixed, configured])

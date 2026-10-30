@@ -37,6 +37,7 @@ struct EditorRequest: Identifiable {
     var copiedDocument: NoteDocument?
     var initialDraft: IncomingNoteDraft?
     var incomingMedia: IncomingImportFile?
+    var sharedReceipt: SharedInboxReceipt?
 }
 
 extension Engine {

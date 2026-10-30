@@ -26,6 +26,7 @@ struct NoteEditorView: View {
     @State private var showDiscard = false
     @State private var dirty = false
     @State private var added = false
+    @State private var sharedWarning: String?
     @State private var draftPreview = false
     @State private var copied: EditorRequest?
     @State private var isOcclusion = false
@@ -164,7 +165,10 @@ struct NoteEditorView: View {
         editorForm
             .disabled(busy || model.busy)
             .safeAreaInset(edge: .top) {
-                if added { Text(AppText.localized("ノートを追加しました")).foregroundStyle(.green).padding(8).accessibilityIdentifier("note-added") }
+                VStack {
+                    if added { Text(AppText.localized("ノートを追加しました")).foregroundStyle(.green).padding(8).accessibilityIdentifier("note-added") }
+                    if let sharedWarning { Text(sharedWarning).foregroundStyle(.orange).padding(8) }
+                }
             }
             .studyThemeSurface().navigationTitle(request.isNew ? AppText.localized("ノートを追加") : AppText.localized("ノートを編集"))
             .toolbar {
@@ -328,6 +332,10 @@ struct NoteEditorView: View {
                     if let warning = warnings[state] { fieldWarning = warning; return }
                 }
                 try await engine.saveNote(document, isNew: request.isNew)
+                if let receipt = request.sharedReceipt {
+                    let accepted = await receipt.accept()
+                    if !accepted { sharedWarning = AppText.localized("ノートは保存済みですが、共有の受信トレイに元の内容が残っています。") }
+                }
                 dirty = false
                 model.refreshAfterEditing()
                 if request.isNew && !closeAfterAdd {
