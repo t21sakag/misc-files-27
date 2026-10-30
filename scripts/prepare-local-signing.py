@@ -5,6 +5,7 @@ No signing identity, account credentials or provisioning profile is used here.
 The ad-hoc signatures only carry entitlements and check local bundle integrity.
 """
 import argparse
+import json
 from pathlib import Path
 import plistlib
 import subprocess
@@ -28,6 +29,10 @@ group = main['StudySharedGroup']
 assert group == 'group.'+main['CFBundleIdentifier']+'.shared'
 assert info(plugins[0])['StudySharedGroup'] == group
 assert not list(app.rglob('embedded.mobileprovision'))
+report_path=Path('build/delivery-inspection.json')
+report_path.parent.mkdir(parents=True,exist_ok=True)
+report={'bundles':[{key:info(bundle).get(key) for key in ['CFBundleIdentifier','CFBundleVersion','AnkiPadSourceCommit','UIDeviceFamily','MinimumOSVersion','StudySharedGroup']} for bundle in [app]+plugins], 'os_signature_verified':False}
+report_path.write_text(json.dumps(report,indent=2)+'\n')
 def sign(path, entitlements=None):
     command = ['codesign','--force','--sign','-','--timestamp=none','--generate-entitlement-der']
     if entitlements: command += ['--entitlements',str(entitlements)]
@@ -43,4 +48,6 @@ with tempfile.TemporaryDirectory(prefix='LocalSigning-') as directory:
         sign(bundle,entitlement_file)
         assert xml_entitlements(executable.read_bytes())['com.apple.security.application-groups'] == [group]
     subprocess.run(['codesign','--verify','--strict','--deep',str(app)],check=True)
+report['os_signature_verified']=True
+report_path.write_text(json.dumps(report,indent=2)+'\n')
 print('PASS: local ad-hoc app/extension signatures preserve matching shared-container declarations; no account/profile used')

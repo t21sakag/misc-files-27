@@ -52,7 +52,7 @@ with zipfile.ZipFile(args.ipa) as package:
     assert all(activation['NSExtensionActivationSupports'+kind+'WithMaxCount'] == 1 for kind in ['File','Image','Movie','WebURL'])
     group = 'group.'+info['CFBundleIdentifier']+'.shared'
     for root, value in [(app,info),(extension_root,extension)]:
-        assert value['UIDeviceFamily'] == [2] and value['MinimumOSVersion'] == '18.0'
+        assert value['UIDeviceFamily'] == [2] and value['MinimumOSVersion'] == '18.0', f"{value['CFBundleIdentifier']}: device family={value['UIDeviceFamily']}, minimum OS={value['MinimumOSVersion']}"
         assert value.get('CFBundleSupportedPlatforms') == ['iPhoneOS']
         assert value['StudySharedGroup'] == group
         executable = package.read(root+value['CFBundleExecutable'])
