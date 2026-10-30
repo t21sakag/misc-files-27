@@ -173,9 +173,15 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         guard tapTestControl(app.buttons.matching(identifier: "collection-menu"), in: app) != nil else { return }
         guard tapTestControl(app.buttons.matching(identifier: "profiles-open"), in: app) != nil else { return }
         guard tapTestControl(app.buttons.matching(identifier: "profile-add"), in: app) != nil else { return }
-        guard let name = tapTestControl(app.alerts.textFields.matching(identifier: "profile-name"), in: app, keyboard: .keep) else { return }
+        let creation = app.alerts.matching(NSPredicate(format: "label == %@", "プロファイルを追加"))
+        // Observed SwiftUI alert TextField exports its placeholder, not the
+        // source accessibility ID. The foreground creation alert has one field.
+        guard let name = tapTestControl(creation.textFields, in: app, keyboard: .keep) else { return }
         name.typeText("Widget secondary")
-        guard tapTestControl(app.alerts.buttons.matching(identifier: "profile-save"), in: app, keyboard: .keep) != nil else { return }
+        // Observed save wrappers share an ID and frame. Select the containing
+        // parent structurally rather than taking the first of two matches.
+        let save = creation.buttons.matching(identifier: "profile-save").containing(.button, identifier: "profile-save")
+        guard tapTestControl(save, in: app, keyboard: .keep) != nil else { return }
         waitForStoredProfile(app, isDefault: false, total: 0)
         capture("Secondary profile selected and published", in: app)
         XCUIDevice.shared.press(.home)
