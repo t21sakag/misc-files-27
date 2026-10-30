@@ -39,9 +39,13 @@ final class ShareViewController: UIViewController {
     @Published var error: String?
     @Published private(set) var files: [ShareProviderFile] = []
     private let container: URL?
+    private let inboxRoot: URL?
     private var loadFailed = false
     var available: Bool { container != nil && !loadFailed }
-    init(container: URL?) { self.container = container }
+    init(container: URL?) {
+        self.container = container
+        inboxRoot = container.map { SharedClientSettings.extensionInboxDirectory(in: $0) }
+    }
     func load(_ items: [NSExtensionItem]) {
         Task {
             defer { loading = false }
@@ -87,7 +91,7 @@ final class ShareViewController: UIViewController {
         }
     }
     func publish() {
-        guard available, !loading, !publishing, !published, let container, !subject.isEmpty || !text.isEmpty || !files.isEmpty else { return }
+        guard available, !loading, !publishing, !published, let inboxRoot, !subject.isEmpty || !text.isEmpty || !files.isEmpty else { return }
         publishing = true
         let content = SharedTextContent(subject: subject, text: text, tags: tags.isEmpty ? nil : tags, isHTML: isHTML)
         let leases = files
@@ -95,7 +99,7 @@ final class ShareViewController: UIViewController {
             defer { publishing = false }
             do {
                 _ = try await Task.detached(priority: .utility) {
-                    try SharedInbox(root: container.appendingPathComponent("IncomingShares", isDirectory: true)).publish(text: content, files: leases.map(\.file))
+                    try SharedInbox(root: inboxRoot).publish(text: content, files: leases.map(\.file))
                 }.value
                 published = true
             } catch { self.error = AppText.localized("共有内容を保存できませんでした。元のアプリからもう一度共有してください。") }
@@ -119,7 +123,9 @@ struct ShareComposerView: View {
                     if model.loading { ProgressView(AppText.localized("共有を受信しています…")) }
                     if !model.files.isEmpty {
                         Section(AppText.localized("ファイル")) {
-                            ForEach(model.files.indices, id: \.self) { Text(model.files[$0].file.name) }
+                            ForEach(model.files.indices, id: \.self) { index in
+                                Text(model.files[index].file.name).accessibilityIdentifier("share-file-" + String(index))
+                            }
                         }
                     }
                     Section(AppText.localized("件名（任意）")) {

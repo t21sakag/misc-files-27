@@ -156,6 +156,7 @@
     "testInvalidReceivedPackageReportsFailureAndKeepsPreviousCollection"
   ],
   "ShareExtensionFlowTests": [
-    "testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel"
+    "testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel",
+    "testSafariImageShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia"
   ]
 }

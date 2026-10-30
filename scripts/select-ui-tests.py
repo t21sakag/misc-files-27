@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 
 suites = {
+    'share-image': ['testSafariImageShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia'],
+    'share-milestone': ['testSafariImageShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia', 'testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel'],
     'share-text': ['testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel'],
     'milestone': ['testPreviewCardAPIReadsAndRestoresFlag', 'testReviewVoicePanelClosesWithoutChangingCard', 'testZZZProfilesKeepCollectionsAndAccountsSeparate'],
     'changed': ['testSwipeCanRevealAndAnswerThenUndo', 'testZZSharedDeckCanBeDownloadedAndImported', 'testZZZProfilesKeepCollectionsAndAccountsSeparate'],

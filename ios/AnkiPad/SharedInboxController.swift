@@ -17,14 +17,19 @@ import SwiftUI
         let request = UUID(); generation = request
         guard let container = SharedGroup.container() else { available = false; return }
         available = true
-        let inbox = SharedInbox(root: container.appendingPathComponent("IncomingShares", isDirectory: true))
+        #if DEBUG
+        let testingNamespace = UITestIsolation.namespace()
+        #else
+        let testingNamespace: String? = nil
+        #endif
+        let inbox = SharedInbox(root: SharedClientSettings.inboxDirectory(in: container, testingNamespace: testingNamespace))
         self.inbox = inbox
         let language = AppText.language
         Task {
             do {
                 let result = try await Task.detached(priority: .utility) {
                     // Language propagation must not hide already received content.
-                    try? SharedClientSettings.save(language: language, in: container)
+                    try? SharedClientSettings.save(language: language, in: container, testingNamespace: testingNamespace)
                     return try inbox.scan()
                 }.value
                 guard generation == request else { return }

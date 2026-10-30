@@ -81,6 +81,22 @@ import Foundation
         precondition(SharedClientSettings.load(from: base) == nil)
         print("PASS: shared language publication and unsupported version/language handling")
 
+        let namespace = UUID().uuidString
+        try SharedClientSettings.save(language: "en", in: base, testingNamespace: namespace)
+        let productionInbox = base.appendingPathComponent("IncomingShares", isDirectory: true)
+        #if DEBUG
+        let scoped = productionInbox.appendingPathComponent("UITests", isDirectory: true).appendingPathComponent(namespace, isDirectory: true)
+        precondition(SharedClientSettings.extensionInboxDirectory(in: base) == scoped)
+        precondition(SharedClientSettings.inboxDirectory(in: base, testingNamespace: namespace) == scoped)
+        try SharedClientSettings.save(language: "ja", in: base)
+        precondition(SharedClientSettings.extensionInboxDirectory(in: base) == productionInbox)
+        #else
+        precondition(SharedClientSettings.extensionInboxDirectory(in: base) == productionInbox)
+        precondition(SharedClientSettings.inboxDirectory(in: base, testingNamespace: namespace) == productionInbox)
+        #endif
+        precondition(SharedClientSettings.inboxDirectory(in: base, testingNamespace: "../outside") == productionInbox)
+        print("PASS: test inbox scope agrees across app and extension; no overrides in Release; malformed scopes are ignored")
+
         let configured = "group.com.localtools.studyclient.shared"
         let suffixed = configured + ".ABCDEFGHIJ"
         precondition(SharedGroup.candidates(configured: configured, signed: ["group.other", suffixed, suffixed], legacy: [configured]) == [suffixed, configured])
