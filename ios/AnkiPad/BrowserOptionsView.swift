@@ -9,17 +9,42 @@ struct BrowserOptionsView: View {
     @State private var busy = false
     @State private var error: String?
 
+    #if DEBUG
+    @State private var traceInstance = UUID()
+    #endif
+    private func trace(_ phase: String) {
+        #if DEBUG
+        guard UITestIsolation.namespace() != nil else { return }
+        NSLog("browser.options.trace instance=%@ phase=%@ loaded=%d busy=%d truncate=%d notes=%d accents=%d",
+              traceInstance.uuidString, phase, loaded ? 1 : 0, busy ? 1 : 0,
+              truncate ? 1 : 0, options.notesMode ? 1 : 0, options.ignoreAccents ? 1 : 0)
+        #endif
+    }
+    private var truncationBinding: Binding<Bool> {
+        Binding(get: { truncate }, set: { value in
+            trace(value ? "truncate.set.true" : "truncate.set.false")
+            truncate = value
+            trace("truncate.assigned")
+        })
+    }
+    private func optionBinding(_ keyPath: WritableKeyPath<BrowserOptions, Bool>, name: String) -> Binding<Bool> {
+        Binding(get: { options[keyPath: keyPath] }, set: { value in
+            trace(name + (value ? ".set.true" : ".set.false"))
+            options[keyPath: keyPath] = value
+            trace(name + ".assigned")
+        })
+    }
     var body: some View {
         NavigationStack {
             Form {
                 Section(AppText.localized("表示")) {
-                    Toggle(AppText.localized("ノート表示"), isOn: $options.notesMode).accessibilityIdentifier("browser-options-notes")
-                    Toggle(AppText.localized("長い内容を3行で省略"), isOn: $truncate).accessibilityIdentifier("browser-options-truncate")
+                    Toggle(AppText.localized("ノート表示"), isOn: optionBinding(\.notesMode, name: "notes")).accessibilityIdentifier("browser-options-notes")
+                    Toggle(AppText.localized("長い内容を3行で省略"), isOn: truncationBinding).accessibilityIdentifier("browser-options-truncate")
                     Text(AppText.localized("省略しない場合は、ブラウザーの各列に内容全体を表示します。"))
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Section(AppText.localized("検索")) {
-                    Toggle(AppText.localized("検索でアクセントを区別しない"), isOn: $options.ignoreAccents)
+                    Toggle(AppText.localized("検索でアクセントを区別しない"), isOn: optionBinding(\.ignoreAccents, name: "accents"))
                         .accessibilityIdentifier("browser-options-ignore-accents")
                     TextField(AppText.localized("既定の検索"), text: $options.defaultSearch)
                         .textInputAutocapitalization(.never).autocorrectionDisabled().accessibilityIdentifier("browser-options-default-search")
@@ -39,8 +64,12 @@ struct BrowserOptionsView: View {
                 }
             }
             .interactiveDismissDisabled(busy)
+            .onAppear { trace("appear") }
+            .onDisappear { trace("disappear") }
+            .onChange(of: truncate) { _, _ in trace("truncate.changed") }
             .task {
-                do { options = try await model.engine.browserOptions(); loaded = true }
+                trace("load.start")
+                do { options = try await model.engine.browserOptions(); loaded = true; trace("load.end") }
                 catch { self.error = error.localizedDescription }
             }
             .alert(AppText.localized("処理できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
