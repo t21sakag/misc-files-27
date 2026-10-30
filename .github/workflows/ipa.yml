@@ -41,6 +41,8 @@ jobs:
           python3 scripts/select-ui-tests.py "$UI_SUITE" "$CI_MODE" > build/ui-test-arguments.txt
           python3 tests/ui_failure_review_smoke.py
           python3 tests/simulator_identity_smoke.py
+          python3 tests/query_predicate_smoke.py
+          python3 scripts/check-ui-query-predicates.py
       - name: Review repeated validation failures
         if: env.CI_MODE == 'ui' || env.CI_MODE == 'full'
         env:

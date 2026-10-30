@@ -285,7 +285,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         capture("Deck list configuration", in: home)
         // This intent has one parameter. Wait for exactly one foreground
         // actionable value Button rather than guessing its empty-value title.
-        let parameter = home.buttons.matching(NSPredicate(format: "hittable == true"))
+        let parameter = home.buttons
         guard tapTestControl(parameter, in: home, keyboard: .keep) != nil else { return }
         capture("Deck list available choices", in: home)
         tapChoice([profileName + " · " + name], in: home)
