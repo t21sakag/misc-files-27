@@ -35,10 +35,13 @@ try:
             if identifier != bundle:
                 continue
             report['container_found'] = True
-            probe = container/'tmp/widget-probe.json'
-            if probe.is_file() and not probe.is_symlink() and probe.stat().st_size <= 16384:
-                shutil.copy2(probe, args.output/'widget-probe.json')
-                report['probe_found'] = True
+            for relative in ['Library/Application Support/widget-probe.json', 'tmp/widget-probe.json']:
+                probe = container/relative
+                if probe.is_file() and not probe.is_symlink() and probe.stat().st_size <= 16384:
+                    shutil.copy2(probe, args.output/'widget-probe.json')
+                    report['probe_found'] = True
+                    report['probe_location'] = relative
+                    break
         predicate = 'process == "StudyWidgets" OR eventMessage CONTAINS ' + json.dumps(bundle)
         with (args.output/'system.log').open('w') as stream:
             try:

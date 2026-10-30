@@ -252,6 +252,324 @@
         }
       ],
       "checked_at": "2026-10-30T11:40:14.696001+00:00"
+    },
+    {
+      "id": "20261030-widget-gallery-runtime-diagnostics",
+      "covers": [
+        [
+          41050403225,
+          1
+        ],
+        [
+          41042856961,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41042856961,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Direct singular read matched normal and privacy-redacted nodes. The subsequent shared resolver avoids that ambiguity, while retaining actual stored-count validation."
+        },
+        {
+          "attempt": [
+            41050403225,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "Unique Home widget exists at (94,56,140,157), but after 30 seconds it has no visible text and no current count. Video at 76s and 90s and failure AX/image agree. App versus WidgetKit/runtime cause is not yet established. Post-test log inspection failed because Xcode had shut down the same owned simulator; absent tmp probe alone does not prove provider non-execution."
+        }
+      ],
+      "root_cause": "The latest assertion reports an unmet real widget condition, not an ambiguous read. Its runtime cause remains unknown because post-test diagnostics assume the simulator is still booted and tmp persists through Xcode cleanup.",
+      "common_resolution": "Keep native interactions, timeout and expected live count unchanged. Capture a filtered, bounded widget log before launching the UI command and stop only its owned observer afterward. Preserve the UI exit status. Move Debug probe to extension Application Support, also emit numeric/stage-only log events, and collect the owned container even after shutdown. The next single-case run obtains evidence about extension launch, timeline and shared-snapshot consumption; it does not assume a rendering fix.",
+      "rule_review": {
+        "semantic_labels": "Exact observed symbol-space label is covered by ControlLabelMatch. The contract test accepts Unicode edge whitespace and rejects unrelated titles, substrings and unescaped regex operators.",
+        "foreground_scope": "Retain typed MenuItem/Button and Cell choices for the foreground gallery. Scope the Home container to the observed icon identifier plus value=Widget, excluding app/Dock icons.",
+        "unique_reads_and_actions": "Replace the ambiguous singular existence read with the shared resolver. Wait for exactly one match before reading. Distinguish passive visibility from action hit-testing; never choose a duplicate by index as a fix.",
+        "live_state": "Retain app-derived expected count1, 30-second observation, exact widget scope and final app opening. No changes to assertion, tap, wait or configuration. Blank output is still failure; no release IPA or parity completion claim.",
+        "keyboard_and_scroll": "Keep existing shared keyboard/reveal handling. Gallery controls keep the keyboard only when the actual target is actionable. No speculative scroll or coordinate fallback. Background hold uses measured margin and excludes occupied icons.",
+        "environment": "Same owned simulator is used by test and collector; shutdown invalidated only the post-test log command. Start a live observer while booted, retain a <=16KiB owned persistent probe, cap captured logs at8MiB. A local subprocess/container regression covers booted observer, shutdown collection, observer failure and child exit preservation.",
+        "first_failure_evidence": "Compared latest failure AX, screenshot and video frames at76s (editing) and90s (Home), plus stored count1. Widget frame(94,56,140,157) has no StaticText. Its simulator UUID exactly matches booted-before and collector, but booted-after is empty and log show returned149. DEBUG and debug.dylib compilation are confirmed, not guessed.",
+        "failure_classification": "Prior duplicate assertion is harness. Latest blank Home widget is an unmet functional condition with app/environment cause undetermined. Post-test log acquisition is inspection failure. Do not classify lack of logs as proof that WidgetKit never launched, nor mask blank rendering by accepting sample25.",
+        "runtime_warnings": "Latest structured summary runtimeWarnings=[]; retain widget warning rejection even if assertions later pass.",
+        "device_evidence": "Only simulator Home rendering is targeted. M6 remains incomplete; SideStore groups, actual widget configuration/families and device behavior remain unverified. build176 contains no widget extension."
+      },
+      "evidence": [
+        {
+          "attempt": [
+            41042856961,
+            1
+          ],
+          "kind": "hierarchy",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41042856961",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/AD6E482B-61AB-409C-9656-96B52EFEC7C3.txt",
+          "sha256": "a29ffc098b85fa8e90d40ace39119a9736ce766cab72a00b3c18dda31ec54e23"
+        },
+        {
+          "attempt": [
+            41042856961,
+            1
+          ],
+          "kind": "issue",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41042856961",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/A38FCDE7-8601-4C6F-BFFF-F2528850CD98.txt",
+          "sha256": "b931649d57231370c55d48361a10395c4b01d946c12e56233635ad191b08fd01"
+        },
+        {
+          "attempt": [
+            41042856961,
+            1
+          ],
+          "kind": "image",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41042856961",
+          "artifact_name": "screenshots",
+          "artifact_entry": "38E57F59-82D4-4D1E-BF77-76730E03E6F5.png",
+          "sha256": "46b4b19c0f402a4fce13ee7cc8edc1cf7931656a9f9e0ed32162beb08067f6ff"
+        },
+        {
+          "attempt": [
+            41042856961,
+            1
+          ],
+          "kind": "recording",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41042856961",
+          "artifact_name": "test-results",
+          "artifact_entry": "screenshots/DDBD367D-7A23-4FBE-AC07-D49FF23E4E8E.mp4",
+          "sha256": "a9f3432a65dc2795f41acdbe5317c36b8cadb5277feea88cfa527831864e4907"
+        },
+        {
+          "attempt": [
+            41050403225,
+            1
+          ],
+          "kind": "hierarchy",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41050403225",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/B003ED3B-5DE7-4495-952F-D2E5D0E35A6B.txt",
+          "sha256": "25b58fd5e25a95d4d064d83975122fd4cb4f7cda06dce0ea195828731b727422"
+        },
+        {
+          "attempt": [
+            41050403225,
+            1
+          ],
+          "kind": "image",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41050403225",
+          "artifact_name": "screenshots",
+          "artifact_entry": "C921A46F-ED8F-4A69-A664-A2B61DD32359.png",
+          "sha256": "bde6dfb4b0de240804afc5886cf98154b4ceb01df861bfcaaac95be07ce83775"
+        },
+        {
+          "attempt": [
+            41050403225,
+            1
+          ],
+          "kind": "recording",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41050403225",
+          "artifact_name": "screenshots",
+          "artifact_entry": "F2793E34-CE2A-41A1-9947-2759FB56CBB3.mp4",
+          "sha256": "394b201904da558b7448195e4cad686c3fb0e1efe1f1b2b4eed2585886f2f7d8"
+        },
+        {
+          "attempt": [
+            41050403225,
+            1
+          ],
+          "kind": "inspection",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41050403225",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/collection.json",
+          "sha256": "d4f3531b0122bf58932fc2daf5096ff5cb88d51bc60d4b67d73485cb2417d33b"
+        },
+        {
+          "attempt": [
+            41050403225,
+            1
+          ],
+          "kind": "inspection",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41050403225",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/system.log",
+          "sha256": "98b10ccbf2e160e370f790d029ce40ae79359c54b55a0d9a67e260041386b369"
+        },
+        {
+          "attempt": [
+            41050403225,
+            1
+          ],
+          "kind": "environment",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41050403225",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "booted-before-tests.json",
+          "sha256": "d38cf195c032e961e8b4c3af36d6df4556b65f8a2b4339410ebc17da0238e7b3"
+        },
+        {
+          "attempt": [
+            41050403225,
+            1
+          ],
+          "kind": "environment",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41050403225",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "booted-after-tests.json",
+          "sha256": "342d12f863efc6fe2427a02afb95802be42baa50275b624616131c363998383f"
+        }
+      ],
+      "next_scope": [
+        "WidgetGalleryFlowTests/testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "e9c6423a8e7475b07d20bac007c9ec8ed813cc24fd2f0d8e36a7e6324d7c85c7",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "711ce7ce4125d1f44cbb3088ca452776d6b852dddcf595ea2223daed4866dc82",
+        "ios/AnkiPadUITests/ControlLabelMatch.swift": "48027c8ba45064cc037cdeb9c2a15186e6fd78c6879f5bd50ff6077b0361ea9a",
+        "ios/AnkiPadUITests/WidgetGalleryFlowTests.swift": "71665ae67a1a38be4c6517273059acaf2c5dbc5c6ae577248a52067500de66da",
+        "ios/StudyWidgets/WidgetData.swift": "b8df797573c895203c0990358c0af96b9de8d4f1ff7217a4184c57d469a44389",
+        "ios/StudyWidgets/WidgetProbe.swift": "2e86bf026d7bf01646262c262b630905408ee1e6b673e771d97b5def6943edc9",
+        "scripts/collect-widget-diagnostics.py": "83d1cd55e31e1157722ae3d443a7164af5b9a6c0eeaeef1b76d7847a636fb33a",
+        "scripts/ui-failure-review.py": "34b2815cd0f9aa9acc1a1e5afa51df55127936f3f60ca8989baa47264634f649",
+        "tests/ipa_packaging_smoke.py": "b47b910c3cb31ed78411aaf9c98ce23d645d8c1551fa04d5b7e25e8437f75410",
+        "scripts/run-ui-with-diagnostics.py": "9b3df49c3d5413ecaa6021c37fa7011ffcccb7d553cf65ade222dde546010221",
+        "tests/widget_diagnostics_smoke.py": "140100a605299d0646189e616de0f7346c71b1e51d8ec1b3cce96cb9c2f87a55",
+        ".github/workflows/ipa.yml": "eceb447b18af31e712023b98cbcba3bf778d0275b6f29258a14a83b91baf0e06"
+      },
+      "checks": [
+        {
+          "name": "Review gate regression",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Swift syntax only; Apple SDK typecheck pending",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "fa1a4728bed6860227c290b388fa8969a947ec838fb81d28d22c0b423705b889"
+        },
+        {
+          "name": "System label contract compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPadUITests/ControlLabelMatch.swift",
+            "tests/control_label_match_smoke.swift",
+            "-o",
+            "build/review-outputs/control-label-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "System label contract execute",
+          "argv": [
+            "build/review-outputs/control-label-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2fa442d406c1369fc0be1d7938257fc8a2d8128c96d7343c08cfb38547f80c18"
+        },
+        {
+          "name": "UI case scope",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "44c3b0d0a9ec8179675f57f80b18a837635885036849df94d92652fca31a1589"
+        },
+        {
+          "name": "Complete disjoint batch scope",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "020acd97462b84b0f9934f94ea5783374dcc7ae0b867178df465782c7cf3d5ce"
+        },
+        {
+          "name": "Debug probe Foundation compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-DDEBUG",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "-c",
+            "ios/StudyWidgets/WidgetProbe.swift",
+            "-o",
+            "build/review-outputs/probe-debug.o"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "Release probe exclusion compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "-c",
+            "ios/StudyWidgets/WidgetProbe.swift",
+            "-o",
+            "build/review-outputs/probe-release.o"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "Debug-only marker boundary",
+          "argv": [
+            "python3",
+            "-c",
+            "from pathlib import Path; p=b'widget-probe.json'; assert p in Path('build/review-outputs/probe-debug.o').read_bytes(); assert p not in Path('build/review-outputs/probe-release.o').read_bytes(); print('PASS: diagnostic path confined to Debug')"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "8cea6ba1541a81a64a04a3f3d9f7b59728ed2dcd661ce9008aaec099f2dccf09"
+        },
+        {
+          "name": "IPA debug probe rejection",
+          "argv": [
+            "python3",
+            "tests/ipa_packaging_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6edaab44150b48ae2dd139f38e1d8ddfbfbd4bd021532ef4e1f59cda9c9d95a4"
+        },
+        {
+          "name": "Actual child process and owned persistent container diagnostics regression",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "All published workflow shell blocks parse",
+          "argv": [
+            "python3",
+            "-c",
+            "import re,subprocess,yaml; from pathlib import Path; w=yaml.safe_load(Path('.github/workflows/ipa.yml').read_text()); steps=[s for j in w['jobs'].values() for s in j.get('steps',[]) if 'run' in s]; [subprocess.run(['bash','-n'],input=re.sub(r'\\$\\{\\{.*?\\}\\}', 'REVIEW_VALUE',s['run']),text=True,check=True) for s in steps]; print('PASS:',len(steps),'workflow shell blocks')"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "586a530bdc774eb66c3d30ff2ae97627a123020184c485fb30d27358c2c0b5dc"
+        }
+      ],
+      "checked_at": "2026-10-30T12:26:30.567810+00:00"
     }
   ]
 }
