@@ -164,6 +164,7 @@
     "testWidgetRouteWaitsForUnsavedEditorAndRejectsMissingDeck"
   ],
   "WidgetGalleryFlowTests": [
-    "testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp"
+    "testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp",
+    "testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount"
   ]
 }

@@ -42,11 +42,14 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         XCTAssertGreaterThan(total ?? 0, 0, "The synthetic collection must have due cards")
         return total ?? 0
     }
-    func testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp() {
+    private func launchWidgetApplication() -> XCUIApplication {
         let app = makeApplication()
         app.launchArguments = ["--uitest-fixture", "--uitest-widgets"]
         app.launch()
         XCTAssertTrue(app.buttons["deck-1"].waitForExistence(timeout: 30), app.debugDescription)
+        return app
+    }
+    private func addSummary(_ app: XCUIApplication) -> (XCUIApplication, Int) {
         let count = expectedCount(app)
         let home = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         XCUIDevice.shared.press(.home)
@@ -90,6 +93,11 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         tapChoice(["Add Widget", "Add Widgets", "ウィジェットを追加"], in: home)
         tapChoice(["Done", "完了"], in: home)
         capture("Home after adding summary", in: home)
+        return (home, count)
+    }
+    func testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp() {
+        let app = launchWidgetApplication()
+        let (home, count) = addSummary(app)
         let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
         guard let widget = waitForTestControl(widgets, in: home, keyboard: .keep) else { return }
         let live = widget.staticTexts.matching(NSPredicate(format: "identifier == %@ AND label == %@", "widget-summary-remaining", "残り\(count)枚"))
@@ -101,4 +109,40 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.buttons["deck-1"].waitForExistence(timeout: 30), app.debugDescription)
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }
+    func testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount() {
+        let app = launchWidgetApplication()
+        let (home, count) = addSummary(app)
+        let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
+        guard let widget = waitForTestControl(widgets, in: home, keyboard: .keep) else { return }
+        widget.press(forDuration: 1.3)
+        capture("Summary context menu", in: home)
+        tapChoice(["Edit Widget", "ウィジェットを編集"], in: home)
+        capture("Summary configuration", in: home)
+        // Match a complete parameter title with its known current value. Do
+        // not use substring matching or choose an arbitrary foreground row.
+        let parameter = home.buttons.matching(NSPredicate(format: "label MATCHES %@",
+            "^\\s*(?:Profile|プロファイル)(?:,\\s*(?:現在のプロファイル|Current profile))?\\s*$"))
+        guard tapTestControl(parameter, in: home, keyboard: .keep) != nil else { return }
+        capture("Summary profile choices", in: home)
+        let fixed = home.staticTexts.matching(label(["既定"]))
+        guard tapTestControl(fixed, in: home, keyboard: .keep) != nil else { return }
+        capture("Summary fixed profile chosen", in: home)
+        // Apple's configuration sheet commits by tapping empty Home background.
+        // This is the same measured, icon-free margin used for Home editing.
+        let frame = home.frame
+        let point = CGPoint(x: frame.maxX - 20, y: frame.midY)
+        XCTAssertTrue(frame.contains(point))
+        XCTAssertTrue(home.icons.allElementsBoundByIndex.filter { $0.exists && $0.frame.contains(point) }.isEmpty)
+        home.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: point.x - frame.minX, dy: point.y - frame.minY)).tap()
+        let live = widgets.staticTexts.matching(NSPredicate(format: "identifier == %@ AND label == %@", "widget-summary-remaining", "残り\(count)枚"))
+        guard waitForTestControl(live, in: home, keyboard: .keep, timeout: 30, purpose: .observation) != nil else { return }
+        capture("Fixed profile summary on Home", in: home)
+        guard let configured = waitForTestControl(widgets, in: home, keyboard: .keep) else { return }
+        configured.press(forDuration: 1.3)
+        tapChoice(["Edit Widget", "ウィジェットを編集"], in: home)
+        capture("Summary configuration reopened", in: home)
+        let saved = home.buttons.matching(NSPredicate(format: "label MATCHES %@", "^\\s*(?:Profile|プロファイル),\\s*既定\\s*$"))
+        _ = waitForTestControl(saved, in: home, keyboard: .keep, purpose: .observation)
+    }
+
 }
