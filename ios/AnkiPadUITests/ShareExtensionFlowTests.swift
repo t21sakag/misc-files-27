@@ -45,7 +45,9 @@ final class ShareExtensionFlowTests: StudyFlowTestSupport {
         let front = app.textViews["note-field-0"]
         XCTAssertTrue(front.waitForExistence(timeout: 30), app.debugDescription)
         XCTAssertEqual(front.value as? String, "Safari shared sentinel")
-        XCTAssertTrue((app.textViews["note-field-1"].value as? String ?? "").contains(url.absoluteString))
+        let back = app.textViews["note-field-1"]
+        revealFormControl(back, in: app.collectionViews["note-form"], topInset: 40, bottomInset: 20)
+        XCTAssertTrue((back.value as? String ?? "").contains(url.absoluteString), app.debugDescription)
         app.buttons["note-close"].tap()
         let discard = app.buttons["破棄"].firstMatch
         if discard.waitForExistence(timeout: 3) { discard.tap() }
