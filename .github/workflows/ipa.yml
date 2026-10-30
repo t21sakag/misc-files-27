@@ -58,6 +58,13 @@ jobs:
           build/new-note-fields-smoke
           swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/AnkiPad/AppText.swift ios/AnkiPad/IncomingImportFile.swift tests/incoming_import_file_smoke.swift -o build/incoming-import-file-smoke
           build/incoming-import-file-smoke
+      - name: Test shared inbox and resigned group selection
+        if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && startsWith(env.UI_SUITE, 'share'))
+        run: |
+          swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/SharedClient/SharedGroup.swift ios/SharedClient/SharedInbox.swift tests/shared_inbox_smoke.swift -o build/shared-inbox-smoke
+          cp build/shared-inbox-smoke build/shared-group-probe
+          codesign --force --sign - --timestamp=none --entitlements tests/shared_group_probe.entitlements build/shared-group-probe
+          build/shared-inbox-smoke build/shared-group-probe
       - name: Test full sync direction safety
         run: |
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/sync-decision-smoke
