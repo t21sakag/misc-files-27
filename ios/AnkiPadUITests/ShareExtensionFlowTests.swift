@@ -22,7 +22,9 @@ final class ShareExtensionFlowTests: StudyFlowTestSupport {
             }
         }
         tapTestControl(safari.buttons.matching(identifier: "ShareButton"), in: safari)
-        openTestShareService(in: safari)
+        // Exercise the exact presentation that previously failed, rather than
+        // passing by chance through the already-working icon-row route.
+        openTestShareService(in: safari, useAppsList: true)
         let content = safari.textViews["share-text"]
         XCTAssertTrue(content.waitForExistence(timeout: 20), safari.debugDescription)
         XCTAssertTrue((content.value as? String ?? "").contains(url.absoluteString), safari.debugDescription)

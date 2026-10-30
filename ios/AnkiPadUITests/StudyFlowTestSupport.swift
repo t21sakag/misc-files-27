@@ -54,16 +54,29 @@ class StudyFlowTestSupport: XCTestCase {
 
     @discardableResult
     func dismissTestKeyboard(in app: XCUIApplication) -> Bool {
-        guard app.keyboards.firstMatch.exists,
-              app.keyboards.firstMatch.frame.intersection(app.frame).height > 1 else { return true }
+        func visible() -> Bool {
+            app.keyboards.firstMatch.exists && app.keyboards.firstMatch.frame.intersection(app.frame).height > 1
+        }
+        guard visible() else { return true }
         let hide = app.buttons.matching(NSPredicate(format: "label IN %@", ["Hide keyboard", "キーボードを隠す"]))
+        let settled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            !visible() || hide.allElementsBoundByIndex.filter { $0.isHittable }.count == 1
+        }, object: nil)
+        guard XCTWaiter.wait(for: [settled], timeout: 10) == .completed else {
+            controlFailure(hide, in: app, reason: "Keyboard stayed visible without a unique actionable dismissal control")
+            return false
+        }
+        // A sheet dismissal may have already closed its keyboard while the
+        // button query was resolving. That is the required end state.
+        if !visible() { return true }
         let buttons = hide.allElementsBoundByIndex.filter { $0.isHittable }
         guard buttons.count == 1 else {
             controlFailure(hide, in: app, reason: "Cannot uniquely dismiss the keyboard before a control action")
             return false
         }
         buttons[0].tap()
-        guard app.keyboards.firstMatch.waitForNonExistence(timeout: 10) else {
+        let closed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in !visible() }, object: nil)
+        guard XCTWaiter.wait(for: [closed], timeout: 10) == .completed else {
             controlFailure(hide, in: app, reason: "Keyboard did not close")
             return false
         }
@@ -104,13 +117,40 @@ class StudyFlowTestSupport: XCTestCase {
         return element
     }
 
-    func openTestShareService(in host: XCUIApplication) {
-        let service = host.cells.matching(NSPredicate(format: "label == %@", "AnkiPad"))
-        if !service.firstMatch.waitForExistence(timeout: 5) {
-            let more = host.cells.matching(NSPredicate(format: "label IN %@", ["More", "その他"]))
-            guard tapTestControl(more, in: host) != nil else { return }
+    func openTestShareService(in host: XCUIApplication, useAppsList: Bool = false) {
+        let composer = host.textFields.matching(identifier: "share-subject")
+        let apps = host.otherElements.matching(identifier: "AppsView").tables.matching(identifier: "tableView")
+        let service = host.cells.matching(NSPredicate(format: "identifier == %@ AND label == %@", "shareCell", "AnkiPad"))
+        let more = host.cells.matching(NSPredicate(format: "identifier == %@ AND label IN %@", "shareCell", ["More", "その他"]))
+        let knownScreen = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            composer.firstMatch.exists || apps.firstMatch.exists
+                || (!useAppsList && service.firstMatch.exists && service.firstMatch.isHittable)
+                || (more.firstMatch.exists && more.firstMatch.isHittable)
+        }, object: nil)
+        guard XCTWaiter.wait(for: [knownScreen], timeout: 20) == .completed else {
+            controlFailure(host.cells, in: host, reason: "No known foreground share presentation"); return
         }
-        tapTestControl(service, in: host)
+        if !composer.firstMatch.exists {
+            if !useAppsList && !apps.firstMatch.exists && service.firstMatch.exists && service.firstMatch.isHittable {
+                guard tapTestControl(service, in: host) != nil else { return }
+            } else {
+                if !apps.firstMatch.exists {
+                    guard tapTestControl(more, in: host) != nil else { return }
+                }
+                guard apps.firstMatch.waitForExistence(timeout: 20), apps.count == 1 else {
+                    controlFailure(apps, in: host, reason: "More did not present one foreground Apps table"); return
+                }
+                // Apps rows have no label themselves. The label is on their
+                // activityTitleLabel child; the old icon remains behind this
+                // sheet and must never be reused as the selection target.
+                let row = apps.cells.containing(.staticText, identifier: "AnkiPad")
+                guard tapTestControl(row, in: host, form: apps.element(boundBy: 0)) != nil else { return }
+            }
+        }
+        let loaded = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND enabled == true AND hittable == true"), object: composer.firstMatch)
+        guard XCTWaiter.wait(for: [loaded], timeout: 20) == .completed else {
+            controlFailure(composer, in: host, reason: "Share service did not reach its editable composer"); return
+        }
     }
 
     func completeTestShare(in host: XCUIApplication, subject: String) {
