@@ -49,7 +49,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.buttons["deck-1"].waitForExistence(timeout: 30), app.debugDescription)
         return app
     }
-    private func addSummary(_ app: XCUIApplication) -> (XCUIApplication, Int)? {
+    private func addWidget(_ app: XCUIApplication, page: Int = 1, title: String = "学習状況") -> (XCUIApplication, Int)? {
         let count = expectedCount(app)
         let home = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         XCUIDevice.shared.press(.home)
@@ -87,9 +87,23 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         if cells.count == 1 && cells.firstMatch.isHittable { tapTestControl(cells, in: home, keyboard: .keep) }
         else { tapTestControl(buttons, in: home, keyboard: .keep) }
         capture("Widget app gallery", in: home)
-        // The first kind is the summary; its default small family follows the
-        // currently selected profile. Do not change a page by guessed swipes.
-        XCTAssertTrue(home.staticTexts["学習状況"].waitForExistence(timeout: 30), home.debugDescription)
+        // Recorded gallery has one nine-page indicator, distinct from the
+        // Home screen's Page control. Observe every transition before acting.
+        XCTAssertTrue((1...9).contains(page))
+        let carousel = home.scrollViews.containing(.pageIndicator, identifier: nil)
+        if page > 1 {
+            for current in 1..<page {
+                let indicator = home.pageIndicators.matching(NSPredicate(format: "value == %@", "page \(current) of 9"))
+                guard waitForTestControl(indicator, in: home, keyboard: .keep, purpose: .observation) != nil,
+                      let content = waitForTestControl(carousel, in: home, keyboard: .keep) else { return nil }
+                content.swipeLeft(velocity: .slow)
+                let advanced = home.pageIndicators.matching(NSPredicate(format: "value == %@", "page \(current + 1) of 9"))
+                guard waitForTestControl(advanced, in: home, keyboard: .keep, purpose: .observation) != nil else { return nil }
+            }
+        }
+        let kind = home.buttons.matching(label(["AnkiPad, " + title]))
+        guard waitForTestControl(kind, in: home, keyboard: .keep, purpose: .observation) != nil else { return nil }
+        capture("Selected widget kind " + title, in: home)
         tapChoice(["Add Widget", "Add Widgets", "ウィジェットを追加"], in: home)
         tapChoice(["Done", "完了"], in: home)
         capture("Home after adding summary", in: home)
@@ -97,7 +111,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
     }
     func testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp() {
         let app = launchWidgetApplication()
-        guard let (home, count) = addSummary(app) else { return }
+        guard let (home, count) = addWidget(app) else { return }
         let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
         guard let widget = waitForTestControl(widgets, in: home, keyboard: .keep) else { return }
         let live = widget.staticTexts.matching(NSPredicate(format: "identifier == %@ AND label == %@", "widget-summary-remaining", "残り\(count)枚"))
@@ -135,7 +149,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
     }
     func testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount() {
         let app = launchWidgetApplication()
-        guard let (home, count) = addSummary(app) else { return }
+        guard let (home, count) = addWidget(app) else { return }
         guard selectFixedDefaultProfile(in: home) else { return }
         let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
         let live = widgets.staticTexts.matching(NSPredicate(format: "identifier == %@ AND label == %@", "widget-summary-remaining", "残り\(count)枚"))
@@ -167,7 +181,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
     }
     func testFixedSummarySurvivesActiveProfileSwitchAndOpensItsOwnProfile() {
         let app = launchWidgetApplication()
-        guard let (home, count) = addSummary(app) else { return }
+        guard let (home, count) = addWidget(app) else { return }
         guard selectFixedDefaultProfile(in: home) else { return }
         app.activate()
         guard tapTestControl(app.buttons.matching(identifier: "collection-menu"), in: app) != nil else { return }
@@ -191,6 +205,25 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20))
         waitForStoredProfile(app, isDefault: true, total: count)
         capture("Widget opened its fixed profile", in: app)
+    }
+
+    func testAddNoteWidgetOpensEmptyDraftAndCancelKeepsDueCount() {
+        let app = launchWidgetApplication()
+        // Bundle order/families: summary2, deck list3, analysis2, add-note2.
+        guard let (home, count) = addWidget(app, page: 8, title: "ノートを追加") else { return }
+        let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
+        let caption = widgets.staticTexts.matching(label(["ノートを追加"]))
+        guard waitForTestControl(caption, in: home, keyboard: .keep, timeout: 30, purpose: .observation) != nil else { return }
+        capture("Add note widget on Home", in: home)
+        guard tapTestControl(widgets, in: home, keyboard: .keep) != nil else { return }
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20))
+        let fields = app.textViews.matching(identifier: "note-field-0")
+        guard let front = waitForTestControl(fields, in: app, keyboard: .keep, purpose: .observation) else { return }
+        XCTAssertEqual(front.value as? String, "")
+        capture("Widget opened unsaved editor", in: app)
+        guard tapTestControl(app.buttons.matching(identifier: "note-close"), in: app) != nil else { return }
+        waitForStoredProfile(app, isDefault: true, total: count)
+        XCTAssertFalse(app.textViews["note-field-0"].exists)
     }
 
 }
