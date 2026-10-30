@@ -99,6 +99,16 @@ class StudyFlowTestSupport: XCTestCase {
         return element
     }
 
+    /// Native alerts can export a Button containing a second Button with the
+    /// same identifier/frame. In the observed action row, only the outer action
+    /// is a direct child of an Other container; containing() includes self and
+    /// does not disambiguate these wrappers. Preserve strict unique readiness.
+    @discardableResult
+    func tapTestAlertAction(_ identifier: String, in alert: XCUIElementQuery, application: XCUIApplication) -> XCUIElement? {
+        let actions = alert.descendants(matching: .other).children(matching: .button).matching(identifier: identifier)
+        return tapTestControl(actions, in: application, keyboard: .keep)
+    }
+
     /// Readiness is also required before reading a value: remote widgets can
     /// expose both placeholder/redaction and live nodes with the same ID.
     @discardableResult

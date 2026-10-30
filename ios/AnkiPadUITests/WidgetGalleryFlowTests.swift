@@ -178,10 +178,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         // source accessibility ID. The foreground creation alert has one field.
         guard let name = tapTestControl(creation.textFields, in: app, keyboard: .keep) else { return }
         name.typeText("Widget secondary")
-        // Observed save wrappers share an ID and frame. Select the containing
-        // parent structurally rather than taking the first of two matches.
-        let save = creation.buttons.matching(identifier: "profile-save").containing(.button, identifier: "profile-save")
-        guard tapTestControl(save, in: app, keyboard: .keep) != nil else { return }
+        guard tapTestAlertAction("profile-save", in: creation, application: app) != nil else { return }
         waitForStoredProfile(app, isDefault: false, total: 0)
         capture("Secondary profile selected and published", in: app)
         XCUIDevice.shared.press(.home)
