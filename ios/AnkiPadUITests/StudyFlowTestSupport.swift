@@ -38,6 +38,7 @@ class StudyFlowTestSupport: XCTestCase {
     }
 
     enum TestKeyboardPolicy { case keep, dismiss }
+    enum TestControlPurpose { case action, observation }
 
     private func controlFailure(_ query: XCUIElementQuery, in app: XCUIApplication, reason: String) {
         let matches = query.allElementsBoundByIndex.prefix(12).map {
@@ -103,7 +104,7 @@ class StudyFlowTestSupport: XCTestCase {
     @discardableResult
     func waitForTestControl(_ query: XCUIElementQuery, in app: XCUIApplication, form: XCUIElement? = nil,
                             keyboard: TestKeyboardPolicy = .dismiss, alreadySatisfied: (() -> Bool)? = nil,
-                            timeout: TimeInterval = 20) -> XCUIElement? {
+                            timeout: TimeInterval = 20, purpose: TestControlPurpose = .action) -> XCUIElement? {
         if alreadySatisfied?() == true { return nil }
         if case .dismiss = keyboard, !dismissTestKeyboard(in: app) { return nil }
         if let form { revealFormControl(query.firstMatch, in: form, topInset: 40, bottomInset: 20, maximumAttempts: 12) }
@@ -117,7 +118,14 @@ class StudyFlowTestSupport: XCTestCase {
         }
         let element = query.element(boundBy: 0)
         let predicate = NSPredicate { _, _ in
-            alreadySatisfied?() == true || (query.count == 1 && element.exists && element.isEnabled && element.isHittable)
+            if alreadySatisfied?() == true { return true }
+            guard query.count == 1 && element.exists else { return false }
+            switch purpose {
+            case .action: return element.isEnabled && element.isHittable
+            case .observation:
+                let visible = element.frame.intersection(app.frame)
+                return !visible.isNull && visible.width > 0 && visible.height > 0
+            }
         }
         let ready = XCTNSPredicateExpectation(predicate: predicate, object: nil)
         guard XCTWaiter.wait(for: [ready], timeout: timeout) == .completed else {

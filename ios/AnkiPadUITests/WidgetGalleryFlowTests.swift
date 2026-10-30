@@ -93,7 +93,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
         guard let widget = waitForTestControl(widgets, in: home, keyboard: .keep) else { return }
         let live = widget.staticTexts.matching(NSPredicate(format: "identifier == %@ AND label == %@", "widget-summary-remaining", "残り\(count)枚"))
-        guard let remaining = waitForTestControl(live, in: home, keyboard: .keep, timeout: 30) else { return }
+        guard let remaining = waitForTestControl(live, in: home, keyboard: .keep, timeout: 30, purpose: .observation) else { return }
         XCTAssertEqual(remaining.label, "残り\(count)枚", "Must read the app's current group snapshot, not a gallery sample or redaction")
         capture("Summary on Home", in: home)
         tapTestControl(widgets, in: home, keyboard: .keep)

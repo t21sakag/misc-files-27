@@ -51,7 +51,7 @@ with tempfile.TemporaryDirectory() as directory:
         assert (result.returncode == 0) == success,(success,result.stdout,result.stderr)
     check(files,True)
     for prefix, name in [(extension,'ShareExtension'),(widget,'StudyWidgets')]:
-        for replacement in [binary(platform=7),binary(groups=['group.other']),binary(xml=False),binary()[:70],binary()+b'ANKIPAD_UI_TEST_NAMESPACE']:
+        for replacement in [binary(platform=7),binary(groups=['group.other']),binary(xml=False),binary()[:70],binary()+b'ANKIPAD_UI_TEST_NAMESPACE',binary()+b'widget-probe.json']:
             check(dict(files,**{prefix+name:replacement}),False)
         check({key:value for key,value in files.items() if not key.startswith(prefix)},False)
     modified=copy.deepcopy(share);modified['AnkiPadSourceCommit']='2'*40

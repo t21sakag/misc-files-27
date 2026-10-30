@@ -70,7 +70,7 @@ with zipfile.ZipFile(args.ipa) as package:
         assert xml_entitlements(executable)['com.apple.security.application-groups'] == [group]
         for language in ['ja','en']:
             assert root+language+'.lproj/Localizable.strings' in names
-        for marker in [b'ANKIPAD_UI_TEST_NAMESPACE',b'--uitest-',b'backend-theme-inspect',b'reminder-save-state',b'widget-snapshot-state']:
+        for marker in [b'ANKIPAD_UI_TEST_NAMESPACE',b'--uitest-',b'backend-theme-inspect',b'reminder-save-state',b'widget-snapshot-state',b'widget-probe.json']:
             assert marker not in executable, 'Release contains test hooks: '+repr(marker)
     for root in [extension_root,widget_root]:
         assert not any(name.startswith(root+'backend/') for name in names), 'Engine assets must remain in app'
