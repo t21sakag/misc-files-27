@@ -3,6 +3,7 @@ import SwiftUI
 struct BrowserView: View {
     @ObservedObject var model: StudyModel
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("isTruncated") private var truncateRows = false
     @AppStorage("relativeCardBrowserFontSize") private var fontPercent = 100
     @AppStorage("card_browser_show_media_filenames") private var showMediaFilenames = false
     @ScaledMetric(relativeTo: .body) private var primarySize: CGFloat = 17
@@ -35,6 +36,7 @@ struct BrowserView: View {
     @State private var duePrompt = false
     @State private var days = ""
     @State private var movePrompt = false
+    @State private var browserOptions = false
     @State private var columnPicker = false
     @State private var saveSearchPrompt = false
     @State private var searchName = ""
@@ -93,17 +95,17 @@ struct BrowserView: View {
             HStack {
                 if row.suspended { Image(systemName: "pause.circle").foregroundStyle(.orange) }
                 if row.flag > 0 { Image(systemName: "flag.fill").foregroundStyle(flagColor(row.flag)) }
-                Text(row.front.isEmpty ? AppText.localized("（空のフィールド）") : row.front).font(.system(size: primarySize * fontScale)).lineLimit(2).foregroundStyle(.primary)
+                Text(row.front.isEmpty ? AppText.localized("（空のフィールド）") : row.front).font(.system(size: primarySize * fontScale)).lineLimit(truncateRows ? 3 : nil).foregroundStyle(.primary)
                     .accessibilityIdentifier("browser-front-\(row.id)")
             }
-            Text(row.back).font(.system(size: secondarySize * fontScale)).foregroundStyle(.secondary).lineLimit(2)
+            Text(row.back).font(.system(size: secondarySize * fontScale)).foregroundStyle(.secondary).lineLimit(truncateRows ? 3 : nil)
                 .accessibilityIdentifier("browser-back-\(row.id)")
             HStack(alignment: .top, spacing: 14) {
                 ForEach(config.columns.filter { $0 != "noteFld" }, id: \.self) { key in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(columnLabel(key)).foregroundStyle(.tertiary)
                         Text(row.metadata[key] ?? "—").foregroundStyle(.secondary)
-                    }.font(.system(size: metadataSize * fontScale)).lineLimit(1)
+                    }.font(.system(size: metadataSize * fontScale)).lineLimit(truncateRows ? 3 : nil)
                 }
             }
         }.padding(.vertical, 4)
@@ -119,6 +121,7 @@ struct BrowserView: View {
     }
     private var filterMenu: some View {
         Menu {
+            Button(AppText.localized("ブラウザーの設定")) { browserOptions = true }.accessibilityIdentifier("browser-options-open")
             Toggle(AppText.localized("ノート表示"), isOn: $config.notesMode).onChange(of: config.notesMode) { _, next in
                 mutateOpening { config = try await model.engine.browserConfiguration(notesMode: next); selected = []; revision += 1 }
             }
@@ -197,6 +200,13 @@ struct BrowserView: View {
                     catch { self.error = error.localizedDescription }
                 }
             }) { TagManagerView(model: model) }
+            .sheet(isPresented: $browserOptions, onDismiss: {
+                mutateOpening {
+                    let saved = try await model.engine.browserConfiguration()
+                    if saved.notesMode != config.notesMode { selected = [] }
+                    config = saved; revision += 1
+                }
+            }) { BrowserOptionsView(model: model) }
             .sheet(isPresented: $columnPicker, onDismiss: saveConfig) { BrowserColumnPicker(columns: columns, config: $config) }
             .sheet(isPresented: $manageSearches, onDismiss: saveConfig) {
                 NavigationStack {

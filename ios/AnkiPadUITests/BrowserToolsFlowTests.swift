@@ -20,20 +20,101 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
         tapTestControl(app.buttons.matching(identifier: "note-close"), in: app)
         XCTAssertTrue(app.buttons["add-note"].waitForExistence(timeout: 20))
     }
-    private func browser(_ search: String, count: Int, in app: XCUIApplication) {
+    private func browser(_ search: String, count: Int, notesMode: Bool = false, in app: XCUIApplication) {
         var url = URLComponents(string: "studyclient://x-callback-url/browser")!
         url.queryItems = [URLQueryItem(name: "search", value: search)]
         app.open(url.url!)
         let results = app.staticTexts.matching(identifier: "browser-results")
         guard let state = waitForTestControl(results, in: app, purpose: .observation) else { return }
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            state.value as? String == search && state.label.contains("\(count)枚")
+            state.value as? String == search && state.label.contains("\(count)" + (notesMode ? "ノート" : "枚"))
         }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 30), .completed, app.debugDescription)
     }
     private func closeBrowser(_ app: XCUIApplication) {
         tapTestControl(app.navigationBars.buttons.matching(NSPredicate(format: "label == %@", "閉じる")), in: app)
         XCTAssertTrue(app.staticTexts["browser-results"].waitForNonExistence(timeout: 20))
+    }
+    private func options(_ app: XCUIApplication) {
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-options-open"), in: app)
+        _ = waitForTestControl(app.buttons.matching(identifier: "browser-options-save"), in: app)
+    }
+    private func setOption(_ identifier: String, enabled: Bool, in app: XCUIApplication) {
+        let query = app.switches.matching(identifier: identifier)
+        guard let control = waitForTestControl(query, in: app) else { return }
+        let desired = enabled ? "1" : "0"
+        if control.value as? String != desired { tapTestControl(query, in: app) }
+        let changed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in control.value as? String == desired }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 10), .completed, app.debugDescription)
+    }
+    func testBrowserTruncationCancelsSavesAndRestoresFullRowsAfterRelaunch() {
+        let app = makeApplication(); app.launchArguments = []; app.launch()
+        addNote("Long browser content " + Array(repeating: "readableword", count: 60).joined(separator: " "), in: app)
+        browser("", count: 1, in: app)
+        let frontQuery = app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browser-front-"))
+        guard let front = waitForTestControl(frontQuery, in: app, purpose: .observation) else { return }
+        let fullHeight = front.frame.height
+        XCTAssertGreaterThan(fullHeight, 80)
+        capture("Browser full row by default", in: app)
+        options(app)
+        guard let toggle = waitForTestControl(app.switches.matching(identifier: "browser-options-truncate"), in: app) else { return }
+        XCTAssertEqual(toggle.value as? String, "0")
+        setOption("browser-options-truncate", enabled: true, in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-options-cancel"), in: app)
+        guard let unchanged = waitForTestControl(frontQuery, in: app, purpose: .observation) else { return }
+        XCTAssertGreaterThanOrEqual(unchanged.frame.height, fullHeight - 2)
+        options(app)
+        guard let cancelled = waitForTestControl(app.switches.matching(identifier: "browser-options-truncate"), in: app) else { return }
+        XCTAssertEqual(cancelled.value as? String, "0")
+        setOption("browser-options-truncate", enabled: true, in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-options-save"), in: app)
+        let collapsed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in front.exists && front.frame.height < fullHeight - 20 }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [collapsed], timeout: 20), .completed, app.debugDescription)
+        let collapsedHeight = front.frame.height
+        capture("Browser row truncated to three lines", in: app)
+        app.terminate(); app.launch()
+        browser("", count: 1, in: app)
+        guard let restored = waitForTestControl(frontQuery, in: app, purpose: .observation) else { return }
+        XCTAssertLessThanOrEqual(restored.frame.height, collapsedHeight + 2)
+        options(app)
+        guard let persisted = waitForTestControl(app.switches.matching(identifier: "browser-options-truncate"), in: app) else { return }
+        XCTAssertEqual(persisted.value as? String, "1")
+        setOption("browser-options-truncate", enabled: false, in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-options-save"), in: app)
+        let expanded = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in restored.exists && restored.frame.height > collapsedHeight + 20 }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [expanded], timeout: 20), .completed, app.debugDescription)
+    }
+    func testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch() {
+        let app = makeApplication(); app.launchArguments = []; app.launch()
+        addNote("café", in: app)
+        browser("cafe", count: 0, in: app)
+        func editOptions() {
+            setOption("browser-options-notes", enabled: true, in: app)
+            setOption("browser-options-ignore-accents", enabled: true, in: app)
+            _ = typeInEmptyTestField(app.textFields.matching(identifier: "browser-options-default-search"), text: "cafe", in: app)
+        }
+        options(app); editOptions()
+        tapTestControl(app.buttons.matching(identifier: "browser-options-cancel"), in: app)
+        guard let results = waitForTestControl(app.staticTexts.matching(identifier: "browser-results"), in: app, purpose: .observation) else { return }
+        XCTAssertTrue(results.label.contains("0枚"), app.debugDescription)
+        options(app); editOptions()
+        tapTestControl(app.buttons.matching(identifier: "browser-options-save"), in: app)
+        let updated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            results.exists && results.label.contains("1ノート") && results.value as? String == "cafe"
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [updated], timeout: 20), .completed, app.debugDescription)
+        closeBrowser(app)
+        app.terminate(); app.launch()
+        tapTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-open"), in: app)
+        guard let initial = waitForTestControl(app.staticTexts.matching(identifier: "browser-results"), in: app, purpose: .observation) else { return }
+        let defaultApplied = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in initial.value as? String == "cafe" && initial.label.contains("1ノート") }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [defaultApplied], timeout: 20), .completed, app.debugDescription)
+        capture("Browser saved search and notes mode after relaunch", in: app)
+        closeBrowser(app)
+        browser("", count: 1, notesMode: true, in: app)
+        capture("Browser explicit empty search overrides default", in: app)
     }
     func testBrowserSearchCreatesFilteredDeckAndEmptySearchCancelKeepsCollection() {
         let app = makeApplication(); app.launchArguments = []; app.launch()

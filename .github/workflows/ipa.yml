@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [browser-tools, browser-filtered, browser-replace, widget-isolation, widget-decks, widget-analysis, widget-add, widget-profile, widget-settings, widget-gallery, widgets, widget-core, widget-deferred, share-regression, share-image, share-milestone, share-text, milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, incoming-final-repair, reminder-repair, regression-repair, upload-only, incoming-fields, incoming-commit, incoming-apkg, incoming-colpkg, incoming-tsv, incoming-invalid, incoming-still-note, incoming-commit-repair, all]
+        options: [browser-options, browser-truncation, browser-search-options, browser-tools, browser-filtered, browser-replace, widget-isolation, widget-decks, widget-analysis, widget-add, widget-profile, widget-settings, widget-gallery, widgets, widget-core, widget-deferred, share-regression, share-image, share-milestone, share-text, milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, incoming-final-repair, reminder-repair, regression-repair, upload-only, incoming-fields, incoming-commit, incoming-apkg, incoming-colpkg, incoming-tsv, incoming-invalid, incoming-still-note, incoming-commit-repair, all]
 permissions:
   contents: read
   actions: read
@@ -316,6 +316,12 @@ jobs:
       - name: Test filtered decks and custom study
         if: env.CI_MODE == 'full'
         run: python3 tests/custom_study_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test browser options persistence
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'browser-options' || env.UI_SUITE == 'browser-truncation' || env.UI_SUITE == 'browser-search-options'))
+        run: |
+          swiftc -swift-version 5 ios/AnkiPad/BrowserOptions.swift tests/browser_options_smoke.swift -o build/browser-options-smoke
+          build/browser-options-smoke
+          python3 tests/browser_options_engine_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test browser search tools
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'browser-tools' || env.UI_SUITE == 'browser-filtered' || env.UI_SUITE == 'browser-replace'))
         run: python3 tests/browser_tools_smoke.py build/native/host/libankipad_bridge.dylib

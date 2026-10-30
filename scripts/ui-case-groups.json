@@ -173,6 +173,8 @@
   ],
   "BrowserToolsFlowTests": [
     "testBrowserSearchCreatesFilteredDeckAndEmptySearchCancelKeepsCollection",
-    "testBrowserGlobalFindReplaceShowsAllScopeAndPersistsChanges"
+    "testBrowserGlobalFindReplaceShowsAllScopeAndPersistsChanges",
+    "testBrowserTruncationCancelsSavesAndRestoresFullRowsAfterRelaunch",
+    "testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch"
   ]
 }

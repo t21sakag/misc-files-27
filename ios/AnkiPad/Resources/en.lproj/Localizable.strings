@@ -816,3 +816,9 @@
 "すべてのノートを対象に置換しますか？" = "Replace across all notes?";
 "選択したノートのみ" = "Selected notes only";
 "タグを置換" = "Replace in tags";
+"設定の保存に失敗し、元の設定に戻せませんでした。" = "Saving failed and the previous settings could not be restored.";
+"ブラウザーの設定" = "Browser options";
+"長い内容を3行で省略" = "Truncate long content to 3 lines";
+"省略しない場合は、ブラウザーの各列に内容全体を表示します。" = "When truncation is off, each browser column displays its full content.";
+"既定の検索" = "Default search";
+"次にブラウザーを開いたときに使います。明示して渡された検索条件は優先されます。" = "Used the next time the browser opens. An explicitly supplied search takes priority.";
