@@ -87,6 +87,7 @@ suites = {
     'incoming-tsv': ['testReceivedTSVSurvivesSourceRemovalAndImportsThroughBundledWebInterface'],
     'incoming-invalid': ['testInvalidReceivedPackageReportsFailureAndKeepsPreviousCollection'],
     'incoming-still-note': ['testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia'],
+    'incoming-commit-repair': ['testReceivedCOLPKGReplacesOnlyAfterConfirmationAndBackupRestoresPreviousNotes', 'testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

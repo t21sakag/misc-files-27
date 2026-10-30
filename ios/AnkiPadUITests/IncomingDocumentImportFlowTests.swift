@@ -48,7 +48,7 @@ final class IncomingDocumentImportFlowTests: StudyFlowTestSupport {
         let replace = app.buttons["incoming-import-replace"]
         XCTAssertTrue(replace.waitForExistence(timeout: 30), app.debugDescription)
         replace.tap()
-        let confirm = app.buttons["incoming-import-replace-confirm"]
+        let confirm = app.buttons.matching(identifier: "incoming-import-replace-confirm").firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 10), app.debugDescription)
         try FileManager.default.removeItem(at: file)
         confirm.tap()

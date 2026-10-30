@@ -154,10 +154,13 @@ final class IncomingFileFlowTests: StudyFlowTestSupport {
         attach.tap()
         let editor = app.images["image-editor-image"]
         XCTAssertTrue(editor.waitForExistence(timeout: 30), app.debugDescription)
-        XCTAssertEqual((editor.value as? String ?? "").components(separatedBy: CharacterSet.decimalDigits.inverted).compactMap(Int.init), [1600, 800])
+        func dimensions() -> [Int] {
+            (editor.value as? String ?? "").components(separatedBy: "×").compactMap { Int($0.filter(\.isNumber)) }
+        }
+        XCTAssertEqual(dimensions(), [1600, 800])
         app.buttons["image-editor-rotate"].tap()
         let rotated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            (editor.value as? String ?? "").components(separatedBy: CharacterSet.decimalDigits.inverted).compactMap(Int.init) == [800, 1600]
+            dimensions() == [800, 1600]
         }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [rotated], timeout: 10), .completed)
         // The editor owns the staged copy, including its original-data fallback.
