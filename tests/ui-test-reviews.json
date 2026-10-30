@@ -2413,6 +2413,250 @@
         }
       ],
       "checked_at": "2026-10-30T22:21:58.458281+00:00"
+    },
+    {
+      "id": "20261031-browser-native-hit-routing",
+      "covers": [
+        [
+          41137814372,
+          1
+        ],
+        [
+          41133454570,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41133454570,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "Native child is unique/actionable; actual synthesized down/up638.5,504.5 hit advertised center but value remained0."
+        },
+        {
+          "attempt": [
+            41137814372,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "Same actual native tap. Live capture was running, not truncated, recorded one appear/load sequence and no binding setter/assignment/change. No evidence of draft reset or view recreation. Need UIKit converted geometry and actual hit target to separate accessibility coordinates from real event routing."
+        }
+      ],
+      "root_cause": "Remaining cause is not established. Correct advertised coordinates do not prove UIKit routes a touch to the native control. The new live evidence rules out an observed binding-set-then-reset and view reload; no setter ran.",
+      "common_resolution": "Keep native child action and all value/cancel/save/relaunch expectations. Observe window-local UISwitch converted bounds, native state and window.hitTest at its actual center. Debug/synthetic namespace only, noninteractive zero-size background, no recognizer/event/action, max30 samples/4096 visited views/12switches. Retain bounded numeric event extraction and live observer. Do not change tap variants until native hit routing evidence identifies cause.",
+      "rule_review": {
+        "semantic_labels": "Keep exact outer IDs and scoped direct native Switch child. Do not infer hittable full row means tapping its label activates a SwiftUI switch.",
+        "foreground_scope": "Actual options view finished loading once. Native child is visible and enabled in accessibility output; new passive probe only traverses its own UIWindow, with finite view/switch/sample bounds.",
+        "unique_reads_and_actions": "Common setTestSwitch proves unique parent and direct child, validates0/1 and checks requested value. The second actual input is exactly638.5,504.5; no coordinate fallback or arbitrary first duplicate is justified.",
+        "live_state": "Latest trace records no setter and no reload: add only native geometry/hit-target observation. No settings, defaults, action duration, count or expected value changes; no forced on-state or synthetic setter invocation.",
+        "keyboard_and_scroll": "Common keyboard isHittable fix already passed filtered and replacement cases. Current failure occurs in an onscreen options switch, not a keyboard or scrolling prerequisite. No new keyboard bypass.",
+        "environment": "378 observer started before UI, saved344526 bytes without truncation and preserved exit65. New probe has no network or process hooks; timer invalidates on removal/window loss. MainActor sampling, Debug/synthetic namespace only.",
+        "first_failure_evidence": "Compare334 archived pointer center and378 small input-events.json (9records/0errors), live-collection metadata and full nontruncated live.log. 378 trace only appear/load.start/load.end loaded1 on one instance, not a reset. Native UIWindow hit testing is the remaining unobserved boundary.",
+        "failure_classification": "Both current attempts remain undetermined after actual center inputs. Do not keep labelling them row misses or claim persistence broken before Save. No new CI before this exact-pair/current-hash review.",
+        "runtime_warnings": "Both summaries runtimeWarnings=[]; preserve existing assertions and do not equate host success with UI success.",
+        "device_evidence": "Synthetic iPadOS27 simulator only; physical SideStore, audio/permissions and all100 regression remain unproven."
+      },
+      "evidence": [
+        {
+          "attempt": [
+            41133454570,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41133454570",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/2996197E-0C7F-43EA-ACB0-0048C2B3A05C.txt",
+          "sha256": "e52f6af5ec9127bdeabd31d33a3ff452aba8586665fc5d78e4e075695492c02e"
+        },
+        {
+          "attempt": [
+            41133454570,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41133454570",
+          "artifact_name": "test-results",
+          "artifact_entry": "screenshots/563FCA18-9FE0-464C-B7E0-B68D4B072637",
+          "sha256": "2125394a7ff3fa4bd6682de0b40de0e069f252a56faee99a6a64ff191bbcf483"
+        },
+        {
+          "attempt": [
+            41137814372,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41137814372",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "aafa1209f5c1d94629fd849326b5eb36f38f8e24ffd0274c660daeb4ceb5d25d"
+        },
+        {
+          "attempt": [
+            41137814372,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41137814372",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "input-events.json",
+          "sha256": "fb0cfdab2ac67096e4ff559a82612f74209a2be8c33995fb0f302738aeab9b46"
+        },
+        {
+          "attempt": [
+            41137814372,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41137814372",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/live.log",
+          "sha256": "9af97012bab340d68063738b48726823cb04999b112c33977fb7767721016244"
+        },
+        {
+          "attempt": [
+            41137814372,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41137814372",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/live-collection.json",
+          "sha256": "782eec3008b5861f300d1e180d115117319e1eafe5a5eea9e225f2fca4845d45"
+        }
+      ],
+      "next_scope": [
+        "BrowserToolsFlowTests/testBrowserTruncationCancelsSavesAndRestoresFullRowsAfterRelaunch"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "48721867cfb9c22971baf24fd59810e3a7b44d363be1eb5c506defce38fd687d",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "61f85fde928872e340cf3d4ebf244bb652b4e415b533ccc5e627cfb196f4a741",
+        "ios/AnkiPadUITests/BrowserToolsFlowTests.swift": "d9acac56bb9482964e5a0c5eb9ca71de7a35c22c18e860ac6a5c8cb09baa90e2",
+        "ios/AnkiPad/BrowserOptions.swift": "6dedca0fc5996db43924f89a5ba261a0fb3f6aed69604336e6303d67895aac62",
+        "ios/AnkiPad/BrowserOptionsView.swift": "4e50470ed9ea8d55f49d7c6356aae1d00e4cbff61e126f4e26b9bd5113c990dc",
+        "ios/AnkiPad/BrowserView.swift": "b8fca0da71e0016ebb3e731ab08233a1a8d302a5e5748a95a6589b6ccb6a216a",
+        "scripts/select-ui-tests.py": "e83f45704aee6b26a27a6a2d1d005de5882cbfd98882e032ac456f90f319f717",
+        "scripts/ui-case-groups.json": "e3349bc559e80152063f89348f94d66f195cbfafd7c2a841c2cfc1ee68fb83b6",
+        "scripts/run-ui-with-diagnostics.py": "3a4a8dbcb6d699666fffcee3afd4d37f1ed9fa364d5a5aa2e1679ef11cdbf303",
+        "scripts/summarize-ui-events.py": "c838494367c3868bc1c5bc3ef5d5b7ec6e9e470ff5230c95c876070d9fe41c57",
+        "tests/ui_events_smoke.py": "c336a292aa89155810590d21dbd0891d9d0348c801841e10cdec74461cbcb886",
+        "tests/widget_diagnostics_smoke.py": "cbad321bbd6183c4ce16d187eeb16234d695e7941ef9d988a210b4365eaba2df",
+        ".github/workflows/ipa.yml": "3d537c0a43388d9813bbbde80c43f4d1ef25a1e7406822a0d2c5fdb139eb1b3a",
+        "ios/AnkiPad/BrowserOptionsHitProbe.swift": "475ede70f8e5c9a2003b2f24479d1ed8f4a18e04e5d84d9d9d0d4d73754bd04f"
+      },
+      "checks": [
+        {
+          "name": "Review gate regression",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Swift syntax only; Apple SDK typecheck pending",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "afe0ae6eec70d910db42d8a3ca3eda02e2a67e0753a9fc96ca8c86cb748daaff"
+        },
+        {
+          "name": "UI case scope",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d06c988b31f003389cdcd386fdcf3bc93eaf0cca9b759485d5604408308fbce2"
+        },
+        {
+          "name": "Complete disjoint batch scope",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "020acd97462b84b0f9934f94ea5783374dcc7ae0b867178df465782c7cf3d5ce"
+        },
+        {
+          "name": "All published workflow shell blocks parse",
+          "argv": [
+            "python3",
+            "-c",
+            "import re,subprocess,yaml; from pathlib import Path; w=yaml.safe_load(Path('.github/workflows/ipa.yml').read_text()); steps=[s for j in w['jobs'].values() for s in j.get('steps',[]) if 'run' in s]; [subprocess.run(['bash','-n'],input=re.sub(r'\\$\\{\\{.*?\\}\\}', 'REVIEW_VALUE',s['run']),text=True,check=True) for s in steps]; print('PASS:',len(steps),'workflow shell blocks')"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "421fa930bacfe3b26e0537f5520e0414f1e5f67897430bfb8f4a2e9bdeb3b01e"
+        },
+        {
+          "name": "Literal query key boundary regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "3d7068949e5031a980b53d913335f7f15f132ecedce88b471203a198d0c894e7"
+        },
+        {
+          "name": "Known unsupported query keys across actual UI source",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2ee1b0b21abca8f7697d081672551182916e7c909e397420c22c90d89ab03eef"
+        },
+        {
+          "name": "Numeric event extraction boundaries",
+          "argv": [
+            "python3",
+            "tests/ui_events_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ecd4775e323cfe5034323f413df7a6e2ab0b180471780cd7de39d89d9f1c1910"
+        },
+        {
+          "name": "Live observer lifetime and exit preservation",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "Translation coverage",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "658932bdfe874e57f8abddaca2b10ef9bced42269f0f97a66294cd3ede978531"
+        },
+        {
+          "name": "Debug diagnostic branches parse; Apple SDK typecheck pending",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-frontend",
+            "-parse",
+            "-swift-version",
+            "5",
+            "-D",
+            "DEBUG",
+            "ios/AnkiPad/BrowserOptionsView.swift",
+            "ios/AnkiPad/BrowserOptionsHitProbe.swift"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "checked_at": "2026-10-30T22:50:07.698469+00:00"
     }
   ]
 }

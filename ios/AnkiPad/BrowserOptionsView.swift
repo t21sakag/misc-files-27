@@ -64,6 +64,13 @@ struct BrowserOptionsView: View {
                 }
             }
             .interactiveDismissDisabled(busy)
+            #if DEBUG
+            .background {
+                if UITestIsolation.namespace() != nil {
+                    BrowserOptionsHitProbe().frame(width: 0, height: 0).allowsHitTesting(false)
+                }
+            }
+            #endif
             .onAppear { trace("appear") }
             .onDisappear { trace("disappear") }
             .onChange(of: truncate) { _, _ in trace("truncate.changed") }
