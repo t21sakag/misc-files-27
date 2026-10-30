@@ -1989,6 +1989,214 @@
         }
       ],
       "checked_at": "2026-10-30T18:32:16.265312+00:00"
+    },
+    {
+      "id": "20261031-browser-keyboard-lifecycle",
+      "covers": [
+        [
+          41120800841,
+          1
+        ],
+        [
+          41117224514,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41117224514,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Replace reached actual 2-change result but exists-to-frame raced with keyboard disappearance. Filtered case compared an empty native TextField value to empty string even though OS exports placeholder; video additionally exposed inherited second-search application scope defect, now disabled only for browser-origin new decks."
+        },
+        {
+          "attempt": [
+            41120800841,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Common keyboard count-only fix was insufficient. Terminal AX retains Keyboard at(0,1180,820,0), Hide keyboard at(720,1378.5,98,63.5), hittable=false, outside app height1180. Screenshot and video98s show no visible keyboard. Failure is before the second synthetic note and before filtered configuration."
+        }
+      ],
+      "root_cause": "A shared keyboard helper treated query membership as on-screen visibility after removing an unsafe frame lookup. That fixed a disappearing-node race but introduced a false visible state for retained zero-height offscreen nodes. The prior rule review did not cover both lifecycle states. Empty TextField placeholder was also mistaken for actual contents.",
+      "common_resolution": "Use object isHittable across Keyboard matches (missing/offscreen false) without exists-to-frame re-resolution. Apple contract: https://developer.apple.com/documentation/xcuiautomation/xcuielement/ishittable . Keep unsupported query-key lint. Empty-field helper inserts known text and compares the entire result, so literal placeholder content cannot masquerade as empty. Do not change taps/timeouts or suppress expected stored counts. Browser filtered creation explicitly clears inherited second condition; editing existing decks preserves configuration.",
+      "rule_review": {
+        "semantic_labels": "Keep exact IDs/titles. Empty field prompt Search is a placeholder, not existing query text; use shared insertion/full-result verification rather than substring or placeholder-only acceptance.",
+        "foreground_scope": "Common native keyboard state is inspected across typed Keyboard elements. Current terminal editor is still foreground with note-added and note-close; it is not a filtered settings failure. Retain typed native fields and unique exact IDs in remaining steps.",
+        "unique_reads_and_actions": "Control reads/actions still pass shared uniqueness/readiness. Keyboard is a lifecycle collection; determine whether any object is hittable without selecting an arbitrary duplicate or resolving a vanishing frame. No isHittable in query predicates.",
+        "live_state": "Retain exact stored query, explicit-empty cancellation, collection unchanged after cancel, built deck new1/learning0/review0 and real review. Keep actual replacement count2 plus restart Updated2/Original0; a result label alone does not prove persistence.",
+        "keyboard_and_scroll": "Review covers both disappearing keyboard and retained zero-height offscreen Keyboard. Replace membership with object isHittable, documented false in both states. Keep common measured reveal/keyboard policy; do not bypass dismissal just for new cases.",
+        "environment": "Actual Apple compile and real-engine contracts passed both runs. Cache service GetCacheEntryDownloadURL timeouts account for long setup and are not failed UI assertions. Own simulator, namespace and fixture remain unchanged; no IPA generation.",
+        "first_failure_evidence": "Compared original run actual replace-result AX with confirmation video154s and empty filtered video95s; latest terminal CAC18D7B hierarchy +56ECFF0E screenshot +video98s match zero-height keyboard/offscreen hide frames. Do not treat stale UI hierarchy after teardown as foreground failure evidence.",
+        "failure_classification": "Both attempts fail in harness; separately fix application inherited second-search broadening found by inspection. Latest keyboard failure occurred in synthetic note preparation, so no proof yet that build and restart assertions pass.",
+        "runtime_warnings": "Both summaries runtimeWarnings=[]; existing compile warnings remain distinct. Do not label app or UI green.",
+        "device_evidence": "Synthetic iPadOS27 simulator evidence only. Hardware, SideStore group, audio, notifications, all widget families and full98 regression remain unverified."
+      },
+      "evidence": [
+        {
+          "attempt": [
+            41117224514,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41117224514",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "16d34bb1fc79ac636f07021d7d8fe1ea6d5283c7eaf870f30f279e743ba04e09"
+        },
+        {
+          "attempt": [
+            41117224514,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41117224514",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/177BFD3C-9F2E-4957-A03C-2CD341CFCD38.txt",
+          "sha256": "09cee437a5b431c67ca21908895bc82e3f53baff87feb044492fbc45d015440a"
+        },
+        {
+          "attempt": [
+            41117224514,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41117224514",
+          "artifact_name": "screenshots",
+          "artifact_entry": "AA917739-E67B-4E64-9327-8531D2DFC74E.mp4",
+          "sha256": "a97b99e667ba61b251031363063d6c7889871d925da57864d049e19993b2568d"
+        },
+        {
+          "attempt": [
+            41120800841,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41120800841",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "f98ccaddc5a08d697a43aaf7ea1a523d6831482a59bcaf09c8c66a8f622cf1d0"
+        },
+        {
+          "attempt": [
+            41120800841,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41120800841",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/CAC18D7B-D42F-44A8-B425-E87CEBBE1A9B.txt",
+          "sha256": "2f75f992b9a1ca823ee5416cfe0b4af822c63f8fc623036cfcd2437f9d14fe57"
+        },
+        {
+          "attempt": [
+            41120800841,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41120800841",
+          "artifact_name": "screenshots",
+          "artifact_entry": "56ECFF0E-F3D3-432F-A5FC-4BA079F1940E.png",
+          "sha256": "6a1719b554e4de9094acb50afcd2696b1442781b0e0ec19877ef4f805292f848"
+        },
+        {
+          "attempt": [
+            41120800841,
+            1
+          ],
+          "kind": "observed",
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41120800841",
+          "artifact_name": "screenshots",
+          "artifact_entry": "234B29C9-DF9F-4406-9659-D8868E6472FB.mp4",
+          "sha256": "e23b1c7a90936da7d3fb57359dd73354da7f29b0f19cc5409c75793984c9cb06"
+        }
+      ],
+      "next_scope": [
+        "BrowserToolsFlowTests/testBrowserSearchCreatesFilteredDeckAndEmptySearchCancelKeepsCollection"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "eea78117529f2e7c017b53c76a5fe7201010d30d8a445c875aee6478be26d2e6",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "a7f3fd1737c4c67b67a66bba19963da5b94195c57f6b8a5f143c8beda2d99718",
+        "ios/AnkiPadUITests/BrowserToolsFlowTests.swift": "75cf5d0cd4d17641e476fa5da0fb16c7e8f11a9d9cf6fb1ce6421d0642d9c8a8",
+        "ios/AnkiPad/BrowserView.swift": "092fb64df0a94c366f80e009ca935e3f783270c56832f5f1887d83338125d2ea",
+        "ios/AnkiPad/CustomStudyView.swift": "854b01b6b594fdfd20ff8d60403a0e663c5982ca85fd291c7cf2c04792a60260",
+        "ios/AnkiPad/FindReplaceView.swift": "5e088e8ae12b67f5b1356a7c5c7fcc9dbe4716bd8e9497395a3345d2be2a8161",
+        "scripts/select-ui-tests.py": "b15f1b1e25a6edf7bbff5b99f2d3e7eda9a6849cff4f7ed9559c79484847e341",
+        "scripts/ui-case-groups.json": "b2295460bb6637757478c711f8b74eabceff6ac05d1e74fd35cdb20b01893ef6",
+        "scripts/check-ui-query-predicates.py": "e79d193db719be33bd64db9390c1bec5aef8ee53f7355003692c7bfb3c3661d6",
+        ".github/workflows/ipa.yml": "99171095b044b4dca88bee3a32205623bc7faef1f562a0dafe2a9d49329e7361"
+      },
+      "checks": [
+        {
+          "name": "Review gate regression",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Swift syntax only; Apple SDK typecheck pending",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "493d6b7377c849e1069cb0834e443c891385e97be708b8b30e55ede68f46c6a5"
+        },
+        {
+          "name": "UI case scope",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2fc4026007f7f13c776e4160d41cc7820a3b7028fb46a796b5a7723ab4d39372"
+        },
+        {
+          "name": "Complete disjoint batch scope",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "020acd97462b84b0f9934f94ea5783374dcc7ae0b867178df465782c7cf3d5ce"
+        },
+        {
+          "name": "All published workflow shell blocks parse",
+          "argv": [
+            "python3",
+            "-c",
+            "import re,subprocess,yaml; from pathlib import Path; w=yaml.safe_load(Path('.github/workflows/ipa.yml').read_text()); steps=[s for j in w['jobs'].values() for s in j.get('steps',[]) if 'run' in s]; [subprocess.run(['bash','-n'],input=re.sub(r'\\$\\{\\{.*?\\}\\}', 'REVIEW_VALUE',s['run']),text=True,check=True) for s in steps]; print('PASS:',len(steps),'workflow shell blocks')"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e769b0627f1f74ccd00eda15005ad8ce142de3e0c7eafb692984dc140573e92f"
+        },
+        {
+          "name": "Literal query key boundary regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "3d7068949e5031a980b53d913335f7f15f132ecedce88b471203a198d0c894e7"
+        },
+        {
+          "name": "Known unsupported query keys across actual UI source",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2ee1b0b21abca8f7697d081672551182916e7c909e397420c22c90d89ab03eef"
+        }
+      ],
+      "checked_at": "2026-10-30T20:46:04.552070+00:00"
     }
   ]
 }

@@ -56,9 +56,10 @@ class StudyFlowTestSupport: XCTestCase {
     @discardableResult
     func dismissTestKeyboard(in app: XCUIApplication) -> Bool {
         func visible() -> Bool {
-            // A keyboard can disappear between exists and frame. Resolve the
-            // collection in one query, without dereferencing a vanishing node.
-            app.keyboards.count > 0
+            // The OS may retain an offscreen, zero-height Keyboard node.
+            // isHittable returns false for both missing and offscreen elements;
+            // never read frame after a separate existence check.
+            app.keyboards.allElementsBoundByIndex.contains { $0.isHittable }
         }
         guard visible() else { return true }
         let hide = app.buttons.matching(NSPredicate(format: "label IN %@", ["Hide keyboard", "キーボードを隠す"]))
