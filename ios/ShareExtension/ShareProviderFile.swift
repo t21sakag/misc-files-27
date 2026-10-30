@@ -28,7 +28,13 @@ final class ShareProviderFile: @unchecked Sendable {
             if type == UTType.fileURL.identifier {
                 provider.loadItem(forTypeIdentifier: type, options: nil) { value, error in
                     if let error { continuation.resume(throwing: error); return }
-                    guard let url = value as? URL, url.isFileURL else { continuation.resume(throwing: CocoaError(.fileReadUnsupportedScheme)); return }
+                    let url: URL?
+                    if let direct = value as? URL { url = direct }
+                    else if let data = value as? Data, let string = String(data: data, encoding: .utf8) {
+                        url = URL(string: string.trimmingCharacters(in: .whitespacesAndNewlines))
+                    } else if let string = value as? String { url = URL(string: string) }
+                    else { url = nil }
+                    guard let url, url.isFileURL else { continuation.resume(throwing: CocoaError(.fileReadUnsupportedScheme)); return }
                     continuation.resume(with: Result { try copy(url, name: suggestedName, type: nil) })
                 }
             } else {
