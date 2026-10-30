@@ -812,3 +812,7 @@
 "約%lld分" = "About %lld min";
 "選択したデッキの枚数を順番に表示し、タップで開きます。" = "Show selected decks in order and tap to open them.";
 "選択したプロファイルで新しいノートを開きます。" = "Open a new note in the selected profile.";
+"対象: すべてのノート" = "Scope: all notes";
+"すべてのノートを対象に置換しますか？" = "Replace across all notes?";
+"選択したノートのみ" = "Selected notes only";
+"タグを置換" = "Replace in tags";

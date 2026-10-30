@@ -74,6 +74,7 @@ struct CustomStudyView: View {
 struct FilteredDeckRequest: Identifiable {
     let id = UUID()
     var deckID = "0"
+    var initialSearch: String? = nil
 }
 struct FilteredDeckView: View {
     @ObservedObject var model: StudyModel
@@ -101,9 +102,9 @@ struct FilteredDeckView: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField(AppText.localized("デッキ名"), text: $name)
+                TextField(AppText.localized("デッキ名"), text: $name).accessibilityIdentifier("filtered-name")
                 Section(AppText.localized("検索条件")) {
-                    TextField(AppText.localized("検索"), text: $query).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    TextField(AppText.localized("検索"), text: $query).textInputAutocapitalization(.never).autocorrectionDisabled().accessibilityIdentifier("filtered-search")
                     Stepper(AppText.localized("上限 \(limit)枚"), value: $limit, in: 1...100000)
                     orderPicker($order)
                 }
@@ -126,8 +127,8 @@ struct FilteredDeckView: View {
             .disabled(busy || !loaded)
             .studyThemeSurface().navigationTitle(AppText.localized("フィルターデッキ"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { dismiss() }.disabled(busy) }
-                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("構築")) { save() }.disabled(busy || !loaded || name.isEmpty) }
+                ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { dismiss() }.disabled(busy).accessibilityIdentifier("filtered-cancel") }
+                ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("構築")) { save() }.disabled(busy || !loaded || name.isEmpty).accessibilityIdentifier("filtered-build") }
             }
             .task { await load() }
             .alert(AppText.localized("構築できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button(AppText.localized("閉じる"), role: .cancel) { error = nil } } message: { Text(error ?? "") }
@@ -145,6 +146,9 @@ struct FilteredDeckView: View {
             let terms = config["searchTerms"] as? [[String: Any]] ?? []
             if let first = terms.first { query = first["search"] as? String ?? ""; limit = first["limit"] as? Int ?? 100; order = orders.firstIndex(of: first["order"] as? String ?? "") ?? 0 }
             if terms.count > 1 { let term = terms[1]; secondEnabled = true; secondQuery = term["search"] as? String ?? ""; secondLimit = term["limit"] as? Int ?? 100; secondOrder = orders.firstIndex(of: term["order"] as? String ?? "") ?? 0 }
+            // An explicit empty browser search means all cards; nil keeps the
+            // engine defaults. Never replace an existing deck's stored query.
+            if request.deckID == "0", let initialSearch = request.initialSearch { query = initialSearch }
             reschedule = config["reschedule"] as? Bool ?? false
             again = config["previewAgainSecs"] as? Int ?? 0; hard = config["previewHardSecs"] as? Int ?? 0; good = config["previewGoodSecs"] as? Int ?? 0
             loaded = true

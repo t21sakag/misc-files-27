@@ -24,6 +24,7 @@ struct BrowserView: View {
     @State private var editor: EditorRequest?
     @State private var changingType: BackendPageRequest?
     @State private var preview: CardPreviewRequest?
+    @State private var filteredDeck: FilteredDeckRequest?
     @State private var findReplace: FindReplaceRequest?
     @State private var selectionExport: SelectionExportRequest?
     @State private var busy = false
@@ -147,6 +148,11 @@ struct BrowserView: View {
                 Button(AppText.localized("この検索を保存")) { searchName = ""; saveSearchPrompt = true }.disabled(query.isEmpty)
                 Button(AppText.localized("保存した検索を管理")) { manageSearches = true }
             }
+            Button(AppText.localized("フィルターデッキを作成")) {
+                filteredDeck = FilteredDeckRequest(initialSearch: query)
+            }.accessibilityIdentifier("browser-create-filtered")
+            Button(AppText.localized("検索と置換")) { findReplace = FindReplaceRequest(noteIDs: []) }
+                .accessibilityIdentifier("browser-find-replace")
             Button(AppText.localized("取り消す")) { mutate { try await model.engine.undo() } }
             Button(AppText.localized("やり直す")) { mutate { _ = try await model.engine.call("CollectionService.Redo") } }
         } label: { Image(systemName: "line.3.horizontal.decrease.circle") }.disabled(busy).accessibilityIdentifier("browser-filter-menu")
@@ -181,6 +187,7 @@ struct BrowserView: View {
             .sheet(item: $changingType, onDismiss: { revision += 1 }) { BackendPageView(model: model, request: $0) }
             .sheet(item: $editor, onDismiss: { revision += 1 }) { NoteEditorView(model: model, request: $0) }
             .sheet(item: $selectionExport) { SelectionExportView(model: model, request: $0) }
+            .sheet(item: $filteredDeck, onDismiss: { revision += 1 }) { FilteredDeckView(model: model, request: $0) }
             .sheet(item: $findReplace, onDismiss: { revision += 1 }) { FindReplaceView(model: model, request: $0) }
             .sheet(item: $preview, onDismiss: { revision += 1 }) { CardPreviewView(model: model, request: $0) }
             .sheet(isPresented: $managingTags, onDismiss: {

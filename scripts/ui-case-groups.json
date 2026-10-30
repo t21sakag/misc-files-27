@@ -170,5 +170,9 @@
     "testAddNoteWidgetOpensEmptyDraftAndCancelKeepsDueCount",
     "testAnalysisWidgetShowsStoredDeckCountsAndOpensReview",
     "testDeckListWidgetSelectsDeckAndOpensItsReview"
+  ],
+  "BrowserToolsFlowTests": [
+    "testBrowserSearchCreatesFilteredDeckAndEmptySearchCancelKeepsCollection",
+    "testBrowserGlobalFindReplaceShowsAllScopeAndPersistsChanges"
   ]
 }
