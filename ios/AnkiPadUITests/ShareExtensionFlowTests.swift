@@ -14,7 +14,11 @@ final class ShareExtensionFlowTests: StudyFlowTestSupport {
         for title in ["Continue", "続ける", "Not Now", "今はしない"] {
             let button = safari.buttons[title].firstMatch
             if button.waitForExistence(timeout: 2) && button.isHittable {
-                tapTestControl(safari.buttons.matching(NSPredicate(format: "label == %@", title)), in: safari, keyboard: .keep)
+                tapTestControl(safari.buttons.matching(NSPredicate(format: "label == %@", title)), in: safari, keyboard: .keep,
+                               alreadySatisfied: {
+                    let share = safari.buttons["ShareButton"]
+                    return share.exists && share.isEnabled && share.isHittable
+                })
             }
         }
         tapTestControl(safari.buttons.matching(identifier: "ShareButton"), in: safari)

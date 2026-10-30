@@ -73,23 +73,31 @@ class StudyFlowTestSupport: XCTestCase {
     /// New control actions resolve a typed, unique query, handle the keyboard,
     /// reveal lazy rows when requested, and wait for actual hit testing. Failure
     /// records the hierarchy, screen and target coordinates before any retry.
+    /// Only optional transient prompts may supply an explicit alreadySatisfied
+    /// postcondition. Required controls never skip their readiness checks.
     @discardableResult
     func tapTestControl(_ query: XCUIElementQuery, in app: XCUIApplication, form: XCUIElement? = nil,
-                        keyboard: TestKeyboardPolicy = .dismiss) -> XCUIElement? {
+                        keyboard: TestKeyboardPolicy = .dismiss, alreadySatisfied: (() -> Bool)? = nil) -> XCUIElement? {
+        if alreadySatisfied?() == true { return nil }
         if case .dismiss = keyboard, !dismissTestKeyboard(in: app) { return nil }
         if let form { revealFormControl(query.firstMatch, in: form, topInset: 40, bottomInset: 20, maximumAttempts: 12) }
-        let exists = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in query.count > 0 }, object: nil)
+        let exists = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in alreadySatisfied?() == true || query.count > 0 }, object: nil)
         guard XCTWaiter.wait(for: [exists], timeout: 20) == .completed else {
             controlFailure(query, in: app, reason: "Control did not appear"); return nil
         }
+        if alreadySatisfied?() == true { return nil }
         guard query.count == 1 else {
             controlFailure(query, in: app, reason: "Control query is ambiguous; scope its container/type explicitly"); return nil
         }
         let element = query.element(boundBy: 0)
-        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND enabled == true AND hittable == true"), object: element)
+        let predicate = alreadySatisfied.map { satisfied in
+            NSPredicate { _, _ in satisfied() || (element.exists && element.isEnabled && element.isHittable) }
+        } ?? NSPredicate(format: "exists == true AND enabled == true AND hittable == true")
+        let ready = XCTNSPredicateExpectation(predicate: predicate, object: element)
         guard XCTWaiter.wait(for: [ready], timeout: 20) == .completed else {
             controlFailure(query, in: app, reason: "Control did not become actionable"); return nil
         }
+        if alreadySatisfied?() == true { return nil }
         XCTContext.runActivity(named: "Tap native control: " + element.identifier + " " + String(describing: element.frame)) { _ in
             element.tap()
         }
