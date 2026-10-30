@@ -49,7 +49,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.buttons["deck-1"].waitForExistence(timeout: 30), app.debugDescription)
         return app
     }
-    private func addSummary(_ app: XCUIApplication) -> (XCUIApplication, Int) {
+    private func addSummary(_ app: XCUIApplication) -> (XCUIApplication, Int)? {
         let count = expectedCount(app)
         let home = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         XCUIDevice.shared.press(.home)
@@ -72,7 +72,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         tapChoice(["Add Widget", "Add Widgets", "ウィジェットを追加"], in: home)
         capture("Widget gallery", in: home)
         let search = home.searchFields
-        guard let field = tapTestControl(search, in: home, keyboard: .keep) else { return }
+        guard let field = tapTestControl(search, in: home, keyboard: .keep) else { return nil }
         field.typeText("AnkiPad")
         let cells = home.cells.containing(.staticText, identifier: "AnkiPad")
         let buttons = home.buttons.matching(label(["AnkiPad"]))
@@ -81,7 +81,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         }, object: nil)
         guard XCTWaiter.wait(for: [knownResult], timeout: 30) == .completed else {
             capture("Widget search result unavailable", in: home)
-            XCTFail("No unique foreground app row in the widget gallery: " + home.debugDescription); return
+            XCTFail("No unique foreground app row in the widget gallery: " + home.debugDescription); return nil
         }
         capture("Widget search results", in: home)
         if cells.count == 1 && cells.firstMatch.isHittable { tapTestControl(cells, in: home, keyboard: .keep) }
@@ -97,7 +97,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
     }
     func testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp() {
         let app = launchWidgetApplication()
-        let (home, count) = addSummary(app)
+        guard let (home, count) = addSummary(app) else { return }
         let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
         guard let widget = waitForTestControl(widgets, in: home, keyboard: .keep) else { return }
         let live = widget.staticTexts.matching(NSPredicate(format: "identifier == %@ AND label == %@", "widget-summary-remaining", "残り\(count)枚"))
@@ -111,7 +111,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
     }
     func testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount() {
         let app = launchWidgetApplication()
-        let (home, count) = addSummary(app)
+        guard let (home, count) = addSummary(app) else { return }
         let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
         guard let widget = waitForTestControl(widgets, in: home, keyboard: .keep) else { return }
         widget.press(forDuration: 1.3)
