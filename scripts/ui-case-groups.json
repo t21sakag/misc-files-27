@@ -134,7 +134,8 @@
     "testBrowserURLSearchAndExplicitEmptyKeepSavedNotes",
     "testBrowserURLWaitsForUnsavedEditorAndUsesLatestSearch",
     "testSharedTextRemainsDraftAndPlainFieldsSaveOnlyExplicitly",
-    "testTextURLHTMLAndTagsSurviveExplicitSaveAndRelaunch"
+    "testTextURLHTMLAndTagsSurviveExplicitSaveAndRelaunch",
+    "testNewNoteTypeSwitchRetainsExtraFieldAndBlocksPrematureSave"
   ],
   "IncomingFileFlowTests": [
     "testReceivedTextDocumentCancelPreservesOriginalAndCollection",

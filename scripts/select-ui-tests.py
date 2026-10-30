@@ -80,6 +80,7 @@ suites = {
     'reminder-repair': ['testActualNotificationAuthorizationAndScheduleReplacement', 'testScopedReminderRecomputesAfterActualReview', 'testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode', 'testReminderNativeSchedulePersistsReplacesAndCancels'],
     'regression-repair': ['testBundledPagesUseNativeNightThemeAndRemainInteractive', 'testAutomaticFullUploadRequiresDirectionChoice', 'testJavaScriptDialogsReturnNativeInputAndDecisions', 'testSubdeckCollapsePersistsAndParentReviewsChildren'],
     'upload-only': ['testAutomaticFullUploadRequiresDirectionChoice'],
+    'incoming-fields': ['testNewNoteTypeSwitchRetainsExtraFieldAndBlocksPrematureSave'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

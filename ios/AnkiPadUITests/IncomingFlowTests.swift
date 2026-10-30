@@ -90,4 +90,65 @@ final class IncomingFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.staticTexts["IncomingURL"].exists, app.debugDescription)
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }
+    func testNewNoteTypeSwitchRetainsExtraFieldAndBlocksPrematureSave() {
+        let app = makeApplication()
+        app.launchArguments = []
+        app.launch()
+        XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
+        app.buttons["collection-menu"].tap(); app.buttons["notetypes"].tap()
+        func create(_ name: String) {
+            XCTAssertTrue(app.buttons["notetype-add"].waitForExistence(timeout: 20))
+            app.buttons["notetype-add"].tap()
+            let field = app.textFields["notetype-name"]
+            XCTAssertTrue(field.waitForExistence(timeout: 20)); field.tap(); field.typeText(name)
+            app.buttons["notetype-create"].tap()
+            XCTAssertTrue(app.buttons[name].waitForExistence(timeout: 30), app.debugDescription)
+        }
+        create("Guard Wide")
+        app.buttons["Guard Wide"].tap()
+        let addField = app.buttons["フィールドを追加"]
+        XCTAssertTrue(addField.waitForExistence(timeout: 20)); waitUntilHittable(addField); addField.tap()
+        let fieldName = app.alerts.textFields.firstMatch
+        XCTAssertTrue(fieldName.waitForExistence(timeout: 10)); fieldName.tap(); fieldName.typeText("Extra")
+        app.alerts.buttons["追加"].tap()
+        app.buttons["notetype-save"].tap()
+        XCTAssertTrue(app.buttons["Guard Wide"].waitForExistence(timeout: 30), app.debugDescription)
+        create("Guard Narrow")
+        app.navigationBars["ノートタイプ"].buttons["閉じる"].tap()
+        XCTAssertTrue(app.buttons["add-note"].waitForExistence(timeout: 30)); app.buttons["add-note"].tap()
+        let form = app.collectionViews["note-form"]
+        func choose(_ type: String) {
+            let picker = app.buttons["note-type"]
+            revealFormControl(picker, in: form, topInset: 40, bottomInset: 20, searchUpward: false)
+            picker.tap(); app.buttons[type].firstMatch.tap()
+        }
+        func field(_ index: Int) -> XCUIElement {
+            let value = app.textViews["note-field-\(index)"]
+            revealFormControl(value, in: form, topInset: 40, bottomInset: 20)
+            return value
+        }
+        choose("Guard Wide")
+        let front = field(0); front.tap(); front.typeText("Guard front")
+        let back = field(1); back.tap(); back.typeText("Guard back")
+        let extra = field(2); extra.tap(); extra.typeText("GuardExtraSentinel")
+        choose("Guard Narrow")
+        let unmapped = app.textViews["note-unmapped-field-2"]
+        revealFormControl(unmapped, in: form, topInset: 40, bottomInset: 20)
+        XCTAssertEqual(unmapped.value as? String, "GuardExtraSentinel")
+        XCTAssertFalse(app.buttons["note-save"].isEnabled, "Unmapped nonempty fields must prevent saving")
+        choose("Guard Wide")
+        XCTAssertEqual(field(0).value as? String, "Guard front")
+        XCTAssertEqual(field(1).value as? String, "Guard back")
+        XCTAssertEqual(field(2).value as? String, "GuardExtraSentinel")
+        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: app.buttons["note-save"])
+        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 20), .completed, app.debugDescription)
+        app.buttons["note-save"].tap()
+        XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30), app.debugDescription)
+        app.buttons["note-close"].tap()
+        app.terminate(); app.launchArguments = []; app.launch()
+        XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
+        assertBrowserContains(app, text: "GuardExtraSentinel", exists: true)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
+
 }
