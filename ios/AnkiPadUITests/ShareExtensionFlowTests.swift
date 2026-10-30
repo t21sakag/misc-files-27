@@ -18,9 +18,9 @@ final class ShareExtensionFlowTests: StudyFlowTestSupport {
         let share = safari.buttons.matching(NSPredicate(format: "identifier == %@ OR label IN %@", "ShareButton", ["Share", "共有"])).firstMatch
         XCTAssertTrue(share.waitForExistence(timeout: 20), safari.debugDescription)
         share.tap()
-        let service = safari.buttons["AnkiPad"].firstMatch
+        let service = safari.cells.matching(NSPredicate(format: "label == %@", "AnkiPad")).firstMatch
         if !service.waitForExistence(timeout: 5) {
-            let more = safari.buttons.matching(NSPredicate(format: "label IN %@", ["More", "その他"])).firstMatch
+            let more = safari.cells.matching(NSPredicate(format: "label IN %@", ["More", "その他"])).firstMatch
             XCTAssertTrue(more.waitForExistence(timeout: 10), safari.debugDescription)
             more.tap()
         }
