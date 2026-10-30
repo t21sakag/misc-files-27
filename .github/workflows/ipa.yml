@@ -76,6 +76,13 @@ jobs:
           build/shared-inbox-smoke build/shared-group-probe
           swiftc -DDEBUG -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/SharedClient/SharedGroup.swift ios/SharedClient/SharedInbox.swift ios/SharedClient/SharedClientSettings.swift tests/shared_inbox_smoke.swift -o build/shared-inbox-debug-smoke
           build/shared-inbox-debug-smoke build/shared-group-probe
+      - name: Test display snapshot persistence and routing
+        if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && startsWith(env.UI_SUITE, 'widget'))
+        run: |
+          swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/SharedClient/WidgetRoute.swift ios/SharedClient/WidgetSnapshot.swift tests/widget_snapshot_smoke.swift -o build/widget-snapshot-smoke
+          build/widget-snapshot-smoke
+          swiftc -DDEBUG -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/SharedClient/WidgetRoute.swift ios/SharedClient/WidgetSnapshot.swift tests/widget_snapshot_smoke.swift -o build/widget-snapshot-debug-smoke
+          build/widget-snapshot-debug-smoke
       - name: Test shared receipt completion and storage failure
         if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && startsWith(env.UI_SUITE, 'share'))
         run: |
@@ -245,6 +252,12 @@ jobs:
       - name: Test real package import, rendering, scheduling, undo and persistence
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
         run: python3 tests/engine_smoke.py build/native/host/libankipad_bridge.dylib build/fixture.apkg
+      - name: Test actual scheduler display snapshot adapter
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && startsWith(env.UI_SUITE, 'widget'))
+        run: |
+          python3 tests/widget_engine_fixture.py build/native/host/libankipad_bridge.dylib build/widget-engine.json
+          swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/SharedClient/WidgetRoute.swift ios/SharedClient/WidgetSnapshot.swift ios/AnkiPad/DeckTree.swift ios/AnkiPad/WidgetSnapshotEngine.swift tests/widget_engine_smoke.swift -o build/widget-engine-smoke
+          build/widget-engine-smoke build/widget-engine.json
       - name: Prepare real incoming document fixtures for selected cases
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
         run: |

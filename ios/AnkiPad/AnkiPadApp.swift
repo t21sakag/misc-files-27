@@ -30,7 +30,9 @@ import AVFoundation
         #endif
         return ProfileRegistryStore()
     }()
-    @Published var profileRegistry = ProfileRegistry.initial
+    @Published var profileRegistry = ProfileRegistry.initial {
+        didSet { widgetRefreshNeeded = true; scheduleWidgetRefresh() }
+    }
     @Published var profilesReady = false
     @Published var showingProfiles = false
     private var deferredProfileImport: URL?
@@ -42,7 +44,9 @@ import AVFoundation
     @Published var cardScriptEvents: [CardScriptEvent] = []
     let networkMetering = NetworkMetering()
     var cardAPIDenials = 0
-    @Published var decks: [Deck] = []
+    @Published var decks: [Deck] = [] {
+        didSet { widgetRefreshNeeded = true; scheduleWidgetRefresh() }
+    }
     @Published var card: StudyCard?
     @Published var selected: Deck?
     @Published var revealed = false
@@ -72,7 +76,14 @@ import AVFoundation
     var reminderRefreshGeneration = UUID()
     var reminderRefreshTask: Task<Void, Never>?
     @Published var reminderUpdateError: String?
-    @Published var busy = false
+    var widgetRefreshNeeded = true
+    var widgetRefreshGeneration = UUID()
+    var widgetRefreshTask: Task<Void, Never>?
+    @Published var widgetRefreshError: String?
+    @Published var widgetNavigationActive = false
+    @Published var busy = false {
+        didSet { scheduleWidgetRefresh() }
+    }
     @Published var cardDialogPresented = false
     @Published var error: String?
     @Published var exportURL: URL?
@@ -136,7 +147,7 @@ import AVFoundation
         syncCancelled = false
         Task {
             defer {
-                busy = false; isSyncing = false
+                isSyncing = false; busy = false
                 scheduleConditionalReminderRefresh()
                 showInterruptedSyncIfNeeded()
                 processPendingAutomaticSync()
@@ -179,7 +190,7 @@ import AVFoundation
             || showingMaintenance || showingNoteTypes || showingNavigationDrawer || showingReviewerOptions
             || showingReviewVoice || showingTemplateActions || editorRequest != nil || backendPage != nil
             || cardActionRequest != nil || exportURL != nil || error != nil || cardDialogPresented || collectionPresentationActive
-            || speechPreparing || speechRequest != nil || timeboxReport != nil
+            || speechPreparing || speechRequest != nil || timeboxReport != nil || widgetNavigationActive
         guard automaticSyncPolicy.take(profileID: currentProfileID, enabled: automaticSyncEnabled,
             hasAccount: account != nil, canStart: !busy && !modal,
             uptime: ProcessInfo.processInfo.systemUptime) != nil else { return }
@@ -442,7 +453,7 @@ import AVFoundation
     var nonSpeechPresentationBlocked: Bool {
         !reviewSceneActive || cardDialogPresented || showingAccount || showingBrowser || showingSharedDecks || showingProfiles || showingSettings || showingMaintenance || showingNoteTypes
         || showingNavigationDrawer || showingReviewerOptions || showingTemplateActions || editorRequest != nil || backendPage != nil
-        || cardActionRequest != nil || exportURL != nil || error != nil || collectionPresentationActive
+        || cardActionRequest != nil || exportURL != nil || error != nil || collectionPresentationActive || widgetNavigationActive
     }
     func pauseReviewInteraction() {
         autoTask?.cancel()
@@ -574,15 +585,16 @@ import AVFoundation
     }
     func refresh() { run { self.decks = try await self.engine.decks() } }
     func select(_ deck: Deck) {
-        run {
-            self.audio.stop()
-            try await self.engine.select(deck.id)
-            self.selected = deck
-            self.reviewButtonTiming = ReviewButtonTiming()
-            self.timebox.start(now: ProcessInfo.processInfo.systemUptime)
-            self.timeboxReport = nil
-            try await self.loadNext()
-        }
+        run { try await self.startReview(deck) }
+    }
+    func startReview(_ deck: Deck) async throws {
+        audio.stop()
+        try await engine.select(deck.id)
+        selected = deck
+        reviewButtonTiming = ReviewButtonTiming()
+        timebox.start(now: ProcessInfo.processInfo.systemUptime)
+        timeboxReport = nil
+        try await loadNext()
     }
     private func loadNext() async throws {
         cancelSpeechPlayback()

@@ -27,6 +27,7 @@ struct ContentView: View {
     @State private var deckBackgroundError: String?
     @ObservedObject private var notificationRoute = ReviewNotificationRoute.shared
     @State private var browserLinks = BrowserLinkInbox()
+    @State private var pendingWidgetRoute: WidgetRoute?
     @State private var browserLinkSearch: String?
     @State private var browserSessionActive = false
     @State private var openingReminder = false
@@ -494,13 +495,22 @@ struct ContentView: View {
             && !openingReminder && !browserSessionActive && notificationRoute.profileID == nil
     }
     private func openPendingExternalRequest() {
-        guard !incomingFiles.isEmpty || !pendingNoteActions.isEmpty || browserLinks.pending != nil || sharedInbox.nextAutomaticEntry != nil,
+        guard pendingWidgetRoute != nil || !incomingFiles.isEmpty || !pendingNoteActions.isEmpty || browserLinks.pending != nil || sharedInbox.nextAutomaticEntry != nil,
               canPresentExternalRequest else { return }
         let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
             .flatMap(\.windows).first(where: \.isKeyWindow)
         // Model bindings can clear before a sheet's dismissal animation ends.
         // Its onDismiss retries after the real controller has gone away.
         guard let root = window?.rootViewController, root.presentedViewController == nil else { return }
+        if let route = pendingWidgetRoute {
+            pendingWidgetRoute = nil
+            Task {
+                do { try await model.openWidgetRoute(route) }
+                catch { model.error = error.localizedDescription }
+                openPendingExternalRequest()
+            }
+            return
+        }
         if !pendingNoteActions.isEmpty {
             switch pendingNoteActions.removeFirst() {
             case .edit(let request): activeSharedEditorReceipt = request.sharedReceipt; model.editorRequest = request
@@ -544,7 +554,10 @@ struct ContentView: View {
         }
     }
     private func receiveExternalURL(_ url: URL) {
-        if url.isFileURL {
+        if let route = WidgetRoute(url: url) {
+            pendingWidgetRoute = route
+            openPendingExternalRequest()
+        } else if url.isFileURL {
             incomingFileCopies += 1
             Task {
                 do {
@@ -576,7 +589,7 @@ struct ContentView: View {
         .onChange(of: phase) { _, value in
             if value == .inactive { model.pauseReviewScene() }
             if value == .background { model.replayStop(); model.requestAutomaticSync(.background) }
-            if value == .active { sharedInbox.refresh(); model.resumeReviewScene(); openPendingReminder(); model.requestAutomaticSync(.foreground) }
+            if value == .active { sharedInbox.refresh(); model.scheduleWidgetRefresh(force: true); model.resumeReviewScene(); openPendingReminder(); model.requestAutomaticSync(.foreground) }
         }
         .onChange(of: model.reviewingInteractionBlocked) { _, blocked in
             if blocked { model.pauseReviewInteraction() } else { model.resumeReviewInteraction(); model.scheduleConditionalReminderRefresh(); openPendingReminder(); model.processPendingAutomaticSync() }

@@ -792,3 +792,5 @@
 "送信" = "Send";
 "ファイルは1つずつ共有してください。" = "Share one file at a time.";
 "取り込みは完了しましたが、共有の受信トレイに元のファイルが残っています。" = "The import completed, but the original file remains in the shared inbox.";
+"ウィジェットのプロファイルが見つかりません。ウィジェットを設定し直してください。" = "The widget’s profile was not found. Reconfigure the widget.";
+"ウィジェットのデッキが見つかりません。ウィジェットを設定し直してください。" = "The widget’s deck was not found. Reconfigure the widget.";

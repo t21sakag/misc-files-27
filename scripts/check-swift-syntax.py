@@ -18,7 +18,7 @@ parser.add_argument('--report', default='build/swift-syntax-report.json')
 args = parser.parse_args()
 if not args.swiftc:
     parser.error('Provide --swiftc or SWIFTC pointing to a Swift compiler')
-files = sorted({path for root in ['ios/AnkiPad', 'ios/AnkiPadUITests', 'tests'] for path in Path(root).rglob('*.swift')})
+files = sorted({path for root in ['ios/AnkiPad', 'ios/AnkiPadUITests', 'ios/SharedClient', 'ios/ShareExtension', 'ios/StudyWidgets', 'tests'] for path in Path(root).rglob('*.swift')})
 if not files:
     raise SystemExit('No Swift sources found; run from the repository root')
 version = subprocess.run([args.swiftc, '--version'], capture_output=True, text=True, check=True).stdout.strip()
