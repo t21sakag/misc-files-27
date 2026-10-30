@@ -71,6 +71,12 @@ private struct WidgetUpdatedView: View {
         }.font(.caption2).foregroundStyle(.secondary).lineLimit(1)
     }
 }
+private func widgetCountDescription(_ counts: WidgetCounts) -> String {
+    [AppText.localized("新規") + " " + counts.new.formatted(),
+     AppText.localized("学習") + " " + counts.learning.formatted(),
+     AppText.localized("復習") + " " + counts.review.formatted()].joined(separator: ", ")
+}
+
 private struct WidgetCountView: View {
     let counts: WidgetCounts
     var body: some View {
@@ -136,14 +142,20 @@ struct StudyDeckListView: View {
                         destination: row.deck.counts.total == 0 ? .options : .review).url) {
                         HStack {
                             Text(row.deck.displayName).lineLimit(1)
-                                Spacer(minLength: 4)
-                                if row.collection.isCurrent(at: entry.date) {
-                                    Text(row.deck.counts.new.formatted()).foregroundStyle(.blue)
-                                    Text(row.deck.counts.learning.formatted()).foregroundStyle(.orange)
-                                    Text(row.deck.counts.review.formatted()).foregroundStyle(.green)
-                                } else { Image(systemName: "arrow.clockwise") }
-                            }.font(.subheadline).monospacedDigit().frame(minHeight: 24)
-                        }.privacySensitive()
+                            Spacer(minLength: 4)
+                            if row.collection.isCurrent(at: entry.date) {
+                                Text(row.deck.counts.new.formatted()).foregroundStyle(.blue)
+                                Text(row.deck.counts.learning.formatted()).foregroundStyle(.orange)
+                                Text(row.deck.counts.review.formatted()).foregroundStyle(.green)
+                            } else { Image(systemName: "arrow.clockwise") }
+                        }.font(.subheadline).monospacedDigit().frame(minHeight: 24)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(row.deck.displayName)
+                    .accessibilityValue(row.collection.isCurrent(at: entry.date)
+                        ? widgetCountDescription(row.deck.counts) : AppText.localized("アプリを開いて更新"))
+                    .accessibilityIdentifier("widget-deck-" + WidgetDeckReference(profileID: row.profile.id, deckID: row.deck.id).identifier)
+                    .privacySensitive()
                 }
                 Spacer(minLength: 0)
                 Text(AppText.localized("件数はアプリで取得した時点の値です。")).font(.caption2).foregroundStyle(.secondary).lineLimit(1)

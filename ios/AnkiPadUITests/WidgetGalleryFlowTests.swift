@@ -259,4 +259,52 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         capture("Analysis widget opened review", in: app)
     }
 
+    func testDeckListWidgetSelectsDeckAndOpensItsReview() {
+        let app = launchWidgetApplication()
+        _ = expectedCount(app)
+        guard let state = waitForTestControl(app.staticTexts.matching(identifier: "widget-snapshot-state"), in: app, keyboard: .keep, purpose: .observation),
+              let raw = state.value as? String, let data = raw.data(using: .utf8),
+              let snapshot = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              let profiles = snapshot["profiles"] as? [[String: Any]],
+              let profile = profiles.first(where: { $0["id"] as? String == "default" }),
+              let collection = profile["collection"] as? [String: Any],
+              let decks = collection["decks"] as? [[String: Any]],
+              let deck = decks.first(where: { $0["id"] as? String == "1" }),
+              let name = deck["name"] as? String, let profileName = profile["name"] as? String,
+              let counts = deck["counts"] as? [String: Int],
+              let new = counts["new"], let learning = counts["learning"], let review = counts["review"] else {
+            XCTFail("Missing stored deck values"); return
+        }
+        guard let (home, _) = addWidget(app, page: 3, title: "デッキ一覧") else { return }
+        let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
+        let empty = widgets.staticTexts.matching(label(["ウィジェットを編集してデッキを選択してください。"]))
+        guard waitForTestControl(empty, in: home, keyboard: .keep, timeout: 30, purpose: .observation) != nil,
+              let widget = waitForTestControl(widgets, in: home, keyboard: .keep) else { return }
+        widget.press(forDuration: 1.3)
+        tapChoice(["Edit Widget", "ウィジェットを編集"], in: home)
+        capture("Deck list configuration", in: home)
+        // This intent has one parameter. Wait for exactly one foreground
+        // actionable value Button rather than guessing its empty-value title.
+        let parameter = home.buttons.matching(NSPredicate(format: "hittable == true"))
+        guard tapTestControl(parameter, in: home, keyboard: .keep) != nil else { return }
+        capture("Deck list available choices", in: home)
+        tapChoice([profileName + " · " + name], in: home)
+        capture("Deck list selected choice", in: home)
+        tapChoice(["Done", "完了"], in: home)
+        capture("Deck list configuration after choice", in: home)
+        let frame = home.frame, point = CGPoint(x: home.frame.maxX - 20, y: home.frame.midY)
+        XCTAssertTrue(frame.contains(point))
+        XCTAssertTrue(home.icons.allElementsBoundByIndex.filter { $0.exists && $0.frame.contains(point) }.isEmpty)
+        home.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: point.x - frame.minX, dy: point.y - frame.minY)).tap()
+        let leaf = name.components(separatedBy: "::").last ?? name
+        let row = widgets.descendants(matching: .any).matching(NSPredicate(format: "identifier == %@ AND label == %@ AND value == %@",
+            "widget-deck-default:1", leaf, "新規 \(new), 学習 \(learning), 復習 \(review)"))
+        guard waitForTestControl(row, in: home, keyboard: .keep, timeout: 30, purpose: .observation) != nil else { return }
+        capture("Configured deck list on Home", in: home)
+        guard tapTestControl(row, in: home, keyboard: .keep) != nil else { return }
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20))
+        guard waitForTestControl(app.buttons.matching(identifier: "reveal"), in: app, keyboard: .keep) != nil else { return }
+        capture("Deck row opened review", in: app)
+    }
+
 }
