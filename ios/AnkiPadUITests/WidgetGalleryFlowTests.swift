@@ -13,7 +13,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
             activity.add(screenshot)
         }
     }
-    private func label(_ values: [String]) -> NSPredicate { NSPredicate(format: "label IN %@", values) }
+    private func label(_ values: [String]) -> NSPredicate { NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(values)) }
     private func tapChoice(_ values: [String], in app: XCUIApplication) {
         let menu = app.menuItems.matching(label(values)), buttons = app.buttons.matching(label(values))
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
@@ -89,6 +89,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(home.staticTexts["学習状況"].waitForExistence(timeout: 30), home.debugDescription)
         tapChoice(["Add Widget", "Add Widgets", "ウィジェットを追加"], in: home)
         tapChoice(["Done", "完了"], in: home)
+        capture("Home after adding summary", in: home)
         let remaining = home.staticTexts["widget-summary-remaining"]
         XCTAssertTrue(remaining.waitForExistence(timeout: 30), home.debugDescription)
         XCTAssertEqual(remaining.label, "残り\(count)枚", "Must read the app's current group snapshot, not a gallery sample")

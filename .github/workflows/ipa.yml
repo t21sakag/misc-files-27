@@ -86,6 +86,8 @@ jobs:
       - name: Test display timeline and entity identity
         if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && startsWith(env.UI_SUITE, 'widget'))
         run: |
+          swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/AnkiPadUITests/ControlLabelMatch.swift tests/control_label_match_smoke.swift -o build/control-label-match-smoke
+          build/control-label-match-smoke
           swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/AnkiPad/AppText.swift ios/SharedClient/SharedGroup.swift ios/SharedClient/SharedClientSettings.swift ios/SharedClient/WidgetRoute.swift ios/SharedClient/WidgetSnapshot.swift ios/StudyWidgets/WidgetConfiguration.swift ios/StudyWidgets/WidgetData.swift tests/widget_timeline_smoke.swift -o build/widget-timeline-smoke
           build/widget-timeline-smoke
       - name: Test shared receipt completion and storage failure
@@ -572,6 +574,11 @@ jobs:
             python3 scripts/summarize-ui-results.py build/test-summary.json "${ui_summary_flags[@]}"
           fi
           xcrun simctl list devices booted -j > build/booted-after-tests.json
+      - name: Collect display process diagnostics
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE == 'widget-gallery'
+        env:
+          SIMULATOR_ID: ${{ steps.ui-prepare.outputs.simulator }}
+        run: python3 scripts/collect-widget-diagnostics.py --simulator "$SIMULATOR_ID"
       - name: Export simulator screenshots
         if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
         run: |
@@ -607,6 +614,7 @@ jobs:
           path: |
             build/test-summary.json
             build/test-tree.json
+            build/widget-diagnostics
             build/UITests.xcresult/database.sqlite3
             build/booted-before-tests.json
             build/ui-prerequisites.json
