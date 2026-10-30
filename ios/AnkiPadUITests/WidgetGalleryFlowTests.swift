@@ -118,10 +118,9 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         capture("Summary context menu", in: home)
         tapChoice(["Edit Widget", "ウィジェットを編集"], in: home)
         capture("Summary configuration", in: home)
-        // Match a complete parameter title with its known current value. Do
-        // not use substring matching or choose an arbitrary foreground row.
-        let parameter = home.buttons.matching(NSPredicate(format: "label MATCHES %@",
-            "^\\s*(?:Profile|プロファイル)(?:,\\s*(?:現在のプロファイル|Current profile))?\\s*$"))
+        // The observed OS row has a separate static parameter title and a
+        // value-only Button. Never concatenate adjacent labels into a title.
+        let parameter = home.buttons.matching(label(["現在のプロファイル", "Current profile"]))
         guard tapTestControl(parameter, in: home, keyboard: .keep) != nil else { return }
         capture("Summary profile choices", in: home)
         let fixed = home.staticTexts.matching(label(["既定"]))
@@ -141,7 +140,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         configured.press(forDuration: 1.3)
         tapChoice(["Edit Widget", "ウィジェットを編集"], in: home)
         capture("Summary configuration reopened", in: home)
-        let saved = home.buttons.matching(NSPredicate(format: "label MATCHES %@", "^\\s*(?:Profile|プロファイル),\\s*既定\\s*$"))
+        let saved = home.buttons.matching(label(["既定"]))
         _ = waitForTestControl(saved, in: home, keyboard: .keep, purpose: .observation)
     }
 

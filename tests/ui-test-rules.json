@@ -1,13 +1,13 @@
 {
   "version": 1,
   "rules": {
-    "semantic_labels": "Normalize only decorative edge whitespace; match the complete semantic title.",
+    "semantic_labels": "Normalize only decorative edge whitespace; match the complete semantic title. Treat adjacent parameter titles and value-only buttons as separate elements unless the observed hierarchy combines them.",
     "foreground_scope": "Resolve the current foreground container and element type before reading or acting.",
     "unique_reads_and_actions": "Both passive reads and actions use one foreground-scoped match. Observations need a visible frame; actions additionally require enabled/hittable. Never pick the first duplicate.",
     "live_state": "Require the expected live data or completed transition. Placeholder, redaction, and element existence alone do not establish readiness.",
     "keyboard_and_scroll": "Use shared keyboard and reveal handling; retain explicit postconditions for optional transient UI.",
     "environment": "Check actual fixtures, services, onboarding and dependencies, including simulator team/App ID/bundle consistency and the remote consumer’s shared-data context, before long UI work.",
-    "first_failure_evidence": "Compare hierarchy, recording and coordinates before changing an interaction; capture remote-process logs during the test because runner cleanup can stop its simulator; retain bounded persistent probes and repair missing diagnostics before another attempt.",
+    "first_failure_evidence": "Compare hierarchy, recording and coordinates before changing an interaction; capture remote-process logs during the test because runner cleanup can stop its simulator; retain bounded persistent probes and repair missing diagnostics before another attempt. Compare the terminal failure capture as well as the immediate transition capture; a transient spinner does not prove persistent loading.",
     "failure_classification": "Separate app defects, harness defects, environment failures and inspection failures; count repeat attempts.",
     "runtime_warnings": "A passed assertion does not dispose of application runtime warnings.",
     "device_evidence": "Simulator checks do not prove actual audio, notification delivery, re-signing or device permissions."
