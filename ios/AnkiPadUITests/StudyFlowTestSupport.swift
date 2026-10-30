@@ -66,10 +66,10 @@ class StudyFlowTestSupport: XCTestCase {
         let settled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
             !visible() || hide.allElementsBoundByIndex.filter { $0.isHittable }.count == 1
         }, object: nil)
-        guard XCTWaiter.wait(for: [settled], timeout: 10) == .completed else {
-            controlFailure(hide, in: app, reason: "Keyboard stayed visible without a unique actionable dismissal control")
-            return false
-        }
+        // AX evaluation can itself outlast the observer deadline. A timeout
+        // is not proof that the keyboard/control is still in that old state.
+        // Recheck the same required postcondition before failing or acting.
+        _ = XCTWaiter.wait(for: [settled], timeout: 10)
         // A sheet dismissal may have already closed its keyboard while the
         // button query was resolving. That is the required end state.
         if !visible() { return true }
@@ -80,7 +80,8 @@ class StudyFlowTestSupport: XCTestCase {
         }
         buttons[0].tap()
         let closed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in !visible() }, object: nil)
-        guard XCTWaiter.wait(for: [closed], timeout: 10) == .completed else {
+        let closedResult = XCTWaiter.wait(for: [closed], timeout: 10)
+        guard closedResult == .completed || !visible() else {
             controlFailure(hide, in: app, reason: "Keyboard did not close")
             return false
         }
