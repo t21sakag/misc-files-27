@@ -109,6 +109,13 @@ class StudyFlowTestSupport: XCTestCase {
         return tapTestControl(actions, in: application, keyboard: .keep)
     }
 
+    @discardableResult
+    func tapTestAlertAction(titles: [String], in alert: XCUIElementQuery, application: XCUIApplication) -> XCUIElement? {
+        let actions = alert.descendants(matching: .other).children(matching: .button)
+            .matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(titles)))
+        return tapTestControl(actions, in: application, keyboard: .keep)
+    }
+
     /// Readiness is also required before reading a value: remote widgets can
     /// expose both placeholder/redaction and live nodes with the same ID.
     @discardableResult

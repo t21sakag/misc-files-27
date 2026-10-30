@@ -92,6 +92,7 @@ suites = {
     'incoming-invalid': ['testInvalidReceivedPackageReportsFailureAndKeepsPreviousCollection'],
     'incoming-still-note': ['testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia'],
     'incoming-commit-repair': ['testReceivedCOLPKGReplacesOnlyAfterConfirmationAndBackupRestoresPreviousNotes', 'testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia'],
+    'widget-isolation': ['testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp', 'testAddNoteWidgetOpensEmptyDraftAndCancelKeepsDueCount'],
     'widget-decks': ['testDeckListWidgetSelectsDeckAndOpensItsReview'],
     'widget-analysis': ['testAnalysisWidgetShowsStoredDeckCountsAndOpensReview'],
     'widget-add': ['testAddNoteWidgetOpensEmptyDraftAndCancelKeepsDueCount'],

@@ -3,6 +3,64 @@ import XCTest
 /// Exercise the OS gallery and the real remote widget process. A synthetic
 /// in-app preview cannot prove registration, shared-group reads, or widgetURL.
 final class WidgetGalleryFlowTests: StudyFlowTestSupport {
+    private var ownsCleanHome = false
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        #if !targetEnvironment(simulator)
+        throw XCTSkip("Home widget lifecycle tests require an owned CI simulator")
+        #endif
+        let home = foregroundHome()
+        capture("Widget isolation before case", in: home)
+        XCTAssertEqual(ownedWidgets(in: home).count, 0, "A prior case left a Home widget")
+        ownsCleanHome = true
+    }
+
+    override func tearDownWithError() throws {
+        try super.tearDownWithError()
+        guard ownsCleanHome else { return }
+        let home = foregroundHome()
+        let widgets = ownedWidgets(in: home)
+        guard widgets.count > 0 else {
+            capture("Widget isolation after case: empty", in: home)
+            return
+        }
+        XCTAssertEqual(widgets.count, 1, "Cleanup must not guess among multiple widgets")
+        // A successful configuration case can finish with its sheet open.
+        // The measured icon-free background is the proven dismissal target.
+        let frame = home.frame
+        let point = CGPoint(x: frame.maxX - 20, y: frame.midY)
+        guard frame.contains(point), home.icons.allElementsBoundByIndex.filter({ $0.exists && $0.frame.contains(point) }).isEmpty else {
+            capture("Widget cleanup background unavailable", in: home)
+            XCTFail("No measured empty Home margin for widget cleanup"); return
+        }
+        home.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: point.x - frame.minX, dy: point.y - frame.minY)).tap()
+        guard let widget = waitForTestControl(widgets, in: home, keyboard: .keep) else { return }
+        widget.press(forDuration: 1.3)
+        capture("Widget cleanup context menu", in: home)
+        let remove = home.buttons.matching(identifier: "com.apple.springboardhome.application-shortcut-item.remove-widget")
+        guard tapTestControl(remove, in: home, keyboard: .keep) != nil else { return }
+        capture("Widget cleanup confirmation", in: home)
+        guard waitForTestControl(home.alerts, in: home, keyboard: .keep, purpose: .observation) != nil else { return }
+        guard tapTestAlertAction(titles: ["Remove", "削除"], in: home.alerts, application: home) != nil else { return }
+        let removed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in widgets.count == 0 }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [removed], timeout: 20), .completed, "Own Home widget was not removed")
+        capture("Widget isolation after case: removed", in: home)
+    }
+
+    private func foregroundHome() -> XCUIApplication {
+        let home = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        // Pressing Home while already there can switch away from the widget page.
+        if home.state != .runningForeground { XCUIDevice.shared.press(.home) }
+        XCTAssertTrue(home.wait(for: .runningForeground, timeout: 20), home.debugDescription)
+        return home
+    }
+
+    private func ownedWidgets(in home: XCUIApplication) -> XCUIElementQuery {
+        home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
+    }
+
     private func capture(_ stage: String, in app: XCUIApplication) {
         XCTContext.runActivity(named: stage) { activity in
             let hierarchy = XCTAttachment(string: app.debugDescription)
