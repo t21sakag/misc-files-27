@@ -83,9 +83,12 @@ final class ShareExtensionFlowTests: StudyFlowTestSupport {
             let button = photos.buttons[title].firstMatch
             if button.waitForExistence(timeout: 1) && button.isHittable { button.tap() }
         }
-        let image = photos.images.matching(identifier: "PXGGridLayout-Info").firstMatch
+        // Fresh simulators also contain stock photos from 2009. The fixture
+        // has no EXIF date, so importing it assigns the current year.
+        let year = String(Calendar.current.component(.year, from: Date()))
+        let image = photos.images.matching(NSPredicate(format: "identifier == %@ AND label CONTAINS %@", "PXGGridLayout-Info", year)).firstMatch
         XCTAssertTrue(image.waitForExistence(timeout: 25), photos.debugDescription)
-        image.tap()
+        image.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         let share = photos.buttons.matching(NSPredicate(format: "label IN %@", ["Share", "共有"])).firstMatch
         XCTAssertTrue(share.waitForExistence(timeout: 15), photos.debugDescription)
         share.tap()
