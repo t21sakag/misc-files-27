@@ -79,15 +79,18 @@ final class ShareExtensionFlowTests: StudyFlowTestSupport {
         let photos = XCUIApplication(bundleIdentifier: "com.apple.mobileslideshow")
         defer { if photos.state != .notRunning { photos.terminate() } }
         photos.launch()
-        for title in ["Continue", "Get Started", "Not Now", "続ける", "はじめる", "今はしない"] {
-            let button = photos.buttons[title].firstMatch
-            if button.waitForExistence(timeout: 1) && button.isHittable { button.tap() }
+        // Photos publishes its What's New sheet after the library grid is
+        // already in the AX tree. Wait for this known first-launch overlay.
+        let welcome = photos.buttons["Continue"].firstMatch
+        if welcome.waitForExistence(timeout: 15) {
+            waitUntilHittable(welcome); welcome.tap()
+            XCTAssertTrue(welcome.waitForNonExistence(timeout: 15), photos.debugDescription)
         }
-        // Fresh simulators also contain stock photos from 2009. The fixture
-        // has no EXIF date, so importing it assigns the current year.
-        let year = String(Calendar.current.component(.year, from: Date()))
-        let image = photos.images.matching(NSPredicate(format: "identifier == %@ AND label CONTAINS %@", "PXGGridLayout-Info", year)).firstMatch
-        XCTAssertTrue(image.waitForExistence(timeout: 25), photos.debugDescription)
+        let images = photos.images.matching(identifier: "PXGGridLayout-Info")
+        XCTAssertTrue(images.firstMatch.waitForExistence(timeout: 25), photos.debugDescription)
+        // All Photos is chronological; the imported synthetic image is last.
+        // Current-year labels omit the year, so do not parse their display text.
+        let image = images.element(boundBy: images.count-1)
         image.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         let share = photos.buttons.matching(NSPredicate(format: "label IN %@", ["Share", "共有"])).firstMatch
         XCTAssertTrue(share.waitForExistence(timeout: 15), photos.debugDescription)
@@ -121,6 +124,8 @@ final class ShareExtensionFlowTests: StudyFlowTestSupport {
         attach.tap()
         let editor = app.images["image-editor-image"]
         XCTAssertTrue(editor.waitForExistence(timeout: 30), app.debugDescription)
+        let dimensions = (editor.value as? String ?? "").components(separatedBy: "×").compactMap { Int($0.filter(\.isNumber)) }
+        XCTAssertEqual(dimensions, [512, 384], app.debugDescription)
         app.buttons["image-editor-insert"].tap()
         XCTAssertTrue(editor.waitForNonExistence(timeout: 20))
         let front = app.textViews["note-field-0"]
