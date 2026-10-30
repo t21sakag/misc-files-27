@@ -143,9 +143,16 @@
     "testIncomingImagePreparationBoundsPreviewAndPreservesAnimation",
     "testReceivedCollectionReplacementCanBeCancelledBeforeMutation",
     "testReceivedAudioAndVideoBecomeDraftAttachmentsWithoutSaving",
-    "testReceivedStillImageOpensOcclusionAndSavesRealMask"
+    "testReceivedStillImageOpensOcclusionAndSavesRealMask",
+    "testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia"
   ],
   "NotificationAuthorizationFlowTests": [
     "testActualNotificationAuthorizationAndScheduleReplacement"
+  ],
+  "IncomingDocumentImportFlowTests": [
+    "testReceivedAPKGImportsAfterOriginalIsRemovedAndPreservesExistingNotes",
+    "testReceivedCOLPKGReplacesOnlyAfterConfirmationAndBackupRestoresPreviousNotes",
+    "testReceivedTSVSurvivesSourceRemovalAndImportsThroughBundledWebInterface",
+    "testInvalidReceivedPackageReportsFailureAndKeepsPreviousCollection"
   ]
 }

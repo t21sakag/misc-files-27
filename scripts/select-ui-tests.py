@@ -81,6 +81,12 @@ suites = {
     'regression-repair': ['testBundledPagesUseNativeNightThemeAndRemainInteractive', 'testAutomaticFullUploadRequiresDirectionChoice', 'testJavaScriptDialogsReturnNativeInputAndDecisions', 'testSubdeckCollapsePersistsAndParentReviewsChildren'],
     'upload-only': ['testAutomaticFullUploadRequiresDirectionChoice'],
     'incoming-fields': ['testNewNoteTypeSwitchRetainsExtraFieldAndBlocksPrematureSave'],
+    'incoming-commit': ['testReceivedAPKGImportsAfterOriginalIsRemovedAndPreservesExistingNotes', 'testReceivedCOLPKGReplacesOnlyAfterConfirmationAndBackupRestoresPreviousNotes', 'testReceivedTSVSurvivesSourceRemovalAndImportsThroughBundledWebInterface', 'testInvalidReceivedPackageReportsFailureAndKeepsPreviousCollection', 'testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia'],
+    'incoming-apkg': ['testReceivedAPKGImportsAfterOriginalIsRemovedAndPreservesExistingNotes'],
+    'incoming-colpkg': ['testReceivedCOLPKGReplacesOnlyAfterConfirmationAndBackupRestoresPreviousNotes'],
+    'incoming-tsv': ['testReceivedTSVSurvivesSourceRemovalAndImportsThroughBundledWebInterface'],
+    'incoming-invalid': ['testInvalidReceivedPackageReportsFailureAndKeepsPreviousCollection'],
+    'incoming-still-note': ['testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

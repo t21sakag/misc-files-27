@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, incoming-final-repair, reminder-repair, regression-repair, upload-only, incoming-fields, all]
+        options: [milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, incoming-final-repair, reminder-repair, regression-repair, upload-only, incoming-fields, incoming-commit, incoming-apkg, incoming-colpkg, incoming-tsv, incoming-invalid, incoming-still-note, all]
 permissions:
   contents: read
 concurrency:
@@ -220,6 +220,17 @@ jobs:
       - name: Test real package import, rendering, scheduling, undo and persistence
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
         run: python3 tests/engine_smoke.py build/native/host/libankipad_bridge.dylib build/fixture.apkg
+      - name: Prepare real incoming document fixtures for selected cases
+        if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
+        run: |
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          import subprocess
+          import sys
+          selected = Path('build/ui-test-arguments.txt').read_text().splitlines()
+          if not selected or any(item.startswith('-only-testing:AnkiPadUITests/IncomingDocumentImportFlowTests/') for item in selected):
+              subprocess.run([sys.executable, 'tests/received_import_fixtures.py', 'build/native/host/libankipad_bridge.dylib', 'ios/AnkiPadUITests/ReceivedFixtures'], check=True)
+          PYTHON
       - name: Test backend language isolation and existing data preservation
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'engine-languages' || env.UI_SUITE == 'languages'))
         run: python3 tests/backend_languages_smoke.py build/native/host/libankipad_bridge.dylib

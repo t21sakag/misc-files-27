@@ -142,6 +142,45 @@ final class IncomingFileFlowTests: StudyFlowTestSupport {
         assertBrowserContains(app, text: "image-occlusion", exists: true)
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }
+    func testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia() throws {
+        let file = try temporaryFile("incoming-still-note.png")
+        let original = image().pngData()!
+        try original.write(to: file)
+        let app = makeApplication()
+        app.launchArguments = []
+        app.open(file)
+        let attach = app.buttons["incoming-image-note"]
+        revealFormControl(attach, in: app.collectionViews["incoming-import-form"], topInset: 40, bottomInset: 20)
+        attach.tap()
+        let editor = app.images["image-editor-image"]
+        XCTAssertTrue(editor.waitForExistence(timeout: 30), app.debugDescription)
+        XCTAssertEqual((editor.value as? String ?? "").components(separatedBy: CharacterSet.decimalDigits.inverted).compactMap(Int.init), [1600, 800])
+        app.buttons["image-editor-rotate"].tap()
+        let rotated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            (editor.value as? String ?? "").components(separatedBy: CharacterSet.decimalDigits.inverted).compactMap(Int.init) == [800, 1600]
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [rotated], timeout: 10), .completed)
+        // The editor owns the staged copy, including its original-data fallback.
+        try FileManager.default.removeItem(at: file)
+        app.buttons["image-editor-insert"].tap()
+        XCTAssertTrue(editor.waitForNonExistence(timeout: 30))
+        let front = app.textViews["note-field-0"]
+        XCTAssertTrue(front.waitForExistence(timeout: 20), app.debugDescription)
+        let html = front.value as? String ?? ""
+        XCTAssertTrue(html.contains("<img"), html)
+        XCTAssertEqual(html.components(separatedBy: "<img").count - 1, 1)
+        app.buttons["note-save"].tap()
+        XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30), app.debugDescription)
+        app.buttons["note-close"].tap()
+        app.terminate(); app.launchArguments = []; app.launch()
+        XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
+        app.buttons["collection-menu"].tap(); app.buttons["browser-open"].tap()
+        let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browser-card-")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 20), app.debugDescription); row.tap()
+        XCTAssertTrue(front.waitForExistence(timeout: 20), app.debugDescription)
+        XCTAssertEqual(front.value as? String, html)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
     func testIncomingImagePreparationBoundsPreviewAndPreservesAnimation() throws {
         let still = try temporaryFile("still.png"), animated = try animatedFile()
         let original = image().pngData()!
