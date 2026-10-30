@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 suites = {
+    'share-regression': ['testReceivedAPKGImportsAfterOriginalIsRemovedAndPreservesExistingNotes', 'testReceivedTSVSurvivesSourceRemovalAndImportsThroughBundledWebInterface', 'testReceivedStillImageOpensOcclusionAndSavesRealMask'],
     'share-image': ['testPhotoShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia'],
     'share-milestone': ['testPhotoShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia', 'testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel'],
     'share-text': ['testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel'],
