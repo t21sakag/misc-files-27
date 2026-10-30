@@ -62,6 +62,7 @@ assert rule['NSExtensionActivationSupportsWebURLWithMaxCount'] == 1
 for key in ['File', 'Image', 'Movie']:
     assert rule['NSExtensionActivationSupports'+key+'WithMaxCount'] == 1
 for bundle, value in [(args.app,app),(extension,share)]:
+    assert value['UIDeviceFamily']==[2] and value['MinimumOSVersion']=='18.0', (bundle,value.get('UIDeviceFamily'),value.get('MinimumOSVersion'))
     assert value['StudySharedGroup'] == app['StudySharedGroup'] and '$(' not in value['StudySharedGroup']
     assert entitlements(bundle)['com.apple.security.application-groups'] == [app['StudySharedGroup']]
     assert (bundle/value['CFBundleExecutable']).is_file()

@@ -132,6 +132,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.localtools.studyclient.share
+        TARGETED_DEVICE_FAMILY: '2'
         APPLICATION_EXTENSION_API_ONLY: YES
         SKIP_INSTALL: YES
         SWIFT_OBJC_BRIDGING_HEADER: ''

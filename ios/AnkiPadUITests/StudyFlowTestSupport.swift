@@ -37,6 +37,105 @@ class StudyFlowTestSupport: XCTestCase {
             .withOffset(CGVector(dx: frame.midX - origin.x, dy: frame.midY - origin.y)).tap()
     }
 
+    enum TestKeyboardPolicy { case keep, dismiss }
+
+    private func controlFailure(_ query: XCUIElementQuery, in app: XCUIApplication, reason: String) {
+        let matches = query.allElementsBoundByIndex.prefix(12).map {
+            "id=\($0.identifier) label=\($0.label) frame=\($0.frame) enabled=\($0.isEnabled) hittable=\($0.isHittable)"
+        }.joined(separator: "\n")
+        let evidence = reason + "\n" + query.debugDescription + "\n" + matches + "\n" + app.debugDescription
+        XCTContext.runActivity(named: "Control prerequisite failed") { activity in
+            let hierarchy = XCTAttachment(string: evidence); hierarchy.name = "Hierarchy and target frames"; hierarchy.lifetime = .keepAlways
+            let screenshot = XCTAttachment(screenshot: app.screenshot()); screenshot.lifetime = .keepAlways
+            activity.add(hierarchy); activity.add(screenshot)
+        }
+        XCTFail(evidence)
+    }
+
+    @discardableResult
+    func dismissTestKeyboard(in app: XCUIApplication) -> Bool {
+        guard app.keyboards.firstMatch.exists,
+              app.keyboards.firstMatch.frame.intersection(app.frame).height > 1 else { return true }
+        let hide = app.buttons.matching(NSPredicate(format: "label IN %@", ["Hide keyboard", "キーボードを隠す"]))
+        let buttons = hide.allElementsBoundByIndex.filter { $0.isHittable }
+        guard buttons.count == 1 else {
+            controlFailure(hide, in: app, reason: "Cannot uniquely dismiss the keyboard before a control action")
+            return false
+        }
+        buttons[0].tap()
+        guard app.keyboards.firstMatch.waitForNonExistence(timeout: 10) else {
+            controlFailure(hide, in: app, reason: "Keyboard did not close")
+            return false
+        }
+        return true
+    }
+
+    /// New control actions resolve a typed, unique query, handle the keyboard,
+    /// reveal lazy rows when requested, and wait for actual hit testing. Failure
+    /// records the hierarchy, screen and target coordinates before any retry.
+    @discardableResult
+    func tapTestControl(_ query: XCUIElementQuery, in app: XCUIApplication, form: XCUIElement? = nil,
+                        keyboard: TestKeyboardPolicy = .dismiss) -> XCUIElement? {
+        if case .dismiss = keyboard, !dismissTestKeyboard(in: app) { return nil }
+        if let form { revealFormControl(query.firstMatch, in: form, topInset: 40, bottomInset: 20, maximumAttempts: 12) }
+        let exists = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in query.count > 0 }, object: nil)
+        guard XCTWaiter.wait(for: [exists], timeout: 20) == .completed else {
+            controlFailure(query, in: app, reason: "Control did not appear"); return nil
+        }
+        guard query.count == 1 else {
+            controlFailure(query, in: app, reason: "Control query is ambiguous; scope its container/type explicitly"); return nil
+        }
+        let element = query.element(boundBy: 0)
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND enabled == true AND hittable == true"), object: element)
+        guard XCTWaiter.wait(for: [ready], timeout: 20) == .completed else {
+            controlFailure(query, in: app, reason: "Control did not become actionable"); return nil
+        }
+        XCTContext.runActivity(named: "Tap native control: " + element.identifier + " " + String(describing: element.frame)) { _ in
+            element.tap()
+        }
+        return element
+    }
+
+    func openTestShareService(in host: XCUIApplication) {
+        let service = host.cells.matching(NSPredicate(format: "label == %@", "AnkiPad"))
+        if !service.firstMatch.waitForExistence(timeout: 5) {
+            let more = host.cells.matching(NSPredicate(format: "label IN %@", ["More", "その他"]))
+            guard tapTestControl(more, in: host) != nil else { return }
+        }
+        tapTestControl(service, in: host)
+    }
+
+    func completeTestShare(in host: XCUIApplication, subject: String) {
+        let query = host.textFields.matching(identifier: "share-subject")
+        guard let field = tapTestControl(query, in: host, keyboard: .keep) else { return }
+        let old = field.value as? String ?? ""
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count)+subject)
+        tapTestControl(host.buttons.matching(identifier: "share-submit"), in: host)
+        tapTestControl(host.buttons.matching(identifier: "share-complete"), in: host)
+    }
+
+    /// Photos exposes its grid before the delayed first-launch sheet appears.
+    /// Keep this environment prerequisite ahead of the actual share journey.
+    func prepareTestPhotoLibrary(_ photos: XCUIApplication) {
+        XCTContext.runActivity(named: "Prerequisite: photo host and imported fixture") { _ in
+            photos.launch()
+            let welcome = photos.buttons.matching(NSPredicate(format: "label IN %@", ["Continue", "続ける"]))
+            if welcome.firstMatch.waitForExistence(timeout: 15) {
+                tapTestControl(welcome, in: photos)
+                XCTAssertTrue(welcome.firstMatch.waitForNonExistence(timeout: 15), photos.debugDescription)
+            }
+            let images = photos.images.matching(identifier: "PXGGridLayout-Info")
+            XCTAssertTrue(images.firstMatch.waitForExistence(timeout: 25), photos.debugDescription)
+            guard images.count > 0 else { return }
+            // All Photos is chronological. Current-year labels omit the year.
+            let image = images.element(boundBy: images.count-1)
+            waitUntilHittable(image)
+            XCTContext.runActivity(named: "Select fixture image: " + String(describing: image.frame)) { _ in
+                image.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            }
+        }
+    }
+
     func revealSettingsControl(_ item: XCUIElement, in app: XCUIApplication) {
         let form = app.collectionViews["settings-form"]
         revealFormControl(item, in: form)

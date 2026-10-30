@@ -18,7 +18,11 @@ keys=['PRODUCT_BUNDLE_IDENTIFIER','TARGETED_DEVICE_FAMILY','IPHONEOS_DEPLOYMENT_
 for target in json.loads(raw):
     if target['target'] not in ['AnkiPad','ShareExtension']:continue
     settings=target['buildSettings']
-    targets.append({'target':target['target'],**{key:settings.get(key) for key in keys}})
+    value={'target':target['target'],**{key:settings.get(key) for key in keys}}
+    previous=next((entry for entry in targets if entry['target']==target['target']),None)
+    if previous is not None:
+        assert previous==value, f"Conflicting duplicate target settings: {target['target']}"
+    else: targets.append(value)
 report={'source':os.environ.get('GITHUB_SHA'),'sdk':'iphoneos','configuration':'Release','targets':targets}
 args.output.parent.mkdir(parents=True,exist_ok=True)
 args.output.write_text(json.dumps(report,indent=2)+'\n')

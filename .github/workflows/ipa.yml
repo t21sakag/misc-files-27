@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'compile: コンパイルだけ / ui: 操作検証 / ipa: 配布用IPAだけ / full: 全検証'
+        description: 'configuration: 設定だけ / compile: コンパイル / ui: 操作検証 / ipa: 配布 / full: 全検証'
         type: choice
         default: compile
         options: [configuration, compile, ui, ipa, full]
@@ -76,8 +76,14 @@ jobs:
           build/shared-inbox-smoke build/shared-group-probe
           swiftc -DDEBUG -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/SharedClient/SharedGroup.swift ios/SharedClient/SharedInbox.swift ios/SharedClient/SharedClientSettings.swift tests/shared_inbox_smoke.swift -o build/shared-inbox-debug-smoke
           build/shared-inbox-debug-smoke build/shared-group-probe
+      - name: Test shared receipt completion and storage failure
+        if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && startsWith(env.UI_SUITE, 'share'))
+        run: |
           swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/SharedClient/SharedInbox.swift ios/SharedClient/SharedInboxReceipt.swift tests/shared_inbox_receipt_smoke.swift -o build/shared-receipt-smoke
           build/shared-receipt-smoke
+      - name: Test actual item-provider file and URL representations
+        if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && startsWith(env.UI_SUITE, 'share'))
+        run: |
           swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/SharedClient/SharedInbox.swift ios/ShareExtension/ShareProviderFile.swift tests/shared_provider_file_smoke.swift -o build/shared-provider-smoke
           build/shared-provider-smoke
       - name: Test full sync direction safety
@@ -124,6 +130,7 @@ jobs:
         run: |
           python3 tests/sync_fixture_scope_smoke.py
           python3 tests/shared_fixture_scope_smoke.py
+          python3 tests/ui_prerequisites_smoke.py
       - name: Test owned simulator lifecycle
         run: python3 tests/ci_simulator_smoke.py
       - name: Test cache input selection
@@ -454,6 +461,15 @@ jobs:
           cd ios
           xcodegen generate
           echo "simulator=$SIMULATOR_ID" >> "$GITHUB_OUTPUT"
+      - name: Check simulator and external UI prerequisites
+        id: ui-prerequisites
+        if: env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
+        env:
+          SIMULATOR_ID: ${{ steps.ui-prepare.outputs.simulator }}
+        run: |
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          if [ -f build/occlusion-fixture.png ]; then xcrun simctl addmedia "$SIMULATOR_ID" build/occlusion-fixture.png; fi
+          python3 scripts/ui-prerequisites.py --simulator "$SIMULATOR_ID" --selections build/ui-test-arguments.txt
       - name: Restore identical generated project and fixture timestamps
         if: env.CI_MODE == 'full' || env.CI_MODE == 'ui'
         run: python3 scripts/xcode-input-mtimes.py restore
@@ -511,8 +527,6 @@ jobs:
         env:
           SIMULATOR_ID: ${{ steps.ui-prepare.outputs.simulator }}
         run: |
-          xcrun simctl bootstatus "$SIMULATOR_ID" -b
-          if [ -f build/occlusion-fixture.png ]; then xcrun simctl addmedia "$SIMULATOR_ID" build/occlusion-fixture.png; fi
           ui_workers=$(python3 scripts/select-ui-workers.py build/ui-test-arguments.txt)
           parallel_ui=NO
           if [ "$ui_workers" -gt 1 ]; then
@@ -572,6 +586,7 @@ jobs:
             build/test-tree.json
             build/UITests.xcresult/database.sqlite3
             build/booted-before-tests.json
+            build/ui-prerequisites.json
             build/booted-after-tests.json
             build/screenshots/manifest.json
             build/screenshots/*.txt
