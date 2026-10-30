@@ -167,6 +167,7 @@
     "testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp",
     "testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount",
     "testFixedSummarySurvivesActiveProfileSwitchAndOpensItsOwnProfile",
-    "testAddNoteWidgetOpensEmptyDraftAndCancelKeepsDueCount"
+    "testAddNoteWidgetOpensEmptyDraftAndCancelKeepsDueCount",
+    "testAnalysisWidgetShowsStoredDeckCountsAndOpensReview"
   ]
 }

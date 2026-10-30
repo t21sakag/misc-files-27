@@ -92,6 +92,7 @@ suites = {
     'incoming-invalid': ['testInvalidReceivedPackageReportsFailureAndKeepsPreviousCollection'],
     'incoming-still-note': ['testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia'],
     'incoming-commit-repair': ['testReceivedCOLPKGReplacesOnlyAfterConfirmationAndBackupRestoresPreviousNotes', 'testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia'],
+    'widget-analysis': ['testAnalysisWidgetShowsStoredDeckCountsAndOpensReview'],
     'widget-add': ['testAddNoteWidgetOpensEmptyDraftAndCancelKeepsDueCount'],
     'widget-profile': ['testFixedSummarySurvivesActiveProfileSwitchAndOpensItsOwnProfile'],
     'widget-settings': ['testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount'],

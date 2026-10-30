@@ -75,16 +75,18 @@ private struct WidgetCountView: View {
     let counts: WidgetCounts
     var body: some View {
         HStack(spacing: 12) {
-            value(counts.new, title: AppText.localized("新規"), color: .blue)
-            value(counts.learning, title: AppText.localized("学習"), color: .orange)
-            value(counts.review, title: AppText.localized("復習"), color: .green)
+            value(counts.new, title: AppText.localized("新規"), color: .blue, identifier: "widget-count-new")
+            value(counts.learning, title: AppText.localized("学習"), color: .orange, identifier: "widget-count-learning")
+            value(counts.review, title: AppText.localized("復習"), color: .green, identifier: "widget-count-review")
         }.monospacedDigit()
     }
-    private func value(_ count: Int, title: String, color: Color) -> some View {
+    private func value(_ count: Int, title: String, color: Color, identifier: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title).font(.caption2).foregroundStyle(.secondary)
             Text(count.formatted()).font(.title3.bold()).foregroundStyle(color).lineLimit(1).minimumScaleFactor(0.7)
-        }.accessibilityElement(children: .combine)
+        }.accessibilityElement(children: .ignore)
+            .accessibilityLabel(title).accessibilityValue(String(count))
+            .accessibilityIdentifier(identifier)
     }
 }
 

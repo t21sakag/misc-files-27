@@ -27,7 +27,7 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         else { tapTestControl(buttons, in: app, keyboard: .keep) }
     }
     private func expectedCount(_ app: XCUIApplication) -> Int {
-        let state = app.staticTexts["widget-snapshot-state"]
+        guard let state = waitForTestControl(app.staticTexts.matching(identifier: "widget-snapshot-state"), in: app, keyboard: .keep, purpose: .observation) else { return 0 }
         var total: Int?
         let stored = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
             guard state.exists, let raw = state.value as? String, let data = raw.data(using: .utf8),
@@ -224,6 +224,39 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         guard tapTestControl(app.buttons.matching(identifier: "note-close"), in: app) != nil else { return }
         waitForStoredProfile(app, isDefault: true, total: count)
         XCTAssertFalse(app.textViews["note-field-0"].exists)
+    }
+
+    func testAnalysisWidgetShowsStoredDeckCountsAndOpensReview() {
+        let app = launchWidgetApplication()
+        _ = expectedCount(app)
+        guard let state = waitForTestControl(app.staticTexts.matching(identifier: "widget-snapshot-state"), in: app, keyboard: .keep, purpose: .observation),
+              let raw = state.value as? String, let data = raw.data(using: .utf8),
+              let snapshot = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              let profiles = snapshot["profiles"] as? [[String: Any]],
+              let profile = profiles.first(where: { $0["id"] as? String == "default" }),
+              let collection = profile["collection"] as? [String: Any],
+              let decks = collection["decks"] as? [[String: Any]],
+              let deck = decks.first(where: { $0["id"] as? String == "1" }),
+              let counts = deck["counts"] as? [String: Int] else {
+            XCTFail("Missing actual stored deck snapshot"); return
+        }
+        XCTAssertGreaterThan(counts["new"] ?? 0, 0)
+        guard let (home, _) = addWidget(app, page: 6, title: "デッキの枚数") else { return }
+        let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
+        // These app-owned accessible groups expose a category label and its
+        // actual numeric value. Their role is intentionally opaque to the OS;
+        // resolve by owned identity/value inside this one widget, not by text.
+        for (key, title) in [("new", "新規"), ("learning", "学習"), ("review", "復習")] {
+            guard let count = counts[key] else { XCTFail("Missing count " + key); return }
+            let value = widgets.descendants(matching: .any).matching(NSPredicate(format: "identifier == %@ AND label == %@ AND value == %@",
+                "widget-count-" + key, title, String(count)))
+            guard waitForTestControl(value, in: home, keyboard: .keep, timeout: 30, purpose: .observation) != nil else { return }
+        }
+        capture("Deck analysis counts on Home", in: home)
+        guard tapTestControl(widgets, in: home, keyboard: .keep) != nil else { return }
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20))
+        guard waitForTestControl(app.buttons.matching(identifier: "reveal"), in: app, keyboard: .keep) != nil else { return }
+        capture("Analysis widget opened review", in: app)
     }
 
 }
