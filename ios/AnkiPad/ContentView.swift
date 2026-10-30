@@ -473,7 +473,7 @@ struct ContentView: View {
     }
     private var errorContent: some View {
         importExportContent
-        .alert(AppText.localized("処理できませんでした"), isPresented: Binding(get: { model.error != nil && !model.showingAccount }, set: { if !$0 { model.error = nil } })) {
+        .alert(AppText.localized("処理できませんでした"), isPresented: Binding(get: { model.error != nil && !model.showingAccount }, set: { if !$0 && model.error != nil { model.error = nil } })) {
             Button(AppText.localized("閉じる"), role: .cancel) { model.error = nil }
         } message: { Text(model.error ?? "") }
     }

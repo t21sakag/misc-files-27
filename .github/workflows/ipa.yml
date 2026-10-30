@@ -564,7 +564,9 @@ jobs:
           if [ -d build/UITests.xcresult ]; then
             xcrun xcresulttool get test-results summary --path build/UITests.xcresult > build/test-summary.json
             xcrun xcresulttool get test-results tests --path build/UITests.xcresult > build/test-tree.json
-            python3 scripts/summarize-ui-results.py build/test-summary.json
+            ui_summary_flags=()
+            if [[ "$UI_SUITE" == widget* ]]; then ui_summary_flags+=(--reject-runtime-warnings); fi
+            python3 scripts/summarize-ui-results.py build/test-summary.json "${ui_summary_flags[@]}"
           fi
           xcrun simctl list devices booted -j > build/booted-after-tests.json
       - name: Export simulator screenshots
