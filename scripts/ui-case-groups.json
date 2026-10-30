@@ -162,5 +162,8 @@
   "WidgetFlowTests": [
     "testWidgetRoutesOpenReviewOptionsAndDraftWithoutSaving",
     "testWidgetRouteWaitsForUnsavedEditorAndRejectsMissingDeck"
+  ],
+  "WidgetGalleryFlowTests": [
+    "testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp"
   ]
 }

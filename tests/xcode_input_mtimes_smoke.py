@@ -17,10 +17,25 @@ with tempfile.TemporaryDirectory() as directory:
     baseline = 1_600_000_000_000_000_000
     for path in (same, changed):
         os.utime(path, ns=(baseline, baseline))
+    additional = []
+    for name in ['SharedClient/Shared.swift', 'ShareExtension/Share.swift', 'StudyWidgets/Widget.swift',
+                 'FutureExtension/NewTarget.swift', 'Share.entitlements', 'project.yml']:
+        path = root / 'ios' / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('identical Apple target input ' + name)
+        os.utime(path, ns=(baseline, baseline))
+        additional.append(path)
+    info = root / 'build/StudyWidgets-Info.plist'
+    info.parent.mkdir(parents=True)
+    info.write_text('identical generated metadata')
+    os.utime(info, ns=(baseline, baseline))
+    additional.append(info)
     manifest = root / 'timestamps.json'
     def run(mode):
         subprocess.run(['python3', str(script), mode, '--root', str(root), '--manifest', str(manifest)], check=True)
     run('save')
+    for path in additional:
+        os.utime(path, ns=(baseline + 100_000_000, baseline + 100_000_000))
     changed.write_text('let b = 2\n')
     changed_time = changed.stat().st_mtime_ns
     os.utime(same, ns=(baseline + 100_000_000, baseline + 100_000_000))
@@ -34,4 +49,5 @@ with tempfile.TemporaryDirectory() as directory:
     assert same.stat().st_mtime_ns == baseline
     assert changed.stat().st_mtime_ns == changed_time
     assert new.stat().st_mtime_ns == new_time
+    assert all(path.stat().st_mtime_ns == baseline for path in additional), 'Unchanged extension/shared/metadata inputs must reuse timestamps'
 print('PASS: identical files reuse timestamps; changed/new files rebuild; cached paths cannot escape input roots')

@@ -32,6 +32,7 @@ def hashes(root):
         'bridge': digest(root, sources + BRIDGE),
         'cargo': digest(root, CARGO),
         'simulator': digest(root, sources + BRIDGE + ['ios/project.yml']),
+        'apple_targets': digest(root, ['ios/project.yml']),
     }
 
 

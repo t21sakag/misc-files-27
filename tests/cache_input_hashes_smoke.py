@@ -22,10 +22,12 @@ with tempfile.TemporaryDirectory() as directory:
     project = module.hashes(root)
     assert project['bridge'] == baseline['bridge'] and project['cargo'] == baseline['cargo']
     assert project['simulator'] != baseline['simulator']
+    assert project['apple_targets'] != baseline['apple_targets']
     (root / 'native/src/lib.rs').write_text('Changed bridge')
     bridge = module.hashes(root)
     assert bridge['bridge'] != project['bridge'] and bridge['simulator'] != project['simulator']
     assert bridge['cargo'] == project['cargo']
+    assert bridge['apple_targets'] == project['apple_targets'], 'Rust changes must not discard reusable SDK modules'
     (root / 'native/Cargo.lock').unlink()
     try:
         module.hashes(root)

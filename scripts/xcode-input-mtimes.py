@@ -20,12 +20,15 @@ def digest(path):
 
 
 def inputs(root):
-    for folder in ('ios/AnkiPad', 'ios/AnkiPadUITests', 'ios/AnkiPad.xcodeproj', 'build/native/iphonesimulator'):
+    # Include every Apple target and shared source, not only the original app.
+    # A new extension must not silently fall outside incremental compilation.
+    for folder in ('ios', 'build/native/iphonesimulator'):
         for path in sorted((root / folder).rglob('*')):
             if path.is_file() and not path.is_symlink() and 'xcuserdata' not in path.parts:
                 yield path
-    if (root / 'ios/project.yml').is_file():
-        yield root / 'ios/project.yml'
+    for path in sorted((root / 'build').glob('*-Info.plist')):
+        if path.is_file() and not path.is_symlink():
+            yield path
 
 
 def main():

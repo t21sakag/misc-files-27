@@ -100,6 +100,7 @@ struct StudySummaryView: View {
                             Label(AppText.localized("今日の学習は完了"), systemImage: "checkmark.circle").font(.headline)
                         } else {
                             Text(AppText.localized("残り\(collection.counts.total)枚")).font(.title2.bold()).minimumScaleFactor(0.7).lineLimit(1)
+                                .accessibilityIdentifier("widget-summary-remaining")
                             if let minutes = collection.etaMinutes { Text(AppText.localized("約\(minutes)分")).font(.subheadline).foregroundStyle(.secondary) }
                         }
                     } else { Text(AppText.localized("アプリを開いて更新")) }
