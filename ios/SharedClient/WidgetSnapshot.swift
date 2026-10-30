@@ -14,6 +14,10 @@ struct WidgetDeckSnapshot: Codable, Equatable, Identifiable {
     let id: String
     let name: String
     let counts: WidgetCounts
+    var displayName: String {
+        let leaf = name.components(separatedBy: "::").last ?? name
+        return leaf.isEmpty ? name : leaf
+    }
 }
 
 struct WidgetCollectionSnapshot: Codable, Equatable {
@@ -45,6 +49,19 @@ struct WidgetSnapshot: Codable, Equatable {
     var version = 1
     var selectedProfileID: String
     var profiles: [WidgetProfileSnapshot]
+
+    /// Preserve configured order while omitting deleted decks, as the original
+    /// deck-picker widget does. Resolve profile and deck together: equal deck
+    /// numbers in different collections must never become interchangeable.
+    func deckRows(for identifiers: [String]) -> [(profile: WidgetProfileSnapshot, collection: WidgetCollectionSnapshot, deck: WidgetDeckSnapshot)] {
+        identifiers.compactMap { identifier in
+            guard let reference = WidgetDeckReference(identifier: identifier),
+                  let profile = profiles.first(where: { $0.id == reference.profileID }),
+                  let collection = profile.collection,
+                  let deck = collection.decks.first(where: { $0.id == reference.deckID }) else { return nil }
+            return (profile, collection, deck)
+        }
+    }
 
     var isValid: Bool {
         version == 1 && !profiles.isEmpty && Set(profiles.map(\.id)).count == profiles.count

@@ -121,26 +121,27 @@ struct StudyDeckListView: View {
         let rows = family == .systemMedium ? 3 : (family == .systemLarge ? 8 : 12)
         return dynamicTypeSize.isAccessibilitySize ? max(1, rows / 2) : rows
     }
+    private var rows: [(profile: WidgetProfileSnapshot, collection: WidgetCollectionSnapshot, deck: WidgetDeckSnapshot)] {
+        entry.snapshot?.deckRows(for: entry.deckIDs) ?? []
+    }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if entry.deckIDs.isEmpty { WidgetUnavailableView(configure: true) }
+            if rows.isEmpty { WidgetUnavailableView(configure: true) }
             else {
                 Text(AppText.localized("デッキ一覧")).font(.headline)
-                ForEach(Array(entry.deckIDs.prefix(capacity).enumerated()), id: \.offset) { _, id in
-                    if let (profile, deck) = WidgetData.deck(id, in: entry.snapshot), let collection = profile.collection {
-                        Link(destination: WidgetRoute(profileID: profile.id, deckID: deck.id,
-                            destination: deck.counts.total == 0 ? .options : .review).url) {
-                            HStack {
-                                Text(deck.name).lineLimit(1)
+                ForEach(Array(rows.prefix(capacity).enumerated()), id: \.offset) { _, row in
+                    Link(destination: WidgetRoute(profileID: row.profile.id, deckID: row.deck.id,
+                        destination: row.deck.counts.total == 0 ? .options : .review).url) {
+                        HStack {
+                            Text(row.deck.displayName).lineLimit(1)
                                 Spacer(minLength: 4)
-                                if collection.isCurrent(at: entry.date) {
-                                    Text(deck.counts.new.formatted()).foregroundStyle(.blue)
-                                    Text(deck.counts.learning.formatted()).foregroundStyle(.orange)
-                                    Text(deck.counts.review.formatted()).foregroundStyle(.green)
+                                if row.collection.isCurrent(at: entry.date) {
+                                    Text(row.deck.counts.new.formatted()).foregroundStyle(.blue)
+                                    Text(row.deck.counts.learning.formatted()).foregroundStyle(.orange)
+                                    Text(row.deck.counts.review.formatted()).foregroundStyle(.green)
                                 } else { Image(systemName: "arrow.clockwise") }
                             }.font(.subheadline).monospacedDigit().frame(minHeight: 24)
                         }.privacySensitive()
-                    } else { Text(AppText.localized("デッキが見つかりません")).font(.caption).foregroundStyle(.secondary) }
                 }
                 Spacer(minLength: 0)
                 Text(AppText.localized("件数はアプリで取得した時点の値です。")).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
@@ -159,7 +160,7 @@ struct StudyDeckAnalysisView: View {
         Group {
             if let (profile, deck) = deck, let collection = profile.collection {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(deck.name).font(.headline).lineLimit(2)
+                    Text(deck.displayName).font(.headline).lineLimit(2)
                     Text(profile.name).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
                     if collection.isCurrent(at: entry.date) { WidgetCountView(counts: deck.counts) }
                     else { Text(AppText.localized("アプリを開いて更新")) }

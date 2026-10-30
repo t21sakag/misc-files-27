@@ -48,6 +48,17 @@ import Foundation
             let route = WidgetRoute(profileID: profileID, deckID: deck.id, destination: action)
             precondition(WidgetRoute(url: route.url) == route)
         }
+        let orderedSnapshot = WidgetSnapshot(selectedProfileID: "default", profiles: [
+            WidgetProfileSnapshot(id: "default", name: "First", collection: collection),
+            WidgetProfileSnapshot(id: profileID, name: "Second", collection: collection)])
+        let firstReference = WidgetDeckReference(profileID: "default", deckID: deck.id).identifier
+        let secondReference = WidgetDeckReference(profileID: profileID, deckID: deck.id).identifier
+        let rows = orderedSnapshot.deckRows(for: ["default:999", secondReference, "invalid", firstReference])
+        precondition(rows.map { $0.profile.id } == [profileID, "default"], "Deleted decks must not consume rows or reorder surviving choices")
+        precondition(rows.prefix(1).first?.profile.id == profileID, "Filter before applying family row capacity")
+        precondition(rows.first?.deck.displayName == "Child", "Native widget uses the last deck-name component")
+        precondition(removed.deckRows(for: [firstReference]).isEmpty, "Deleted profile must never resolve in another collection")
+        precondition(orderedSnapshot.deckRows(for: ["default:999"]).isEmpty)
         let reference = WidgetDeckReference(profileID: profileID, deckID: deck.id)
         precondition(WidgetDeckReference(identifier: reference.identifier) == reference)
         precondition(reference.identifier != WidgetDeckReference(profileID: "default", deckID: deck.id).identifier)
