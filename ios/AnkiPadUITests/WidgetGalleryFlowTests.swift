@@ -109,11 +109,9 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.buttons["deck-1"].waitForExistence(timeout: 30), app.debugDescription)
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }
-    func testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount() {
-        let app = launchWidgetApplication()
-        guard let (home, count) = addSummary(app) else { return }
+    private func selectFixedDefaultProfile(in home: XCUIApplication) -> Bool {
         let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
-        guard let widget = waitForTestControl(widgets, in: home, keyboard: .keep) else { return }
+        guard let widget = waitForTestControl(widgets, in: home, keyboard: .keep) else { return false }
         widget.press(forDuration: 1.3)
         capture("Summary context menu", in: home)
         tapChoice(["Edit Widget", "ウィジェットを編集"], in: home)
@@ -121,10 +119,10 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         // The observed OS row has a separate static parameter title and a
         // value-only Button. Never concatenate adjacent labels into a title.
         let parameter = home.buttons.matching(label(["現在のプロファイル", "Current profile"]))
-        guard tapTestControl(parameter, in: home, keyboard: .keep) != nil else { return }
+        guard tapTestControl(parameter, in: home, keyboard: .keep) != nil else { return false }
         capture("Summary profile choices", in: home)
         let fixed = home.collectionViews.buttons.matching(label(["既定"]))
-        guard tapTestControl(fixed, in: home, keyboard: .keep) != nil else { return }
+        guard tapTestControl(fixed, in: home, keyboard: .keep) != nil else { return false }
         capture("Summary fixed profile chosen", in: home)
         // Apple's configuration sheet commits by tapping empty Home background.
         // This is the same measured, icon-free margin used for Home editing.
@@ -133,6 +131,13 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(frame.contains(point))
         XCTAssertTrue(home.icons.allElementsBoundByIndex.filter { $0.exists && $0.frame.contains(point) }.isEmpty)
         home.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: point.x - frame.minX, dy: point.y - frame.minY)).tap()
+        return true
+    }
+    func testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount() {
+        let app = launchWidgetApplication()
+        guard let (home, count) = addSummary(app) else { return }
+        guard selectFixedDefaultProfile(in: home) else { return }
+        let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
         let live = widgets.staticTexts.matching(NSPredicate(format: "identifier == %@ AND label == %@", "widget-summary-remaining", "残り\(count)枚"))
         guard waitForTestControl(live, in: home, keyboard: .keep, timeout: 30, purpose: .observation) != nil else { return }
         capture("Fixed profile summary on Home", in: home)
@@ -142,6 +147,47 @@ final class WidgetGalleryFlowTests: StudyFlowTestSupport {
         capture("Summary configuration reopened", in: home)
         let saved = home.buttons.matching(label(["既定"]))
         _ = waitForTestControl(saved, in: home, keyboard: .keep, purpose: .observation)
+    }
+
+    private func waitForStoredProfile(_ app: XCUIApplication, isDefault: Bool, total: Int) {
+        let states = app.staticTexts.matching(identifier: "widget-snapshot-state")
+        guard let state = waitForTestControl(states, in: app, keyboard: .keep, purpose: .observation) else { return }
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            guard let raw = state.value as? String, let data = raw.data(using: .utf8),
+                  let snapshot = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+                  let selected = snapshot["selectedProfileID"] as? String,
+                  (selected == "default") == isDefault,
+                  let profiles = snapshot["profiles"] as? [[String: Any]],
+                  let profile = profiles.first(where: { $0["id"] as? String == selected }),
+                  let collection = profile["collection"] as? [String: Any],
+                  let counts = collection["counts"] as? [String: Int] else { return false }
+            return (counts["new"] ?? 0) + (counts["learning"] ?? 0) + (counts["review"] ?? 0) == total
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 30), .completed, app.debugDescription)
+    }
+    func testFixedSummarySurvivesActiveProfileSwitchAndOpensItsOwnProfile() {
+        let app = launchWidgetApplication()
+        guard let (home, count) = addSummary(app) else { return }
+        guard selectFixedDefaultProfile(in: home) else { return }
+        app.activate()
+        guard tapTestControl(app.buttons.matching(identifier: "collection-menu"), in: app) != nil else { return }
+        guard tapTestControl(app.buttons.matching(identifier: "profiles-open"), in: app) != nil else { return }
+        guard tapTestControl(app.buttons.matching(identifier: "profile-add"), in: app) != nil else { return }
+        guard let name = tapTestControl(app.alerts.textFields.matching(identifier: "profile-name"), in: app, keyboard: .keep) else { return }
+        name.typeText("Widget secondary")
+        guard tapTestControl(app.alerts.buttons.matching(identifier: "profile-save"), in: app, keyboard: .keep) != nil else { return }
+        waitForStoredProfile(app, isDefault: false, total: 0)
+        capture("Secondary profile selected and published", in: app)
+        XCUIDevice.shared.press(.home)
+        XCTAssertTrue(home.wait(for: .runningForeground, timeout: 20))
+        let widgets = home.icons.matching(NSPredicate(format: "identifier == %@ AND value == %@", "AnkiPad", "Widget"))
+        let live = widgets.staticTexts.matching(NSPredicate(format: "identifier == %@ AND label == %@", "widget-summary-remaining", "残り\(count)枚"))
+        guard waitForTestControl(live, in: home, keyboard: .keep, timeout: 30, purpose: .observation) != nil else { return }
+        capture("Fixed summary retains original profile count", in: home)
+        guard tapTestControl(widgets, in: home, keyboard: .keep) != nil else { return }
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20))
+        waitForStoredProfile(app, isDefault: true, total: count)
+        capture("Widget opened its fixed profile", in: app)
     }
 
 }

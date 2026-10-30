@@ -165,6 +165,7 @@
   ],
   "WidgetGalleryFlowTests": [
     "testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp",
-    "testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount"
+    "testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount",
+    "testFixedSummarySurvivesActiveProfileSwitchAndOpensItsOwnProfile"
   ]
 }
