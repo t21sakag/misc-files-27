@@ -92,6 +92,9 @@ suites = {
     'incoming-invalid': ['testInvalidReceivedPackageReportsFailureAndKeepsPreviousCollection'],
     'incoming-still-note': ['testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia'],
     'incoming-commit-repair': ['testReceivedCOLPKGReplacesOnlyAfterConfirmationAndBackupRestoresPreviousNotes', 'testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia'],
+    'widgets': ['testWidgetRoutesOpenReviewOptionsAndDraftWithoutSaving', 'testWidgetRouteWaitsForUnsavedEditorAndRejectsMissingDeck'],
+    'widget-core': ['testWidgetRoutesOpenReviewOptionsAndDraftWithoutSaving'],
+    'widget-deferred': ['testWidgetRouteWaitsForUnsavedEditorAndRejectsMissingDeck'],
     'all': [],
 }
 suite, mode = sys.argv[1:]

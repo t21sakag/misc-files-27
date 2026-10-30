@@ -31,10 +31,16 @@ share = dict(main,CFBundlePackageType='XPC!',CFBundleIdentifier=bundle+'.share',
         'NSExtensionActivationSupports'+kind+'WithMaxCount':1 for kind in ['File','Image','Movie','WebURL']})}})
 app = 'Payload/Client.app/'
 extension = app+'PlugIns/ShareExtension.appex/'
-files = {app+'Info.plist':plistlib.dumps(main),app+'Client':binary(),extension+'Info.plist':plistlib.dumps(share),extension+'ShareExtension':binary()}
+widget = app+'PlugIns/StudyWidgets.appex/'
+widget_info = dict(main,CFBundlePackageType='XPC!',CFBundleIdentifier=bundle+'.widgets',CFBundleExecutable='StudyWidgets',
+                   NSExtension={'NSExtensionPointIdentifier':'com.apple.widgetkit-extension'})
+files = {app+'Info.plist':plistlib.dumps(main),app+'Client':binary(),extension+'Info.plist':plistlib.dumps(share),extension+'ShareExtension':binary(),
+         widget+'Info.plist':plistlib.dumps(widget_info),widget+'StudyWidgets':binary()}
 for language in ['ja','en']:
     files[app+language+'.lproj/Localizable.strings']=b''
     files[extension+language+'.lproj/Localizable.strings']=b''
+    files[widget+language+'.lproj/Localizable.strings']=b''
+    files[widget+language+'.lproj/WidgetConfiguration.strings']=b''
 for name in ['AGPL-3.0.txt','AnkiDroid-GPL-3.0.txt','Anki-NOTICE.txt']:files[app+name]=b'synthetic license fixture'
 with tempfile.TemporaryDirectory() as directory:
     ipa=Path(directory)/'fixture.ipa'
@@ -44,11 +50,15 @@ with tempfile.TemporaryDirectory() as directory:
         result=subprocess.run([sys.executable,'-I',str(verifier),str(ipa),'--source',source],capture_output=True,text=True)
         assert (result.returncode == 0) == success,(success,result.stdout,result.stderr)
     check(files,True)
-    for replacement in [binary(platform=7),binary(groups=['group.other']),binary(xml=False),binary()[:70],binary()+b'ANKIPAD_UI_TEST_NAMESPACE']:
-        check(dict(files,**{extension+'ShareExtension':replacement}),False)
-    check({key:value for key,value in files.items() if not key.startswith(extension)},False)
+    for prefix, name in [(extension,'ShareExtension'),(widget,'StudyWidgets')]:
+        for replacement in [binary(platform=7),binary(groups=['group.other']),binary(xml=False),binary()[:70],binary()+b'ANKIPAD_UI_TEST_NAMESPACE']:
+            check(dict(files,**{prefix+name:replacement}),False)
+        check({key:value for key,value in files.items() if not key.startswith(prefix)},False)
     modified=copy.deepcopy(share);modified['AnkiPadSourceCommit']='2'*40
     check(dict(files,**{extension+'Info.plist':plistlib.dumps(modified)}),False)
+    modified=copy.deepcopy(widget_info);modified['CFBundleVersion']='2'
+    check(dict(files,**{widget+'Info.plist':plistlib.dumps(modified)}),False)
+    check(dict(files,**{widget+'backend/private.js':b'engine must remain in the main app'}),False)
     check(dict(files,**{app+'private.apkg':b'never distribute test decks'}),False)
     check(dict(files,**{app+'embedded.mobileprovision':b'never upload profiles'}),False)
-print('PASS: isolated IPA verification accepts matching device/shared metadata and rejects simulator, wrong/missing XML group, truncation, hooks, missing/mismatched extension, decks and profiles')
+print('PASS: isolated IPA verification accepts app/share/widget metadata and rejects wrong platform/group, truncation, hooks, missing/mismatched extensions, engine leakage, decks and profiles')

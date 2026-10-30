@@ -79,6 +79,9 @@ import AVFoundation
     var widgetRefreshNeeded = true
     var widgetRefreshGeneration = UUID()
     var widgetRefreshTask: Task<Void, Never>?
+    #if DEBUG
+    @Published var widgetSnapshotInspection = ""
+    #endif
     @Published var widgetRefreshError: String?
     @Published var widgetNavigationActive = false
     @Published var busy = false {

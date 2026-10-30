@@ -48,6 +48,12 @@ import Foundation
             let route = WidgetRoute(profileID: profileID, deckID: deck.id, destination: action)
             precondition(WidgetRoute(url: route.url) == route)
         }
+        let reference = WidgetDeckReference(profileID: profileID, deckID: deck.id)
+        precondition(WidgetDeckReference(identifier: reference.identifier) == reference)
+        precondition(reference.identifier != WidgetDeckReference(profileID: "default", deckID: deck.id).identifier)
+        for invalid in ["default:0", "other:1", "default:1:2", "default:", "default:01"] {
+            precondition(WidgetDeckReference(identifier: invalid) == nil)
+        }
         let invalidURLs = ["studyclient://widget/review?profile=default", "studyclient://widget/add?profile=../elsewhere",
             "studyclient://widget/options?profile=default&deck=-1", "studyclient://widget/add?profile=default&profile=" + profileID,
             "studyclient://widget/home?profile=default&deck=01", "studyclient://widget/home?profile=default&callback=https://example.invalid",

@@ -126,6 +126,11 @@ struct ContentView: View {
                         .accessibilityIdentifier("reminder-refresh-completions")
                         .accessibilityValue(String(model.reminderRefreshCompletions))
                 }
+                if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-widgets") {
+                    Text("Widget snapshot observation").font(.caption2).allowsHitTesting(false)
+                        .accessibilityIdentifier("widget-snapshot-state")
+                        .accessibilityValue(model.widgetSnapshotInspection)
+                }
                 #endif
             }
             .overlay(alignment: .bottom) {
@@ -505,6 +510,10 @@ struct ContentView: View {
         if let route = pendingWidgetRoute {
             pendingWidgetRoute = nil
             Task {
+                guard canPresentExternalRequest else {
+                    if pendingWidgetRoute == nil { pendingWidgetRoute = route }
+                    return
+                }
                 do { try await model.openWidgetRoute(route) }
                 catch { model.error = error.localizedDescription }
                 openPendingExternalRequest()

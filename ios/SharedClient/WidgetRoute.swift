@@ -1,5 +1,18 @@
 import Foundation
 
+/// Deck numbers are unique within a collection, never across profiles.
+struct WidgetDeckReference: Equatable {
+    let profileID: String
+    let deckID: String
+    var identifier: String { profileID + ":" + deckID }
+    init(profileID: String, deckID: String) { self.profileID = profileID; self.deckID = deckID }
+    init?(identifier: String) {
+        let fields = identifier.split(separator: ":", omittingEmptySubsequences: false)
+        guard fields.count == 2, WidgetRoute.validProfileID(String(fields[0])), WidgetRoute.validDeckID(String(fields[1])) else { return nil }
+        profileID = String(fields[0]); deckID = String(fields[1])
+    }
+}
+
 /// A route only opens app UI. It never adds, answers, deletes, or syncs data.
 struct WidgetRoute: Equatable {
     enum Destination: String { case home, review, options, add }

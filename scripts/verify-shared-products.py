@@ -46,9 +46,14 @@ def entitlements(bundle):
     return {'com.apple.security.application-groups':groups[0]}
 app = info(args.app)
 extensions = list((args.app/'PlugIns').glob('*.appex'))
-assert len(extensions) == 1, extensions
-extension = extensions[0]
+assert {extension.name for extension in extensions} == {'ShareExtension.appex','StudyWidgets.appex'}, extensions
+extension = next(extension for extension in extensions if extension.name == 'ShareExtension.appex')
 share = info(extension)
+widget = next(extension for extension in extensions if extension.name == 'StudyWidgets.appex')
+widget_info = info(widget)
+assert widget_info['CFBundleIdentifier'] == app['CFBundleIdentifier']+'.widgets'
+assert widget_info['NSExtension']['NSExtensionPointIdentifier'] == 'com.apple.widgetkit-extension'
+assert 'NSExtensionPrincipalClass' not in widget_info['NSExtension']
 assert share['CFBundleIdentifier'] == app['CFBundleIdentifier']+'.share'
 assert share['AnkiPadSourceCommit'] == app['AnkiPadSourceCommit'] == args.source
 assert share['CFBundleVersion'] == app['CFBundleVersion']
@@ -61,7 +66,11 @@ assert rule['NSExtensionActivationSupportsText'] is True
 assert rule['NSExtensionActivationSupportsWebURLWithMaxCount'] == 1
 for key in ['File', 'Image', 'Movie']:
     assert rule['NSExtensionActivationSupports'+key+'WithMaxCount'] == 1
-for bundle, value in [(args.app,app),(extension,share)]:
+for bundle, value in [(args.app,app), *[(extension, info(extension)) for extension in extensions]]:
+    assert value['AnkiPadSourceCommit'] == args.source
+    assert value['CFBundleVersion'] == app['CFBundleVersion']
+    assert value['CFBundleShortVersionString'] == app['CFBundleShortVersionString']
+    assert value['CFBundlePackageType'] == ('APPL' if bundle == args.app else 'XPC!')
     assert value['UIDeviceFamily']==[2] and value['MinimumOSVersion']=='18.0', (bundle,value.get('UIDeviceFamily'),value.get('MinimumOSVersion'))
     assert value['StudySharedGroup'] == app['StudySharedGroup'] and '$(' not in value['StudySharedGroup']
     assert entitlements(bundle)['com.apple.security.application-groups'] == [app['StudySharedGroup']]
@@ -69,7 +78,10 @@ for bundle, value in [(args.app,app),(extension,share)]:
     for language in ['ja','en']:
         assert (bundle/(language+'.lproj')/'Localizable.strings').is_file()
     subprocess.run(['codesign', '--verify', '--strict', str(bundle)], check=True)
-assert not list(extension.rglob('*.anki2'))
-assert not list(extension.rglob('*.apkg'))
-assert not list(extension.rglob('backend'))
-print('PASS: embedded share service, principal class, activation, source/version, localized resources and matching embedded simulator group entitlements and valid signatures')
+for extension in extensions:
+    assert not list(extension.rglob('*.anki2'))
+    assert not list(extension.rglob('*.apkg'))
+    assert not list(extension.rglob('backend'))
+for language in ['ja','en']:
+    assert (widget/(language+'.lproj')/'WidgetConfiguration.strings').is_file()
+print('PASS: embedded share/widget services, activation, source/version, localized resources and matching embedded simulator group entitlements and valid signatures')

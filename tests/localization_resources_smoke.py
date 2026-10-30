@@ -36,7 +36,7 @@ for key in ja:
 
 used = set()
 occurrences = 0
-for path in sorted(path for directory in ['AnkiPad', 'ShareExtension', 'SharedClient']
+for path in sorted(path for directory in ['AnkiPad', 'ShareExtension', 'SharedClient', 'StudyWidgets']
                    for path in (root/'ios'/directory).glob('*.swift')):
     text = path.read_text()
     for value in sources.scan(text):
@@ -55,4 +55,9 @@ for language in ['ja','en']:
     info = table(resources/(language+'.lproj')/'InfoPlist.strings')
     assert set(info) == {'NSCameraUsageDescription','NSMicrophoneUsageDescription','NSSpeechRecognitionUsageDescription','NSLocalNetworkUsageDescription'}
     if language == 'en': assert not any(sources.is_japanese(value) for value in info.values())
+widget_tables = [table(root/'ios/StudyWidgets/Resources'/(language+'.lproj')/'WidgetConfiguration.strings') for language in ['ja','en']]
+assert widget_tables[0].keys() == widget_tables[1].keys()
+for key, value in widget_tables[1].items():
+    assert value == key and not sources.is_japanese(value), ('Widget configuration base key', key)
+    assert widget_tables[0][key].strip(), ('Missing Japanese widget configuration', key)
 print(f'PASS: {occurrences} native text sites, {len(used)} used keys, {len(ja)} ja/en translations, matching format arguments and permission reasons')

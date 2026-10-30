@@ -24,10 +24,11 @@ def info(bundle):
     return plistlib.loads((bundle/'Info.plist').read_bytes())
 main = info(app)
 plugins = list((app/'PlugIns').glob('*.appex'))
-assert len(plugins) == 1 and info(plugins[0])['CFBundleIdentifier'] == main['CFBundleIdentifier']+'.share'
+assert {info(plugin)['CFBundleIdentifier'] for plugin in plugins} == {main['CFBundleIdentifier']+suffix for suffix in ['.share','.widgets']}
+assert len(plugins) == 2
 group = main['StudySharedGroup']
 assert group == 'group.'+main['CFBundleIdentifier']+'.shared'
-assert info(plugins[0])['StudySharedGroup'] == group
+assert all(info(plugin)['StudySharedGroup'] == group for plugin in plugins)
 assert not list(app.rglob('embedded.mobileprovision'))
 report_path=Path('build/delivery-inspection.json')
 report_path.parent.mkdir(parents=True,exist_ok=True)

@@ -37,6 +37,11 @@ extension StudyModel {
                 let value = WidgetSnapshot.updating(previous, profiles: profiles, selectedID: registry.selectedID, collection: snapshot)
                 // No suspension between the generation guard and atomic publish.
                 try store.save(value)
+                #if DEBUG
+                if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-widgets"), let stored = try store.load() {
+                    self.widgetSnapshotInspection = String(data: try JSONEncoder().encode(stored), encoding: .utf8) ?? ""
+                }
+                #endif
                 self.widgetRefreshNeeded = false
                 self.widgetRefreshError = nil
                 self.reloadStudyWidgets()

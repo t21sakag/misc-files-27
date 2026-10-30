@@ -73,6 +73,8 @@ targets:
     dependencies:
       - target: ShareExtension
         embed: true
+      - target: StudyWidgets
+        embed: true
     sources:
       - path: SharedClient
       - path: AnkiPad
@@ -102,6 +104,45 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.localtools.studyclient.uitests
         SWIFT_OBJC_BRIDGING_HEADER: ''
         OTHER_LDFLAGS: ['$(inherited)']
+  StudyWidgets:
+    type: app-extension
+    platform: iOS
+    info:
+      path: ../build/StudyWidgets-Info.plist
+      properties:
+        CFBundleDisplayName: AnkiPad
+        AnkiPadSourceCommit: $(ANKIPAD_SOURCE_COMMIT)
+        StudySharedGroup: $(STUDY_SHARED_GROUP)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    sources:
+      - path: StudyWidgets
+        excludes: [Resources]
+      - path: StudyWidgets/Resources
+        buildPhase: resources
+      - path: SharedClient/WidgetRoute.swift
+      - path: SharedClient/WidgetSnapshot.swift
+      - path: SharedClient/SharedGroup.swift
+      - path: SharedClient/SharedClientSettings.swift
+      - path: AnkiPad/AppText.swift
+      - path: AnkiPad/Resources/ja.lproj/Localizable.strings
+        buildPhase: resources
+      - path: AnkiPad/Resources/en.lproj/Localizable.strings
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.localtools.studyclient.widgets
+        TARGETED_DEVICE_FAMILY: '2'
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+        SWIFT_OBJC_BRIDGING_HEADER: ''
+        OTHER_LDFLAGS: []
+        HEADER_SEARCH_PATHS: []
+        LIBRARY_SEARCH_PATHS: []
+        CODE_SIGN_ENTITLEMENTS: Share.entitlements
+        'CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]': ShareSimulator.entitlements
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: NO
+        INFOPLIST_KEY_UILaunchScreen_Generation: NO
   ShareExtension:
     type: app-extension
     platform: iOS

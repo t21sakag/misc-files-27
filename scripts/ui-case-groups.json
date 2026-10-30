@@ -158,5 +158,9 @@
   "ShareExtensionFlowTests": [
     "testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel",
     "testPhotoShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia"
+  ],
+  "WidgetFlowTests": [
+    "testWidgetRoutesOpenReviewOptionsAndDraftWithoutSaving",
+    "testWidgetRouteWaitsForUnsavedEditorAndRejectsMissingDeck"
   ]
 }
