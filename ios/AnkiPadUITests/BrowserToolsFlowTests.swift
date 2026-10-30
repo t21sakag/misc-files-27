@@ -1,6 +1,15 @@
 import XCTest
 
 final class BrowserToolsFlowTests: StudyFlowTestSupport {
+    private func capture(_ stage: String, in app: XCUIApplication) {
+        XCTContext.runActivity(named: stage) { activity in
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = stage + " hierarchy"; hierarchy.lifetime = .keepAlways
+            let screenshot = XCTAttachment(screenshot: app.screenshot())
+            screenshot.name = stage; screenshot.lifetime = .keepAlways
+            activity.add(hierarchy); activity.add(screenshot)
+        }
+    }
     private func addNote(_ text: String, in app: XCUIApplication) {
         guard tapTestControl(app.buttons.matching(identifier: "add-note"), in: app) != nil else { return }
         guard let field = tapTestControl(app.textViews.matching(identifier: "note-field-0"), in: app,
@@ -75,10 +84,12 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
         tapTestControl(app.buttons.matching(NSPredicate(format: "label == %@", "置換する")), in: app)
         guard let result = waitForTestControl(app.staticTexts.matching(identifier: "replace-result"), in: app, purpose: .observation) else { return }
         XCTAssertEqual(result.label, "2件を変更しました。")
+        capture("Global replacement committed", in: app)
         tapTestControl(app.buttons.matching(identifier: "replace-close"), in: app)
         closeBrowser(app)
         app.terminate(); app.launch()
         browser("ReplaceUpdated", count: 2, in: app)
+        capture("Replacement persisted after relaunch", in: app)
         closeBrowser(app)
         browser("ReplaceOriginal", count: 0, in: app)
         XCTAssertFalse(app.alerts.firstMatch.exists)
