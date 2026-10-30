@@ -86,8 +86,12 @@ final class ShareExtensionFlowTests: StudyFlowTestSupport {
         }
         let image = safari.webViews.images["Shared picture fixture"].firstMatch
         XCTAssertTrue(image.waitForExistence(timeout: 20), safari.debugDescription)
-        image.press(forDuration: 1)
-        let imageShare = safari.buttons.matching(NSPredicate(format: "label BEGINSWITH %@ OR label BEGINSWITH %@", "Share", "共有")).firstMatch
+        let imageFrame = image.frame, origin = safari.frame.origin
+        safari.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+            .withOffset(CGVector(dx: imageFrame.midX-origin.x, dy: imageFrame.midY-origin.y)).press(forDuration: 1)
+        // The toolbar's ShareButton is already visible before a context menu
+        // opens. Wait for the image-specific action instead of sharing the page.
+        let imageShare = safari.buttons.matching(NSPredicate(format: "(label BEGINSWITH %@ OR label BEGINSWITH %@) AND identifier != %@", "Share", "共有", "ShareButton")).firstMatch
         XCTAssertTrue(imageShare.waitForExistence(timeout: 15), safari.debugDescription)
         imageShare.tap()
         let service = safari.cells.matching(NSPredicate(format: "label == %@", "AnkiPad")).firstMatch
