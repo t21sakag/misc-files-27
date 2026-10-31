@@ -39,6 +39,7 @@ jobs:
           case "$CI_MODE" in compile|ui|ipa|full) ;; *) exit 2 ;; esac
           mkdir -p build
           python3 scripts/select-ui-tests.py "$UI_SUITE" "$CI_MODE" > build/ui-test-arguments.txt
+          python3 tests/ci_scope_smoke.py
           python3 tests/ui_failure_review_smoke.py
           python3 tests/simulator_identity_smoke.py
           python3 tests/ui_events_smoke.py
