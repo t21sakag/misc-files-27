@@ -56,7 +56,6 @@ struct BrowserView: View {
     }
     var body: some View {
         NavigationStack { dialogs }
-            .environment(\.editMode, $editMode)
             .task {
                 traceSelection("initialize.start")
                 await initialize()
@@ -95,6 +94,7 @@ struct BrowserView: View {
             }
             if busy { ProgressView() }
         }
+        .environment(\.editMode, $editMode)
         .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: AppText.localized("検索（deck:、tag:、is:due など）"))
         .studyThemeSurface()
         .navigationTitle(config.notesMode ? AppText.localized("ノートブラウザー") : AppText.localized("カードブラウザー"))
@@ -123,7 +123,7 @@ struct BrowserView: View {
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("閉じる")) { dismiss() } }
         ToolbarItemGroup(placement: .topBarTrailing) {
-            EditButton()
+            EditButton().environment(\.editMode, $editMode).accessibilityIdentifier("browser-edit-mode")
             Button { editor = EditorRequest() } label: { Image(systemName: "plus") }.accessibilityLabel(AppText.localized("ノートを追加"))
             filterMenu
             actionsMenu

@@ -2910,6 +2910,351 @@
         }
       ],
       "checked_at": "2026-10-31T00:47:41.209230+00:00"
+    },
+    {
+      "id": "20261031-browser-edit-mode-consumer-scope",
+      "covers": [
+        [
+          41159545589,
+          1
+        ],
+        [
+          41157192423,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41157192423,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "Selection-case terminal3notes/0selected after actual correct menu center. Subsequent trace identifies a consistent application edit-mode/reset defect. Separate notes-case native Switch had correct input638.5,452.5 but no setter; its root cause remains undetermined."
+        },
+        {
+          "attempt": [
+            41159545589,
+            1
+          ],
+          "kind": "application",
+          "finding": "Actual all.enter/all.editing/update.exit/all.exit proves3selected and editing1, then List binding sends0 while model editing1. Root initializes once. Native toolbar still Edit and no edit selection controls. Native consumers do not share the expected owned edit state."
+        }
+      ],
+      "root_cause": "Selection action delivery is proven in595. Selection is then cleared by native List binding while view state editing1 and native EditButton inactive disagree. Code supplies editMode only outside NavigationStack. Shared binding must reach actual List/EditButton consumers. This scope explanation is an inference from code plus logs/AX; it needs Apple validation. Separate571 Switch nondelivery remains undetermined.",
+      "common_resolution": "Move owned editMode injection onto List and explicitly onto EditButton, remove ancestor-only injection. Preserve native input, selection callbacks including empty, count/order/card expectations and timeout. Retain Debug/synthetic count-only tracing and semantic terminal evidence. Revalidate only the failed order case after this exact-pair/current-code/executed-check review.",
+      "rule_review": {
+        "semantic_labels": "Menu full Japanese semantic titles and unique native cell/button scope were actually matched. Actual event573.5,297 corresponds to SelectAll frame455.5,278,236,38; no label/target variant is needed.",
+        "foreground_scope": "595 terminal AX shows note browser3 rows and native toolbar Edit despite view editing1. Bind at the actual List/EditButton consumer scopes; do not assume an ancestor environment survives navigation/toolbar scopes. Existing row IDs and note text remain unchanged.",
+        "unique_reads_and_actions": "Same shared menu query and native tap. Actions begin in app live trace, so action delivery is established. Keep all empty selection callbacks valid; no first match/coordinate workaround or callback suppression.",
+        "live_state": "all.exit selected3/ordered3/editing1 is followed187ms later by binding.set incoming0. No subsequent root initialize. Model state alone was insufficient; require native selection count and mode to agree. Shared requireTestCondition now captures terminal AX/image and rechecks the same condition after timeout.",
+        "keyboard_and_scroll": "These failures occur after keyboard-free import/menu setup; controls are onscreen. Keep existing shared keyboard/reveal readiness. No scroll variant, hold duration, time increase or stronger synthetic selection.",
+        "environment": "Native APKG export/import and source-package preflight succeed. Fixture loaded6cards then notes3. Same own simulator/profile namespace; no server/photo dependency for this scope. DEBUG-only count logs have no query, note text, ID or credential values.",
+        "first_failure_evidence": "571 AX/video130s and actual SelectAll0DF/SwitchE670 input establish prior symptoms.595 terminal AX543CA/imageA8F match inactive toolbar and0selected; live log proves action then native empty callback. Video120s is dark Home after lifecycle and is not terminal-state proof. Numeric pointer2B5 event573.5,297 matches observed menu center. No blind retap.",
+        "failure_classification": "571 mixed: selectAll consistent with595 app defect; independent Switch nondelivery still undetermined.595 is application consumer/environment mismatch, not dismissed as a harness failure. Both failed attempts count, despite two failing cases in571. No third dispatch before record completes.",
+        "runtime_warnings": "Both UI summaries runtimeWarnings=[]; passing host/preflight never substitutes for UI success. Keep runtime warning gate and exact-case counts.",
+        "device_evidence": "iPadOS27 simulator only. Notes representative/sibling expansion and insertion-order UI remain unreached, full104 and actual device/SideStore/audio/notification/sync evidence remain incomplete."
+      },
+      "evidence": [
+        {
+          "attempt": [
+            41157192423,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41157192423",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "5dee6cf5f21252dcb6bf16164752d69eab3dc924ea34ff06f5ed32f66fa30028"
+        },
+        {
+          "attempt": [
+            41157192423,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41157192423",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "input-events.json",
+          "sha256": "1f179a9c03530c5bb99187ba0ba107e37e67563c0064c10fff35f8741e6916ca"
+        },
+        {
+          "attempt": [
+            41157192423,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41157192423",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/live.log",
+          "sha256": "3e023ae4bd9e4633859ee2616ff5691cec8eec05790cd1f0d22a9db2f687326c"
+        },
+        {
+          "attempt": [
+            41157192423,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41157192423",
+          "artifact_name": "screenshots",
+          "artifact_entry": "2545F98B-8EA3-40D5-8FB7-26DFB0790998.mp4",
+          "sha256": "873a335f2c327e7d82c96065a04cff3cbbd458f288d47ed51dc54a2d4d773658"
+        },
+        {
+          "attempt": [
+            41157192423,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41157192423",
+          "artifact_name": "screenshots",
+          "artifact_entry": "8D9E05F1-7127-4F5C-99DB-376F719EC0F2.png",
+          "sha256": "f5a21082d519ec147905630e549bb0f99e3ac0effa28039ec6dfdc9120aeef0a"
+        },
+        {
+          "attempt": [
+            41159545589,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41159545589",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "8d7f4d3c8461338abd3993c98eb8b98117bd388f7acfdc17c9e0e2828169cbbd"
+        },
+        {
+          "attempt": [
+            41159545589,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41159545589",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "input-events.json",
+          "sha256": "52a478183f97b1f1a296033058e39f569990da5c7d38212c5e46140f5228a4d6"
+        },
+        {
+          "attempt": [
+            41159545589,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41159545589",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/live.log",
+          "sha256": "cfa72078fd4c755342f8341b952b9c210d6a6f7215558ad5b330a6075af6164a"
+        },
+        {
+          "attempt": [
+            41159545589,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41159545589",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/543CA21B-4FE3-490B-AA2E-0F0336C2AA69.txt",
+          "sha256": "f873f7de3b04a5b68236542106ddfe6224b9a7734595e9e426f79e3469a4303c"
+        },
+        {
+          "attempt": [
+            41159545589,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41159545589",
+          "artifact_name": "screenshots",
+          "artifact_entry": "A8F15724-F1AF-4A5F-AFB1-7C22A79013BA.png",
+          "sha256": "912ff6f5e1a6d05124f3c837d9f5ac635ff7dd601c7f5a4092229ee2a3ddc231"
+        },
+        {
+          "attempt": [
+            41159545589,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41159545589",
+          "artifact_name": "screenshots",
+          "artifact_entry": "0F19C19E-61B4-4CF2-8B6F-60B3190BF759.mp4",
+          "sha256": "3fb6db91648e5338141f75a12fa2f93233dcf54c77609b89c1d97dd18d8d286a"
+        }
+      ],
+      "next_scope": [
+        "BrowserToolsFlowTests/testBrowserSelectionOrderSurvivesDeselectionAndReselection"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "3247130bccebbed4cc9ee6676f798cd44c111ef25c5ac1950ad566b2e59a86d1",
+        "ios/AnkiPad/BrowserView.swift": "766262cc595c7ecbc7ac248d651f2feb77ff02788545d900d69fe7768fdc8cae",
+        "ios/AnkiPad/BrowserOptionsView.swift": "332bc8715714f459fbac77953298ae76d32e8173cce7b11ba3bd1fe45bb8d9c8",
+        "ios/AnkiPad/CardPreviewRequest.swift": "d3ebe0a84f3621c928c3005c976324ac2386a37868ba86c992266d4723dc486e",
+        "ios/AnkiPad/BrowserPreviewEngine.swift": "ee317ac45daf625fc86431dfda152e68b59c82803c3d4f4565721107b3147ca4",
+        "ios/AnkiPadUITests/BrowserToolsFlowTests.swift": "9778476b5f4066002c4e792061f421f7bf20cb1649179484d2f2c79df52af488",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "7e8dc25d208c3d2517d212311fe10753714be33eeccdf06c4b5f473627d97fc4",
+        "scripts/ui-prerequisites.py": "c1d28b4122fd43bd9ce7a81c40926786942947062731eab3740b1ee027e698c3",
+        "tests/ui_prerequisites_smoke.py": "25a275d8549aab46a11bde12baac3cf2c815ed61ffa732c39c1d6cc6e64cd263",
+        "tests/browser_preview_engine_smoke.py": "2766f867d573b46d8b0b9043af7ccdc0c0bbd845b5b9e08baeaa0dbf1e31def4",
+        "tests/browser_preview_smoke.swift": "4891d4969b41685d0dbe629c8d32b51a2417241ab951f9b22f11f6655f8db471",
+        "scripts/run-ui-with-diagnostics.py": "66240446422a2c037448098b30015a31758a45d60575bc83f7d107ff30860fbc",
+        "tests/widget_diagnostics_smoke.py": "da96901f668e45545a8015184694e5d316a4ff838233b85dea0e8f22280d4354",
+        "scripts/select-ui-tests.py": "68588e2db3bb843cfc609883f3744d563fa8dc12b5ae7004a6e51ff118db7ff8",
+        "scripts/ui-case-groups.json": "2a5c23ba2ad2bf6648706619346b462a7524f646d32caa4dde3579bfd43c7262",
+        "tests/ui_case_groups_smoke.py": "ef6895b7d22403ed3105aa4b28c3a439061b4628b2af289a4b772e70dac1b2bf",
+        "tests/ci_scope_smoke.py": "8a8137900644d98a0797e53e3b0cb10cd9f60e435e85ef5d1608e5afd15ebe31",
+        ".github/workflows/ipa.yml": "6982df8aa5973d248d293c0f6bee8814cac87f953cf33cfe2321a9b92adfe905"
+      },
+      "checks": [
+        {
+          "name": "Review gate regression",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Swift syntax only; Apple SDK typecheck pending",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5726e22be4fb014cb9cd8ba61fc729d40eee473cbcb634a05e4d4e5e5442f970"
+        },
+        {
+          "name": "UI case scope",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b659ab3258a77884dca6555f8251fadec48e764e7c54b2c0b22c074362f072ca"
+        },
+        {
+          "name": "Complete disjoint batch scope",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "020acd97462b84b0f9934f94ea5783374dcc7ae0b867178df465782c7cf3d5ce"
+        },
+        {
+          "name": "All published workflow shell blocks parse",
+          "argv": [
+            "python3",
+            "-c",
+            "import re,subprocess,yaml; from pathlib import Path; w=yaml.safe_load(Path('.github/workflows/ipa.yml').read_text()); steps=[s for j in w['jobs'].values() for s in j.get('steps',[]) if 'run' in s]; [subprocess.run(['bash','-n'],input=re.sub(r'\\$\\{\\{.*?\\}\\}', 'REVIEW_VALUE',s['run']),text=True,check=True) for s in steps]; print('PASS:',len(steps),'workflow shell blocks')"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "671d5e6581b93c1bcf44f89258eba9dd97e5e3e868358934cbf55a1b3bebfead"
+        },
+        {
+          "name": "Literal query key boundary regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "3d7068949e5031a980b53d913335f7f15f132ecedce88b471203a198d0c894e7"
+        },
+        {
+          "name": "Known unsupported query keys across actual UI source",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2ee1b0b21abca8f7697d081672551182916e7c909e397420c22c90d89ab03eef"
+        },
+        {
+          "name": "Numeric event extraction boundaries",
+          "argv": [
+            "python3",
+            "tests/ui_events_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ecd4775e323cfe5034323f413df7a6e2ab0b180471780cd7de39d89d9f1c1910"
+        },
+        {
+          "name": "Live observer lifetime and exit preservation",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "Translation coverage",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "0b8664b6a2c5c5f407addf33bc993194b92e465329d2304b91aa52ff9ab0d333"
+        },
+        {
+          "name": "All dispatch choices match selectors",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2ea2b6d47932c3abaf9a25e5f28a7821cb8a704a672ff4660f44f3e95d047a3b"
+        },
+        {
+          "name": "External package prerequisites and missing/corrupt rejection",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "Actual native multi-template package roundtrip",
+          "argv": [
+            "python3",
+            "tests/browser_preview_engine_smoke.py",
+            "env:PREVIEW_NATIVE_LIB",
+            "build/browser-preview-native.json",
+            "ios/AnkiPadUITests/ReceivedFixtures/preview.apkg"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "43f3a4976b049efdbe0fb642aa898f7173fe4669c0e999b46d4b0e936533e16e"
+        },
+        {
+          "name": "Production preview factory and adapter compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "ios/AnkiPad/CardPreviewRequest.swift",
+            "ios/AnkiPad/BrowserPreviewEngine.swift",
+            "tests/browser_preview_smoke.swift",
+            "-o",
+            "build/browser-preview-local-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "Production preview factory with actual native fixture IDs",
+          "argv": [
+            "build/browser-preview-local-smoke",
+            "build/browser-preview-native.json"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2d2043aaab511b84e20d9c121d57c21d7c85dd1910755b6dbeb782cf0b9a8de4"
+        },
+        {
+          "name": "Debug branch syntax; Apple typecheck pending",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-frontend",
+            "-parse",
+            "-swift-version",
+            "5",
+            "-D",
+            "DEBUG",
+            "ios/AnkiPad/BrowserView.swift"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "checked_at": "2026-10-31T02:39:53.307332+00:00"
     }
   ]
 }
