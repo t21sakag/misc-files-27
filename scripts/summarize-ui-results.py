@@ -12,5 +12,5 @@ args = parser.parse_args()
 summary = json.loads(args.summary.read_text())
 keys = ('result', 'totalTestCount', 'passedTests', 'failedTests', 'skippedTests', 'testFailures', 'runtimeWarnings', 'startTime', 'finishTime')
 print(json.dumps({key: summary[key] for key in keys if key in summary}, ensure_ascii=False, indent=2))
-if args.reject_runtime_warnings and summary.get('runtimeWarnings'):
+if args.reject_runtime_warnings and summary.get('runtimeWarnings') != []:
     raise SystemExit('Runtime warnings require investigation before this milestone can pass')

@@ -2,7 +2,7 @@ import XCTest
 
 final class TypingFocusFlowTests: StudyFlowTestSupport {
     func testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks() {
-        let app = makeApplication(); app.launchArguments = []; app.launch()
+        let app = makeApplication(); app.launchArguments = ["--uitest-typing-focus"]; app.launch()
         tapTestControl(app.buttons.matching(identifier: "add-note"), in: app)
         tapTestControl(app.buttons.matching(identifier: "note-type"), in: app)
         tapTestMenuAction(titles: ["基本 (解答を入力)"], in: app)

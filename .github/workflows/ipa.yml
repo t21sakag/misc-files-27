@@ -44,6 +44,7 @@ jobs:
           python3 tests/simulator_identity_smoke.py
           python3 tests/ui_events_smoke.py
           python3 tests/query_predicate_smoke.py
+          python3 tests/ui_workflow_diagnostics_smoke.py
           python3 scripts/check-ui-query-predicates.py
       - name: Review repeated validation failures
         if: env.CI_MODE == 'ui' || env.CI_MODE == 'full'
@@ -597,10 +598,7 @@ jobs:
           while IFS= read -r selection; do
             if [ -n "$selection" ]; then ui_test_args+=("$selection"); fi
           done < ../build/ui-test-arguments.txt
-          diagnostic_command=()
-          if [[ "$UI_SUITE" = browser-preview-notes || "$UI_SUITE" = browser-preview-order || "$UI_SUITE" = browser-preview-selection || "$UI_SUITE" = browser-options || "$UI_SUITE" = browser-truncation || "$UI_SUITE" = browser-search-options || "$UI_SUITE" = widget-isolation || "$UI_SUITE" = widget-gallery || "$UI_SUITE" = widget-decks || "$UI_SUITE" = widget-analysis || "$UI_SUITE" = widget-add || "$UI_SUITE" = widget-profile || "$UI_SUITE" = widget-settings ]]; then
-            diagnostic_command=(python3 ../scripts/run-ui-with-diagnostics.py --simulator "$SIMULATOR_ID" --settings ../build/project-settings.json --output ../build/widget-diagnostics --)
-          fi
+          diagnostic_command=(python3 ../scripts/run-ui-with-diagnostics.py --simulator "$SIMULATOR_ID" --settings ../build/project-settings.json --output ../build/widget-diagnostics --)
           "${diagnostic_command[@]}" xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator "${ui_test_args[@]}" -parallel-testing-enabled "$parallel_ui" -parallel-testing-worker-count "$ui_workers" -maximum-concurrent-test-simulator-destinations 2 -destination "id=$SIMULATOR_ID" ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -derivedDataPath ../build/simulator -resultBundlePath ../build/UITests.xcresult CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" test-without-building
       - name: Export structured UI failures and timing
         if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
@@ -608,9 +606,7 @@ jobs:
           if [ -d build/UITests.xcresult ]; then
             xcrun xcresulttool get test-results summary --path build/UITests.xcresult > build/test-summary.json
             xcrun xcresulttool get test-results tests --path build/UITests.xcresult > build/test-tree.json
-            ui_summary_flags=()
-            if [[ "$UI_SUITE" == widget* ]]; then ui_summary_flags+=(--reject-runtime-warnings); fi
-            python3 scripts/summarize-ui-results.py build/test-summary.json "${ui_summary_flags[@]}"
+            python3 scripts/summarize-ui-results.py build/test-summary.json --reject-runtime-warnings
           fi
           xcrun simctl list devices booted -j > build/booted-after-tests.json
       - name: Collect display process diagnostics

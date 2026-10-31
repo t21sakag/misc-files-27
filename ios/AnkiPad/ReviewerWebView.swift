@@ -334,9 +334,40 @@ struct ReviewerWebView: UIViewRepresentable {
                 }
             }
         }
+        #if DEBUG
+        private func traceTypingFocus(_ phase: String, view: WKWebView, domFocused: Bool? = nil, error: Error? = nil) {
+            guard UITestIsolation.namespace() != nil,
+                  ProcessInfo.processInfo.arguments.contains("--uitest-typing-focus") else { return }
+            func firstResponder(in root: UIView) -> UIView? {
+                if root.isFirstResponder { return root }
+                for child in root.subviews { if let found = firstResponder(in: child) { return found } }
+                return nil
+            }
+            let native = view.window.flatMap { firstResponder(in: $0) }
+            // Only structural state from the synthetic test. No card/input text.
+            let nativeType = native.map { String(describing: type(of: $0)) } ?? "none"
+            let nativeInWeb = native.map { $0 === view || $0.isDescendant(of: view) } ?? false
+            let errorIdentity = error.map { ($0 as NSError).domain + ":" + String(($0 as NSError).code) } ?? "none"
+            NSLog("typing.focus.trace phase=%@ window=%d key=%d enabled=%d native=%@ inWeb=%d dom=%@ error=%@",
+                  phase, view.window != nil ? 1 : 0, view.window?.isKeyWindow == true ? 1 : 0,
+                  view.isUserInteractionEnabled ? 1 : 0, nativeType, nativeInWeb ? 1 : 0,
+                  domFocused.map(String.init) ?? "unobserved", errorIdentity)
+        }
+        #endif
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             if shouldFocusTyping {
+                #if DEBUG
+                if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-typing-focus") {
+                    traceTypingFocus("before-focus", view: webView)
+                    webView.evaluateJavaScript("(()=>{const field=document.getElementById('typeans');field?.focus();return !!field && document.activeElement===field;})()") { [weak self, weak webView] result, error in
+                        if let webView { self?.traceTypingFocus("after-focus", view: webView, domFocused: result as? Bool, error: error) }
+                    }
+                } else {
+                    webView.evaluateJavaScript("document.getElementById('typeans')?.focus();")
+                }
+                #else
                 webView.evaluateJavaScript("document.getElementById('typeans')?.focus();")
+                #endif
             }
             deliverScriptEvent(webView)
             guard !isAnswer, let card = scheduling, !card.customScheduling.isEmpty, card.mutationKey != lastMutationKey else { return }

@@ -52,7 +52,7 @@ def run(simulator, bundle, output, command):
             raise KeyboardInterrupt
 
     try:
-        predicate = 'process == "StudyWidgets" OR eventMessage CONTAINS ' + json.dumps(bundle) + ' OR eventMessage BEGINSWITH "browser.options.trace " OR eventMessage BEGINSWITH "browser.selection.trace " OR eventMessage BEGINSWITH "reminder.save.trace " OR process == "usernotificationsd"'
+        predicate = 'process == "StudyWidgets" OR eventMessage CONTAINS ' + json.dumps(bundle) + ' OR eventMessage BEGINSWITH "browser.options.trace " OR eventMessage BEGINSWITH "browser.selection.trace " OR eventMessage BEGINSWITH "typing.focus.trace " OR eventMessage BEGINSWITH "reminder.save.trace " OR process == "usernotificationsd"'
         try:
             observer = subprocess.Popen(['xcrun', 'simctl', 'spawn', simulator, 'log', 'stream',
                 '--style', 'compact', '--level', 'info', '--predicate', predicate],

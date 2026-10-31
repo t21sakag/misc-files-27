@@ -29,7 +29,7 @@ print('launch', flush=True)
 if os.environ.get('LARGE_LOG'):
     sys.stdout.buffer.write(b'x' * (9 * 1024 * 1024)); sys.stdout.buffer.flush()
 assert any('browser.options.trace' in value for value in sys.argv)
-assert any('reminder.save.trace' in value and 'usernotificationsd' in value for value in sys.argv)
+assert any('reminder.save.trace' in value and 'typing.focus.trace' in value and 'usernotificationsd' in value for value in sys.argv)
 assert any('browser.selection.trace' in value for value in sys.argv)
 print('browser.options.trace phase=load.end loaded=1', flush=True)
 print('browser.selection.trace phase=all.enter rows=3 selected=0', flush=True)
