@@ -665,6 +665,7 @@ jobs:
             build/booted-after-tests.json
             build/screenshots/manifest.json
             build/screenshots/*.txt
+            build/screenshots/*.ips
           if-no-files-found: ignore
           retention-days: 7
       - name: Remove owned test simulator
@@ -766,6 +767,7 @@ jobs:
             build/test-summary.json
             build/test-tree.json
             build/ui-prerequisites.json
+            build/UITests.xcresult/database.sqlite3
             build/batch-ui-selections.txt
             build/ui-batches.json
             build/project-settings.json
@@ -773,6 +775,7 @@ jobs:
             build/widget-diagnostics
             build/screenshots/manifest.json
             build/screenshots/*.txt
+            build/screenshots/*.ips
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v4
