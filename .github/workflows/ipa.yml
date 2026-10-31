@@ -169,7 +169,7 @@ jobs:
           build/ui-test-isolation-smoke
       - name: Validate UI case grouping and scope selection
         run: python3 tests/ui_case_groups_smoke.py
-      - name: Test serial case partition and compiled product transfer
+      - name: Test case partition and compiled product transfer
         run: |
           python3 tests/ui_batch_transfer_smoke.py
           python3 tests/ui_batch_runner_smoke.py
@@ -562,7 +562,7 @@ jobs:
             build/simulator/SDKStatCaches.noindex
             build/simulator/input-mtimes.json
           key: ${{ steps.xcode-simulator.outputs.cache-primary-key }}
-      - name: Plan serial UI batches
+      - name: Plan independent UI batches
         id: ui-batch-plan
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'batch-check' || env.UI_SUITE == 'all'))
         run: |
@@ -714,7 +714,7 @@ jobs:
     if: inputs.mode == 'full' || (inputs.mode == 'ui' && (inputs.ui_suite == 'batch-check' || inputs.ui_suite == 'all'))
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 5
       matrix:
         batch: ${{ fromJSON(needs.build.outputs.batches) }}
     runs-on: xcode-27

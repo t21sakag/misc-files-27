@@ -13,7 +13,7 @@ def plan(groups, durations, proof=False):
                  'MediaFlowTests/testZImageOcclusionCanBeCreatedFromPhoto']
         if not set(cases).issubset({c + '/' + m for c, ms in groups.items() for m in ms}):
             raise ValueError('Missing proof case')
-    batches = [[] for _ in range(2 if proof else 3)]
+    batches = [[] for _ in range(2 if proof else 5)]
     totals = [0.0] * len(batches)
     for case in sorted(cases, key=lambda c: (-durations.get(c, 180), c)):
         index = min(range(len(batches)), key=lambda i: (totals[i], i))

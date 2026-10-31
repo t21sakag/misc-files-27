@@ -50,7 +50,8 @@ def is_ui_attempt(run):
     return any(step['name'] in (
         'Start requested iPadOS 27 simulator before native setup',
         'Execute selected UI cases without rebuilding',
-        'Plan serial UI batches') and step.get('conclusion') in ('success', 'failure') for step in steps)
+        'Plan serial UI batches',
+        'Plan independent UI batches') and step.get('conclusion') in ('success', 'failure') for step in steps)
 
 
 def recent_failures(runs):

@@ -46,6 +46,10 @@ with tempfile.TemporaryDirectory() as directory:
     legacy = run(4); legacy['display_title'] = 'Misc checks'
     legacy['jobs'][0]['steps'] = [{'name': 'Execute selected UI cases without rebuilding', 'conclusion': 'failure'}]
     assert review.decision([legacy, run(2)], empty, workspace)['decision'] == 'review_required'
+    for name in ['Plan serial UI batches', 'Plan independent UI batches']:
+        fallback = run(4); fallback['display_title'] = 'Misc checks'
+        fallback['jobs'][0]['steps'] = [{'name': name, 'conclusion': 'success'}]
+        assert review.is_ui_attempt(fallback), name
     draft = {
         'id': 'local-regression', 'covers': [[2,1],[1,1]],
         'classifications': [{'attempt': [number,1], 'kind': 'harness', 'finding': 'Observed selector failure.'} for number in [2,1]],

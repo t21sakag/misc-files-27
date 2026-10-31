@@ -15,7 +15,7 @@ durations = json.loads((root/'scripts/ui-case-durations.json').read_text())
 result = planner.plan(groups, durations)
 expected = sorted(c+'/'+m for c, ms in groups.items() for m in ms)
 assert sorted(c for b in result['batches'] for c in b) == expected
-assert all(result['batches']) and len(result['batches']) == 3
+assert all(result['batches']) and len(result['batches']) == 5
 assert result == planner.plan(groups, durations), 'Non-deterministic scope'
 assert sum(map(len, planner.plan(groups, durations, True)['batches'])) == 2
 changed = dict(groups, NewTests=['testNewFeature'])
