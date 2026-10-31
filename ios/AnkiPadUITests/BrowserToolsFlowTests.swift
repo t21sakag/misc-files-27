@@ -67,10 +67,9 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
     }
     private func expectSelectedNotes(_ count: Int, in app: XCUIApplication) {
         guard let results = waitForTestControl(app.staticTexts.matching(identifier: "browser-results"), in: app, purpose: .observation) else { return }
-        let updated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+        requireTestCondition("Three notes with \(count) selected", in: app) {
             results.value as? String == "PreviewScope" && results.label.contains("3ノート") && results.label.contains("\(count)件選択中")
-        }, object: nil)
-        XCTAssertEqual(XCTWaiter.wait(for: [updated], timeout: 30), .completed, app.debugDescription)
+        }
     }
     private func openBrowserPreview(_ app: XCUIApplication) {
         tapTestControl(app.buttons.matching(identifier: "browser-actions-menu"), in: app)

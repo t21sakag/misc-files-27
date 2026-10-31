@@ -37,6 +37,25 @@ class StudyFlowTestSupport: XCTestCase {
             .withOffset(CGVector(dx: frame.midX - origin.x, dy: frame.midY - origin.y)).tap()
     }
 
+    /// A semantic transition needs the same terminal-state evidence as a
+    /// control lookup. A waiter timeout alone is not its current-state verdict.
+    @discardableResult
+    func requireTestCondition(_ description: String, in app: XCUIApplication, timeout: TimeInterval = 30,
+                              condition: @escaping () -> Bool) -> Bool {
+        let expected = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in condition() }, object: nil)
+        let result = XCTWaiter.wait(for: [expected], timeout: timeout)
+        if result == .completed || condition() { return true }
+        XCTContext.runActivity(named: "Required UI state failed: " + description) { activity in
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "Terminal hierarchy for " + description; hierarchy.lifetime = .keepAlways
+            let screenshot = XCTAttachment(screenshot: app.screenshot())
+            screenshot.name = "Terminal state for " + description; screenshot.lifetime = .keepAlways
+            activity.add(hierarchy); activity.add(screenshot)
+        }
+        XCTFail("Required UI state did not arrive: " + description)
+        return false
+    }
+
     enum TestKeyboardPolicy { case keep, dismiss }
     enum TestControlPurpose { case action, observation }
 

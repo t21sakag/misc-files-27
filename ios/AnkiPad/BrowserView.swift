@@ -57,12 +57,21 @@ struct BrowserView: View {
     var body: some View {
         NavigationStack { dialogs }
             .environment(\.editMode, $editMode)
-            .task { await initialize() }
+            .task {
+                traceSelection("initialize.start")
+                await initialize()
+                traceSelection("initialize.end")
+            }
+            .onAppear { traceSelection("appear") }
+            .onChange(of: editMode.isEditing) { _, _ in traceSelection("editing.changed") }
             .onDisappear { UserDefaults.standard.set(query, forKey: model.profilePreferenceKey("lastBrowserSearch")) }
             .task(id: "\(loaded)-\(query)-\(revision)-\(config.notesMode)-\(showMediaFilenames)") { await search() }
     }
     private var list: some View {
-        List(selection: Binding(get: { selected }, set: updateSelection)) {
+        List(selection: Binding(get: { selected }, set: { next in
+            traceSelection("binding.set", incoming: next.count)
+            updateSelection(next)
+        })) {
             Section {
                 ForEach(rows) { row in
                     Group {
@@ -163,7 +172,13 @@ struct BrowserView: View {
     }
     private var actionsMenu: some View {
         Menu {
-            Button(AppText.localized("すべて選択")) { editMode = .active; updateSelection(Set(ids)) }.disabled(ids.isEmpty)
+            Button(AppText.localized("すべて選択")) {
+                traceSelection("all.enter")
+                editMode = .active
+                traceSelection("all.editing")
+                updateSelection(Set(ids))
+                traceSelection("all.exit")
+            }.disabled(ids.isEmpty)
             Button(AppText.localized("選択を解除")) { updateSelection([]) }
             Button(AppText.localized("プレビュー")) { openPreview(selected: selectionOrder) }.disabled(ids.isEmpty)
             Section {
@@ -290,10 +305,20 @@ struct BrowserView: View {
     private func quoted(_ value: String) -> String { "\"" + value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\"" }
     private func flagColor(_ flag: Int) -> Color { [.gray, .red, .orange, .green, .blue, .pink, .cyan, .purple][min(7, max(0, flag))] }
     private func saveConfig() { mutateOpening { try await model.engine.saveBrowserConfiguration(config); revision += 1 } }
+    private func traceSelection(_ phase: String, incoming: Int = -1) {
+        #if DEBUG
+        guard UITestIsolation.namespace() != nil else { return }
+        NSLog("browser.selection.trace phase=%@ rows=%d selected=%d ordered=%d incoming=%d editing=%d busy=%d notes=%d",
+              phase, ids.count, selected.count, selectionOrder.count, incoming,
+              editMode.isEditing ? 1 : 0, busy ? 1 : 0, config.notesMode ? 1 : 0)
+        #endif
+    }
     private func updateSelection(_ next: Set<String>) {
+        traceSelection("update.enter", incoming: next.count)
         // AnkiDroid's LinkedHashSet preserves the order rows were selected.
         selectionOrder = BrowserSelectionOrder.updating(previous: selectionOrder, next: next, rowIDs: ids)
         selected = next
+        traceSelection("update.exit", incoming: next.count)
     }
     private func openPreview(selected: [String]) {
         // Use the complete ordered result, not just the first displayed page.

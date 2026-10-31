@@ -29,7 +29,9 @@ print('launch', flush=True)
 if os.environ.get('LARGE_LOG'):
     sys.stdout.buffer.write(b'x' * (9 * 1024 * 1024)); sys.stdout.buffer.flush()
 assert any('browser.options.trace' in value for value in sys.argv)
+assert any('browser.selection.trace' in value for value in sys.argv)
 print('browser.options.trace phase=load.end loaded=1', flush=True)
+print('browser.selection.trace phase=all.enter rows=3 selected=0', flush=True)
 print('WidgetProbe timeline.request', flush=True)
 while True: time.sleep(1)
 ''')
@@ -49,6 +51,7 @@ while True: time.sleep(1)
         assert report['truncated'] and report['bytes_saved'] <= module.LIMIT
         assert b'WidgetProbe timeline.request' in (output/'live.log').read_bytes()
         assert b'browser.options.trace phase=load.end' in (output/'live.log').read_bytes()
+        assert b'browser.selection.trace phase=all.enter' in (output/'live.log').read_bytes()
         # An observer failure must not replace a successful UI command's result.
         executable.write_text('#!/usr/bin/env python3\nraise SystemExit(149)\n')
         assert module.run(simulator, bundle, base/'unavailable', [sys.executable, '-c', 'pass']) == 0
