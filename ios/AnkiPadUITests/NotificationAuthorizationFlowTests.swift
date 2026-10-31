@@ -6,33 +6,41 @@ final class NotificationAuthorizationFlowTests: StudyFlowTestSupport {
         let app = makeApplication()
         app.launchArguments = ["--uitest-reminders"]
         app.launch()
+        let form = app.collectionViews["reminder-form"]
         func open() {
             if !app.navigationBars["設定"].exists {
-                XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
-                app.buttons["collection-menu"].tap(); app.buttons["設定"].tap()
+                tapTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
+                tapTestMenuAction(titles: ["設定"], in: app)
             }
-            let link = app.buttons["reminder-open"]
-            revealSettingsControl(link, in: app); link.tap()
-            XCTAssertTrue(app.collectionViews["reminder-form"].waitForExistence(timeout: 20))
+            let links = app.buttons.matching(identifier: "reminder-open")
+            revealSettingsControl(links.element, in: app)
+            tapTestControl(links, in: app)
+            requireTestCondition("Reminder form is foreground", in: app) { form.isHittable }
         }
         func toggle(_ id: String, _ desired: Bool) {
-            let outer = app.switches[id]
-            revealFormControl(outer, in: app.collectionViews["reminder-form"], topInset: 40, bottomInset: 10, searchUpward: false)
-            let control = outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
-            if (control.value as? String == "1") != desired { control.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap() }
-            XCTAssertEqual(control.value as? String, desired ? "1" : "0", app.debugDescription)
+            let controls = app.switches.matching(identifier: id)
+            revealFormControl(controls.element, in: form, topInset: 40, bottomInset: 10, searchUpward: false)
+            setTestSwitch(controls, enabled: desired, in: app)
         }
         func save() {
-            let button = app.buttons["reminder-save"]
-            revealFormControl(button, in: app.collectionViews["reminder-form"], topInset: 40, bottomInset: 10)
-            button.tap()
-            let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.buttons.matching(NSPredicate(format: "label IN %@", ["Allow", "許可"])).firstMatch
-            if allow.waitForExistence(timeout: 3) { allow.tap() }
-            XCTAssertTrue(app.navigationBars["学習リマインダー"].waitForNonExistence(timeout: 30), reminderFailureContext(app))
+            let buttons = app.buttons.matching(identifier: "reminder-save")
+            revealFormControl(buttons.element, in: form, topInset: 40, bottomInset: 10)
+            tapTestControl(buttons, in: app)
+            let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+            let allow = springboard.alerts.buttons.matching(NSPredicate(format: "label IN %@", ["Allow", "許可"]))
+            // Optional OS prompt; if present its action must still be unique.
+            if allow.element.waitForExistence(timeout: 3) {
+                tapTestControl(allow, in: springboard, keyboard: .keep)
+            }
+            requireTestCondition("Reminder save completed without an error", in: app) {
+                !app.navigationBars["学習リマインダー"].exists
+            }
+            XCTAssertFalse(app.alerts.element.exists, reminderFailureContext(app))
         }
         func snapshot() throws -> Set<String> {
-            let status = app.staticTexts["reminder-native-schedule"]
-            revealFormControl(status, in: app.collectionViews["reminder-form"], topInset: 40, bottomInset: 10)
+            let statuses = app.staticTexts.matching(identifier: "reminder-native-schedule")
+            revealFormControl(statuses.element, in: form, topInset: 40, bottomInset: 10)
+            let status = try XCTUnwrap(waitForTestControl(statuses, in: app, purpose: .observation))
             let value = try XCTUnwrap(status.value as? String)
             print("Actual OS authorization and pending requests: " + value)
             let data = try XCTUnwrap(value.data(using: .utf8))
@@ -50,6 +58,6 @@ final class NotificationAuthorizationFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(replaced.isDisjoint(with: initial))
         toggle("reminder-enabled", false); save()
         open(); XCTAssertTrue(try snapshot().isEmpty)
-        XCTAssertFalse(app.alerts.firstMatch.exists)
+        XCTAssertFalse(app.alerts.element.exists)
     }
 }

@@ -8,6 +8,7 @@ import UserNotifications
     func record(_ phase: String) {
         guard UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-reminders") else { return }
         self.phase = phase
+        NSLog("reminder.save.trace %@", phase)
     }
 }
 #endif
@@ -108,6 +109,15 @@ import UserNotifications
                     next.requestIDs.append(identifier)
                 }
             } catch {
+                #if DEBUG
+                // Synthetic-test diagnostics retain the native error identity,
+                // without logging request content or changing the save result.
+                let nativeError = error as NSError
+                record("OS add failed; domain=" + nativeError.domain + "; code=" + String(nativeError.code))
+                if let underlying = nativeError.userInfo[NSUnderlyingErrorKey] as? NSError {
+                    record("OS add underlying; domain=" + underlying.domain + "; code=" + String(underlying.code))
+                }
+                #endif
                 center.removePendingNotificationRequests(withIdentifiers: next.requestIDs)
                 throw error
             }

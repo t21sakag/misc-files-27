@@ -3255,6 +3255,184 @@
         }
       ],
       "checked_at": "2026-10-31T02:39:53.307332+00:00"
+    },
+    {
+      "id": "20261031-full-focus-notification-native-evidence",
+      "covers": [
+        [
+          41180884838,
+          1
+        ],
+        [
+          41164048621,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41180884838,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "DOM/AX focus exists, but synthesized typing leaves actual field empty and keyboard absent. Native responder versus simulator input unproven; do not mask auto-focus with tap/JS."
+        },
+        {
+          "attempt": [
+            41164048621,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "Seven failures contain distinct causes: old hide-keyboard harness bug, four OS source authorization saves, UIKit app focus abort, then XCTest runner crash tracking. Actual IPS ownership corrects selector-only diagnosis."
+        }
+      ],
+      "root_cause": "Full combines multiple actual failure modes. Latest focus failure is later than repaired keyboard dismissal and remains undetermined. Four notification cases share native save rejection despite authorized settings; repeating UI taps without native diagnostics is insufficient.",
+      "common_resolution": "Strengthen observed-state/crash ownership rules; migrate remaining notification baseline actions to common unique/reveal/native-switch helpers, preserving actual scheduling assertions. Capture bounded owned-sim daemon and synthetic NSError identity. Next single baseline observes source authorization without faking grants, retries, longer timeouts or changed success criteria. Focus and toolbar repairs remain separate until cause evidence.",
+      "rule_review": {
+        "semantic_labels": "Keep full semantic settings title and exact reminder IDs. Four full failures include the actual Source is not authorized alert, rather than a title mismatch. No shorter/substring matcher introduced.",
+        "foreground_scope": "Notification baseline now resolves the actual foreground form and typed menu/buttons/switches. Retain OS SpringBoard scope for permission approval. Latest typing failure is inside actual reviewer TextField, not note editor.",
+        "unique_reads_and_actions": "Migrate all notification-baseline actions and schedule reads to shared unique/actionable helpers. Replace firstMatch/native switch coordinate shortcuts with shared direct native Switch resolution. Optional OS approval still uses unique readiness if it exists.",
+        "live_state": "UN authorized2 and alert2 are not successful scheduling: keep native pending request IDs equal savedIDs, seven requests, replacement disjointness and cancellation0. Typing DOM Focused was true but actual input empty; do not inject JS text or add focus-concealing tap to pass.",
+        "keyboard_and_scroll": "Old offscreen Hide keyboard was a harness failure; shared dismissal now passes. Notification form reveal and shared keyboard handling retained. Typing new empty input/no keyboard is distinct and undetermined; focus helper must not dismiss keyboard during observation.",
+        "environment": "Owned fresh iPadOS27 still sees notification source rejection. Earlier40940466698 had same error before simulator team change, and focused40967640881/40970855345 succeeded. Do not blame SIMULATOR0 or freshen away the problem without native logs. Existing preflight, team identity validation and daemon logging remain bounded to owned sim.",
+        "first_failure_evidence": "Compared full terminal AX for notification and typing, actual typing PNG, toolbar video38/48s, two actual IPS process names/stack and exact event times. Extend bounded live observer with usernotificationsd and synthetic reminder phase/domain/code so a new failure is observable, without retries or changed result.",
+        "failure_classification": "Full97/104 plus21 warnings is not green. Typing legacy hide was harness; current empty input remains app/environment undetermined. Toolbar AnkiPad SIGABRT occurs in UIKit focus guide after back tap. Deck case actual actions/relaunch finished before Runner SIGTRAP inside XCTCrashLogTracker; rerun later independently, do not claim deletion app crash.",
+        "runtime_warnings": "Keep explicit empty runtimeWarnings requirement. Latest typing warnings[]; full21 entries mapped to cases, including audio main-thread and publication in sync/profiles/timebox. No suppression; downloaded batch2 database has0 SourceCodeFrames for those issues, so stack not yet known.",
+        "device_evidence": "This scope verifies actual simulator authorization and pending requests, not physical notification delivery, TTS, SideStore re-signing or Pencil. build176 remains delivery; no IPA or full rerun."
+      },
+      "evidence": [
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41180884838",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "edaf0cafa43cd59705212acc50649c65c9a80c9059f1e6329c88b52b9f5547f5"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41180884838",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/E3FF051D-B2E3-4636-BFE9-CBE28F226DEF.txt",
+          "sha256": "3d1a77b0e48fa0b6237c589b7d2f97df04e335d3ec2b06a3464770333efea66a"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41180884838",
+          "artifact_name": "screenshots",
+          "artifact_entry": "9E6C71AA-1E91-43CD-B370-617BA132C9FA.png",
+          "sha256": "9296d2a912907560a6c77c9a9976928751fe8a3a6bc694435ade918a0bad8049"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41164048621",
+          "artifact_name": "test-results-2",
+          "artifact_entry": "screenshots/51B8F533-9F4C-4337-8D03-986DE357F2E6.ips",
+          "sha256": "a64fe65c724f4f7c33dd338f438d49386a543f3552f8d4a8581a118437e67ca4"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41164048621",
+          "artifact_name": "test-results-2",
+          "artifact_entry": "screenshots/1AC4BD6A-8844-4DBD-8915-1BF00E950080.ips",
+          "sha256": "5b63bdd27bfa4fffb39320362145e0a7910873233a1f1cc16ae922937c94c1bf"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41164048621",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "screenshots/AFB6A682-5BDD-4371-AB83-92CCDB2DB378.txt",
+          "sha256": "c37e1942e238474b24a69dc991847e55b70e8c919a3221b9d3bebd82b97fd6b9"
+        }
+      ],
+      "next_scope": [
+        "NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "5fb7b069e3d79dbdd1bf643b0e7a6f12c068ea0af6d422404e069314fb3ae0e9",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "7e8dc25d208c3d2517d212311fe10753714be33eeccdf06c4b5f473627d97fc4",
+        "ios/AnkiPadUITests/ControlLabelMatch.swift": "48027c8ba45064cc037cdeb9c2a15186e6fd78c6879f5bd50ff6077b0361ea9a",
+        "ios/AnkiPadUITests/NotificationAuthorizationFlowTests.swift": "e364ce0770e2cd05bfff25e5cc907cf3aef3ecafe37844114d9d518080b76ab6",
+        "ios/AnkiPadUITests/TypingFocusFlowTests.swift": "974ee2818bf4f8f5b12d270bd12ad04a96935d21e3b0e60bffeffd246f8252bf",
+        "ios/AnkiPad/ReviewReminderSettings.swift": "cd013f7b23e7bc505d222e667c36b3821715560714fffa855dcb77f04560922a",
+        "scripts/run-ui-with-diagnostics.py": "13d22ef56f891389e7479400a40e67a149d389d9cae17ab8cf7f539c1e06f926",
+        "scripts/select-ui-tests.py": "68588e2db3bb843cfc609883f3744d563fa8dc12b5ae7004a6e51ff118db7ff8",
+        "scripts/ui-case-groups.json": "2a5c23ba2ad2bf6648706619346b462a7524f646d32caa4dde3579bfd43c7262",
+        "scripts/ui-prerequisites.py": "e96a940cb86a951c17366714d2af061289d0b65b2b5d00203259ea18b5bb8582",
+        "scripts/simulator_identity.py": "00be6b4984339aa0bf81be7debb35c507c17b06d1f944320d59341586c73df6b",
+        "scripts/verify-shared-products.py": "8a62839f9c7558e8b5ebe5bad637de275e85131a023d578e5707b41ee4a208ce",
+        ".github/workflows/ipa.yml": "0e810f38af0bbd4eb2b8aaa9896e00139ae6f8ce6c7a95e237c746b15b234134"
+      },
+      "checks": [
+        {
+          "name": "Swift syntax only; Apple typecheck pending",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5726e22be4fb014cb9cd8ba61fc729d40eee473cbcb634a05e4d4e5e5442f970"
+        },
+        {
+          "name": "Full case catalog104",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b659ab3258a77884dca6555f8251fadec48e764e7c54b2c0b22c074362f072ca"
+        },
+        {
+          "name": "Dispatch choices111",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2ea2b6d47932c3abaf9a25e5f28a7821cb8a704a672ff4660f44f3e95d047a3b"
+        },
+        {
+          "name": "Unsupported query lint",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2ee1b0b21abca8f7697d081672551182916e7c909e397420c22c90d89ab03eef"
+        },
+        {
+          "name": "Review gate regression",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Bounded observer and persistent probes",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "Real batch runner and preflight",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "Simulator identity",
+          "argv": [
+            "python3",
+            "tests/simulator_identity_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec4dcf530af5a45941f312753ffde3ef60300e306e01d38acb91bbb4bbca02fb"
+        }
+      ],
+      "checked_at": "2026-10-31T08:03:45.360249+00:00"
     }
   ]
 }
