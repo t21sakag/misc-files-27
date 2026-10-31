@@ -123,14 +123,14 @@ class StudyFlowTestSupport: XCTestCase {
     /// Native submenu cells can omit the source accessibility identifier.
     /// Match the full observed title within actual menu cell buttons, retaining
     /// the shared one-match/actionable checks instead of choosing the first.
-    func testMenuActions(titles: [String], in app: XCUIApplication) -> XCUIElementQuery {
+    func menuActions(titles: [String], in app: XCUIApplication) -> XCUIElementQuery {
         app.collectionViews.children(matching: .cell).children(matching: .button)
             .matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(titles)))
     }
 
     @discardableResult
     func tapTestMenuAction(titles: [String], in app: XCUIApplication) -> XCUIElement? {
-        tapTestControl(testMenuActions(titles: titles, in: app), in: app, keyboard: .keep)
+        tapTestControl(menuActions(titles: titles, in: app), in: app, keyboard: .keep)
     }
 
     /// SwiftUI can export a labelled full-row Switch wrapping the native

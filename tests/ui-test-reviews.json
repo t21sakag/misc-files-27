@@ -2657,6 +2657,259 @@
         }
       ],
       "checked_at": "2026-10-30T22:50:07.698469+00:00"
+    },
+    {
+      "id": "20261031-flag-menu-and-final-source-scope",
+      "covers": [
+        [
+          41151725748,
+          1
+        ],
+        [
+          41149139424,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41149139424,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Native flag submenu leaf exports full PriorityFlag title but omits source ID. Terminal AX/screenshot prove actual Cell/Button; parent synthesized event572,601 matches parent menu center; missing ID prevents leaf action."
+        },
+        {
+          "attempt": [
+            41151725748,
+            1
+          ],
+          "kind": "inspection",
+          "finding": "Preflight case catalog regex counts helper testMenuActions as an XCTest method. UI never started. Final helper edit was syntax/lint checked but full case catalog was not rerun after that edit."
+        }
+      ],
+      "root_cause": "Two separate verification defects: assuming all native menu leaves export source IDs, then omitting final-source catalog validation after adding a helper with a test prefix. No evidence of a production rename/persistence defect; first run passed rename/cancel/empty/relaunch/draft checks and preview regression.",
+      "common_resolution": "Use shared menuActions/tapTestMenuAction to resolve the observed CollectionView/Cell/Button by complete semantic title and strict one-match/actionable readiness. Rename helper outside XCTest test prefix. Require final-source case catalog, selector/dispatch choice agreement, syntax and query lint; record executed checks and current hashes before the next single flag-names attempt. Keep native tap, expectations, keyboard handling and timeouts unchanged.",
+      "rule_review": {
+        "semantic_labels": "Full PriorityFlag title is observed, no normalization beyond existing decorative-edge matching; do not use substring or coordinate fallback.",
+        "foreground_scope": "Terminal AX exports the native submenu as CollectionView/Cell/Button with no IDs for all leaf rows. Shared query uses exactly that observed structure; parent ID remains valid and unchanged. Names/editor/close paths have already been traversed successfully.",
+        "unique_reads_and_actions": "menuActions uses one query for read and tap; shared resolver requires unique enabled/hittable match. No first match, duplicate suppression or new gesture. Parent actual down/up572,601 matchesframecenter; leaf had zero matching IDs, so no leaf input was sent.",
+        "live_state": "Keep all cancel/empty-save/rename/relaunch/draft/numeric-search assertions. The first run proved all but final numeric-search action. Blank-save native JSON no-op and numeric flag preservation also passed production-adapter/real-engine host tests.",
+        "keyboard_and_scroll": "Existing shared keyboard handling succeeded throughout three edits; keep native dismissal closure checks. Flags entry uses observed options Form reveal. No additional scrolling/tap shortcut.",
+        "environment": "411491 host/compile/identity succeeded. 411517 failed before UI at the case catalog because helper test prefix was misclassified; rename and rerun entire catalog after final edit. All106 dispatch choices now match selector. No simulator restart or environment guess.",
+        "first_failure_evidence": "Compare terminal AX9C30DF20 and screenshot7521FD68 with input-eventsE9171BFA. Video350s shows options and400s dark Home, so it is not terminal menu proof; terminal AX/image establish displayed PriorityFlag. Second failure explicit catalog AssertionError testMenuActions, no nonexistent UI/video evidence claimed.",
+        "failure_classification": "411491 harness target-ID assumption;411517 inspection/catalog validation workflow. Count both failed UI-mode attempts even though second never reached UI. Exact two-failure gate review precedes next attempt; no bypass via compile/successful host checks.",
+        "runtime_warnings": "First full UI summary runtimeWarnings=[]; second never ran UI so no runtime-warning claim. Preserve existing warning gate.",
+        "device_evidence": "iPadOS27 simulator and collection-engine contracts only. Actual iPad, SideStore entitlement/re-sign, sync transport of labels, physical speech/notifications and full101 regression remain incomplete."
+      },
+      "evidence": [
+        {
+          "attempt": [
+            41149139424,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41149139424",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "4c26842b104c54116c127488dd0f3cd3ecc28dda86f73e4ee0ea96211d193590"
+        },
+        {
+          "attempt": [
+            41149139424,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41149139424",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/9C30DF20-FC0F-47BB-B660-7AF90115F4B7.txt",
+          "sha256": "ef4aed383d6d9ddba1eea3f4cdaa8582c7274b48952faee5e623c84c8852af2e"
+        },
+        {
+          "attempt": [
+            41149139424,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41149139424",
+          "artifact_name": "screenshots",
+          "artifact_entry": "7521FD68-EB5F-443D-A3BC-01E8B2D62D5E.png",
+          "sha256": "0c4f8543c57d085b880fcd89fe1efaab0904d224883c44dc3aa3fb05e042cf63"
+        },
+        {
+          "attempt": [
+            41149139424,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41149139424",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "input-events.json",
+          "sha256": "b577ab8b8f11e7dde9cf4ff1844cfdc7ede9e55acc189dbfaae1987d6fefd74b"
+        },
+        {
+          "attempt": [
+            41149139424,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41149139424",
+          "artifact_name": "screenshots",
+          "artifact_entry": "2A607841-8DFD-4766-9B41-0B19FFDC1B41.mp4",
+          "sha256": "e870116595bd0d0ee0ecdebc42a118fcd90b83eba2630fb9e6ad24cb323561a6"
+        },
+        {
+          "attempt": [
+            41151725748,
+            1
+          ],
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41151725748",
+          "artifact_name": "completed run log",
+          "sha256": "31f82afc2f390871560da366d2c73eb08f0c2ab0d04d5e0adf26965cb305f3e7"
+        }
+      ],
+      "next_scope": [
+        "BrowserToolsFlowTests/testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "da362eac4ac8f4213131b0c61ac3604f258993cf31915580c0ecbcb3db53d1e8",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "2f4fb84d5b04862e40e959edffc65f3c9ed974faae4228ba6919fe2a3a992ba2",
+        "ios/AnkiPadUITests/BrowserToolsFlowTests.swift": "2accf49e6d34601b371f003fec68d740e5d99e89711fc558de88f06de5ec316b",
+        "ios/AnkiPad/BrowserOptionsView.swift": "332bc8715714f459fbac77953298ae76d32e8173cce7b11ba3bd1fe45bb8d9c8",
+        "ios/AnkiPad/BrowserView.swift": "32e8f124f33905e854f1e159ee833ccc7ca7e2e23eb08352e681a46bd6381b01",
+        "ios/AnkiPad/FlagLabels.swift": "95ec19517c468cbea28fba6518ba74ce3f2169e593a2218512ee14af1f773aef",
+        "ios/AnkiPad/FlagLabelsEngine.swift": "58a30b43e47170b5dfc727648eaabf7cb871c9c5fa03a70c0c5a843f8c7ef55b",
+        "ios/AnkiPad/FlagLabelsModel.swift": "0ea7e6ed6fdbd85729627cb0f0b73891b00f5db8e8cf736bfc14a2c5dbed39ba",
+        "ios/AnkiPad/FlagNamesView.swift": "1646634f23b580639c605229420b12a40ae5708112bd9a17e4029218370c337a",
+        "scripts/select-ui-tests.py": "1add4c593ef146575698213b331cadfd5e973356d3e2c2056ea859a54ff46175",
+        "scripts/ui-case-groups.json": "1ae1d8f915d9bb32effc0292ea5ff3837cfd481418c74aaa69f9e86b6be4285e",
+        "tests/ui_case_groups_smoke.py": "8edaf4d72587d550f610fdc4cd69e4dbd6f281e76487ea54e100262cf7e34611",
+        "tests/ci_scope_smoke.py": "8a8137900644d98a0797e53e3b0cb10cd9f60e435e85ef5d1608e5afd15ebe31",
+        ".github/workflows/ipa.yml": "174decf71bbeffb5a571a80f39fc482667d040a6cf4ede8e48db472ebd04ac47"
+      },
+      "checks": [
+        {
+          "name": "Review gate regression",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Swift syntax only; Apple SDK typecheck pending",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "0e67aa0c4fa18bc3626622915ab2a2983f8c57f210a61da3fa4179e9385de5ba"
+        },
+        {
+          "name": "UI case scope",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "bfbd9429a4fdb1d97c184edf7cfbdb3834b165d43200f07fc92c783348e34324"
+        },
+        {
+          "name": "Complete disjoint batch scope",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "020acd97462b84b0f9934f94ea5783374dcc7ae0b867178df465782c7cf3d5ce"
+        },
+        {
+          "name": "All published workflow shell blocks parse",
+          "argv": [
+            "python3",
+            "-c",
+            "import re,subprocess,yaml; from pathlib import Path; w=yaml.safe_load(Path('.github/workflows/ipa.yml').read_text()); steps=[s for j in w['jobs'].values() for s in j.get('steps',[]) if 'run' in s]; [subprocess.run(['bash','-n'],input=re.sub(r'\\$\\{\\{.*?\\}\\}', 'REVIEW_VALUE',s['run']),text=True,check=True) for s in steps]; print('PASS:',len(steps),'workflow shell blocks')"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "1684146a601cae04f2ad8b9f2611b7524b59cdeafc28299a5dff3c12417e9446"
+        },
+        {
+          "name": "Literal query key boundary regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "3d7068949e5031a980b53d913335f7f15f132ecedce88b471203a198d0c894e7"
+        },
+        {
+          "name": "Known unsupported query keys across actual UI source",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2ee1b0b21abca8f7697d081672551182916e7c909e397420c22c90d89ab03eef"
+        },
+        {
+          "name": "Numeric event extraction boundaries",
+          "argv": [
+            "python3",
+            "tests/ui_events_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ecd4775e323cfe5034323f413df7a6e2ab0b180471780cd7de39d89d9f1c1910"
+        },
+        {
+          "name": "Live observer lifetime and exit preservation",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "Translation coverage",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5ded3f4d1e6bdbe6bda7d77186482b4c53049692d33116887f1dcb237d543aaa"
+        },
+        {
+          "name": "All dispatch choices match selectors",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e0d41f614670ac07ca9fae539bc62ab9e02766c28e23f90e1c875da4f9fd8ec0"
+        },
+        {
+          "name": "Production flag parser and adapter compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "ios/AnkiPad/FlagLabels.swift",
+            "ios/AnkiPad/FlagLabelsEngine.swift",
+            "tests/flag_labels_smoke.swift",
+            "-o",
+            "build/flag-labels-local-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "Production flag parser and adapter behavior",
+          "argv": [
+            "build/flag-labels-local-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d1b04a4c03f5fed8f879d6def40084f412caba70e2fdbae8e23dff2225071654"
+        }
+      ],
+      "checked_at": "2026-10-31T00:47:41.209230+00:00"
     }
   ]
 }

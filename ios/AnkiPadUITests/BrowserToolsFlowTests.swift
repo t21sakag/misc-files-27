@@ -87,7 +87,7 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
         tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
         tapTestControl(app.buttons.matching(identifier: "browser-filter-flags"), in: app)
         capture("Renamed native flag submenu", in: app)
-        guard let renamed = waitForTestControl(testMenuActions(titles: ["PriorityFlag"], in: app), in: app) else { return }
+        guard let renamed = waitForTestControl(menuActions(titles: ["PriorityFlag"], in: app), in: app) else { return }
         XCTAssertEqual(renamed.label, "PriorityFlag")
         tapTestMenuAction(titles: ["PriorityFlag"], in: app)
         guard let results = waitForTestControl(app.staticTexts.matching(identifier: "browser-results"), in: app, purpose: .observation) else { return }
