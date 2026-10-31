@@ -1,9 +1,5 @@
 import SwiftUI
 
-struct CardPreviewRequest: Identifiable {
-    let id = UUID()
-    let ids: [String]
-}
 struct PreviewCard {
     let mutationKey = UUID()
     let id: String
@@ -71,6 +67,11 @@ struct CardPreviewView: View {
     @State private var recognition = CardScriptRecognition()
     @State private var scriptEvents: [CardScriptEvent] = []
     @State private var loadGeneration = UUID()
+    init(model: StudyModel, request: CardPreviewRequest) {
+        self.model = model
+        self.request = request
+        _index = State(initialValue: request.initialIndex)
+    }
     var body: some View {
         NavigationStack {
             VStack {
@@ -89,10 +90,12 @@ struct CardPreviewView: View {
                         scriptEventError: { error = $0 })
                     HStack {
                         Button { move(-1) } label: { Image(systemName: "chevron.left") }.disabled(index == 0 || busy).keyboardShortcut(.leftArrow, modifiers: [])
+                            .accessibilityLabel(AppText.localized("前のカード")).accessibilityIdentifier("preview-previous")
                         Spacer()
                         Button(answer ? AppText.localized("表面を表示") : AppText.localized("解答を表示")) { if answer { answer = false } else { reveal() } }.disabled(busy)
                         Spacer()
                         Button { move(1) } label: { Image(systemName: "chevron.right") }.disabled(index + 1 >= request.ids.count || busy).keyboardShortcut(.rightArrow, modifiers: [])
+                            .accessibilityLabel(AppText.localized("次のカード")).accessibilityIdentifier("preview-next")
                     }.padding()
                 } else if let error { ContentUnavailableView(AppText.localized("カードを表示できませんでした"), systemImage: "exclamationmark.triangle", description: Text(error)) }
                 else if request.ids.isEmpty { ContentUnavailableView(AppText.localized("カードがありません"), systemImage: "rectangle.stack") }

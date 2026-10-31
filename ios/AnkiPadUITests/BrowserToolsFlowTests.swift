@@ -43,6 +43,35 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
     private func setOption(_ identifier: String, enabled: Bool, in app: XCUIApplication) {
         setTestSwitch(app.switches.matching(identifier: identifier), enabled: enabled, in: app)
     }
+    func testBrowserPreviewAllResultsAndContextStartKeepBothCards() {
+        let app = makeApplication(); app.launchArguments = []; app.launch()
+        addNote("PreviewScope A", in: app)
+        addNote("PreviewScope B", in: app)
+        browser("PreviewScope", count: 2, in: app)
+        func expectCard(_ text: String, previous: Bool, next: Bool) {
+            _ = waitForTestControl(app.webViews.staticTexts.matching(NSPredicate(format: "label == %@", text)), in: app, purpose: .observation)
+            guard let backward = waitForTestControl(app.buttons.matching(identifier: "preview-previous"), in: app, purpose: .observation),
+                  let forward = waitForTestControl(app.buttons.matching(identifier: "preview-next"), in: app, purpose: .observation) else { return }
+            XCTAssertEqual(backward.isEnabled, previous, app.debugDescription)
+            XCTAssertEqual(forward.isEnabled, next, app.debugDescription)
+        }
+        tapTestControl(app.buttons.matching(identifier: "browser-actions-menu"), in: app)
+        tapTestMenuAction(titles: ["プレビュー"], in: app)
+        expectCard("PreviewScope A", previous: false, next: true)
+        tapTestControl(app.buttons.matching(identifier: "preview-next"), in: app)
+        expectCard("PreviewScope B", previous: true, next: false)
+        capture("All browser results preview reaches second card", in: app)
+        tapTestControl(app.buttons.matching(identifier: "preview-close"), in: app)
+        let lastRow = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "browser-card-", "PreviewScope B"))
+        guard let row = waitForTestControl(lastRow, in: app) else { return }
+        XCTContext.runActivity(named: "Open context for unique second browser row") { _ in row.press(forDuration: 1) }
+        tapTestMenuAction(titles: ["プレビュー"], in: app)
+        expectCard("PreviewScope B", previous: true, next: false)
+        capture("Context preview starts at second row with both cards", in: app)
+        tapTestControl(app.buttons.matching(identifier: "preview-previous"), in: app)
+        expectCard("PreviewScope A", previous: false, next: true)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
     func testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch() {
         let app = makeApplication(); app.launchArguments = []; app.launch()
         browser("", count: 0, in: app)

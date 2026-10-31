@@ -21,6 +21,7 @@ struct BrowserView: View {
     @State private var ids: [String] = []
     @State private var rows: [BrowserCard] = []
     @State private var selected: Set<String> = []
+    @State private var selectionOrder: [String] = []
     @State private var editMode = EditMode.inactive
     @State private var editor: EditorRequest?
     @State private var changingType: BackendPageRequest?
@@ -61,7 +62,7 @@ struct BrowserView: View {
             .task(id: "\(loaded)-\(query)-\(revision)-\(config.notesMode)-\(showMediaFilenames)") { await search() }
     }
     private var list: some View {
-        List(selection: $selected) {
+        List(selection: Binding(get: { selected }, set: updateSelection)) {
             Section {
                 ForEach(rows) { row in
                     Group {
@@ -71,7 +72,7 @@ struct BrowserView: View {
                     .tag(row.id)
                     .contextMenu {
                         Button(AppText.localized("編集")) { edit(row) }
-                        Button(AppText.localized("プレビュー")) { preview = CardPreviewRequest(ids: row.cardIDs) }.disabled(row.cardIDs.isEmpty)
+                        Button(AppText.localized("プレビュー")) { openPreview(selected: [row.id]) }.disabled(row.cardIDs.isEmpty)
                         Button(row.suspended ? AppText.localized("保留を解除") : AppText.localized("保留")) { mutate { if row.suspended { try await model.engine.restoreCards(row.cardIDs) } else { try await model.engine.suspend(row.cardIDs) } } }
                         Button(AppText.localized("今日は表示しない")) { mutate { try await model.engine.bury(row.cardIDs) } }
                     }
@@ -123,7 +124,7 @@ struct BrowserView: View {
         Menu {
             Button(AppText.localized("ブラウザーの設定")) { browserOptions = true }.accessibilityIdentifier("browser-options-open")
             Toggle(AppText.localized("ノート表示"), isOn: $config.notesMode).onChange(of: config.notesMode) { _, next in
-                mutateOpening { config = try await model.engine.browserConfiguration(notesMode: next); selected = []; revision += 1 }
+                mutateOpening { config = try await model.engine.browserConfiguration(notesMode: next); updateSelection([]); revision += 1 }
             }
             Button(AppText.localized("表示する列")) { columnPicker = true }
             Menu(AppText.localized("並べ替え")) {
@@ -162,13 +163,13 @@ struct BrowserView: View {
     }
     private var actionsMenu: some View {
         Menu {
-            Button(AppText.localized("すべて選択")) { editMode = .active; selected = Set(ids) }.disabled(ids.isEmpty)
-            Button(AppText.localized("選択を解除")) { selected = [] }
+            Button(AppText.localized("すべて選択")) { editMode = .active; updateSelection(Set(ids)) }.disabled(ids.isEmpty)
+            Button(AppText.localized("選択を解除")) { updateSelection([]) }
+            Button(AppText.localized("プレビュー")) { openPreview(selected: selectionOrder) }.disabled(ids.isEmpty)
             Section {
                 Button(AppText.localized("編集")) {
                     if let id = selected.first { editor = config.notesMode ? EditorRequest(noteID: id) : EditorRequest(cardID: id) }
                 }.disabled(selected.count != 1)
-                Button(AppText.localized("プレビュー")) { mutateOpening { preview = CardPreviewRequest(ids: try await chosenCards()) } }
                 Button(AppText.localized("保留")) { performCards { try await model.engine.suspend($0) } }
                 Button(AppText.localized("保留・非表示を解除")) { performCards { try await model.engine.restoreCards($0) } }
                 Button(AppText.localized("今日は表示しない")) { performCards { try await model.engine.bury($0) } }
@@ -183,7 +184,7 @@ struct BrowserView: View {
                 Button(AppText.localized("新規カードに戻す")) { performCards { try await model.engine.forget($0) } }
                 Button(AppText.localized("ノートを削除"), role: .destructive) { deleteConfirm = true }
             }.disabled(selected.isEmpty)
-        } label: { Image(systemName: "ellipsis.circle") }.disabled(busy)
+        } label: { Image(systemName: "ellipsis.circle") }.disabled(busy).accessibilityIdentifier("browser-actions-menu")
     }
     private var sheets: some View {
         list
@@ -203,7 +204,7 @@ struct BrowserView: View {
             .sheet(isPresented: $browserOptions, onDismiss: {
                 mutateOpening {
                     let saved = try await model.engine.browserConfiguration()
-                    if saved.notesMode != config.notesMode { selected = [] }
+                    if saved.notesMode != config.notesMode { updateSelection([]) }
                     config = saved; revision += 1
                 }
             }) { BrowserOptionsView(model: model) }
@@ -281,7 +282,7 @@ struct BrowserView: View {
             try Task.checkCancellation()
             let cards = try await model.engine.browserRows(Array(result.prefix(100)), config: config, showMediaFilenames: showMediaFilenames)
             try Task.checkCancellation()
-            ids = result; rows = cards; selected.formIntersection(Set(ids)); completedQuery = query
+            ids = result; rows = cards; updateSelection(selected.intersection(Set(ids))); completedQuery = query
         } catch is CancellationError {} catch { self.error = error.localizedDescription }
     }
     private func edit(_ row: BrowserCard) { editor = config.notesMode ? EditorRequest(noteID: row.noteID, deckID: row.deckID) : EditorRequest(cardID: row.id, deckID: row.deckID) }
@@ -289,6 +290,19 @@ struct BrowserView: View {
     private func quoted(_ value: String) -> String { "\"" + value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\"" }
     private func flagColor(_ flag: Int) -> Color { [.gray, .red, .orange, .green, .blue, .pink, .cyan, .purple][min(7, max(0, flag))] }
     private func saveConfig() { mutateOpening { try await model.engine.saveBrowserConfiguration(config); revision += 1 } }
+    private func updateSelection(_ next: Set<String>) {
+        // AnkiDroid's LinkedHashSet preserves the order rows were selected.
+        selectionOrder = BrowserSelectionOrder.updating(previous: selectionOrder, next: next, rowIDs: ids)
+        selected = next
+    }
+    private func openPreview(selected: [String]) {
+        // Use the complete ordered result, not just the first displayed page.
+        let rowIDs = ids
+        let notesMode = config.notesMode
+        mutateOpening {
+            preview = try await model.engine.browserPreview(rowIDs: rowIDs, selected: selected, notesMode: notesMode)
+        }
+    }
     private func chosenCards() async throws -> [String] { let ordered = ids.filter { selected.contains($0) }; return config.notesMode ? try await model.engine.cardIDsForNotes(ordered) : ordered }
     private func chosenNotes() async throws -> [String] { let ordered = ids.filter { selected.contains($0) }; return config.notesMode ? ordered : try await model.engine.noteIDsForCards(ordered) }
     private func changeType() {
@@ -307,7 +321,7 @@ struct BrowserView: View {
         Task { defer { busy = false }; do { try await action() } catch { self.error = error.localizedDescription } }
     }
     private func mutate(_ action: @escaping () async throws -> Void) {
-        mutateOpening { try await action(); selected = []; revision += 1; model.refreshAfterEditing() }
+        mutateOpening { try await action(); updateSelection([]); revision += 1; model.refreshAfterEditing() }
     }
 }
 
