@@ -17,7 +17,7 @@ manifest = Path('build/ui-products.json')
 workspace = str(Path.cwd())
 toolchain = subprocess.check_output(['xcodebuild', '-version'], text=True)
 if args.action == 'pack':
-    paths = ['build/simulator/Build/Products', 'build/native/host', 'build/fixture.apkg', 'build/ui-batches.json']
+    paths = ['build/simulator/Build/Products', 'build/native/host', 'build/fixture.apkg', 'build/ui-batches.json', 'build/project-settings.json']
     assert len(list(Path(paths[0]).glob('*.xctestrun'))) == 1
     with tarfile.open(archive, 'w:gz') as tar:
         for name in paths:

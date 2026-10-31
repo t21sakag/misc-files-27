@@ -2,7 +2,7 @@
 """Execute transferred test products, then require the exact planned case count."""
 import argparse
 import json
-import os
+import sys
 from pathlib import Path
 import subprocess
 
@@ -15,7 +15,21 @@ cases = plan['batches'][args.batch]
 assert cases and len(cases) == len(set(cases))
 products = list(Path('build/simulator/Build/Products').glob('*.xctestrun'))
 assert len(products) == 1, products
-result = subprocess.run(['xcodebuild', 'test-without-building', '-xctestrun', str(products[0]),
+# Verify each consumer's own simulator and bundled data, not just the producer.
+selections = Path('build/batch-ui-selections.txt')
+selections.write_text(''.join('-only-testing:AnkiPadUITests/'+case+'\n' for case in cases))
+prerequisites = [sys.executable, str(Path(__file__).with_name('ui-prerequisites.py')),
+                 '--simulator', args.simulator, '--selections', str(selections)]
+if any(case.endswith(('/testNotesPreviewUsesRepresentativesUntilMultipleRowsSelected',
+                       '/testBrowserSelectionOrderSurvivesDeselectionAndReselection')) for case in cases):
+    packages = [path for path in Path('build/simulator/Build/Products').rglob('preview.apkg')
+                if path.parent.name == 'ReceivedFixtures']
+    assert len(packages) == 1, ('Expected one compiled preview fixture', packages)
+    prerequisites += ['--preview-package', str(packages[0])]
+subprocess.run(prerequisites, check=True)
+result = subprocess.run([sys.executable, str(Path(__file__).with_name('run-ui-with-diagnostics.py')),
+    '--simulator', args.simulator, '--',
+    'xcodebuild', 'test-without-building', '-xctestrun', str(products[0]),
     '-destination', 'id='+args.simulator, '-parallel-testing-enabled', 'NO',
     '-resultBundlePath', 'build/UITests.xcresult',
     *['-only-testing:AnkiPadUITests/'+c for c in cases]])
@@ -33,3 +47,4 @@ actual = list(identities(json.loads(Path('build/test-tree.json').read_text())['t
 assert sorted(actual) == sorted(cases), (actual, cases)
 assert result.returncode == 0 and summary['totalTestCount'] == len(cases) and summary['passedTests'] == len(cases), summary
 assert summary['failedTests'] == summary['skippedTests'] == 0, summary
+assert summary.get('runtimeWarnings') == [], 'Runtime warnings require investigation before the batch can pass'

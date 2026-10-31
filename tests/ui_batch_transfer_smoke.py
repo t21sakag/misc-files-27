@@ -35,6 +35,10 @@ with tempfile.TemporaryDirectory() as directory:
     (a/'build/native/host/server').write_bytes(b'host')
     (a/'build/fixture.apkg').write_bytes(b'synthetic package')
     (a/'build/ui-batches.json').write_text(json.dumps(result))
+    settings={'targets':[{'target':'StudyWidgets','PRODUCT_BUNDLE_IDENTIFIER':'com.fixture.widgets'}]}
+    (a/'build/project-settings.json').write_text(json.dumps(settings))
+    fixture=products/'App.app/PlugIns/Tests.xctest/ReceivedFixtures/preview.apkg'
+    fixture.parent.mkdir(parents=True);fixture.write_bytes(b'compiled test resource')
     script = str(root/'scripts/ui-products.py')
     subprocess.run(['python3', script, 'pack', '--source', 'abc'], cwd=a, env=env, check=True, stdout=subprocess.DEVNULL)
     import shutil
@@ -43,6 +47,8 @@ with tempfile.TemporaryDirectory() as directory:
     assert rejected.returncode != 0 and not (b/'build/simulator').exists()
     subprocess.run(['python3', script, 'unpack', '--source', 'abc'], cwd=b, env=env, check=True, stdout=subprocess.DEVNULL)
     out = b/'build/simulator/Build/Products'
+    assert json.loads((b/'build/project-settings.json').read_text())==settings
+    assert (out/'App.app/PlugIns/Tests.xctest/ReceivedFixtures/preview.apkg').read_bytes()==b'compiled test resource'
     assert (out/'App.app/App').read_bytes() == binary.read_bytes()
     assert os.access(out/'App.app/App', os.X_OK) and (out/'AppLink').is_symlink()
     restored = plistlib.loads((out/'tests.xctestrun').read_bytes())
@@ -51,4 +57,4 @@ with tempfile.TemporaryDirectory() as directory:
     archive = b/'build/ui-products.tar.gz'; archive.write_bytes(archive.read_bytes()+b'corrupt')
     rejected = subprocess.run(['python3', script, 'unpack', '--source', 'abc'], cwd=b, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     assert rejected.returncode != 0
-print('PASS: complete/disjoint/stable batches, new-case inclusion, binary/symlink/mode preservation, path relocation, source and digest rejection')
+print('PASS: complete/disjoint/stable batches, new-case inclusion, compiled fixture/settings/binary/symlink/mode preservation, path relocation, source and digest rejection')

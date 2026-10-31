@@ -13,6 +13,7 @@ parser=argparse.ArgumentParser()
 parser.add_argument('--simulator',required=True)
 parser.add_argument('--selections',type=Path,required=True)
 parser.add_argument('--output',type=Path,default=Path('build/ui-prerequisites.json'))
+parser.add_argument('--preview-package',type=Path,default=Path('ios/AnkiPadUITests/ReceivedFixtures/preview.apkg'))
 args=parser.parse_args()
 selected=args.selections.read_text().splitlines()
 photo=not selected or any(line.endswith('/testPhotoShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia') for line in selected)
@@ -25,7 +26,7 @@ try:
     assert all(value in known for value in selected),'Unknown UI prerequisite selection'
     if preview:
         report['preview_package_valid']=False
-        package=Path('ios/AnkiPadUITests/ReceivedFixtures/preview.apkg')
+        package=args.preview_package
         assert 0<package.stat().st_size<=4*1024*1024,'Missing/oversized preview package'
         with zipfile.ZipFile(package) as archive:
             assert sum(entry.file_size for entry in archive.infolist())<=32*1024*1024,'Oversized preview contents'

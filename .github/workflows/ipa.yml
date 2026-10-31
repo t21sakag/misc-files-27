@@ -170,7 +170,9 @@ jobs:
       - name: Validate UI case grouping and scope selection
         run: python3 tests/ui_case_groups_smoke.py
       - name: Test serial case partition and compiled product transfer
-        run: python3 tests/ui_batch_transfer_smoke.py
+        run: |
+          python3 tests/ui_batch_transfer_smoke.py
+          python3 tests/ui_batch_runner_smoke.py
       - name: Test interrupted sync marker persistence
         run: |
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/SyncActivityStore.swift tests/sync_activity_smoke.swift -o build/sync-activity-smoke
@@ -746,11 +748,15 @@ jobs:
           BATCH_INDEX: ${{ matrix.batch }}
           SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
         run: python3 scripts/run-ui-batch.py "$BATCH_INDEX" "$SIMULATOR_ID"
+      - name: Collect batch display diagnostics
+        if: always()
+        run: python3 scripts/collect-widget-diagnostics.py --simulator "${{ steps.simulator.outputs.id }}"
       - name: Export batch attachments
         if: always()
         run: |
           if [ -f build/UITests.xcresult/Info.plist ]; then
             xcrun xcresulttool export attachments --path build/UITests.xcresult --output-path build/screenshots
+            python3 scripts/summarize-ui-events.py --directory build/screenshots --output build/input-events.json
           fi
       - uses: actions/upload-artifact@v4
         if: always()
@@ -759,8 +765,23 @@ jobs:
           path: |
             build/test-summary.json
             build/test-tree.json
+            build/ui-prerequisites.json
+            build/batch-ui-selections.txt
+            build/ui-batches.json
+            build/project-settings.json
+            build/input-events.json
+            build/widget-diagnostics
             build/screenshots/manifest.json
             build/screenshots/*.txt
+          if-no-files-found: ignore
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-${{ matrix.batch }}
+          path: |
+            build/screenshots/*.png
+            build/screenshots/*.mp4
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v4
