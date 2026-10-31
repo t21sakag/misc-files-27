@@ -86,9 +86,10 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
         tapTestControl(app.buttons.matching(identifier: "browser-options-cancel"), in: app)
         tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
         tapTestControl(app.buttons.matching(identifier: "browser-filter-flags"), in: app)
-        guard let renamed = waitForTestControl(app.buttons.matching(identifier: "browser-filter-flag-1"), in: app) else { return }
+        capture("Renamed native flag submenu", in: app)
+        guard let renamed = waitForTestControl(testMenuActions(titles: ["PriorityFlag"], in: app), in: app) else { return }
         XCTAssertEqual(renamed.label, "PriorityFlag")
-        tapTestControl(app.buttons.matching(identifier: "browser-filter-flag-1"), in: app)
+        tapTestMenuAction(titles: ["PriorityFlag"], in: app)
         guard let results = waitForTestControl(app.staticTexts.matching(identifier: "browser-results"), in: app, purpose: .observation) else { return }
         let numericSearch = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in results.value as? String == "flag:1" }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [numericSearch], timeout: 20), .completed, app.debugDescription)
