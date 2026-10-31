@@ -254,7 +254,7 @@ struct ContentView: View {
                     Button(AppText.localized("今日は表示しない")) { model.modifyCurrent { try await model.engine.bury([$0.id]) } }
                     Button(AppText.localized("関連カードを今日は表示しない")) { model.modifyCurrent { try await model.engine.bury([$0.noteID], note: true) } }
                     Menu(AppText.localized("フラグ")) {
-                        ForEach(0..<8, id: \.self) { flag in Button(flag == 0 ? AppText.localized("なし") : AppText.localized("フラグ \(flag)")) { model.setCurrentFlag(flag) } }
+                        ForEach(0..<8, id: \.self) { flag in Button(model.flagLabels.name(flag)) { model.setCurrentFlag(flag) } }
                     }
                 } label: { Image(systemName: "ellipsis.circle") }.disabled(model.busy || model.card == nil).accessibilityIdentifier("reviewer-menu")
             } else {

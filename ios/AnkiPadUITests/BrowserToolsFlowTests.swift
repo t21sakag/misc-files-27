@@ -43,6 +43,57 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
     private func setOption(_ identifier: String, enabled: Bool, in app: XCUIApplication) {
         setTestSwitch(app.switches.matching(identifier: identifier), enabled: enabled, in: app)
     }
+    func testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch() {
+        let app = makeApplication(); app.launchArguments = []; app.launch()
+        browser("", count: 0, in: app)
+        func openNames(draftNotes: Bool = false) {
+            options(app)
+            if draftNotes { setOption("browser-options-notes", enabled: true, in: app) }
+            tapTestControl(app.buttons.matching(identifier: "flag-names-open"), in: app, form: app.collectionViews["browser-options-form"])
+        }
+        func editRed(_ name: String) {
+            tapTestControl(app.buttons.matching(identifier: "flag-name-1"), in: app)
+            tapTestControl(app.buttons.matching(identifier: "flag-name-clear"), in: app)
+            if !name.isEmpty {
+                _ = typeInEmptyTestField(app.textFields.matching(identifier: "flag-name-text"), text: name, in: app)
+            }
+        }
+        func expectRed(_ name: String) {
+            guard let red = waitForTestControl(app.buttons.matching(identifier: "flag-name-1"), in: app, purpose: .observation) else { return }
+            XCTAssertEqual(red.label, name, app.debugDescription)
+        }
+        openNames(draftNotes: true); expectRed("赤")
+        editRed("CancelledFlag")
+        tapTestControl(app.buttons.matching(identifier: "flag-name-cancel"), in: app)
+        expectRed("赤")
+        editRed("")
+        tapTestControl(app.buttons.matching(identifier: "flag-name-save"), in: app)
+        expectRed("赤")
+        editRed("PriorityFlag")
+        tapTestControl(app.buttons.matching(identifier: "flag-name-save"), in: app)
+        expectRed("PriorityFlag")
+        capture("Flag name saved without changing flag code", in: app)
+        tapTestControl(app.buttons.matching(identifier: "flag-names-close"), in: app)
+        guard let draft = waitForTestControl(app.switches.matching(identifier: "browser-options-notes"), in: app, purpose: .observation) else { return }
+        XCTAssertEqual(draft.value as? String, "1", "Returning from flag names must retain the unsaved options draft")
+        tapTestControl(app.buttons.matching(identifier: "browser-options-cancel"), in: app)
+        closeBrowser(app)
+        app.terminate(); app.launch()
+        browser("", count: 0, in: app)
+        openNames(); expectRed("PriorityFlag")
+        capture("Flag name retained after relaunch", in: app)
+        tapTestControl(app.buttons.matching(identifier: "flag-names-close"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-options-cancel"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-flags"), in: app)
+        guard let renamed = waitForTestControl(app.buttons.matching(identifier: "browser-filter-flag-1"), in: app) else { return }
+        XCTAssertEqual(renamed.label, "PriorityFlag")
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-flag-1"), in: app)
+        guard let results = waitForTestControl(app.staticTexts.matching(identifier: "browser-results"), in: app, purpose: .observation) else { return }
+        let numericSearch = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in results.value as? String == "flag:1" }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [numericSearch], timeout: 20), .completed, app.debugDescription)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
     func testBrowserTruncationCancelsSavesAndRestoresFullRowsAfterRelaunch() {
         let app = makeApplication(); app.launchArguments = []; app.launch()
         addNote("Long browser content " + Array(repeating: "readableword", count: 60).joined(separator: " "), in: app)

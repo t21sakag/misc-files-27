@@ -116,11 +116,11 @@ struct CardPreviewView: View {
                         toggleMark()
                     }.disabled(card == nil || busy).keyboardShortcut("*", modifiers: []).accessibilityIdentifier("preview-mark")
                     Button(AppText.localized("音声を再生"), systemImage: "speaker.wave.2") { replay() }.disabled(card == nil || busy).accessibilityIdentifier("preview-replay").keyboardShortcut("r", modifiers: [])
-                    Menu((card?.flag ?? 0) == 0 ? AppText.localized("フラグなし") : AppText.localized("フラグ \(card?.flag ?? 0)"), systemImage: "flag") {
+                    Menu((card?.flag ?? 0) == 0 ? AppText.localized("フラグなし") : model.flagLabels.name(card?.flag ?? 0), systemImage: "flag") {
                         ForEach(0..<8, id: \.self) { flag in
                             Button { setFlag(flag) } label: {
-                                if card?.flag == flag { Label(flag == 0 ? AppText.localized("なし") : AppText.localized("フラグ \(flag)"), systemImage: "checkmark") }
-                                else { Text(flag == 0 ? AppText.localized("なし") : AppText.localized("フラグ \(flag)")) }
+                                if card?.flag == flag { Label(model.flagLabels.name(flag), systemImage: "checkmark") }
+                                else { Text(model.flagLabels.name(flag)) }
                             }.keyboardShortcut(flag == 0 ? nil : KeyboardShortcut(KeyEquivalent(Character(String(flag))), modifiers: .control))
                             .accessibilityIdentifier("preview-flag-\(flag)").accessibilityValue(card?.flag == flag ? AppText.localized("選択中") : AppText.localized("未選択"))
                         }

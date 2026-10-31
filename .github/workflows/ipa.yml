@@ -317,6 +317,12 @@ jobs:
       - name: Test filtered decks and custom study
         if: env.CI_MODE == 'full'
         run: python3 tests/custom_study_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test label preferences
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'flag-names' || env.UI_SUITE == 'flag-milestone'))
+        run: |
+          swiftc -swift-version 5 ios/AnkiPad/FlagLabels.swift ios/AnkiPad/FlagLabelsEngine.swift tests/flag_labels_smoke.swift -o build/flag-labels-smoke
+          build/flag-labels-smoke
+          python3 tests/flag_labels_engine_smoke.py build/native/host/libankipad_bridge.dylib
       - name: Test browser options persistence
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'browser-options' || env.UI_SUITE == 'browser-truncation' || env.UI_SUITE == 'browser-search-options'))
         run: |

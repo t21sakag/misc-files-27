@@ -175,6 +175,7 @@
     "testBrowserSearchCreatesFilteredDeckAndEmptySearchCancelKeepsCollection",
     "testBrowserGlobalFindReplaceShowsAllScopeAndPersistsChanges",
     "testBrowserTruncationCancelsSavesAndRestoresFullRowsAfterRelaunch",
-    "testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch"
+    "testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch",
+    "testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch"
   ]
 }

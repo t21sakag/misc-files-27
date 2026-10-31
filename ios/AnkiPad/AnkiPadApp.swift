@@ -45,8 +45,11 @@ import AVFoundation
     let networkMetering = NetworkMetering()
     var cardAPIDenials = 0
     @Published var decks: [Deck] = [] {
-        didSet { widgetRefreshNeeded = true; scheduleWidgetRefresh() }
+        didSet { widgetRefreshNeeded = true; scheduleWidgetRefresh(); scheduleFlagLabelRefresh() }
     }
+    @Published var flagLabels = FlagLabels()
+    var flagLabelRefreshTask: Task<Void, Never>?
+    var flagLabelSource: Engine?
     @Published var card: StudyCard?
     @Published var selected: Deck?
     @Published var revealed = false

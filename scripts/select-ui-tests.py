@@ -92,6 +92,8 @@ suites = {
     'incoming-invalid': ['testInvalidReceivedPackageReportsFailureAndKeepsPreviousCollection'],
     'incoming-still-note': ['testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia'],
     'incoming-commit-repair': ['testReceivedCOLPKGReplacesOnlyAfterConfirmationAndBackupRestoresPreviousNotes', 'testReceivedStillImageCanBeEditedSavedAndReopenedAsNoteMedia'],
+    'flag-names': ['testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch'],
+    'flag-milestone': ['testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch', 'testPreviewFlagPersistsAfterClosing'],
     'browser-options': ['testBrowserTruncationCancelsSavesAndRestoresFullRowsAfterRelaunch', 'testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch'],
     'browser-truncation': ['testBrowserTruncationCancelsSavesAndRestoresFullRowsAfterRelaunch'],
     'browser-search-options': ['testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch'],

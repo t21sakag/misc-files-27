@@ -208,11 +208,11 @@ final class CardAPIFlowTests: StudyFlowTestSupport {
         let flags = app.buttons["preview-flags"]
         flags.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         app.buttons["preview-flag-4"].tap()
-        let saved = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "フラグ 4"), object: flags)
+        let saved = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "青"), object: flags)
         XCTAssertEqual(XCTWaiter.wait(for: [saved], timeout: 20), .completed)
         app.buttons["preview-close"].tap()
         openPreview()
-        XCTAssertEqual(flags.label, "フラグ 4", app.debugDescription)
+        XCTAssertEqual(flags.label, "青", app.debugDescription)
         XCTAssertEqual(mark.label, toggledMarkLabel, app.debugDescription)
         mark.tap()
         let markRestored = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", originalMarkLabel), object: mark)

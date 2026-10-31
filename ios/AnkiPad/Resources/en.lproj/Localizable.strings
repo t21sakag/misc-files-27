@@ -822,3 +822,13 @@
 "省略しない場合は、ブラウザーの各列に内容全体を表示します。" = "When truncation is off, each browser column displays its full content.";
 "既定の検索" = "Default search";
 "次にブラウザーを開いたときに使います。明示して渡された検索条件は優先されます。" = "Used the next time the browser opens. An explicitly supplied search takes priority.";
+"フラグ名を変更" = "Rename flags";
+"フラグを選択してください。" = "Select a flag.";
+"入力を消去" = "Clear input";
+"赤" = "Red";
+"オレンジ" = "Orange";
+"緑" = "Green";
+"青" = "Blue";
+"ピンク" = "Pink";
+"ターコイズ" = "Turquoise";
+"紫" = "Purple";

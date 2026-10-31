@@ -145,7 +145,7 @@ struct BrowserView: View {
                 ForEach(tags, id: \.self) { tag in Button(tag) { query = "tag:" + quoted(tag) } }
             }
             Menu(AppText.localized("ノートタイプ")) { ForEach(types) { type in Button(type.name) { query = "mid:" + type.id } } }
-            Menu(AppText.localized("フラグ")) { ForEach(0..<8, id: \.self) { value in Button(value == 0 ? AppText.localized("なし") : AppText.localized("フラグ \(value)")) { query = "flag:\(value)" } } }
+            Menu(AppText.localized("フラグ")) { ForEach(0..<8, id: \.self) { value in Button(model.flagLabels.name(value)) { query = "flag:\(value)" }.accessibilityIdentifier("browser-filter-flag-\(value)") } }.accessibilityIdentifier("browser-filter-flags")
             Menu(AppText.localized("保存した検索")) {
                 ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in Button(name) { query = config.savedSearches[name] ?? "" } }
                 Button(AppText.localized("この検索を保存")) { searchName = ""; saveSearchPrompt = true }.disabled(query.isEmpty)
@@ -172,7 +172,7 @@ struct BrowserView: View {
                 Button(AppText.localized("保留")) { performCards { try await model.engine.suspend($0) } }
                 Button(AppText.localized("保留・非表示を解除")) { performCards { try await model.engine.restoreCards($0) } }
                 Button(AppText.localized("今日は表示しない")) { performCards { try await model.engine.bury($0) } }
-                Menu(AppText.localized("フラグ")) { ForEach(0..<8, id: \.self) { flag in Button(flag == 0 ? AppText.localized("なし") : AppText.localized("フラグ \(flag)")) { performCards { try await model.engine.setFlag($0, flag: flag) } } } }
+                Menu(AppText.localized("フラグ")) { ForEach(0..<8, id: \.self) { flag in Button(model.flagLabels.name(flag)) { performCards { try await model.engine.setFlag($0, flag: flag) } } } }
                 Button(AppText.localized("デッキを移動")) { movePrompt = true }
                 Button(AppText.localized("ノートタイプを変更"), action: changeType)
                 Button(AppText.localized("書き出す")) { mutateOpening { selectionExport = SelectionExportRequest(cardIDs: try await chosenCards()) } }

@@ -51,8 +51,10 @@ struct BrowserOptionsView: View {
                     Text(AppText.localized("次にブラウザーを開いたときに使います。明示して渡された検索条件は優先されます。"))
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                Section { NavigationLink(AppText.localized("フラグ名を変更")) { FlagNamesView(model: model) }.accessibilityIdentifier("flag-names-open") }
                 if busy { ProgressView() }
             }
+            .accessibilityIdentifier("browser-options-form")
             .disabled(!loaded || busy)
             .studyThemeSurface().navigationTitle(AppText.localized("ブラウザーの設定"))
             .toolbar {
@@ -68,6 +70,7 @@ struct BrowserOptionsView: View {
             .onDisappear { trace("disappear") }
             .onChange(of: truncate) { _, _ in trace("truncate.changed") }
             .task {
+                guard !loaded else { return }
                 trace("load.start")
                 do { options = try await model.engine.browserOptions(); loaded = true; trace("load.end") }
                 catch { self.error = error.localizedDescription }
