@@ -177,6 +177,8 @@
     "testBrowserTruncationCancelsSavesAndRestoresFullRowsAfterRelaunch",
     "testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch",
     "testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch",
-    "testBrowserPreviewAllResultsAndContextStartKeepBothCards"
+    "testBrowserPreviewAllResultsAndContextStartKeepBothCards",
+    "testNotesPreviewUsesRepresentativesUntilMultipleRowsSelected",
+    "testBrowserSelectionOrderSurvivesDeselectionAndReselection"
   ]
 }

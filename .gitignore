@@ -8,3 +8,4 @@ __pycache__/
 
 /ios/AnkiPad/Resources/fixture.apkg
 /ios/AnkiPad.xcodeproj/
+/ios/AnkiPadUITests/ReceivedFixtures/preview.apkg

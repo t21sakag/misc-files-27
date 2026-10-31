@@ -7,6 +7,7 @@ import struct
 import subprocess
 import time
 import zlib
+import zipfile
 
 parser=argparse.ArgumentParser()
 parser.add_argument('--simulator',required=True)
@@ -15,12 +16,22 @@ parser.add_argument('--output',type=Path,default=Path('build/ui-prerequisites.js
 args=parser.parse_args()
 selected=args.selections.read_text().splitlines()
 photo=not selected or any(line.endswith('/testPhotoShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia') for line in selected)
-report={'photo_required':photo,'fixture_valid':False,'photo_host_installed':False}
+preview=not selected or any(line.endswith(('/testNotesPreviewUsesRepresentativesUntilMultipleRowsSelected', '/testBrowserSelectionOrderSurvivesDeselectionAndReselection')) for line in selected)
+report={'photo_required':photo,'fixture_valid':False,'photo_host_installed':False,'preview_package_required':preview}
 args.output.parent.mkdir(parents=True,exist_ok=True)
 try:
     groups=json.loads(Path(__file__).with_name('ui-case-groups.json').read_text())
     known={'-only-testing:AnkiPadUITests/'+name+'/'+method for name,methods in groups.items() for method in methods}
     assert all(value in known for value in selected),'Unknown UI prerequisite selection'
+    if preview:
+        report['preview_package_valid']=False
+        package=Path('ios/AnkiPadUITests/ReceivedFixtures/preview.apkg')
+        assert 0<package.stat().st_size<=4*1024*1024,'Missing/oversized preview package'
+        with zipfile.ZipFile(package) as archive:
+            assert sum(entry.file_size for entry in archive.infolist())<=32*1024*1024,'Oversized preview contents'
+            assert {'collection.anki2','collection.anki21','collection.anki21b'}.intersection(archive.namelist()),'No collection in preview package'
+            assert archive.testzip() is None,'Corrupt preview package'
+        report['preview_package_valid']=True
     if photo:
         image=Path('build/occlusion-fixture.png').read_bytes()
         assert image[:8]==b'\x89PNG\r\n\x1a\n' and struct.unpack_from('>II',image,16)==(512,384),'Missing/wrong image fixture'

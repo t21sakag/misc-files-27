@@ -43,6 +43,89 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
     private func setOption(_ identifier: String, enabled: Bool, in app: XCUIApplication) {
         setTestSwitch(app.switches.matching(identifier: identifier), enabled: enabled, in: app)
     }
+    private func previewFixtureBrowser() throws -> XCUIApplication {
+        let source = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "preview", withExtension: "apkg", subdirectory: "ReceivedFixtures"))
+        let data = try Data(contentsOf: source)
+        XCTAssertFalse(data.isEmpty, "Preview package must exist before starting UI work")
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(at: folder) }
+        let file = folder.appendingPathComponent("preview.apkg")
+        try data.write(to: file)
+        let app = makeApplication(); app.launchArguments = []; app.launch()
+        guard waitForTestControl(app.buttons.matching(identifier: "collection-menu"), in: app) != nil else { return app }
+        app.open(file)
+        tapTestControl(app.buttons.matching(identifier: "incoming-import-confirm"), in: app)
+        XCTAssertTrue(app.buttons["incoming-import-confirm"].waitForNonExistence(timeout: 30), app.debugDescription)
+        guard waitForTestControl(app.buttons.matching(identifier: "sync"), in: app) != nil else { return app }
+        browser("PreviewScope", count: 6, in: app)
+        options(app)
+        setOption("browser-options-notes", enabled: true, in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-options-save"), in: app)
+        expectSelectedNotes(0, in: app)
+        return app
+    }
+    private func expectSelectedNotes(_ count: Int, in app: XCUIApplication) {
+        guard let results = waitForTestControl(app.staticTexts.matching(identifier: "browser-results"), in: app, purpose: .observation) else { return }
+        let updated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            results.value as? String == "PreviewScope" && results.label.contains("3ノート") && results.label.contains("\(count)件選択中")
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [updated], timeout: 30), .completed, app.debugDescription)
+    }
+    private func openBrowserPreview(_ app: XCUIApplication) {
+        tapTestControl(app.buttons.matching(identifier: "browser-actions-menu"), in: app)
+        tapTestMenuAction(titles: ["プレビュー"], in: app)
+    }
+    private func expectPreviewCard(_ text: String, position: Int, total: Int, in app: XCUIApplication) {
+        _ = waitForTestControl(app.navigationBars.matching(identifier: "プレビュー \(position) / \(total)"), in: app, purpose: .observation)
+        _ = waitForTestControl(app.webViews.staticTexts.matching(NSPredicate(format: "label == %@", text)), in: app, purpose: .observation)
+        guard let previous = waitForTestControl(app.buttons.matching(identifier: "preview-previous"), in: app, purpose: .observation),
+              let next = waitForTestControl(app.buttons.matching(identifier: "preview-next"), in: app, purpose: .observation) else { return }
+        XCTAssertEqual(previous.isEnabled, position > 1, app.debugDescription)
+        XCTAssertEqual(next.isEnabled, position < total, app.debugDescription)
+    }
+    private func selectAllNotes(_ app: XCUIApplication) {
+        tapTestControl(app.buttons.matching(identifier: "browser-actions-menu"), in: app)
+        tapTestMenuAction(titles: ["すべて選択"], in: app)
+        expectSelectedNotes(3, in: app)
+        capture("All three note rows selected", in: app)
+    }
+    func testNotesPreviewUsesRepresentativesUntilMultipleRowsSelected() throws {
+        let app = try previewFixtureBrowser()
+        openBrowserPreview(app)
+        expectPreviewCard("PreviewScope 0", position: 1, total: 3, in: app)
+        tapTestControl(app.buttons.matching(identifier: "preview-next"), in: app)
+        expectPreviewCard("PreviewScope 1", position: 2, total: 3, in: app)
+        capture("Notes preview uses one representative per note", in: app)
+        tapTestControl(app.buttons.matching(identifier: "preview-close"), in: app)
+        selectAllNotes(app)
+        openBrowserPreview(app)
+        expectPreviewCard("PreviewScope 0", position: 1, total: 6, in: app)
+        tapTestControl(app.buttons.matching(identifier: "preview-next"), in: app)
+        expectPreviewCard("Second card: PreviewScope 0", position: 2, total: 6, in: app)
+        capture("Selected notes preview expands sibling cards", in: app)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
+    func testBrowserSelectionOrderSurvivesDeselectionAndReselection() throws {
+        let app = try previewFixtureBrowser()
+        selectAllNotes(app)
+        func toggleRow(_ name: String, selectedCount: Int) {
+            tapTestControl(app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@", "browser-front-", name)), in: app)
+            expectSelectedNotes(selectedCount, in: app)
+        }
+        toggleRow("PreviewScope 1", selectedCount: 2)
+        toggleRow("PreviewScope 0", selectedCount: 1)
+        toggleRow("PreviewScope 0", selectedCount: 2)
+        capture("Row zero reselected after row two", in: app)
+        openBrowserPreview(app)
+        expectPreviewCard("PreviewScope 2", position: 1, total: 4, in: app)
+        tapTestControl(app.buttons.matching(identifier: "preview-next"), in: app)
+        expectPreviewCard("Second card: PreviewScope 2", position: 2, total: 4, in: app)
+        tapTestControl(app.buttons.matching(identifier: "preview-next"), in: app)
+        expectPreviewCard("PreviewScope 0", position: 3, total: 4, in: app)
+        capture("Preview follows selection insertion order and excludes unselected note", in: app)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
     func testBrowserPreviewAllResultsAndContextStartKeepBothCards() {
         let app = makeApplication(); app.launchArguments = []; app.launch()
         addNote("PreviewScope A", in: app)

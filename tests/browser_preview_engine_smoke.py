@@ -34,6 +34,10 @@ with tempfile.TemporaryDirectory() as directory:
             rendered = engine.call('CardRenderingService.RenderExistingCard', {'cardId': cid, 'partialRender': True})
             assert any('PreviewScope' in node.get('text', '') for node in rendered['questionNodes'])
             assert before[cid]['noteId'] == nid
+            html = ''.join(node.get('text', '') for node in rendered['questionNodes'])
+            expected = notes_before[nid]['fields'][0]
+            if before[cid].get('templateIdx', 0) == 1: expected = 'Second card: ' + expected
+            assert engine.call('CardRenderingService.HtmlToTextLine', {'text': html, 'preserveMediaFilenames': True})['val'] == expected
     # A filtered browser result must not accidentally expand back to all notes.
     scoped = engine.call('SearchService.SearchNotes', {'search': '"PreviewScope 1"'})['ids']
     assert len(scoped) == 1 and scoped[0] in rows
@@ -41,5 +45,21 @@ with tempfile.TemporaryDirectory() as directory:
     assert notes_before == {nid: engine.call('NotesService.GetNote', {'nid': nid}) for nid in rows}
     if len(sys.argv) > 2:
         Path(sys.argv[2]).write_text(json.dumps({'rows': rows, 'cards': cards})+'\n')
+    if len(sys.argv) > 3:
+        package = Path(sys.argv[3]).resolve()
+        package.parent.mkdir(parents=True, exist_ok=True)
+        engine.call('ImportExportService.ExportAnkiPackage', {
+            'outPath': str(package), 'options': {'withMedia': False, 'withScheduling': False},
+            'limit': {'wholeCollection': {}}})
+        destination = Engine(Path(directory)/'imported-preview')
+        presets = destination.call('ImportExportService.GetImportAnkiPackagePresets')
+        destination.call('ImportExportService.ImportAnkiPackage', {'packagePath': str(package), 'options': presets})
+        imported = destination.call('SearchService.SearchNotes', {'search': 'PreviewScope'})['ids']
+        assert len(imported) == 3
+        imported_cards = [destination.call('NotesService.CardsOfNote', {'nid': nid})['cids'] for nid in imported]
+        assert all(len(ids) == 2 for ids in imported_cards)
+        assert len(destination.call('SearchService.SearchCards', {'search': 'PreviewScope'})['ids']) == 6
+        destination.close()
+        print('PASS: small synthetic preview APKG reimports as three notes and six real cards')
     engine.close()
 print('PASS: real two-template note/card ordering, filtered row scope and rendered content; card/note scheduling unchanged')
