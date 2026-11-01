@@ -8,6 +8,11 @@ import AVFoundation
     @MainActor static func main() {
         #if DEBUG
         if UITestIsolation.namespace() != nil,
+           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-scroll") {
+            ToolbarScrollFocusReproductionApp.main()
+            return
+        }
+        if UITestIsolation.namespace() != nil,
            ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-parent") {
             ToolbarParentFocusReproductionApp.main()
             return

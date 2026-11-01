@@ -63,4 +63,28 @@ final class ToolbarFocusReproductionTests: StudyFlowTestSupport {
         waitForTestControl(app.buttons.matching(identifier: "deck-1"), in: app, purpose: .observation)
         XCTAssertFalse(app.alerts.element.exists)
     }
+
+    func testScrollableMinimalParentCanReturnFromProductionToolbar() {
+        let app = makeApplication()
+        app.launchArguments = ["--uitest-toolbar-focus-scroll"]
+        app.launch()
+        tapTestControl(app.buttons.matching(identifier: "focus-scroll-settings"), in: app)
+        let form = app.collectionViews["focus-scroll-form"]
+        tapTestControl(app.buttons.matching(identifier: "focus-scroll-toolbar"), in: app, form: form)
+        guard setTestSwitch(app.switches.matching(identifier: "toolbar-enabled"), enabled: true, in: app) else { return }
+        XCTContext.runActivity(named: "Scrollable parent before native back") { activity in
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "Scrollable parent before back"; hierarchy.lifetime = .keepAlways
+            let screen = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); screen.lifetime = .keepAlways
+            activity.add(hierarchy); activity.add(screen)
+        }
+        tapTestControl(app.navigationBars["操作バーの設定"].buttons.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["設定", "戻る", "Back"]))), in: app)
+        requireTestCondition("Scrollable minimal parent survives native back", in: app) {
+            app.state == .runningForeground && !app.navigationBars["操作バーの設定"].exists
+                && app.navigationBars["設定"].exists && app.collectionViews["focus-scroll-form"].exists
+        }
+        tapTestControl(app.buttons.matching(identifier: "focus-scroll-cancel"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "focus-scroll-settings"), in: app)
+        XCTAssertFalse(app.alerts.element.exists)
+    }
 }

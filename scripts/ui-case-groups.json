@@ -186,6 +186,7 @@
   ],
   "ToolbarFocusReproductionTests": [
     "testProductionToolbarInMinimalPresentedNavigationCanReturnAfterToggle",
-    "testActualSettingsParentCanReturnFromProductionToolbar"
+    "testActualSettingsParentCanReturnFromProductionToolbar",
+    "testScrollableMinimalParentCanReturnFromProductionToolbar"
   ]
 }

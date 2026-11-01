@@ -4259,6 +4259,255 @@
         }
       ],
       "checked_at": "2026-11-01T09:06:48.065645+00:00"
+    },
+    {
+      "id": "20261102-toolbar-parent-scroll-isolation",
+      "covers": [
+        [
+          41318873679,
+          1
+        ],
+        [
+          41317284573,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41317284573,
+            1
+          ],
+          "kind": "application",
+          "finding": "Actual settings/model from a small outer root reproduces AnkiPad SIGABRT in UIFocusContainerGuideFallbackItemsContainer after the exact native back."
+        },
+        {
+          "attempt": [
+            41318873679,
+            1
+          ],
+          "kind": "application",
+          "finding": "Moving loading UI outside Form does not prevent the same app SIGABRT;0/1passed117.679s and original back contact retained."
+        }
+      ],
+      "root_cause": "The actual parent/model is sufficient whereas the small static parent passed. The tested loading-placeholder/Form lifecycle candidate failed and is reverted to the pre-experiment source. Exact focus ownership/invalid environment remains unresolved; no claim that scrolling alone is causal.",
+      "common_resolution": "No new common tap/helper workaround is supported. Review and retain all shared readiness/keyboard/semantic capture rules, restore the failed production candidate, and vary only a long inert-row parent in a separate DEBUG/synthetic App entry. The production child and normal App WindowGroup remain unchanged. Run only this one comparison to distinguish scrolling/virtualization from other actual-parent/model context before another production patch.",
+      "rule_review": {
+        "semantic_labels": "Both attempts uniquely resolve the production child toolbar navigation bar and complete native Back title. The source BackButton frame is(130,270,44,44); actual native contact(152,292) is its center. No replacement label or tap method is warranted.",
+        "foreground_scope": "Actual SettingsView is presented in the small outer root; terminal pre-pop AX shows its real child navigation bar and native Switch. The real full ContentView is unnecessary for reproduction. Failed postconditions are scoped to foreground application and parent form, not an underlying window.",
+        "unique_reads_and_actions": "Shared setTestSwitch resolves the direct child and verifies1. Native contact(638.5,402) matches its observed thumb. Shared unique Back action matches the visible button. Retain these controls and their readiness checks; no arbitrary duplicate/parent tap or injected state.",
+        "live_state": "After Back, both terminal hierarchies show XCUIApplicationState rawValue1; actual AnkiPad SIGABRT and Home screen corroborate a real application exit. The shared semantic waiter preserves this original failure. The new comparison checks actual parent navigation/form plus foreground state, not only a model flag.",
+        "keyboard_and_scroll": "Preserve portrait, hardware keyboard and exact native back operation. Both actual-parent cases reveal the real link through the shared scroll helper. Next comparison adds only32 inert text rows before the real child link and uses shared form reveal; no keyboard disconnection, outside dismissal, focus override or forced orientation.",
+        "environment": "Both attempts compile and bootstrap the actual synthetic engine/prefs with own isolated simulator and profilesReady/!busy/error-free parent. The minimal baseline41314966136 passed3native cycles with no model. New scroll comparison needs no server/model/permissions; actual production toolbar child, theme and delegate remain unchanged. Full remains5independent batches with one shared producer.",
+        "first_failure_evidence": "Compared pre-pop AX, terminal state, video and numeric input for both attempts.413172 video64s is child/on and69s is Home.413188 video71s is child/on before Back at72.53s; terminal PNG408B... is Home. Actual ips identifies AnkiPad, not the test runner, and same UIKit focus fallback-container stack. Screen capture now works after crash with no secondary screenshot error.",
+        "failure_classification": "Both41317284573/1 and41318873679/1 are application SIGABRT failures after the intended native back operation, not harness selectors, server readiness or inspection failure. The precise invalid focus environment is still undetermined. Shared control implementation needs no speculative correction for this legitimate app crash; evidence capture already retains the real fault.",
+        "runtime_warnings": "Both summaries have runtimeWarnings=[] and0/1passed; warnings absence does not negate an abort. Keep existing warning gate. The prior separate runner crash during deck deletion is not conflated with this AnkiPad process abort.",
+        "device_evidence": "These are iPadOS27 simulator observations. Neither a diagnostic success nor parse checks prove the normal app or release IPA fixed; physical iPad keyboard/audio/notifications/signing remain separate. Normal-entry relaunch checks in the failed actual-parent diagnostic were never reached."
+      },
+      "evidence": [
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41317284573",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "ec592284891d364162d6a527e4029a79f8f73690c88982aaae4b5633f364ef45"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41317284573",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "input-events.json",
+          "sha256": "fa25597369afa701baf811dcb08dc145fec4ab87f3de8500ec42be3a774dc2d5"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41317284573",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/E1B29D74-5495-444F-A9F8-8D708986368D.ips",
+          "sha256": "5a60f1dafbe88c43a37e9bcb6cab33ce94fb7b42e8a72887ce3254c80b4dac4a"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41317284573",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/5C4B82C9-E3B5-44ED-8F06-36874418B6A7.txt",
+          "sha256": "93edef99a833f2235581b5de62d10a806b2b71ee1aeb88426d2dea4a1743d653"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41317284573",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/E2CE187A-AB09-442B-8F4B-AEB45A5F69D9.txt",
+          "sha256": "585437ff8b5338f446a3e61a8cc7e16ad887dfc21c166e74891a1009be80bb88"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41318873679",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "322b2142e8a73213f9e90604234f5099c8c89b733e5fa703af2e4ddf9ea57d08"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41318873679",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "input-events.json",
+          "sha256": "b34b5e670d89ff95aee53ebccb68d5b8b70a1c0c6177710f3436fd8c20dba6ce"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41318873679",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/6905C085-5CDC-496A-A0ED-638240F48838.ips",
+          "sha256": "5e789499c0dac280d4fee218111a995c10aa23c8e96d94be1897ff57806ecf6a"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41318873679",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/793DB048-2B4F-48BA-B893-7AE128C41A8A.txt",
+          "sha256": "4874e54db7c78ce5b3ec111c786a4eddedff782fab5b474bc04942fb8c7bf718"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41318873679",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/0AE9A87D-5DEA-46DE-BC0A-9E5A91759C24.txt",
+          "sha256": "585437ff8b5338f446a3e61a8cc7e16ad887dfc21c166e74891a1009be80bb88"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41318873679",
+          "artifact_name": "screenshots",
+          "artifact_entry": "DDE47247-3594-44B9-9080-28F958DDFB6B.mp4",
+          "sha256": "894ca1ba2f2e582f473d078a780603c399380db6442add872d2b275042d4fb52"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41318873679",
+          "artifact_name": "screenshots",
+          "artifact_entry": "408B678A-325D-473D-BEE4-20878690A40D.png",
+          "sha256": "0709aa8b13d90d397ba180c46419e37589200637e534fbb4d8cf9af9620fe03b"
+        }
+      ],
+      "next_scope": [
+        "ToolbarFocusReproductionTests/testScrollableMinimalParentCanReturnFromProductionToolbar"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "ac92b4c7c46e6d26694c806042bf1a109f2859edeb81b2857096347f4bb98e1e",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "45d959519814394757bf391ceaa314f51e44b6f8bc75d71371108b1d6535f19b",
+        "ios/AnkiPadUITests/ControlLabelMatch.swift": "48027c8ba45064cc037cdeb9c2a15186e6fd78c6879f5bd50ff6077b0361ea9a",
+        "ios/AnkiPadUITests/ToolbarFocusReproductionTests.swift": "f11396d52c48af720c4179e785a7237465e5964036c8aa3bcb5d46d31be9d11b",
+        "ios/AnkiPad/AnkiPadApp.swift": "13907dde1be919d9a5a238edde4f46fb6859b6fb9da9168954e83302c0ff4dc8",
+        "ios/AnkiPad/ToolbarFocusReproductionView.swift": "cb78efd32aeb48fce30d733220c5d52eb11010d00231f82dbc5f478e6ad94baf",
+        "ios/AnkiPad/ReviewToolbarConfiguration.swift": "58dce1a97c34240927ad3e2cb49f950f4a4a9af3d64166473c0dc8f867107a23",
+        "ios/AnkiPad/SettingsView.swift": "95f8405605e884573758140474df57d913572651f052f45e6c94c62cb0016b8a",
+        "scripts/ui-failure-review.py": "cf95fd7fdeac4dea406f2c37ebd2f0c0724d314eb9a69d5257176683ac351227",
+        "scripts/run-ui-with-diagnostics.py": "4dfde1fab9f1a137fafd1b3aa01acc0b16e2dae541a6edead63f0d9a415235b2",
+        "scripts/select-ui-tests.py": "bfb65218797984e091c43881351e1e192fb241e0ced26e9126c549a61b2c2c9a",
+        "scripts/ui-case-groups.json": "49d3f4b049db1021343ec589e4ed4ba8f0d9fe5e7b94dea047583067297c932a",
+        "scripts/plan-ui-batches.py": "bb01f40241a348812dabedf20e504f97a24695dd0c2762f961ffd8d0944912c1",
+        ".github/workflows/ipa.yml": "c9fc7b93ae6bd412dd545172889a1a3bf3b2665f586d8b8c0e21cd8932158f28",
+        "tests/ui_failure_review_smoke.py": "62aa3d5171dd34dca650013f791cfb8c3d4d29eeb58fb2e10f72790b518b66de",
+        "tests/ui_case_groups_smoke.py": "e4bc3224ab237d5b68f8c1cd29a8ca9a425bdb553143d220d86425dee4b15bd5",
+        "tests/ci_scope_smoke.py": "8a8137900644d98a0797e53e3b0cb10cd9f60e435e85ef5d1608e5afd15ebe31",
+        "tests/ui_batch_transfer_smoke.py": "a8730ed3e1a3643b012efcc69157eec57eb9fe14930264185a8a5868a9e2d902"
+      },
+      "checks": [
+        {
+          "name": "Final Swift syntax209; not Apple typecheck",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "8eb590317cc2c74312c18f3642342a2a20a9aaac26bdc29c11a243fc8ef7a643"
+        },
+        {
+          "name": "Full catalog108",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ea5e86cbf7c9e8eb21cfa4072b84feceb1c8c6f3389d40814561b82457385732"
+        },
+        {
+          "name": "Dispatch choices127",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e8222c7d650f11f45822472bb25452475585b292de1769bb122ea495b16dd3e5"
+        },
+        {
+          "name": "UI query lint43",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "431b3e09253572a251104e4e8d84441322ae036f8e1075d838e3b480367ae0a1"
+        },
+        {
+          "name": "Review guard chronology and pair regression",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Bounded actual diagnostics observer",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "Actual workflow diagnostics routing",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "Five disjoint batches and compiled products transfer",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        },
+        {
+          "name": "Batch runner failure and prerequisite integrity",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "Exact one-case scroll comparison",
+          "argv": [
+            "python3",
+            "scripts/select-ui-tests.py",
+            "focus-scroll",
+            "ui"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "3e4af34ec41c95d956498d3184541ed4497c470100aea7597636f4fc609fb6e2"
+        },
+        {
+          "name": "Normal and DEBUG launch/reproduction parse",
+          "argv": [
+            "python3",
+            "-c",
+            "import os,subprocess; from pathlib import Path; files=['ios/AnkiPad/AnkiPadApp.swift','ios/AnkiPad/ToolbarFocusReproductionView.swift','ios/AnkiPadUITests/ToolbarFocusReproductionTests.swift']; [subprocess.run([os.environ['ANKIPAD_SWIFTC'],'-frontend','-parse','-swift-version','5',*flags,*files],check=True) for flags in ([],['-D','DEBUG'])]; print('PASS: normal and DEBUG parse; no Apple typecheck')"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "561260f7a5fc845a3c31d2419a57b1722e453a7cb9145c19d8773ad59541a6de"
+        }
+      ],
+      "checked_at": "2026-11-01T15:29:45.443513+00:00"
     }
   ]
 }

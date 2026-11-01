@@ -28,6 +28,7 @@ suites = {
     'note-recording': ['testRecordedNoteInsertionSurvivesSheetCleanupAndRelaunchWithPlayableMedia'],
     'voice-recording': ['testReviewRecordingReferenceComparisonAndTemporaryCleanup'],
     'voice': ['testCardAudioQueueCompletesOnceAndCancellationDoesNotReplay', 'testReviewRecordingReferenceComparisonAndTemporaryCleanup'],
+    'focus-scroll': ['testScrollableMinimalParentCanReturnFromProductionToolbar'],
     'focus-parent': ['testActualSettingsParentCanReturnFromProductionToolbar'],
     'focus-minimal': ['testProductionToolbarInMinimalPresentedNavigationCanReturnAfterToggle'],
     'controls-regression': ['testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions', 'testDeckContextDeletionKeepsTargetAfterConfirmationDismisses'],

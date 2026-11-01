@@ -93,4 +93,57 @@ struct ToolbarParentFocusReproductionView: View {
         .task { model.bootstrap() }
     }
 }
+
+/// Third comparison: add only inert rows to the small parent so its native
+/// collection must scroll/reuse cells before opening the unchanged child.
+struct ToolbarScrollFocusReproductionApp: App {
+    @UIApplicationDelegateAdaptor(ReviewNotificationAppDelegate.self) private var notificationDelegate
+    @AppStorage("appearance") private var appearance = "system"
+    init() {
+        do { try UITestIsolation.prepare() }
+        catch { fatalError("Could not initialize isolated UI test storage: \(error)") }
+    }
+    var body: some Scene {
+        WindowGroup {
+            StudyThemeContainer { ToolbarScrollFocusReproductionView() }
+                .environment(\.locale, AppText.locale)
+                .preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil)
+        }
+    }
+}
+
+struct ToolbarScrollFocusReproductionView: View {
+    @State private var showingSettings = false
+    @State private var configuration = ReviewToolbarConfiguration()
+    var body: some View {
+        NavigationStack {
+            List {
+                Button(AppText.localized("設定")) { showingSettings = true }
+                    .accessibilityIdentifier("focus-scroll-settings")
+            }.studyThemeSurface().navigationTitle("Scroll checks")
+        }
+        .sheet(isPresented: $showingSettings) {
+            NavigationStack {
+                Form {
+                    ForEach(0..<32, id: \.self) { index in Text("Parent row \(index + 1)") }
+                    NavigationLink(AppText.localized("操作バーの設定")) {
+                        ReviewToolbarSettingsView(configuration: $configuration)
+                    }.accessibilityIdentifier("focus-scroll-toolbar")
+                }
+                .accessibilityIdentifier("focus-scroll-form")
+                .studyThemeSurface().navigationTitle(AppText.localized("設定"))
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(AppText.localized("キャンセル")) { showingSettings = false }
+                            .accessibilityIdentifier("focus-scroll-cancel")
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(AppText.localized("保存")) { showingSettings = false }
+                            .accessibilityIdentifier("focus-scroll-save")
+                    }
+                }
+            }
+        }
+    }
+}
 #endif
