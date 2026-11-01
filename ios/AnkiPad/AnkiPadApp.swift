@@ -8,6 +8,12 @@ import AVFoundation
     @MainActor static func main() {
         #if DEBUG
         if UITestIsolation.namespace() != nil,
+           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-section")
+            || ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-section-combined") {
+            ToolbarSectionFocusReproductionApp.main()
+            return
+        }
+        if UITestIsolation.namespace() != nil,
            ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-text") {
             ToolbarNativeControlFocusReproductionApp<ToolbarFocusTextControls>.main()
             return

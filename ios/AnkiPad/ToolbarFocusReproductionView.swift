@@ -311,4 +311,98 @@ struct ToolbarFocusStepperControls: ToolbarFocusNativeControls {
             .accessibilityIdentifier("focus-native-stepper-zoom")
     }
 }
+
+/// The measured small parents put their active link directly in Form, whereas
+/// real SettingsView puts it among controls/links inside a named Section.
+/// Compare that boundary alone, then the neighboring controls, without changing
+/// any measured baseline scene or the production settings view.
+struct ToolbarSectionFocusReproductionApp: App {
+    @UIApplicationDelegateAdaptor(ReviewNotificationAppDelegate.self) private var notificationDelegate
+    @AppStorage("appearance") private var appearance = "system"
+    init() {
+        do { try UITestIsolation.prepare() }
+        catch { fatalError("Could not initialize isolated UI test storage: \(error)") }
+    }
+    var body: some Scene {
+        WindowGroup {
+            StudyThemeContainer {
+                ToolbarSectionFocusReproductionView(includeNativeRows:
+                    ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-section-combined"))
+            }
+                .environment(\.locale, AppText.locale)
+                .preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil)
+        }
+    }
+}
+
+struct ToolbarSectionFocusReproductionView: View {
+    let includeNativeRows: Bool
+    @State private var showingSettings = false
+    var body: some View {
+        NavigationStack {
+            List {
+                Button(AppText.localized("設定")) { showingSettings = true }
+                    .accessibilityIdentifier("focus-section-settings")
+            }.studyThemeSurface().navigationTitle("Section checks")
+        }
+        .sheet(isPresented: $showingSettings) {
+            ToolbarSectionSettingsReproductionView(includeNativeRows: includeNativeRows)
+        }
+    }
+}
+
+struct ToolbarSectionSettingsReproductionView: View {
+    let includeNativeRows: Bool
+    @Environment(\.dismiss) private var dismiss
+    @State private var configuration = ReviewToolbarConfiguration()
+    @State private var gestures = ReviewGestureConfiguration()
+    @State private var touch = ReviewTouchConfiguration()
+    @State private var keyboard = ReviewKeyboardConfiguration()
+    @State private var gamepad = ReviewGamepadConfiguration()
+    @State private var keepWhiteboard = false
+    var body: some View {
+        NavigationStack {
+            Form {
+                ForEach(0..<32, id: \.self) { index in Text("Parent row \(index + 1)") }
+                Section(AppText.localized("学習操作")) {
+                    if includeNativeRows {
+                        ToolbarFocusTextControls()
+                        ToolbarFocusSliderControls()
+                        ToolbarFocusStepperControls()
+                        NavigationLink(AppText.localized("スワイプの割り当て")) {
+                            ReviewGestureSettingsView(configuration: $gestures)
+                        }
+                        NavigationLink(AppText.localized("タッチ領域の割り当て")) {
+                            ReviewTouchSettingsView(configuration: $touch)
+                        }
+                    }
+                    NavigationLink(AppText.localized("操作バーの設定")) {
+                        ReviewToolbarSettingsView(configuration: $configuration)
+                    }.accessibilityIdentifier("focus-section-toolbar")
+                    if includeNativeRows {
+                        NavigationLink(AppText.localized("キーボードの割り当て")) {
+                            ReviewKeyboardSettingsView(configuration: $keyboard)
+                        }
+                        NavigationLink(AppText.localized("ゲームパッドの割り当て")) {
+                            ReviewGamepadSettingsView(configuration: $gamepad)
+                        }
+                        Toggle(AppText.localized("次のカードにも手書きを残す"), isOn: $keepWhiteboard)
+                    }
+                }
+            }
+            .accessibilityIdentifier("focus-section-form")
+            .studyThemeSurface().navigationTitle(AppText.localized("設定"))
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(AppText.localized("キャンセル")) { dismiss() }
+                        .accessibilityIdentifier("focus-section-cancel")
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(AppText.localized("保存")) { dismiss() }
+                        .accessibilityIdentifier("focus-section-save")
+                }
+            }
+        }
+    }
+}
 #endif

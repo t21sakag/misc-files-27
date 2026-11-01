@@ -191,6 +191,8 @@
     "testLocallyOwnedScrollableParentCanReturnFromProductionToolbar",
     "testNativeTextFieldsParentCanReturnFromProductionToolbar",
     "testNativeSlidersParentCanReturnFromProductionToolbar",
-    "testNativeSteppersParentCanReturnFromProductionToolbar"
+    "testNativeSteppersParentCanReturnFromProductionToolbar",
+    "testSectionedParentCanReturnFromProductionToolbar",
+    "testSectionedCombinedControlsParentCanReturnFromProductionToolbar"
   ]
 }
