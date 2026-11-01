@@ -103,7 +103,9 @@ final class AutomaticSyncTests: StudyFlowTestSupport {
         let profile = prepareSyncProfile(app, name: "Automatic full download check", withFixture: false,
                                          extraArguments: ["--uitest-presentation-trace"])
         loginToSyncFixture(app, username: "fixture@example.test", server: syncEndpoint(delayed: true))
-        guard waitForTestControl(app.staticTexts.matching(identifier: "空のコレクションにAnkiWebからダウンロード中…"), in: app,
+        // The same status is also rendered in the bottom busy bar. Observe
+        // its deck-list copy uniquely, rather than taking a global first match.
+        guard waitForTestControl(app.collectionViews.staticTexts.matching(identifier: "空のコレクションにAnkiWebからダウンロード中…"), in: app,
                                 keyboard: .keep, timeout: 60, purpose: .observation) != nil else { return }
         app.terminate(); app.launch()
         let interrupted = app.alerts.matching(identifier: "処理できませんでした")
