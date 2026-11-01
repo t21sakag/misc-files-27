@@ -17,6 +17,12 @@ import AVFoundation
     private var preparingPlayback = false
     private var permissionGeneration = UUID()
     @Published private(set) var requestingPermission = false
+    private func traceRecording(_ phase: String) {
+        #if DEBUG
+        guard UITestIsolation.namespace() != nil else { return }
+        NSLog("audio.playback.trace phase=%@ main=%d", phase, Thread.isMainThread ? 1 : 0)
+        #endif
+    }
     private func sessionLease() -> AudioSessionLease {
         if let session, session.isValid { return session }
         let identity = UUID()
@@ -53,7 +59,10 @@ import AVFoundation
             recorder.delegate = self
             self.recorder = recorder
             file = url
-            guard recorder.record() else { throw EngineError(message: AppText.localized("録音を開始できませんでした。")) }
+            traceRecording("recorder-record.begin")
+            let started = recorder.record()
+            traceRecording("recorder-record.end")
+            guard started else { throw EngineError(message: AppText.localized("録音を開始できませんでした。")) }
             recording = true
         } catch {
             guard permissionGeneration == generation else { return }
