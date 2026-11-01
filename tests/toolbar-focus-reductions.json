@@ -1,9 +1,9 @@
 {
   "source": "ios/AnkiPad/SettingsView.swift",
-  "source_sha256": "06b5ee306c13a89197ef4acbd9a356b857f37f36b99e860df008835422ce6db9",
+  "source_sha256": "95f8405605e884573758140474df57d913572651f052f45e6c94c62cb0016b8a",
   "plan": "tests/toolbar-focus-reduction-plan.json",
-  "plan_sha256": "24de633edb6915c1e78b4724fd6e571cb5b598c3a85b231a9cc197d8fd8b9ea3",
-  "stage": "production-all-fourteen-sections-grouped-seven-plus-seven",
+  "plan_sha256": "d00e452f4c07ff4963d273f8e59f50f7284e25e65f8556d64f997670d639b5e1",
+  "stage": "hold-first-six-split-remaining-seven",
   "shared_sections": [
     "アプリの言語",
     "同期",
@@ -84,5 +84,5 @@
       "retains_full_source_layout": false
     }
   },
-  "generated_sha256": "59093d9c9b99a3770b16b209d5253db46f418aa30e3a91ef8ba01ff1c6519224"
+  "generated_sha256": "7b663b03263f10b7f6297834a7413e7c930860f657d1026c98c09b8235387207"
 }
