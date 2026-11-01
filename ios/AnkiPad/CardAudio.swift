@@ -4,7 +4,9 @@ import AVKit
 import UniformTypeIdentifiers
 
 @MainActor final class CardAudio {
-    private var player: AVAudioPlayer?
+    private var filePlayer: FileAudioPlayer?
+    private var filePlaying = false
+    private var fileFinishedDuringStart = false
     private var video: AVPlayerViewController?
     private var videoObserver: NSObjectProtocol?
     private var videoDelegate: VideoDelegate?
@@ -15,7 +17,6 @@ import UniformTypeIdentifiers
     private var pending: [[String: Any]] = []
     private var preferredVoices: [String: AVSpeechSynthesisVoice] = [:]
     private var media: URL?
-    private var delegate: AudioDelegate?
     private var generation = UUID()
     private var completion: (() -> Void)?
     private var session: AudioSessionLease?
@@ -40,7 +41,7 @@ import UniformTypeIdentifiers
     }
     var isPreparing: Bool { preparing }
     // Preparing belongs to the queue lifetime, so wait-for-audio cannot race startup.
-    var isPlaying: Bool { preparing || player?.isPlaying == true || speech.isSpeaking || video != nil }
+    var isPlaying: Bool { preparing || filePlaying || speech.isSpeaking || video != nil }
     func append(_ tags: [[String: Any]], media: URL) {
         self.media = media
         pending += tags
@@ -55,9 +56,7 @@ import UniformTypeIdentifiers
         preferredVoices = [:]
         currentUtterance = nil; utteranceGeneration = nil
         pending = []
-        tracePlayback("player-stop.begin")
-        player?.stop(); player = nil
-        tracePlayback("player-stop.end")
+        clearFilePlayer()
         tracePlayback("speech-stop.begin")
         speech.stopSpeaking(at: .immediate)
         tracePlayback("speech-stop.end")
@@ -120,8 +119,10 @@ import UniformTypeIdentifiers
         advance()
     }
     private func advance() {
+        // A late completion from a revoked owner must not restart its queue.
+        if let session, !session.isValid { stop(); return }
         guard !pending.isEmpty, let media else {
-            player = nil; delegate = nil
+            clearFilePlayer()
             if let session { AudioSessionCoordinator.shared.release(session, deactivate: false) }
             session = nil
             let finished = completion
@@ -166,26 +167,11 @@ import UniformTypeIdentifiers
             let root = media.standardizedFileURL.resolvingSymlinksInPath()
             let url = root.appendingPathComponent(filename).standardizedFileURL.resolvingSymlinksInPath()
             guard url.path.hasPrefix(root.path + "/") else { advance(); return }
-            do {
-                if UTType(filenameExtension: url.pathExtension)?.conforms(to: .movie) == true {
-                    if !playVideo(url) { advance() }
-                    return
-                }
-                tracePlayback("player-init.begin")
-                let audio = try AVAudioPlayer(contentsOf: url)
-                tracePlayback("player-init.end")
-                let delegate = AudioDelegate { [weak self] in
-                    guard let self, self.generation == playbackGeneration else { return }
-                    self.advance()
-                }
-                self.delegate = delegate
-                audio.delegate = delegate
-                player = audio
-                tracePlayback("player-play.begin")
-                let started = audio.play()
-                tracePlayback("player-play.end")
-                if !started { advance() }
-            } catch { advance() }
+            if UTType(filenameExtension: url.pathExtension)?.conforms(to: .movie) == true {
+                if !playVideo(url) { advance() }
+                return
+            }
+            startFile(url, playbackGeneration: playbackGeneration)
         } else if let tts = tag["tts"] as? [String: Any], let text = tts["fieldText"] as? String {
             let utterance = AVSpeechUtterance(string: text)
             let requested = tts["voices"] as? [String] ?? []
@@ -206,9 +192,76 @@ import UniformTypeIdentifiers
             Task { @MainActor in self.finished?(utterance) }
         }
     }
-    private final class AudioDelegate: NSObject, AVAudioPlayerDelegate {
-        let done: @MainActor () -> Void
-        init(done: @escaping @MainActor () -> Void) { self.done = done }
-        func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) { Task { @MainActor in self.done() } }
+    private func clearFilePlayer() {
+        if let filePlayer { AudioSessionCoordinator.shared.cleanup { filePlayer.stop() } }
+        filePlayer = nil; filePlaying = false; fileFinishedDuringStart = false
+    }
+    private func startFile(_ url: URL, playbackGeneration: UUID) {
+        guard let lease = session, lease.isValid else { stop(); return }
+        clearFilePlayer()
+        let worker = FileAudioPlayer()
+        filePlayer = worker; preparing = true
+        preparation = Task { @MainActor [weak self] in
+            do {
+                let started = try await AudioSessionCoordinator.shared.perform(lease: lease) {
+                    try worker.play(url, lease: lease) { [weak self, weak worker] in
+                        Task { @MainActor in
+                            guard let self, let worker, self.generation == playbackGeneration,
+                                  self.filePlayer === worker else { return }
+                            if self.preparing { self.fileFinishedDuringStart = true }
+                            else { self.filePlaying = false; self.advance() }
+                        }
+                    }
+                }
+                guard let self, self.generation == playbackGeneration, self.filePlayer === worker,
+                      !Task.isCancelled else { return }
+                guard lease.isValid else { self.stop(); return }
+                self.preparing = false; self.preparation = nil
+                self.filePlaying = started && !self.fileFinishedDuringStart
+                if !self.filePlaying { self.advance() }
+            } catch {
+                guard let self, self.generation == playbackGeneration, self.filePlayer === worker,
+                      !Task.isCancelled else { return }
+                self.preparing = false; self.preparation = nil
+                if lease.isValid { self.advance() } else { self.stop() }
+            }
+        }
+    }
+}
+
+/// All native player access belongs to AudioSessionCoordinator's executor.
+/// Each clip has its own instance; stale cleanup cannot stop a replacement.
+private final class FileAudioPlayer: @unchecked Sendable {
+    private var player: AVAudioPlayer?
+    private var delegate: Delegate?
+    private static func trace(_ phase: String) {
+        #if DEBUG
+        guard UITestIsolation.namespace() != nil || NSClassFromString("XCTestCase") != nil else { return }
+        NSLog("audio.playback.trace phase=%@ main=%d", phase, Thread.isMainThread ? 1 : 0)
+        #endif
+    }
+    func play(_ url: URL, lease: AudioSessionLease, finished: @escaping @Sendable () -> Void) throws -> Bool {
+        guard lease.isValid else { return false }
+        Self.trace("player-init.begin")
+        let audio = try AVAudioPlayer(contentsOf: url)
+        Self.trace("player-init.end")
+        let delegate = Delegate(done: finished)
+        self.delegate = delegate; player = audio; audio.delegate = delegate
+        guard lease.isValid else { stop(); return false }
+        Self.trace("player-play.begin")
+        let started = audio.play()
+        Self.trace("player-play.end")
+        guard lease.isValid else { stop(); return false }
+        return started
+    }
+    func stop() {
+        Self.trace("player-stop.begin")
+        player?.stop(); player = nil; delegate = nil
+        Self.trace("player-stop.end")
+    }
+    private final class Delegate: NSObject, AVAudioPlayerDelegate {
+        let done: @Sendable () -> Void
+        init(done: @escaping @Sendable () -> Void) { self.done = done }
+        func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) { done() }
     }
 }

@@ -75,6 +75,23 @@ final class AudioSessionCoordinator: @unchecked Sendable {
         }
     }
 
+    /// Player operations share the session executor, so a category switch
+    /// cannot overtake a pending play or run concurrently with its stop.
+    func perform<Value: Sendable>(lease: AudioSessionLease,
+                                  _ operation: @escaping @Sendable () throws -> Value) async throws -> Value {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Value, Error>) in
+            queue.async {
+                guard lease.isValid, self.leases[lease.id] != nil else {
+                    continuation.resume(throwing: CancellationError()); return
+                }
+                do { continuation.resume(returning: try operation()) }
+                catch { continuation.resume(throwing: error) }
+            }
+        }
+    }
+    /// Cleanup refers to one player instance, even after its lease is cancelled.
+    func cleanup(_ operation: @escaping @Sendable () -> Void) { queue.async(execute: operation) }
+
     func release(_ lease: AudioSessionLease, deactivate: Bool) {
         lease.cancel()
         queue.async {

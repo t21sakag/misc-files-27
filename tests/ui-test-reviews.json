@@ -3666,6 +3666,215 @@
         }
       ],
       "checked_at": "2026-11-01T03:33:13.093721+00:00"
+    },
+    {
+      "id": "20261101-file-player-executor",
+      "covers": [
+        [
+          41269703374,
+          1
+        ],
+        [
+          41267524687,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41269703374,
+            1
+          ],
+          "kind": "application",
+          "finding": "Native PCM assertions pass. SDK warnings fall inside player-play begin/end(main1) four times, not init/stop. First play blocks553ms. Exact native play call is proven."
+        },
+        {
+          "attempt": [
+            41267524687,
+            1
+          ],
+          "kind": "application",
+          "finding": "Explicit session setup and ownership checks pass and app compiles. Review playback still reports main-thread activation because native AVAudioPlayer.play remained on main."
+        }
+      ],
+      "root_cause": "AVAudioPlayer.play implicitly activates audio on main even after explicit session activation was moved off main. Owned SDK and call-boundary logs prove the exact call.",
+      "common_resolution": "Use the same session executor for native player init/play/stop, with one worker instance per clip. Lease and generation checks reject obsolete starts, post-play cancellation stops the obsolete instance, and cleanup targets that instance only. Buffer native completion delivered before the async start result returns. Keep timed PCM, actual-playback and pending cancellation, once-only completion, replacement and warnings gates unchanged.",
+      "rule_review": {
+        "semantic_labels": "Both attempts completed the actual notification refresh assertions. No title/label failure is observed. Keep exact labels and the strict pending/saved-ID comparisons; do not change them for an audio runtime warning.",
+        "foreground_scope": "Warning occurs directly after reveal on the actual reviewer. Next scope uses the already compiled native PCM test in the XCTest runner, with no UI control substitutions. The same CardAudio and coordinator sources are linked into runner and app.",
+        "unique_reads_and_actions": "No new tap/read matchers are introduced. Native PCM test retains actual timed clip completion, one callback and replacement; it additionally waits until preparation ends and the real AVAudioPlayer is playing before active-playback cancellation.",
+        "live_state": "Each clip has a private worker and UI snapshot. Preparing stays true through native play startup, actual playing is set only after its result, and an early native finish is buffered until that result returns. Generation plus worker identity reject stale completions and cleanup cannot stop replacement. Queue advance also rejects a revoked lease before any completion or next-item setup, so a late native callback cannot reacquire playback over a newer microphone owner.",
+        "keyboard_and_scroll": "No keyboard/scroll failure in this pair. Do not tweak taps or timeout500-second reminder flow to fix audio. Use direct native PCM case to observe the same playback component without repeating that long flow.",
+        "environment": "Core perform validates the prepared live lease on the same serial executor as category changes. Cleanup remains queued even after cancellation. Core host checks now execute operations off main, reject cancelled operations and verify cleanup survives. UIKit video remains on main; speech and recorder playback still need their own warning verification.",
+        "first_failure_evidence": "Exact native Runner log03:45:10.187 player-play.begin(main1),10.188 SDK978,10.740 end; three subsequent plays repeat ordering. Init ends before warning; speech/player stop boundaries lack this warning. Native PCM has no app UI interaction, so no failure AX/video exists or is needed for a tap change. Keep bounded diagnostics to verify player operations main0 after correction.",
+        "failure_classification": "Both are genuine native main-thread activation warnings. Latest exact call identified by real native PCM evidence. Fix player executor ownership; no harness or tap correction is claimed.",
+        "runtime_warnings": "Retain explicit empty warning gate. Latest summary aggregates one SDK warning but raw owned log has four player-play occurrences. Verify raw main0 and empty SDK warnings; assertion success alone is insufficient.",
+        "device_evidence": "No real-device audio, microphone route, Bluetooth, background interruption or notification delivery proof. Current task is simulator-native warning diagnosis; keep physical verification open."
+      },
+      "evidence": [
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41269703374",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "206223d60e41fb95c4420e79a3449ae282a0710b636d2ff9f885c6b049269315"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41269703374",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/live.log",
+          "sha256": "f7e7eee1dc8f48fa6138f90f49679042954ad87db02361804f41aefa2f30e6a9"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41269703374",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/live-collection.json",
+          "sha256": "508b52e07268cb0f41e39628043eb735c08ba02633b7e070c298b130a19c8301"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41267524687",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "4955500e16753b73daf57317dbcb1808cf4ab1633c17cd19e28ffcc51b4df1ef"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41267524687",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/live.log",
+          "sha256": "9b04a51b55d857e0f2079a22c06f940d5493038963a30c21147b9e0713e5390c"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41267524687",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/live-collection.json",
+          "sha256": "86a01c8c208695085ce817fc306271a237ae16541ac3bc7d4423aa1ec4401368"
+        }
+      ],
+      "next_scope": [
+        "AudioFlowTests/testCardAudioQueueCompletesOnceAndCancellationDoesNotReplay"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "5fb7b069e3d79dbdd1bf643b0e7a6f12c068ea0af6d422404e069314fb3ae0e9",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "7e8dc25d208c3d2517d212311fe10753714be33eeccdf06c4b5f473627d97fc4",
+        "ios/AnkiPadUITests/AudioFlowTests.swift": "1e9d692e4acbffc6074a5d6a4cea6925114ffe0daa95ea4eb645139d0186c657",
+        "ios/AnkiPad/AudioSessionCoordinator.swift": "a8f9fcaeeacb42a0bc91d750d862683779f4f366b85b6abf9c3e24cfc48ebd85",
+        "ios/AnkiPad/CardAudio.swift": "00f3030e606364e2d41c2fc34f3f6f001e0e5a7d252d9823c6d793de355d6d38",
+        "ios/AnkiPad/AudioRecorderView.swift": "babeba051b5c64801294a1020dcf60faf7fbc0f58a3f6f4a70f6a215e68938e3",
+        "ios/AnkiPad/CardScriptSpeech.swift": "9da8fda76d625fad256fe815a2be103fd43ca2e2eb9cd72d2506cdfbfe4395bf",
+        "ios/AnkiPad/CardScriptRecognition.swift": "836b3bcb1223497e68ddd45f17aa8ff02d160b121332ab69e1cd425ee4544e3d",
+        "ios/project.yml": "8c56f96b75de28025a7e368745e3c31556b8e03b841868adaeb072a93817f009",
+        "scripts/run-ui-with-diagnostics.py": "d5ae137bcc231b8ec235c1284248e64085bf393590a60aa4cdf93a6be20eb9fe",
+        "scripts/select-ui-tests.py": "477f3001b728032a1d475b0c708beba4c292d3552754dfe8cdf8822cfe0fd584",
+        "scripts/ui-case-groups.json": "2a5c23ba2ad2bf6648706619346b462a7524f646d32caa4dde3579bfd43c7262",
+        "scripts/summarize-ui-results.py": "8c867c654eb08bdb351c98f85d99457a8994b9d01a3fa90907ef2fba02852471",
+        ".github/workflows/ipa.yml": "8a1aade6d73fa8774dc6d9be29424bd6f53aa6ef727e5e12fc8bcecff95828d5",
+        "tests/widget_diagnostics_smoke.py": "94f888b42879725b5865b16f74b98504952f82aead1ed863d83b274e9413c224",
+        "tests/ui_case_groups_smoke.py": "09a6804f2ceea49bbe63314225dab68b28d3e0c53f9a55d51056a98b7ccb54f8",
+        "tests/audio_session_coordinator_smoke.swift": "afef7db6ebfb81722abb2fe74a4b2cc224675333f34d2351c37392cf2389e11d"
+      },
+      "checks": [
+        {
+          "name": "Swift syntax206; no Apple SDK typecheck",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6dd47774badaacb41be3ad7ec0828603e98c31174351e02bb7e49786c26446cc"
+        },
+        {
+          "name": "Actual queue ownership strict-concurrency compilation",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-strict-concurrency=complete",
+            "-warnings-as-errors",
+            "-parse-as-library",
+            "ios/AnkiPad/AudioSessionCoordinator.swift",
+            "tests/audio_session_coordinator_smoke.swift",
+            "-o",
+            "build/audio-session-coordinator-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "Actual queue ownership execution",
+          "argv": [
+            "build/audio-session-coordinator-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "4be50bcbca4790fe1d3fd918fbb5799fd4f2d76cd443d2dc62c0da0fa838c5e4"
+        },
+        {
+          "name": "Case catalog104 and audio alias",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b659ab3258a77884dca6555f8251fadec48e764e7c54b2c0b22c074362f072ca"
+        },
+        {
+          "name": "Dispatch choices112",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "99f5080a695f7b84ca21d15e3286116573f0458d7d9db30d89cff2f0f6ab1a06"
+        },
+        {
+          "name": "UI query lint",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2ee1b0b21abca8f7697d081672551182916e7c909e397420c22c90d89ab03eef"
+        },
+        {
+          "name": "Gate regression",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Native stage and SDK observer predicates",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "Actual workflow diagnostic routing",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "Exact PCM scope",
+          "argv": [
+            "python3",
+            "scripts/select-ui-tests.py",
+            "audio-queue",
+            "ui"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "92b85c822c7b837c6c904f0f7ac8254298fb772aa60b43b65a9f87785bf73d0c"
+        }
+      ],
+      "checked_at": "2026-11-01T03:52:26.346117+00:00"
     }
   ]
 }

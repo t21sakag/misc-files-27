@@ -97,6 +97,21 @@ private final class Probe: @unchecked Sendable {
         do { try await coordinator.prepare(.playback, lease: neverStarted); preconditionFailure("Cancelled request started") }
         catch is CancellationError {} catch { preconditionFailure("Unexpected error") }
         precondition(probe.events.count == count)
+        let operationLease = AudioSessionLease()
+        try await coordinator.prepare(.playback, lease: operationLease)
+        let value = try await coordinator.perform(lease: operationLease) {
+            precondition(!Thread.isMainThread)
+            return 17
+        }
+        precondition(value == 17)
+        coordinator.release(operationLease, deactivate: false)
+        do {
+            _ = try await coordinator.perform(lease: operationLease) { () -> Int in preconditionFailure("Cancelled player operation executed") }
+            preconditionFailure("Cancelled player operation succeeded")
+        } catch is CancellationError {} catch { preconditionFailure("Unexpected player error") }
+        coordinator.cleanup { probe.revoked("cleanup") }
+        await barrier(coordinator)
+        precondition(probe.events.last == "revoked.cleanup", "Cancelled player cleanup was lost")
         print("PASS: audio configuration/deactivation run off main; shared playback, cancelled/failed category rollback, incompatible replacement and old-owner cleanup preserve the live session")
     }
 }
