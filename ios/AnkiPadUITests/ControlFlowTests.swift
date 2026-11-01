@@ -75,7 +75,7 @@ final class ControlFlowTests: StudyFlowTestSupport {
         waitForTestControl(app.buttons.matching(identifier: "reveal"), in: app)
         // Blank card space in configured lower-right zone, not a DOM control.
         // Use the shared app-anchored frame mapping to avoid WebKit offsets.
-        guard let web = waitForTestControl(app.webViews, in: app) else { return }
+        guard let web = waitForTestCardWebView(in: app) else { return }
         tapScreenFrame(web, in: app, normalizedOffset: CGVector(dx: 0.9, dy: 0.92))
         waitForTestControl(app.buttons.matching(identifier: "answer-2"), in: app)
         XCTAssertFalse(app.alerts.element.exists)

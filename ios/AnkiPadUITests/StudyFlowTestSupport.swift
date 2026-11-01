@@ -28,6 +28,14 @@ class StudyFlowTestSupport: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: timeout), .completed)
     }
 
+    /// WebKit exports multiple nested WebView AX wrappers for one card. Resolve
+    /// the unique native host's direct WebView, rather than selecting a wrapper
+    /// by index or treating all descendants as independent card surfaces.
+    func waitForTestCardWebView(in app: XCUIApplication) -> XCUIElement? {
+        let roots = app.descendants(matching: .other).children(matching: .webView)
+        return waitForTestControl(roots, in: app)
+    }
+
     func tapScreenFrame(_ element: XCUIElement, in app: XCUIApplication,
                         normalizedOffset: CGVector = CGVector(dx: 0.5, dy: 0.5)) {
         waitUntilHittable(element)
@@ -41,6 +49,7 @@ class StudyFlowTestSupport: XCTestCase {
         guard app.frame.contains(point) else {
             XCTFail("Resolved screen-frame tap point is outside the application"); return
         }
+        print("Screen-frame tap: element=\(frame) point=\(point)")
         // WebKit can add its content offset again to element-relative taps.
         // Anchor at the native app instead of using the Web accessibility node.
         app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
