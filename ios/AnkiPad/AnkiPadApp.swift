@@ -8,6 +8,21 @@ import AVFoundation
     @MainActor static func main() {
         #if DEBUG
         if UITestIsolation.namespace() != nil,
+           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-text") {
+            ToolbarNativeControlFocusReproductionApp<ToolbarFocusTextControls>.main()
+            return
+        }
+        if UITestIsolation.namespace() != nil,
+           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-slider") {
+            ToolbarNativeControlFocusReproductionApp<ToolbarFocusSliderControls>.main()
+            return
+        }
+        if UITestIsolation.namespace() != nil,
+           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-stepper") {
+            ToolbarNativeControlFocusReproductionApp<ToolbarFocusStepperControls>.main()
+            return
+        }
+        if UITestIsolation.namespace() != nil,
            ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-owner") {
             ToolbarLocalOwnerFocusReproductionApp.main()
             return

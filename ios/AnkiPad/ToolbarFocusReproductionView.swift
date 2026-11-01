@@ -204,4 +204,111 @@ struct ToolbarLocalOwnerSettingsReproductionView: View {
         }
     }
 }
+
+/// Compare native control categories in otherwise identical scrolling parents.
+/// These are diagnosis-only views, with no focus mutation or success injection.
+protocol ToolbarFocusNativeControls: View { init() }
+
+struct ToolbarNativeControlFocusReproductionApp<Controls: ToolbarFocusNativeControls>: App {
+    @UIApplicationDelegateAdaptor(ReviewNotificationAppDelegate.self) private var notificationDelegate
+    @AppStorage("appearance") private var appearance = "system"
+    init() {
+        do { try UITestIsolation.prepare() }
+        catch { fatalError("Could not initialize isolated UI test storage: \(error)") }
+    }
+    var body: some Scene {
+        WindowGroup {
+            StudyThemeContainer { ToolbarNativeControlFocusReproductionView<Controls>() }
+                .environment(\.locale, AppText.locale)
+                .preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil)
+        }
+    }
+}
+
+struct ToolbarNativeControlFocusReproductionView<Controls: ToolbarFocusNativeControls>: View {
+    @State private var showingSettings = false
+    var body: some View {
+        NavigationStack {
+            List {
+                Button(AppText.localized("設定")) { showingSettings = true }
+                    .accessibilityIdentifier("focus-native-settings")
+            }.studyThemeSurface().navigationTitle("Control checks")
+        }
+        .sheet(isPresented: $showingSettings) { ToolbarNativeControlSettingsReproductionView<Controls>() }
+    }
+}
+
+struct ToolbarNativeControlSettingsReproductionView<Controls: ToolbarFocusNativeControls>: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var configuration = ReviewToolbarConfiguration()
+    var body: some View {
+        NavigationStack {
+            Form {
+                ForEach(0..<32, id: \.self) { index in Text("Parent row \(index + 1)") }
+                Section { Controls() }
+                NavigationLink(AppText.localized("操作バーの設定")) {
+                    ReviewToolbarSettingsView(configuration: $configuration)
+                }.accessibilityIdentifier("focus-native-toolbar")
+            }
+            .accessibilityIdentifier("focus-native-form")
+            .studyThemeSurface().navigationTitle(AppText.localized("設定"))
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(AppText.localized("キャンセル")) { dismiss() }
+                        .accessibilityIdentifier("focus-native-cancel")
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(AppText.localized("保存")) { dismiss() }
+                        .accessibilityIdentifier("focus-native-save")
+                }
+            }
+        }
+    }
+}
+
+struct ToolbarFocusTextControls: ToolbarFocusNativeControls {
+    @State private var hold = "0"
+    @State private var interval = "200"
+    init() {}
+    var body: some View {
+        LabeledContent(AppText.localized("解答表示の長押し（ミリ秒）")) {
+            TextField("0〜2000", text: $hold).keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing).frame(width: 100).accessibilityIdentifier("focus-native-input-hold")
+        }
+        LabeledContent(AppText.localized("ボタンの連打防止（ミリ秒）")) {
+            TextField("0〜1000", text: $interval).keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing).frame(width: 100).accessibilityIdentifier("focus-native-input-interval")
+        }
+    }
+}
+
+struct ToolbarFocusSliderControls: ToolbarFocusNativeControls {
+    @State private var zoom = 1.0
+    @State private var size = 100.0
+    init() {}
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(AppText.localized("カードの拡大率: \(String(Int(zoom * 100)) + "%")"))
+            Slider(value: $zoom, in: 0.5...2.5, step: 0.05)
+                .accessibilityIdentifier("focus-native-slider-zoom")
+        }
+        Text(AppText.localized("ボタンの大きさ: \(String(Int(size)) + "%")"))
+        Slider(value: $size, in: 10...200, step: 10).accessibilityIdentifier("focus-native-slider-size")
+    }
+}
+
+struct ToolbarFocusStepperControls: ToolbarFocusNativeControls {
+    @State private var timeout = 60
+    @State private var timebox = 0
+    @State private var zoom = 100
+    init() {}
+    var body: some View {
+        Stepper(AppText.localized("通信のタイムアウト: \(timeout)秒"), value: $timeout, in: 10...1200, step: 10)
+            .accessibilityIdentifier("focus-native-stepper-timeout")
+        Stepper(AppText.localized("学習の区切り: \(timebox)分（0で無効）"), value: $timebox, in: 0...120)
+            .accessibilityIdentifier("focus-native-stepper-timebox")
+        Stepper(AppText.localized("画像の拡大率: \(zoom)%"), value: $zoom, in: 50...300, step: 10)
+            .accessibilityIdentifier("focus-native-stepper-zoom")
+    }
+}
 #endif

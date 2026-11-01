@@ -188,6 +188,9 @@
     "testProductionToolbarInMinimalPresentedNavigationCanReturnAfterToggle",
     "testActualSettingsParentCanReturnFromProductionToolbar",
     "testScrollableMinimalParentCanReturnFromProductionToolbar",
-    "testLocallyOwnedScrollableParentCanReturnFromProductionToolbar"
+    "testLocallyOwnedScrollableParentCanReturnFromProductionToolbar",
+    "testNativeTextFieldsParentCanReturnFromProductionToolbar",
+    "testNativeSlidersParentCanReturnFromProductionToolbar",
+    "testNativeSteppersParentCanReturnFromProductionToolbar"
   ]
 }

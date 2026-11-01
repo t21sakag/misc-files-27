@@ -111,4 +111,48 @@ final class ToolbarFocusReproductionTests: StudyFlowTestSupport {
         waitForTestControl(app.buttons.matching(identifier: "focus-owner-settings"), in: app)
         XCTAssertFalse(app.alerts.element.exists)
     }
+
+    func testNativeTextFieldsParentCanReturnFromProductionToolbar() {
+        exerciseNativeControlParent("--uitest-toolbar-focus-text") {
+            $0.textFields.matching(identifier: "focus-native-input-hold")
+        }
+    }
+
+    func testNativeSlidersParentCanReturnFromProductionToolbar() {
+        exerciseNativeControlParent("--uitest-toolbar-focus-slider") {
+            $0.sliders.matching(identifier: "focus-native-slider-size")
+        }
+    }
+
+    func testNativeSteppersParentCanReturnFromProductionToolbar() {
+        exerciseNativeControlParent("--uitest-toolbar-focus-stepper") {
+            $0.steppers.matching(identifier: "focus-native-stepper-timeout")
+        }
+    }
+
+    private func exerciseNativeControlParent(_ argument: String,
+                                             control: (XCUIApplication) -> XCUIElementQuery) {
+        let app = makeApplication()
+        app.launchArguments = [argument]
+        app.launch()
+        tapTestControl(app.buttons.matching(identifier: "focus-native-settings"), in: app)
+        let form = app.collectionViews["focus-native-form"]
+        guard waitForTestControl(control(app), in: app, form: form, purpose: .observation) != nil else { return }
+        tapTestControl(app.buttons.matching(identifier: "focus-native-toolbar"), in: app, form: form)
+        guard setTestSwitch(app.switches.matching(identifier: "toolbar-enabled"), enabled: true, in: app) else { return }
+        XCTContext.runActivity(named: "Native-control parent before native back " + argument) { activity in
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "Native-control parent before back"; hierarchy.lifetime = .keepAlways
+            let screen = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); screen.lifetime = .keepAlways
+            activity.add(hierarchy); activity.add(screen)
+        }
+        tapTestControl(app.navigationBars["操作バーの設定"].buttons.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["設定", "戻る", "Back"]))), in: app)
+        requireTestCondition("Native-control parent survives native back " + argument, in: app) {
+            app.state == .runningForeground && !app.navigationBars["操作バーの設定"].exists
+                && app.navigationBars["設定"].exists && app.collectionViews["focus-native-form"].exists
+        }
+        tapTestControl(app.buttons.matching(identifier: "focus-native-cancel"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "focus-native-settings"), in: app)
+        XCTAssertFalse(app.alerts.element.exists)
+    }
 }
