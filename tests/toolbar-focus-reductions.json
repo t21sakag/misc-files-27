@@ -2,8 +2,8 @@
   "source": "ios/AnkiPad/SettingsView.swift",
   "source_sha256": "95f8405605e884573758140474df57d913572651f052f45e6c94c62cb0016b8a",
   "plan": "tests/toolbar-focus-reduction-plan.json",
-  "plan_sha256": "e5a18035317f7838060d5cb393b4873b46d72a465ced730a68c0e70e6233df5d",
-  "stage": "full-original-form-style-eager-prototype",
+  "plan_sha256": "e1953b124373c832f38ab6cccaba4d7662d615bbaef38316d0a38dfd4af30564",
+  "stage": "full-eager-visible-labels-native-destination-defaults",
   "shared_sections": [
     "アプリの言語",
     "同期",
@@ -29,6 +29,9 @@
     "カードのJavaScript権限": "d747d7fc35914f66fb0e31fe3b5a9f5b4684bf78f863e35adcf0a50a0bb25574",
     "バックアップの保持数": "ecb5d4975d0cfef0cd3e797c051aa7dbf18c54a782cf76bddb062e87e45c5180"
   },
+  "renderer_sources": {
+    "ios/AnkiPad/ToolbarEagerFormStyle.swift": "f9d322e9f74a2ee174025c8e59a874d8d953b32f9f9d5bab19d2066e44fdbb31"
+  },
   "variants": {
     "full": {
       "type": "ToolbarFullSettingsReductionView",
@@ -49,7 +52,8 @@
         "バックアップの保持数"
       ],
       "retains_full_source_layout": true,
-      "renderer": "platform-form"
+      "renderer": "platform-form",
+      "destinations_use_platform_defaults": false
     },
     "left": {
       "type": "ToolbarLeftSettingsReductionView",
@@ -66,7 +70,8 @@
         "検索と編集"
       ],
       "retains_full_source_layout": false,
-      "renderer": "platform-form"
+      "renderer": "platform-form",
+      "destinations_use_platform_defaults": false
     },
     "right": {
       "type": "ToolbarRightSettingsReductionView",
@@ -84,7 +89,8 @@
         "バックアップの保持数"
       ],
       "retains_full_source_layout": false,
-      "renderer": "platform-form"
+      "renderer": "platform-form",
+      "destinations_use_platform_defaults": false
     },
     "eager": {
       "type": "ToolbarEagerSettingsReductionView",
@@ -105,8 +111,9 @@
         "バックアップの保持数"
       ],
       "retains_full_source_layout": true,
-      "renderer": "eager-native-sections"
+      "renderer": "eager-native-sections",
+      "destinations_use_platform_defaults": true
     }
   },
-  "generated_sha256": "ae664e4ab7471372d9496440f6079159877d90b81e766c9b8240e5d23106512e"
+  "generated_sha256": "b3c82491642735da02c2b6d3c0cc0b8eeef3d1e094ea45b3b896cd8c14854b4c"
 }

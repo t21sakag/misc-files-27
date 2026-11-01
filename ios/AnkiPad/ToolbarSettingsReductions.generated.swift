@@ -892,7 +892,7 @@ struct ToolbarEagerSettingsReductionView: ToolbarModelSettingsFocusView {
                         Text(AppText.localized("iPadの「視差効果を減らす」やE Inkテーマが有効な場合も、アプリの画面遷移を抑制します。"))
                             .font(.caption).foregroundStyle(.secondary)
                         NavigationLink(AppText.localized("デッキ一覧の背景")) {
-                            DeckBackgroundSettingsView(root: model.engine.root, change: $deckBackgroundChange)
+                            DeckBackgroundSettingsView(root: model.engine.root, change: $deckBackgroundChange).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic)
                         }.accessibilityIdentifier("deck-background-open")
                         VStack(alignment: .leading) { Text(AppText.localized("カードの拡大率: \(String(Int(reviewZoom * 100)) + "%")")); Slider(value: $reviewZoom, in: 0.5...2.5, step: 0.05) }
                         Stepper(AppText.localized("画像の拡大率: \(String(imageZoom) + "%")"), value: $imageZoom, in: 50...300, step: 10)
@@ -934,11 +934,11 @@ struct ToolbarEagerSettingsReductionView: ToolbarModelSettingsFocusView {
                             .font(.caption).foregroundStyle(.secondary)
                         Toggle(AppText.localized("入力式カードの解答欄に自動フォーカス"), isOn: $autoFocusTypeInAnswer).accessibilityIdentifier("auto-focus-type-answer")
                         Toggle(AppText.localized("スワイプで解答・評価"), isOn: $swipeReview)
-                        NavigationLink(AppText.localized("スワイプの割り当て")) { ReviewGestureSettingsView(configuration: $gestureConfiguration) }
-                        NavigationLink(AppText.localized("タッチ領域の割り当て")) { ReviewTouchSettingsView(configuration: $touchConfiguration) }.accessibilityIdentifier("touch-settings-open")
-                        NavigationLink(AppText.localized("操作バーの設定")) { ReviewToolbarSettingsView(configuration: $toolbarConfiguration) }.accessibilityIdentifier("toolbar-settings-open")
-                        NavigationLink(AppText.localized("キーボードの割り当て")) { ReviewKeyboardSettingsView(configuration: $keyboardConfiguration) }
-                        NavigationLink(AppText.localized("ゲームパッドの割り当て")) { ReviewGamepadSettingsView(configuration: $gamepadConfiguration) }
+                        NavigationLink(AppText.localized("スワイプの割り当て")) { ReviewGestureSettingsView(configuration: $gestureConfiguration).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) }
+                        NavigationLink(AppText.localized("タッチ領域の割り当て")) { ReviewTouchSettingsView(configuration: $touchConfiguration).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) }.accessibilityIdentifier("touch-settings-open")
+                        NavigationLink(AppText.localized("操作バーの設定")) { ReviewToolbarSettingsView(configuration: $toolbarConfiguration).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) }.accessibilityIdentifier("toolbar-settings-open")
+                        NavigationLink(AppText.localized("キーボードの割り当て")) { ReviewKeyboardSettingsView(configuration: $keyboardConfiguration).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) }
+                        NavigationLink(AppText.localized("ゲームパッドの割り当て")) { ReviewGamepadSettingsView(configuration: $gamepadConfiguration).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) }
                         Toggle(AppText.localized("次のカードにも手書きを残す"), isOn: $keepWhiteboard)
                         Toggle(AppText.localized("音声再生ボタンを隠す"), isOn: boolean("reviewing", "hideAudioPlayButtons"))
                         Toggle(AppText.localized("解答表示時に問題側の音声を止める"), isOn: boolean("reviewing", "interruptAudioWhenAnswering"))
@@ -957,8 +957,8 @@ struct ToolbarEagerSettingsReductionView: ToolbarModelSettingsFocusView {
                         Toggle(AppText.localized("追加先を現在のデッキにする"), isOn: boolean("editing", "addingDefaultsToCurrentDeck"))
                         Toggle(AppText.localized("画像をPNGで取り込む"), isOn: boolean("editing", "pasteImagesAsPng"))
                     }
-                    Section { NavigationLink(AppText.localized("ライセンスとソース")) { OpenSourceLicensesView() } }
-                    Section { NavigationLink(AppText.localized("学習リマインダー")) { ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks) }.accessibilityIdentifier("reminder-open") }
+                    Section { NavigationLink(AppText.localized("ライセンスとソース")) { OpenSourceLicensesView().formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) } }
+                    Section { NavigationLink(AppText.localized("学習リマインダー")) { ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) }.accessibilityIdentifier("reminder-open") }
                     Section(AppText.localized("カードのJavaScript権限")) {
                         Toggle(AppText.localized("テンプレートからマイク録音を許可"), isOn: $allowTemplateAudioRecording).accessibilityIdentifier("allow-template-audio-recording")
                         Text(AppText.localized("有効にして保存すると、iPadOSのマイク許可も確認します。カメラへのアクセスは許可しません。"))

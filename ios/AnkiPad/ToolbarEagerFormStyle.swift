@@ -8,7 +8,7 @@ struct ToolbarEagerFormStyle: FormStyle {
     func makeBody(configuration: Configuration) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                ForEach(sections: configuration.content) { section in
+                ForEach(sections: configuration.content.labeledContentStyle(ToolbarEagerLabeledContentStyle())) { section in
                     VStack(alignment: .leading, spacing: 8) {
                         if !section.header.isEmpty {
                             VStack(alignment: .leading) { section.header }
@@ -41,6 +41,19 @@ struct ToolbarEagerFormStyle: FormStyle {
         // ordinary platform style rather than inheriting this experiment.
         .pickerStyle(.menu)
         .formStyle(.automatic)
+    }
+}
+
+/// Form's platform renderer normally supplies this visual label/value layout.
+/// Apply the style before resolving subviews so labels are retained alongside
+/// native pickers and text fields, rather than only in accessibility metadata.
+private struct ToolbarEagerLabeledContentStyle: LabeledContentStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            configuration.label.fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+            configuration.content
+        }
     }
 }
 #endif

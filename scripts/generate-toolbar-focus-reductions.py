@@ -86,6 +86,8 @@ def generate():
                 'plan': PLAN, 'plan_sha256': hashlib.sha256(plan_raw.encode()).hexdigest(),
                 'stage': plan['stage'], 'shared_sections': selected_labels['shared'],
                 'section_sha256': {label: hashlib.sha256(block.encode()).hexdigest() for label, block in zip(labels, blocks)},
+                'renderer_sources': {'ios/AnkiPad/ToolbarEagerFormStyle.swift':
+                                     hashlib.sha256((ROOT / 'ios/AnkiPad/ToolbarEagerFormStyle.swift').read_bytes()).hexdigest()},
                 'variants': {}}
     for name, selected in variants.items():
         typename = 'Toolbar' + name.title() + 'SettingsReductionView'
@@ -94,6 +96,22 @@ def generate():
             marker = '            .accessibilityIdentifier("settings-form")\n'
             assert body.count(marker) == 1
             body = body.replace(marker, '            .formStyle(ToolbarEagerFormStyle())\n' + marker, 1)
+            # Style overrides belong to this form, not to the native forms or
+            # lists opened by its links. Restore their original defaults at
+            # the destination boundary before the subview proxy is resolved.
+            destinations = [
+                'DeckBackgroundSettingsView(root: model.engine.root, change: $deckBackgroundChange)',
+                'ReviewGestureSettingsView(configuration: $gestureConfiguration)',
+                'ReviewTouchSettingsView(configuration: $touchConfiguration)',
+                'ReviewToolbarSettingsView(configuration: $toolbarConfiguration)',
+                'ReviewKeyboardSettingsView(configuration: $keyboardConfiguration)',
+                'ReviewGamepadSettingsView(configuration: $gamepadConfiguration)',
+                'OpenSourceLicensesView()',
+                'ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks)',
+            ]
+            for destination in destinations:
+                assert body.count(destination) == 1
+                body = body.replace(destination, destination + '.formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic)', 1)
         assert body.count('struct SettingsView: View {') == 1
         body = body.replace('struct SettingsView: View {', 'struct ' + typename + ': ToolbarModelSettingsFocusView {', 1)
         field = '    @ObservedObject var model: StudyModel\n'
@@ -102,7 +120,8 @@ def generate():
         chunks += ['\n// Variant: ' + name + '\n', body]
         manifest['variants'][name] = {'type': typename, 'sections': [labels[i] for i in selected],
                                      'retains_full_source_layout': name in ('full', 'eager'),
-                                     'renderer': 'eager-native-sections' if name == 'eager' else 'platform-form'}
+                                     'renderer': 'eager-native-sections' if name == 'eager' else 'platform-form',
+                                     'destinations_use_platform_defaults': name == 'eager'}
     chunks.append('#endif\n')
     output = ''.join(chunks)
     manifest['generated_sha256'] = hashlib.sha256(output.encode()).hexdigest()
