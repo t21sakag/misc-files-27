@@ -146,4 +146,62 @@ struct ToolbarScrollFocusReproductionView: View {
         }
     }
 }
+
+/// Fourth comparison: the same inert-row parent owns configuration locally,
+/// like SettingsView. The earlier passing scroll scene keeps its outer owner.
+struct ToolbarLocalOwnerFocusReproductionApp: App {
+    @UIApplicationDelegateAdaptor(ReviewNotificationAppDelegate.self) private var notificationDelegate
+    @AppStorage("appearance") private var appearance = "system"
+    init() {
+        do { try UITestIsolation.prepare() }
+        catch { fatalError("Could not initialize isolated UI test storage: \(error)") }
+    }
+    var body: some Scene {
+        WindowGroup {
+            StudyThemeContainer { ToolbarLocalOwnerFocusReproductionView() }
+                .environment(\.locale, AppText.locale)
+                .preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil)
+        }
+    }
+}
+
+struct ToolbarLocalOwnerFocusReproductionView: View {
+    @State private var showingSettings = false
+    var body: some View {
+        NavigationStack {
+            List {
+                Button(AppText.localized("設定")) { showingSettings = true }
+                    .accessibilityIdentifier("focus-owner-settings")
+            }.studyThemeSurface().navigationTitle("Owner checks")
+        }
+        .sheet(isPresented: $showingSettings) { ToolbarLocalOwnerSettingsReproductionView() }
+    }
+}
+
+struct ToolbarLocalOwnerSettingsReproductionView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var configuration = ReviewToolbarConfiguration()
+    var body: some View {
+        NavigationStack {
+            Form {
+                ForEach(0..<32, id: \.self) { index in Text("Parent row \(index + 1)") }
+                NavigationLink(AppText.localized("操作バーの設定")) {
+                    ReviewToolbarSettingsView(configuration: $configuration)
+                }.accessibilityIdentifier("focus-owner-toolbar")
+            }
+            .accessibilityIdentifier("focus-owner-form")
+            .studyThemeSurface().navigationTitle(AppText.localized("設定"))
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(AppText.localized("キャンセル")) { dismiss() }
+                        .accessibilityIdentifier("focus-owner-cancel")
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(AppText.localized("保存")) { dismiss() }
+                        .accessibilityIdentifier("focus-owner-save")
+                }
+            }
+        }
+    }
+}
 #endif
