@@ -356,6 +356,9 @@ struct ReviewerWebView: UIViewRepresentable {
         #endif
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             if shouldFocusTyping {
+                // DOM focus alone does not establish UIKit's keyboard target.
+                // Activate this WebView before focusing the answer input.
+                webView.becomeFirstResponder()
                 #if DEBUG
                 if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-typing-focus") {
                     traceTypingFocus("before-focus", view: webView)
