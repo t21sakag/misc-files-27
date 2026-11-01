@@ -10,9 +10,24 @@ import AVFoundation
     var duration: TimeInterval { recording ? recorder?.currentTime ?? 0 : recordedDuration }
     private var recorder: AVAudioRecorder?
     private var playback: AVAudioPlayer?
-    private var ownsAudioSession = false
+    private var session: AudioSessionLease?
+    private var playbackPreparation: Task<Void, Never>?
+    private var playbackGeneration = UUID()
+    private var preparingPlayback = false
     private var permissionGeneration = UUID()
     @Published private(set) var requestingPermission = false
+    private func sessionLease() -> AudioSessionLease {
+        if let session, session.isValid { return session }
+        let identity = UUID()
+        let lease = AudioSessionLease(id: identity) { [weak self] in
+            Task { @MainActor in
+                guard let self, self.session?.id == identity else { return }
+                self.finish()
+            }
+        }
+        session = lease
+        return lease
+    }
     func start() async {
         guard !requestingPermission, !recording else { return }
         finish()
@@ -20,16 +35,18 @@ import AVFoundation
         let generation = UUID()
         permissionGeneration = generation
         requestingPermission = true
+        defer { if permissionGeneration == generation { requestingPermission = false } }
         let granted = await AVAudioApplication.requestRecordPermission()
         guard permissionGeneration == generation else { return }
-        requestingPermission = false
         guard granted else { error = AppText.localized("設定でAnkiPadのマイクへのアクセスを許可してください。"); return }
         do {
-            discard()
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
-            try session.setActive(true)
-            ownsAudioSession = true
+            // The old file is replaced only after permission is granted. Do
+            // not call discard(), which invalidates this in-flight request.
+            if let file { try? FileManager.default.removeItem(at: file) }
+            file = nil; recorder = nil; playback = nil; recordedDuration = 0
+            let lease = sessionLease()
+            try await AudioSessionCoordinator.shared.prepare(.recording, lease: lease)
+            guard permissionGeneration == generation, lease.isValid else { return }
             let url = FileManager.default.temporaryDirectory.appendingPathComponent("recording-" + UUID().uuidString + ".m4a")
             let recorder = try AVAudioRecorder(url: url, settings: [AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 44100, AVNumberOfChannelsKey: 1, AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue])
             recorder.delegate = self
@@ -38,8 +55,8 @@ import AVFoundation
             guard recorder.record() else { throw EngineError(message: AppText.localized("録音を開始できませんでした。")) }
             recording = true
         } catch {
+            guard permissionGeneration == generation else { return }
             self.error = error.localizedDescription
-            finish()
             discard()
         }
     }
@@ -49,33 +66,49 @@ import AVFoundation
         recording = false
     }
     func togglePreview() {
-        guard !recording, file != nil else { return }
-        if playback?.isPlaying == true { playback?.pause(); playing = false; return }
-        guard let playback else { preview(); return }
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default)
-            try session.setActive(true)
-            ownsAudioSession = true
-            if playback.currentTime >= playback.duration { playback.currentTime = 0 }
-            guard playback.play() else { throw EngineError(message: AppText.localized("録音を再生できませんでした。")) }
-            playing = true
-        } catch { self.error = error.localizedDescription }
+        guard !requestingPermission, !recording, file != nil else { return }
+        if preparingPlayback || playback?.isPlaying == true {
+            playbackGeneration = UUID()
+            playbackPreparation?.cancel(); playbackPreparation = nil
+            if preparingPlayback, let session {
+                AudioSessionCoordinator.shared.release(session, deactivate: false)
+                self.session = nil
+            }
+            preparingPlayback = false
+            playback?.pause(); playing = false
+        } else { preparePreview(reset: playback == nil) }
     }
     func preview() {
-        guard let file, !recording else { return }
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default)
-            try session.setActive(true)
-            ownsAudioSession = true
-            playback?.stop()
-            playback = try AVAudioPlayer(contentsOf: file)
-            playback?.delegate = self
-            guard playback?.play() == true else { throw EngineError(message: AppText.localized("録音を再生できませんでした。")) }
-            playing = true
+        guard !requestingPermission, !recording, file != nil else { return }
+        preparePreview(reset: true)
+    }
+    private func preparePreview(reset: Bool) {
+        guard let file else { return }
+        playbackPreparation?.cancel()
+        let generation = UUID(); playbackGeneration = generation
+        let lease = sessionLease()
+        preparingPlayback = true
+        playback?.pause(); playing = false
+        playbackPreparation = Task { @MainActor [weak self] in
+            do {
+                try await AudioSessionCoordinator.shared.prepare(.playback, lease: lease)
+                guard let self, self.playbackGeneration == generation, !Task.isCancelled else { return }
+                guard lease.isValid else { self.finish(); return }
+                self.preparingPlayback = false; self.playbackPreparation = nil
+                if reset || self.playback == nil {
+                    self.playback = try AVAudioPlayer(contentsOf: file)
+                    self.playback?.delegate = self
+                }
+                guard let playback = self.playback else { return }
+                if playback.currentTime >= playback.duration { playback.currentTime = 0 }
+                guard playback.play() else { throw EngineError(message: AppText.localized("録音を再生できませんでした。")) }
+                self.playing = true
+            } catch {
+                guard let self, self.playbackGeneration == generation, !Task.isCancelled else { return }
+                self.preparingPlayback = false; self.playbackPreparation = nil
+                self.error = error.localizedDescription
+            }
         }
-        catch { self.error = error.localizedDescription }
     }
     func discard() {
         finish()
@@ -109,10 +142,10 @@ import AVFoundation
         playback?.stop()
         playing = false
         stop()
-        if ownsAudioSession {
-            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-            ownsAudioSession = false
-        }
+        playbackGeneration = UUID()
+        playbackPreparation?.cancel(); playbackPreparation = nil; preparingPlayback = false
+        if let session { AudioSessionCoordinator.shared.release(session, deactivate: true) }
+        session = nil
     }
     nonisolated func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
         let message = error?.localizedDescription ?? AppText.localized("録音中にエラーが発生しました。")

@@ -18,7 +18,7 @@ final class AudioFlowTests: StudyFlowTestSupport {
             try data.write(to: root.appendingPathComponent(name))
         }
         try wave("short.wav", samples: 1600)
-        try wave("long.wav", samples: 8000)
+        try wave("long.wav", samples: 24000)
         let audio = CardAudio()
         defer { audio.stop() }
         var completions = 0
@@ -31,15 +31,24 @@ final class AudioFlowTests: StudyFlowTestSupport {
         XCTAssertEqual(completions, 1)
         XCTAssertGreaterThan(Date().timeIntervalSince(start), 0.25, "A rejected/no-output play must not masquerade as completed playback")
         XCTAssertFalse(audio.isPlaying)
+        let pendingCancellation = expectation(description: "Cancelled preparation must not start playback or completion")
+        pendingCancellation.isInverted = true
+        audio.play([["soundOrVideo": "long.wav"]], media: root) { pendingCancellation.fulfill() }
+        XCTAssertTrue(audio.isPreparing)
+        audio.stop()
         let cancelled = expectation(description: "Cancelled comparison must not start own recording")
         cancelled.isInverted = true
         audio.play([["soundOrVideo": "long.wav"]], media: root) { cancelled.fulfill() }
         XCTAssertTrue(audio.isPlaying)
+        let outputStarted = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            audio.isPlaying && !audio.isPreparing
+        }, object: nil)
+        await fulfillment(of: [outputStarted], timeout: 5)
         audio.stop()
         let replacement = expectation(description: "New audio completes independently")
         audio.play([["soundOrVideo": "short.wav"]], media: root) { replacement.fulfill() }
         await fulfillment(of: [replacement], timeout: 5)
-        await fulfillment(of: [cancelled], timeout: 1.1)
+        await fulfillment(of: [cancelled, pendingCancellation], timeout: 1.1)
         XCTAssertFalse(audio.isPlaying)
     }
 

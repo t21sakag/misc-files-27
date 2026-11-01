@@ -18,6 +18,9 @@ import UniformTypeIdentifiers
     private var delegate: AudioDelegate?
     private var generation = UUID()
     private var completion: (() -> Void)?
+    private var session: AudioSessionLease?
+    private var preparation: Task<Void, Never>?
+    private var preparing = false
     init() {
         // Keep the synthesizer delegate alive across stop and media switches.
         // TextToSpeech may dispatch a cancelled utterance callback later.
@@ -29,7 +32,9 @@ import UniformTypeIdentifiers
         }
         speech.delegate = speechDelegate
     }
-    var isPlaying: Bool { player?.isPlaying == true || speech.isSpeaking || video != nil }
+    var isPreparing: Bool { preparing }
+    // Preparing belongs to the queue lifetime, so wait-for-audio cannot race startup.
+    var isPlaying: Bool { preparing || player?.isPlaying == true || speech.isSpeaking || video != nil }
     func append(_ tags: [[String: Any]], media: URL) {
         self.media = media
         pending += tags
@@ -37,6 +42,9 @@ import UniformTypeIdentifiers
     }
     func stop() {
         generation = UUID()
+        preparation?.cancel(); preparation = nil; preparing = false
+        if let session { AudioSessionCoordinator.shared.release(session, deactivate: false) }
+        session = nil
         completion = nil
         preferredVoices = [:]
         currentUtterance = nil; utteranceGeneration = nil
@@ -101,19 +109,52 @@ import UniformTypeIdentifiers
     }
     private func advance() {
         guard !pending.isEmpty, let media else {
+            player = nil; delegate = nil
+            if let session { AudioSessionCoordinator.shared.release(session, deactivate: false) }
+            session = nil
             let finished = completion
             completion = nil
             finished?()
             return
         }
         let playbackGeneration = generation
-        let tag = pending.removeFirst()
+        let lease: AudioSessionLease
+        if let session, session.isValid { lease = session }
+        else {
+            let identity = UUID()
+            lease = AudioSessionLease(id: identity) { [weak self] in
+                Task { @MainActor in
+                    guard let self, self.session?.id == identity else { return }
+                    self.stop()
+                }
+            }
+            session = lease
+        }
+        preparing = true
+        preparation = Task { @MainActor [weak self] in
+            do {
+                try await AudioSessionCoordinator.shared.prepare(.playback, lease: lease)
+                guard let self, self.generation == playbackGeneration, !Task.isCancelled else { return }
+                guard lease.isValid else { self.stop(); return }
+                self.preparing = false; self.preparation = nil
+                let tag = self.pending.removeFirst()
+                self.playPrepared(tag, media: media, playbackGeneration: playbackGeneration)
+            } catch {
+                guard let self, self.generation == playbackGeneration, !Task.isCancelled else { return }
+                self.preparing = false; self.preparation = nil
+                if !lease.isValid { self.stop(); return }
+                // Match the existing queue policy for an unplayable item.
+                self.pending.removeFirst()
+                self.advance()
+            }
+        }
+    }
+    private func playPrepared(_ tag: [String: Any], media: URL, playbackGeneration: UUID) {
         if let filename = tag["soundOrVideo"] as? String {
             let root = media.standardizedFileURL.resolvingSymlinksInPath()
             let url = root.appendingPathComponent(filename).standardizedFileURL.resolvingSymlinksInPath()
             guard url.path.hasPrefix(root.path + "/") else { advance(); return }
             do {
-                try AVAudioSession.sharedInstance().setCategory(.playback)
                 if UTType(filenameExtension: url.pathExtension)?.conforms(to: .movie) == true {
                     if !playVideo(url) { advance() }
                     return
@@ -129,8 +170,6 @@ import UniformTypeIdentifiers
                 if !audio.play() { advance() }
             } catch { advance() }
         } else if let tts = tag["tts"] as? [String: Any], let text = tts["fieldText"] as? String {
-            do { try AVAudioSession.sharedInstance().setCategory(.playback) }
-            catch { advance(); return }
             let utterance = AVSpeechUtterance(string: text)
             let requested = tts["voices"] as? [String] ?? []
             let voices = AVSpeechSynthesisVoice.speechVoices()

@@ -180,6 +180,11 @@ jobs:
           build/sync-activity-smoke
       - name: Test card touch bridge cancellation and control exclusions
         run: node tests/review_touch_bridge_smoke.js
+      - name: Test audio session ownership
+        if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || env.CI_MODE == 'ui'
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/AudioSessionCoordinator.swift tests/audio_session_coordinator_smoke.swift -o build/audio-session-coordinator-smoke
+          build/audio-session-coordinator-smoke
       - name: Test persistent reviewer gesture configuration
         run: |
           swiftc ios/AnkiPad/AppText.swift -swift-version 5 -target arm64-apple-macosx15.0 -parse-as-library ios/AnkiPad/ReviewGestureConfiguration.swift ios/AnkiPad/ReviewKeyboardConfiguration.swift ios/AnkiPad/ReviewGamepadConfiguration.swift ios/AnkiPad/ReviewTouchConfiguration.swift ios/AnkiPad/ReviewToolbarConfiguration.swift tests/gesture_configuration_smoke.swift -o build/gesture-configuration-smoke

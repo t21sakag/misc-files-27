@@ -18,7 +18,7 @@ struct CardScriptEvent {
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
     private var hasTap = false
-    private var sessionActive = false
+    private var session: AudioSessionLease?
     private var callback: (([String]?, String?) -> Void)?
     func setLanguage(_ language: String) -> Bool { self.language = language; return true }
     func start(callback: @escaping ([String]?, String?) -> Void) async -> Bool {
@@ -39,10 +39,17 @@ struct CardScriptEvent {
             callback(nil, "Speech recognition is not available on this device."); cancel(); return false
         }
         do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.record, mode: .measurement, options: [.duckOthers])
-            try session.setActive(true)
-            sessionActive = true
+            let identity = UUID()
+            let lease = AudioSessionLease(id: identity) { [weak self] in
+                Task { @MainActor in
+                    guard let self, self.session?.id == identity else { return }
+                    self.callback?(nil, "Audio input was interrupted.")
+                    self.cancel()
+                }
+            }
+            session = lease
+            try await AudioSessionCoordinator.shared.prepare(.recognition, lease: lease)
+            guard generation == token, lease.isValid else { return false }
             let engine = AVAudioEngine()
             let request = SFSpeechAudioBufferRecognitionRequest()
             request.shouldReportPartialResults = false
@@ -73,6 +80,7 @@ struct CardScriptEvent {
             try engine.start()
             return true
         } catch {
+            guard generation == token else { return false }
             callback(nil, error.localizedDescription)
             cancel()
             return false
@@ -92,8 +100,8 @@ struct CardScriptEvent {
         task = nil; request = nil; engine = nil; recognizer = nil; callback = nil
     }
     private func deactivateSession() {
-        guard sessionActive else { return }
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-        sessionActive = false
+        guard let session else { return }
+        AudioSessionCoordinator.shared.release(session, deactivate: true)
+        self.session = nil
     }
 }
