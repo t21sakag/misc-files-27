@@ -2,8 +2,8 @@
   "source": "ios/AnkiPad/SettingsView.swift",
   "source_sha256": "95f8405605e884573758140474df57d913572651f052f45e6c94c62cb0016b8a",
   "plan": "tests/toolbar-focus-reduction-plan.json",
-  "plan_sha256": "e1953b124373c832f38ab6cccaba4d7662d615bbaef38316d0a38dfd4af30564",
-  "stage": "full-eager-visible-labels-native-destination-defaults",
+  "plan_sha256": "21a28cd190ff182d047ce349a902decb20632592203f6c9c003905caaf39f0d8",
+  "stage": "direct-raw-sections-explicit-native-choice-labels",
   "shared_sections": [
     "アプリの言語",
     "同期",
@@ -30,7 +30,7 @@
     "バックアップの保持数": "ecb5d4975d0cfef0cd3e797c051aa7dbf18c54a782cf76bddb062e87e45c5180"
   },
   "renderer_sources": {
-    "ios/AnkiPad/ToolbarEagerFormStyle.swift": "f9d322e9f74a2ee174025c8e59a874d8d953b32f9f9d5bab19d2066e44fdbb31"
+    "ios/AnkiPad/ToolbarEagerSettingsForm.swift": "04579ace11aa8504ebbdc1487659d999bb83f64bf060431f49ef6554d2d708c7"
   },
   "variants": {
     "full": {
@@ -52,8 +52,7 @@
         "バックアップの保持数"
       ],
       "retains_full_source_layout": true,
-      "renderer": "platform-form",
-      "destinations_use_platform_defaults": false
+      "renderer": "platform-form"
     },
     "left": {
       "type": "ToolbarLeftSettingsReductionView",
@@ -70,8 +69,7 @@
         "検索と編集"
       ],
       "retains_full_source_layout": false,
-      "renderer": "platform-form",
-      "destinations_use_platform_defaults": false
+      "renderer": "platform-form"
     },
     "right": {
       "type": "ToolbarRightSettingsReductionView",
@@ -89,8 +87,7 @@
         "バックアップの保持数"
       ],
       "retains_full_source_layout": false,
-      "renderer": "platform-form",
-      "destinations_use_platform_defaults": false
+      "renderer": "platform-form"
     },
     "eager": {
       "type": "ToolbarEagerSettingsReductionView",
@@ -111,9 +108,18 @@
         "バックアップの保持数"
       ],
       "retains_full_source_layout": true,
-      "renderer": "eager-native-sections",
-      "destinations_use_platform_defaults": true
+      "renderer": "direct-eager-sections",
+      "explicit_picker_labels": [
+        "言語",
+        "画像・音声の取得",
+        "学習画面の操作",
+        "テーマ",
+        "昼のテーマ",
+        "夜のテーマ",
+        "表示位置",
+        "新規と復習の順序"
+      ]
     }
   },
-  "generated_sha256": "b3c82491642735da02c2b6d3c0cc0b8eeef3d1e094ea45b3b896cd8c14854b4c"
+  "generated_sha256": "5215744180db2bca3d0113aa19448bc5a3d4358763e04b52996fcacece63a579"
 }

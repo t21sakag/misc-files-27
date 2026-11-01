@@ -845,12 +845,15 @@ struct ToolbarEagerSettingsReductionView: ToolbarModelSettingsFocusView {
     @State private var keepWhiteboard: Bool = UserDefaults.standard.object(forKey: "keepWhiteboard") as? Bool ?? false
     var body: some View {
         NavigationStack {
-            Form {
+            ToolbarEagerSettingsForm {
                 if loaded {
                     Section(AppText.localized("アプリの言語")) {
-                        Picker(AppText.localized("言語"), selection: $language) {
-                            ForEach(AppLanguageChoice.allCases) { Text($0.title).tag($0) }
-                        }.accessibilityIdentifier("app-language")
+                        LabeledContent(AppText.localized("言語")) {
+                            Picker("", selection: $language) {
+                                ForEach(AppLanguageChoice.allCases) { Text($0.title).tag($0) }
+                            }.accessibilityIdentifier("app-language")
+                                .labelsHidden().pickerStyle(.menu)
+                        }
                         Text(AppText.localized("保存後、アプリを終了して開き直すと適用します。同期や編集中のデータはそのままです。"))
                             .font(.caption).foregroundStyle(.secondary)
                     }
@@ -859,9 +862,12 @@ struct ToolbarEagerSettingsReductionView: ToolbarModelSettingsFocusView {
                         Text(AppText.localized("起動・前面復帰時とバックグラウンド移行時に同期します。全体を置き換える同期には確認が必要です。未保存の編集がある間は待機します。"))
                             .font(.caption).foregroundStyle(.secondary)
                         Toggle(AppText.localized("従量課金の回線でも同期する"), isOn: $networkPreferences.allowMetered).accessibilityIdentifier("sync-allow-metered")
-                        Picker(AppText.localized("画像・音声の取得"), selection: $networkPreferences.mediaFetch) {
-                            ForEach(SyncMediaFetch.allCases) { Text($0.title).tag($0) }
-                        }.accessibilityIdentifier("sync-media-fetch")
+                        LabeledContent(AppText.localized("画像・音声の取得")) {
+                            Picker("", selection: $networkPreferences.mediaFetch) {
+                                ForEach(SyncMediaFetch.allCases) { Text($0.title).tag($0) }
+                            }.accessibilityIdentifier("sync-media-fetch")
+                                .labelsHidden().pickerStyle(.menu)
+                        }
                         Toggle(AppText.localized("未同期の変更を表示"), isOn: $networkPreferences.showStatusBadge).accessibilityIdentifier("sync-status-badge")
                         Stepper(AppText.localized("通信のタイムアウト: \(networkPreferences.ioTimeoutSecs)秒"), value: $networkPreferences.ioTimeoutSecs,
                                 in: SyncNetworkPreferences.minimumTimeout...SyncNetworkPreferences.maximumTimeout, step: 10)
@@ -876,23 +882,35 @@ struct ToolbarEagerSettingsReductionView: ToolbarModelSettingsFocusView {
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     Section(AppText.localized("表示")) {
-                        Picker(AppText.localized("学習画面の操作"), selection: $displayMode) { ForEach(ReviewDisplayMode.allCases) { Text($0.title).tag($0) } }.accessibilityIdentifier("review-display-mode")
+                        LabeledContent(AppText.localized("学習画面の操作")) {
+                            Picker("", selection: $displayMode) { ForEach(ReviewDisplayMode.allCases) { Text($0.title).tag($0) } }.accessibilityIdentifier("review-display-mode")
+                                .labelsHidden().pickerStyle(.menu)
+                        }
                         Toggle(AppText.localized("学習の上部バーを表示"), isOn: $showTopbar)
                         Toggle(AppText.localized("学習中にデッキ名を表示"), isOn: $showDeckTitle).accessibilityIdentifier("show-deck-title")
                         Toggle(AppText.localized("学習の残り時間を表示"), isOn: $showETA).accessibilityIdentifier("show-review-eta")
                         Text(AppText.localized("全画面でも画面を3回タップすると操作バーを表示できます。")).font(.caption).foregroundStyle(.secondary)
-                        Picker(AppText.localized("テーマ"), selection: $appearance) { Text(AppText.localized("システム")).tag("system"); Text(AppText.localized("ライト")).tag("light"); Text(AppText.localized("ダーク")).tag("dark") }.accessibilityIdentifier("app-theme-mode")
-                        Picker(AppText.localized("昼のテーマ"), selection: $dayTheme) {
-                            ForEach(StudyDayTheme.allCases) { Text($0.title).tag($0) }
-                        }.accessibilityIdentifier("day-theme")
-                        Picker(AppText.localized("夜のテーマ"), selection: $nightTheme) {
-                            ForEach(StudyNightTheme.allCases) { Text($0.title).tag($0) }
-                        }.accessibilityIdentifier("night-theme")
+                        LabeledContent(AppText.localized("テーマ")) {
+                            Picker("", selection: $appearance) { Text(AppText.localized("システム")).tag("system"); Text(AppText.localized("ライト")).tag("light"); Text(AppText.localized("ダーク")).tag("dark") }.accessibilityIdentifier("app-theme-mode")
+                                .labelsHidden().pickerStyle(.menu)
+                        }
+                        LabeledContent(AppText.localized("昼のテーマ")) {
+                            Picker("", selection: $dayTheme) {
+                                ForEach(StudyDayTheme.allCases) { Text($0.title).tag($0) }
+                            }.accessibilityIdentifier("day-theme")
+                                .labelsHidden().pickerStyle(.menu)
+                        }
+                        LabeledContent(AppText.localized("夜のテーマ")) {
+                            Picker("", selection: $nightTheme) {
+                                ForEach(StudyNightTheme.allCases) { Text($0.title).tag($0) }
+                            }.accessibilityIdentifier("night-theme")
+                                .labelsHidden().pickerStyle(.menu)
+                        }
                         Toggle(AppText.localized("アプリのアニメーションを無効にする"), isOn: $removeAnimations).accessibilityIdentifier("remove-app-animations")
                         Text(AppText.localized("iPadの「視差効果を減らす」やE Inkテーマが有効な場合も、アプリの画面遷移を抑制します。"))
                             .font(.caption).foregroundStyle(.secondary)
                         NavigationLink(AppText.localized("デッキ一覧の背景")) {
-                            DeckBackgroundSettingsView(root: model.engine.root, change: $deckBackgroundChange).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic)
+                            DeckBackgroundSettingsView(root: model.engine.root, change: $deckBackgroundChange)
                         }.accessibilityIdentifier("deck-background-open")
                         VStack(alignment: .leading) { Text(AppText.localized("カードの拡大率: \(String(Int(reviewZoom * 100)) + "%")")); Slider(value: $reviewZoom, in: 0.5...2.5, step: 0.05) }
                         Stepper(AppText.localized("画像の拡大率: \(String(imageZoom) + "%")"), value: $imageZoom, in: 50...300, step: 10)
@@ -903,9 +921,12 @@ struct ToolbarEagerSettingsReductionView: ToolbarModelSettingsFocusView {
                         Toggle(AppText.localized("評価ボタンに次回の間隔を表示"), isOn: boolean("reviewing", "showIntervalsOnButtons"))
                     }
                     Section(AppText.localized("評価ボタン")) {
-                        Picker(AppText.localized("表示位置"), selection: $answerPosition) {
-                            ForEach(AnswerButtonPosition.allCases) { Text($0.title).tag($0) }
-                        }.accessibilityIdentifier("answer-position")
+                        LabeledContent(AppText.localized("表示位置")) {
+                            Picker("", selection: $answerPosition) {
+                                ForEach(AnswerButtonPosition.allCases) { Text($0.title).tag($0) }
+                            }.accessibilityIdentifier("answer-position")
+                                .labelsHidden().pickerStyle(.menu)
+                        }
                         Toggle(AppText.localized("大きな評価ボタン（2行）"), isOn: $largeAnswerButtons).accessibilityIdentifier("answer-large")
                         Text(AppText.localized("ボタンの大きさ: \(String(Int(answerSize)) + "%")"))
                         Slider(value: $answerSize, in: 10...200, step: 10).accessibilityIdentifier("answer-size")
@@ -934,11 +955,11 @@ struct ToolbarEagerSettingsReductionView: ToolbarModelSettingsFocusView {
                             .font(.caption).foregroundStyle(.secondary)
                         Toggle(AppText.localized("入力式カードの解答欄に自動フォーカス"), isOn: $autoFocusTypeInAnswer).accessibilityIdentifier("auto-focus-type-answer")
                         Toggle(AppText.localized("スワイプで解答・評価"), isOn: $swipeReview)
-                        NavigationLink(AppText.localized("スワイプの割り当て")) { ReviewGestureSettingsView(configuration: $gestureConfiguration).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) }
-                        NavigationLink(AppText.localized("タッチ領域の割り当て")) { ReviewTouchSettingsView(configuration: $touchConfiguration).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) }.accessibilityIdentifier("touch-settings-open")
-                        NavigationLink(AppText.localized("操作バーの設定")) { ReviewToolbarSettingsView(configuration: $toolbarConfiguration).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) }.accessibilityIdentifier("toolbar-settings-open")
-                        NavigationLink(AppText.localized("キーボードの割り当て")) { ReviewKeyboardSettingsView(configuration: $keyboardConfiguration).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) }
-                        NavigationLink(AppText.localized("ゲームパッドの割り当て")) { ReviewGamepadSettingsView(configuration: $gamepadConfiguration).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) }
+                        NavigationLink(AppText.localized("スワイプの割り当て")) { ReviewGestureSettingsView(configuration: $gestureConfiguration) }
+                        NavigationLink(AppText.localized("タッチ領域の割り当て")) { ReviewTouchSettingsView(configuration: $touchConfiguration) }.accessibilityIdentifier("touch-settings-open")
+                        NavigationLink(AppText.localized("操作バーの設定")) { ReviewToolbarSettingsView(configuration: $toolbarConfiguration) }.accessibilityIdentifier("toolbar-settings-open")
+                        NavigationLink(AppText.localized("キーボードの割り当て")) { ReviewKeyboardSettingsView(configuration: $keyboardConfiguration) }
+                        NavigationLink(AppText.localized("ゲームパッドの割り当て")) { ReviewGamepadSettingsView(configuration: $gamepadConfiguration) }
                         Toggle(AppText.localized("次のカードにも手書きを残す"), isOn: $keepWhiteboard)
                         Toggle(AppText.localized("音声再生ボタンを隠す"), isOn: boolean("reviewing", "hideAudioPlayButtons"))
                         Toggle(AppText.localized("解答表示時に問題側の音声を止める"), isOn: boolean("reviewing", "interruptAudioWhenAnswering"))
@@ -946,8 +967,11 @@ struct ToolbarEagerSettingsReductionView: ToolbarModelSettingsFocusView {
                     Section(AppText.localized("スケジュール")) {
                         Stepper(AppText.localized("日付を切り替える時刻: \(integer("scheduling", "rollover").wrappedValue)時"), value: integer("scheduling", "rollover"), in: 0...23)
                         Stepper(AppText.localized("先取り学習: \(integer("scheduling", "learnAheadSecs").wrappedValue / 60)分"), value: integer("scheduling", "learnAheadSecs"), in: 0...86400, step: 60)
-                        Picker(AppText.localized("新規と復習の順序"), selection: string("scheduling", "newReviewMix", fallback: "DISTRIBUTE")) {
-                            Text(AppText.localized("混ぜる")).tag("DISTRIBUTE"); Text(AppText.localized("復習を先に")).tag("REVIEWS_FIRST"); Text(AppText.localized("新規を先に")).tag("NEW_FIRST")
+                        LabeledContent(AppText.localized("新規と復習の順序")) {
+                            Picker("", selection: string("scheduling", "newReviewMix", fallback: "DISTRIBUTE")) {
+                                Text(AppText.localized("混ぜる")).tag("DISTRIBUTE"); Text(AppText.localized("復習を先に")).tag("REVIEWS_FIRST"); Text(AppText.localized("新規を先に")).tag("NEW_FIRST")
+                            }
+                                .labelsHidden().pickerStyle(.menu)
                         }
                         Toggle(AppText.localized("学習負荷の分散"), isOn: boolean("reviewing", "loadBalancerEnabled"))
                     }
@@ -957,8 +981,8 @@ struct ToolbarEagerSettingsReductionView: ToolbarModelSettingsFocusView {
                         Toggle(AppText.localized("追加先を現在のデッキにする"), isOn: boolean("editing", "addingDefaultsToCurrentDeck"))
                         Toggle(AppText.localized("画像をPNGで取り込む"), isOn: boolean("editing", "pasteImagesAsPng"))
                     }
-                    Section { NavigationLink(AppText.localized("ライセンスとソース")) { OpenSourceLicensesView().formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) } }
-                    Section { NavigationLink(AppText.localized("学習リマインダー")) { ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks).formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic) }.accessibilityIdentifier("reminder-open") }
+                    Section { NavigationLink(AppText.localized("ライセンスとソース")) { OpenSourceLicensesView() } }
+                    Section { NavigationLink(AppText.localized("学習リマインダー")) { ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks) }.accessibilityIdentifier("reminder-open") }
                     Section(AppText.localized("カードのJavaScript権限")) {
                         Toggle(AppText.localized("テンプレートからマイク録音を許可"), isOn: $allowTemplateAudioRecording).accessibilityIdentifier("allow-template-audio-recording")
                         Text(AppText.localized("有効にして保存すると、iPadOSのマイク許可も確認します。カメラへのアクセスは許可しません。"))
@@ -977,7 +1001,6 @@ struct ToolbarEagerSettingsReductionView: ToolbarModelSettingsFocusView {
                     }
                 } else { ProgressView() }
             }
-            .formStyle(ToolbarEagerFormStyle())
             .accessibilityIdentifier("settings-form")
             .studyThemeSurface()
             .disabled(busy)

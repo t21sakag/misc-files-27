@@ -1,14 +1,15 @@
 #if DEBUG
 import SwiftUI
 
-/// Diagnostic only: retain the original Form's sections and native controls,
-/// but render them eagerly without recycled list cells. Production keeps its
-/// platform Form until rendering, labels, navigation and persistence are proved.
-struct ToolbarEagerFormStyle: FormStyle {
-    func makeBody(configuration: Configuration) -> some View {
+/// Diagnostic full-content container: resolve the original sections directly,
+/// before platform Form styling removes visible control labels.
+struct ToolbarEagerSettingsForm<Content: View>: View {
+    private let content: Content
+    init(@ViewBuilder content: () -> Content) { self.content = content() }
+    var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                ForEach(sections: configuration.content.labeledContentStyle(ToolbarEagerLabeledContentStyle())) { section in
+                ForEach(sections: content) { section in
                     VStack(alignment: .leading, spacing: 8) {
                         if !section.header.isEmpty {
                             VStack(alignment: .leading) { section.header }
@@ -37,23 +38,6 @@ struct ToolbarEagerFormStyle: FormStyle {
             .padding(.horizontal, 16).padding(.vertical, 20)
         }
         .accessibilityIdentifier("settings-eager-scroll")
-        // Keep choices as native menus; nested destination Forms retain their
-        // ordinary platform style rather than inheriting this experiment.
-        .pickerStyle(.menu)
-        .formStyle(.automatic)
-    }
-}
-
-/// Form's platform renderer normally supplies this visual label/value layout.
-/// Apply the style before resolving subviews so labels are retained alongside
-/// native pickers and text fields, rather than only in accessibility metadata.
-private struct ToolbarEagerLabeledContentStyle: LabeledContentStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            configuration.label.fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-            configuration.content
-        }
     }
 }
 #endif

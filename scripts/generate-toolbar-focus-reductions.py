@@ -57,6 +57,60 @@ def source_parts(raw):
     return ''.join(lines[:begin[0]+1]), blocks, labels, ''.join(lines[end[0]:])
 
 
+def eager_content(raw):
+    """Keep picker bodies/tags/IDs verbatim while making their labels visible."""
+    marker = '            Form {\n'
+    assert raw.count(marker) == 1
+    body = raw.replace(marker, '            ToolbarEagerSettingsForm {\n', 1)
+    pattern = re.compile(r'^( +)Picker\(AppText\.localized\("([^"]+)"\), selection:', re.M)
+    matches = list(pattern.finditer(body))
+    assert len(matches) == 8, 'Inspect actual picker coverage before adapting labels'
+    replacements = []
+    for match in reversed(matches):
+        opening = body.index('{', match.end())
+        depth, quoted, escaped, closing = 0, False, False, None
+        for index in range(opening, len(body)):
+            char = body[index]
+            if quoted:
+                if escaped:
+                    escaped = False
+                elif char == '\\':
+                    escaped = True
+                elif char == '"':
+                    quoted = False
+                continue
+            if char == '"':
+                quoted = True
+            elif char == '{':
+                depth += 1
+            elif char == '}':
+                depth -= 1
+                if depth == 0:
+                    closing = index
+                    break
+        assert closing is not None
+        end = body.index('\n', closing) + 1
+        old = body[match.start():end]
+        indent, label = match.groups()
+        header = 'Picker(AppText.localized(' + json.dumps(label, ensure_ascii=False) + '), selection:'
+        assert old.count(header) == 1
+        picker = old.replace(header, 'Picker("", selection:', 1)
+        adapted = indent + 'LabeledContent(AppText.localized(' + json.dumps(label, ensure_ascii=False) + ')) {\n'
+        adapted += ''.join('    ' + line for line in picker.splitlines(keepends=True))
+        adapted += indent + '        .labelsHidden().pickerStyle(.menu)\n' + indent + '}\n'
+        replacements.append((old, adapted))
+        body = body[:match.start()] + adapted + body[end:]
+    # Lossless reverse comparison protects all selection expressions, enum
+    # tags, native IDs, model/default values and persistence callbacks.
+    reverse = body
+    for old, adapted in replacements:
+        assert reverse.count(adapted) == 1
+        reverse = reverse.replace(adapted, old, 1)
+    reverse = reverse.replace('            ToolbarEagerSettingsForm {\n', marker, 1)
+    assert reverse == raw
+    return body, [match.group(2) for match in matches]
+
+
 def generate():
     raw = (ROOT / SOURCE).read_text()
     prefix, blocks, labels, suffix = source_parts(raw)
@@ -86,32 +140,14 @@ def generate():
                 'plan': PLAN, 'plan_sha256': hashlib.sha256(plan_raw.encode()).hexdigest(),
                 'stage': plan['stage'], 'shared_sections': selected_labels['shared'],
                 'section_sha256': {label: hashlib.sha256(block.encode()).hexdigest() for label, block in zip(labels, blocks)},
-                'renderer_sources': {'ios/AnkiPad/ToolbarEagerFormStyle.swift':
-                                     hashlib.sha256((ROOT / 'ios/AnkiPad/ToolbarEagerFormStyle.swift').read_bytes()).hexdigest()},
+                'renderer_sources': {'ios/AnkiPad/ToolbarEagerSettingsForm.swift':
+                                     hashlib.sha256((ROOT / 'ios/AnkiPad/ToolbarEagerSettingsForm.swift').read_bytes()).hexdigest()},
                 'variants': {}}
     for name, selected in variants.items():
         typename = 'Toolbar' + name.title() + 'SettingsReductionView'
         body = raw if name in ('full', 'eager') else prefix + ''.join(blocks[i] for i in selected) + suffix
         if name == 'eager':
-            marker = '            .accessibilityIdentifier("settings-form")\n'
-            assert body.count(marker) == 1
-            body = body.replace(marker, '            .formStyle(ToolbarEagerFormStyle())\n' + marker, 1)
-            # Style overrides belong to this form, not to the native forms or
-            # lists opened by its links. Restore their original defaults at
-            # the destination boundary before the subview proxy is resolved.
-            destinations = [
-                'DeckBackgroundSettingsView(root: model.engine.root, change: $deckBackgroundChange)',
-                'ReviewGestureSettingsView(configuration: $gestureConfiguration)',
-                'ReviewTouchSettingsView(configuration: $touchConfiguration)',
-                'ReviewToolbarSettingsView(configuration: $toolbarConfiguration)',
-                'ReviewKeyboardSettingsView(configuration: $keyboardConfiguration)',
-                'ReviewGamepadSettingsView(configuration: $gamepadConfiguration)',
-                'OpenSourceLicensesView()',
-                'ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks)',
-            ]
-            for destination in destinations:
-                assert body.count(destination) == 1
-                body = body.replace(destination, destination + '.formStyle(.automatic).labeledContentStyle(.automatic).pickerStyle(.automatic)', 1)
+            body, picker_labels = eager_content(body)
         assert body.count('struct SettingsView: View {') == 1
         body = body.replace('struct SettingsView: View {', 'struct ' + typename + ': ToolbarModelSettingsFocusView {', 1)
         field = '    @ObservedObject var model: StudyModel\n'
@@ -120,8 +156,9 @@ def generate():
         chunks += ['\n// Variant: ' + name + '\n', body]
         manifest['variants'][name] = {'type': typename, 'sections': [labels[i] for i in selected],
                                      'retains_full_source_layout': name in ('full', 'eager'),
-                                     'renderer': 'eager-native-sections' if name == 'eager' else 'platform-form',
-                                     'destinations_use_platform_defaults': name == 'eager'}
+                                     'renderer': 'direct-eager-sections' if name == 'eager' else 'platform-form'}
+        if name == 'eager':
+            manifest['variants'][name]['explicit_picker_labels'] = picker_labels
     chunks.append('#endif\n')
     output = ''.join(chunks)
     manifest['generated_sha256'] = hashlib.sha256(output.encode()).hexdigest()
