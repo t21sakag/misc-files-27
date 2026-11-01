@@ -28,13 +28,23 @@ class StudyFlowTestSupport: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: timeout), .completed)
     }
 
-    func tapScreenFrame(_ element: XCUIElement, in app: XCUIApplication) {
+    func tapScreenFrame(_ element: XCUIElement, in app: XCUIApplication,
+                        normalizedOffset: CGVector = CGVector(dx: 0.5, dy: 0.5)) {
         waitUntilHittable(element)
         let frame = element.frame, origin = app.frame.origin
+        guard normalizedOffset.dx.isFinite, normalizedOffset.dy.isFinite,
+              (0...1).contains(normalizedOffset.dx), (0...1).contains(normalizedOffset.dy) else {
+            XCTFail("Screen-frame tap needs a normalized point inside the resolved element"); return
+        }
+        let point = CGPoint(x: frame.minX + frame.width * normalizedOffset.dx,
+                            y: frame.minY + frame.height * normalizedOffset.dy)
+        guard app.frame.contains(point) else {
+            XCTFail("Resolved screen-frame tap point is outside the application"); return
+        }
         // WebKit can add its content offset again to element-relative taps.
         // Anchor at the native app instead of using the Web accessibility node.
         app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
-            .withOffset(CGVector(dx: frame.midX - origin.x, dy: frame.midY - origin.y)).tap()
+            .withOffset(CGVector(dx: point.x - origin.x, dy: point.y - origin.y)).tap()
     }
 
     /// A semantic transition needs the same terminal-state evidence as a

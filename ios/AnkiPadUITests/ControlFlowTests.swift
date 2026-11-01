@@ -4,85 +4,80 @@ final class ControlFlowTests: StudyFlowTestSupport {
     func testDeckContextDeletionKeepsTargetAfterConfirmationDismisses() {
         let app = makeApplication()
         app.launch()
-        let menu = app.buttons["collection-menu"]
-        XCTAssertTrue(menu.waitForExistence(timeout: 30)); menu.tap(); app.buttons["デッキを作成"].tap()
-        let dialog = app.alerts["デッキを作成"]
-        XCTAssertTrue(dialog.waitForExistence(timeout: 20))
-        let field = dialog.textFields.firstMatch
-        field.tap(); field.typeText("Deletion confirmation check")
-        dialog.buttons["保存"].tap()
-        let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'deck-' AND label CONTAINS 'Deletion confirmation check'")).firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 30), app.debugDescription)
-        row.press(forDuration: 1)
-        app.buttons["削除"].firstMatch.tap()
-        let confirm = app.buttons["deck-delete-confirm"].firstMatch
-        XCTAssertTrue(confirm.waitForExistence(timeout: 20), app.debugDescription)
-        confirm.tap()
-        XCTAssertTrue(row.waitForNonExistence(timeout: 30), app.debugDescription)
-        XCTAssertTrue(app.buttons["deck-1"].exists, "Unrelated fixture deck must remain")
+        tapTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
+        tapTestMenuAction(titles: ["デッキを作成"], in: app)
+        let dialog = app.alerts.matching(identifier: "デッキを作成")
+        typeInEmptyTestField(dialog.textFields, text: "Deletion confirmation check", in: app)
+        tapTestAlertAction(titles: ["保存"], in: dialog, application: app)
+        let names = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'deck-' AND label CONTAINS 'Deletion confirmation check'"))
+        guard let created = waitForTestControl(names, in: app) else { return }
+        let id = created.identifier
+        let target = app.buttons.matching(identifier: id)
+        created.press(forDuration: 1)
+        tapTestMenuAction(titles: ["削除"], in: app)
+        tapTestControl(app.buttons.matching(identifier: "deck-delete-confirm"), in: app, keyboard: .keep)
+        requireTestCondition("Confirmed deck target is removed", in: app) { target.count == 0 }
+        waitForTestControl(app.buttons.matching(identifier: "deck-1"), in: app, purpose: .observation)
         app.terminate(); app.launchArguments = []; app.launch()
-        XCTAssertTrue(app.buttons["deck-1"].waitForExistence(timeout: 30))
-        XCTAssertFalse(row.exists, "Deletion must persist across relaunch")
-        XCTAssertFalse(app.alerts.firstMatch.exists)
+        waitForTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
+        XCTAssertEqual(target.count, 0, "Deletion must persist across relaunch")
+        XCTAssertEqual(names.count, 0, "Deleted deck name must not reappear with a different ID")
+        XCTAssertFalse(app.alerts.element.exists)
     }
 
     func testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions() {
         let app = makeApplication()
         app.launch()
-        let menu = app.buttons["collection-menu"]
-        XCTAssertTrue(menu.waitForExistence(timeout: 30))
-        menu.tap(); app.buttons["設定"].tap()
-        let settings = app.collectionViews["settings-form"]
-        let toolbarLink = app.buttons["toolbar-settings-open"]
-        for _ in 0..<12 { if toolbarLink.exists && toolbarLink.isHittable { break }; settings.swipeUp() }
-        waitUntilHittable(toolbarLink); toolbarLink.tap()
-        func enable(_ id: String) {
-            let outer = app.switches[id]
-            XCTAssertTrue(outer.waitForExistence(timeout: 20))
-            let control = outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
-            if control.value as? String != "1" { control.tap() }
-            let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '1'"), object: control)
-            XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 10), .completed)
+        tapTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
+        tapTestMenuAction(titles: ["設定"], in: app)
+        let toolbarLink = app.buttons.matching(identifier: "toolbar-settings-open")
+        revealSettingsControl(toolbarLink.element, in: app)
+        tapTestControl(toolbarLink, in: app)
+        guard setTestSwitch(app.switches.matching(identifier: "toolbar-enabled"), enabled: true, in: app) else { return }
+        // Preserve the real back-navigation path implicated by the earlier
+        // app focus assertion. Do not replace it with dismiss/relaunch.
+        XCTContext.runActivity(named: "Before toolbar settings back navigation") { activity in
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "Toolbar settings before navigation"; hierarchy.lifetime = .keepAlways
+            let screen = XCTAttachment(screenshot: app.screenshot()); screen.lifetime = .keepAlways
+            activity.add(hierarchy); activity.add(screen)
         }
-        enable("toolbar-enabled")
-        app.navigationBars["操作バーの設定"].buttons.element(boundBy: 0).tap()
-        let touchLink = app.buttons["touch-settings-open"]
-        XCTAssertTrue(touchLink.waitForExistence(timeout: 20)); touchLink.tap()
-        enable("touch-enabled")
-        let zone = app.buttons["touch-zone-8"]
-        for _ in 0..<12 { if zone.exists && zone.isHittable { break }; app.collectionViews["touch-settings-form"].swipeUp() }
-        waitUntilHittable(zone); zone.tap()
-        let show = app.buttons["解答を表示"].firstMatch
-        XCTAssertTrue(show.waitForExistence(timeout: 20)); show.tap()
-        app.navigationBars["タッチ領域の割り当て"].buttons.element(boundBy: 0).tap()
-        app.buttons["settings-save"].tap()
-        XCTAssertTrue(menu.waitForExistence(timeout: 30))
+        let backTitle = NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["設定", "戻る", "Back"]))
+        tapTestControl(app.navigationBars["操作バーの設定"].buttons.matching(backTitle), in: app)
+        requireTestCondition("Native back navigation returns to settings", in: app) {
+            app.state == .runningForeground && !app.navigationBars["操作バーの設定"].exists && app.navigationBars["設定"].exists
+        }
+        let touchLink = app.buttons.matching(identifier: "touch-settings-open")
+        revealSettingsControl(touchLink.element, in: app)
+        tapTestControl(touchLink, in: app)
+        let form = app.collectionViews["touch-settings-form"]
+        guard waitForTestControl(app.switches.matching(identifier: "touch-enabled"), in: app, form: form, purpose: .observation) != nil,
+              setTestSwitch(app.switches.matching(identifier: "touch-enabled"), enabled: true, in: app) else { return }
+        tapTestControl(app.buttons.matching(identifier: "touch-zone-8"), in: app, form: form)
+        tapTestMenuAction(titles: ["解答を表示"], in: app)
+        tapTestControl(app.navigationBars["タッチ領域の割り当て"].buttons.matching(backTitle), in: app)
+        waitForTestControl(app.navigationBars.matching(identifier: "設定"), in: app, purpose: .observation)
+        tapTestControl(app.buttons.matching(identifier: "settings-save"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
         app.terminate(); app.launchArguments = []; app.launch()
-        let deck = app.buttons["deck-1"]
-        XCTAssertTrue(deck.waitForExistence(timeout: 30)); deck.tap()
-        let web = app.webViews.firstMatch
-        XCTAssertTrue(web.staticTexts["AnkiDroid API metadata verified"].waitForExistence(timeout: 30))
-        let toolbar = app.descendants(matching: .any).matching(identifier: "custom-review-toolbar").firstMatch
-        XCTAssertTrue(toolbar.waitForExistence(timeout: 20), "Enabled toolbar must survive relaunch")
-        func action(_ title: String) -> XCUIElement {
-            app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'review-toolbar-' AND label == %@", title)).firstMatch
+        tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
+        waitForTestControl(app.webViews.staticTexts.matching(identifier: "AnkiDroid API metadata verified"), in: app, purpose: .observation)
+        // These unique action IDs exist only in the enabled persisted toolbar;
+        // exercise them rather than relying on an inferred container AX type.
+        func actions(_ title: String) -> XCUIElementQuery {
+            app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'review-toolbar-' AND label == %@", title))
         }
-        let mark = action("マークを切り替え")
-        waitUntilHittable(mark); mark.tap()
-        app.buttons["reviewer-menu"].tap()
-        let remove = app.buttons["マークを外す"]
-        XCTAssertTrue(remove.waitForExistence(timeout: 20), "Toolbar must perform the actual native mark operation")
-        remove.tap()
-        let edit = action("ノートを編集")
-        waitUntilHittable(edit); edit.tap()
-        let close = app.buttons["note-close"]
-        XCTAssertTrue(close.waitForExistence(timeout: 20)); close.tap()
-        XCTAssertTrue(app.buttons["reveal"].waitForExistence(timeout: 20))
-        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: app.buttons["reveal"])
-        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 30), .completed)
+        tapTestControl(actions("マークを切り替え"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "reviewer-menu"), in: app)
+        tapTestMenuAction(titles: ["マークを外す"], in: app)
+        tapTestControl(actions("ノートを編集"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "note-close"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "reveal"), in: app)
         // Blank card space in configured lower-right zone, not a DOM control.
-        web.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.92)).tap()
-        XCTAssertTrue(app.buttons["answer-2"].waitForExistence(timeout: 20), "Persisted region assignment must reveal through the actual WebKit tap bridge")
-        XCTAssertFalse(app.alerts.firstMatch.exists)
+        // Use the shared app-anchored frame mapping to avoid WebKit offsets.
+        guard let web = waitForTestControl(app.webViews, in: app) else { return }
+        tapScreenFrame(web, in: app, normalizedOffset: CGVector(dx: 0.9, dy: 0.92))
+        waitForTestControl(app.buttons.matching(identifier: "answer-2"), in: app)
+        XCTAssertFalse(app.alerts.element.exists)
     }
 }

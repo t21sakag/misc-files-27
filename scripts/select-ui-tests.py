@@ -28,6 +28,8 @@ suites = {
     'note-recording': ['testRecordedNoteInsertionSurvivesSheetCleanupAndRelaunchWithPlayableMedia'],
     'voice-recording': ['testReviewRecordingReferenceComparisonAndTemporaryCleanup'],
     'voice': ['testCardAudioQueueCompletesOnceAndCancellationDoesNotReplay', 'testReviewRecordingReferenceComparisonAndTemporaryCleanup'],
+    'controls-regression': ['testCustomToolbarAndTouchAssignmentPersistAndPerformNativeActions', 'testDeckContextDeletionKeepsTargetAfterConfirmationDismisses'],
+    'deck-delete': ['testDeckContextDeletionKeepsTargetAfterConfirmationDismisses'],
     'sync-confirmations': ['testAutomaticFullDownloadRequiresDirectionChoice', 'testAutomaticFullUploadRequiresDirectionChoice', 'testFullSyncWithLocalDataRequiresTypedUploadConfirmation'],
     'download-only': ['testAutomaticFullDownloadRequiresDirectionChoice'],
     'typed-upload': ['testFullSyncWithLocalDataRequiresTypedUploadConfirmation'],
