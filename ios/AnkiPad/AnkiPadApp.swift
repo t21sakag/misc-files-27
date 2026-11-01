@@ -4,7 +4,20 @@ import PencilKit
 import UIKit
 import AVFoundation
 
-@main struct AnkiPadApp: App {
+@main enum AppEntryPoint {
+    @MainActor static func main() {
+        #if DEBUG
+        if UITestIsolation.namespace() != nil,
+           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-minimal") {
+            ToolbarFocusReproductionApp.main()
+            return
+        }
+        #endif
+        AnkiPadApp.main()
+    }
+}
+
+struct AnkiPadApp: App {
     @UIApplicationDelegateAdaptor(ReviewNotificationAppDelegate.self) private var notificationDelegate
     @AppStorage("appearance") private var appearance = "system"
     init() {

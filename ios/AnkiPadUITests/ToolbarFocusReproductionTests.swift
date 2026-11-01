@@ -1,0 +1,36 @@
+import XCTest
+
+/// Application crash diagnosis, not an additional AnkiDroid feature claim.
+final class ToolbarFocusReproductionTests: StudyFlowTestSupport {
+    func testProductionToolbarInMinimalPresentedNavigationCanReturnAfterToggle() {
+        let app = makeApplication()
+        app.launchArguments = ["--uitest-toolbar-focus-minimal"]
+        app.launch()
+        tapTestControl(app.buttons.matching(identifier: "focus-repro-settings"), in: app)
+        let backTitle = NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["設定", "戻る", "Back"]))
+        var previous = false
+        for cycle in 1...3 {
+            tapTestControl(app.buttons.matching(identifier: "focus-repro-toolbar"), in: app)
+            let toggle = app.switches.matching(identifier: "toolbar-enabled")
+            guard let row = waitForTestControl(toggle, in: app, purpose: .observation) else { return }
+            XCTAssertEqual(row.value as? String, previous ? "1" : "0", "Real configuration binding survives navigation")
+            let enabled = !previous
+            guard setTestSwitch(toggle, enabled: enabled, in: app) else { return }
+            XCTContext.runActivity(named: "Minimal toolbar before native back cycle \(cycle)") { activity in
+                let hierarchy = XCTAttachment(string: app.debugDescription)
+                hierarchy.name = "Minimal toolbar before back"; hierarchy.lifetime = .keepAlways
+                let screen = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); screen.lifetime = .keepAlways
+                activity.add(hierarchy); activity.add(screen)
+            }
+            tapTestControl(app.navigationBars["操作バーの設定"].buttons.matching(backTitle), in: app)
+            requireTestCondition("Minimal toolbar native back returns on cycle \(cycle)", in: app) {
+                app.state == .runningForeground && !app.navigationBars["操作バーの設定"].exists
+                    && app.navigationBars["設定"].exists && app.collectionViews["focus-repro-form"].exists
+            }
+            previous = enabled
+        }
+        tapTestControl(app.buttons.matching(identifier: "focus-repro-cancel"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "focus-repro-settings"), in: app)
+        XCTAssertFalse(app.alerts.element.exists)
+    }
+}
