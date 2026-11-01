@@ -33,6 +33,8 @@ assert any('audio.playback.trace' in value and 'AVAudioSession_iOS.mm' in value 
 assert any('reminder.save.trace' in value and 'typing.focus.trace' in value and 'usernotificationsd' in value for value in sys.argv)
 assert any('browser.selection.trace' in value for value in sys.argv)
 assert any('ui.publication.trace' in value for value in sys.argv)
+assert any('process == "AnkiPad"' in value and '_UIFocusContainerGuide' in value and 'Terminating app due to uncaught exception' in value for value in sys.argv)
+print('*** Terminating app due to uncaught exception NSInvalidArgumentException, reason: fixture focus reason', flush=True)
 print('browser.options.trace phase=load.end loaded=1', flush=True)
 print('browser.selection.trace phase=all.enter rows=3 selected=0', flush=True)
 print('WidgetProbe timeline.request', flush=True)
@@ -55,6 +57,7 @@ while True: time.sleep(1)
         assert b'WidgetProbe timeline.request' in (output/'live.log').read_bytes()
         assert b'browser.options.trace phase=load.end' in (output/'live.log').read_bytes()
         assert b'browser.selection.trace phase=all.enter' in (output/'live.log').read_bytes()
+        assert b'fixture focus reason' in (output/'live.log').read_bytes()
         # An observer failure must not replace a successful UI command's result.
         executable.write_text('#!/usr/bin/env python3\nraise SystemExit(149)\n')
         assert module.run(simulator, bundle, base/'unavailable', [sys.executable, '-c', 'pass']) == 0

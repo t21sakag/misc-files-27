@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture the owned simulator's widget log while the selected UI command runs.
+"""Capture owned simulator diagnostics while the selected UI command runs.
 
 Xcode may shut down the simulator before a post-test log-show command can run.
 The observer never boots a device, retries a test, or changes its exit status.
@@ -52,7 +52,7 @@ def run(simulator, bundle, output, command):
             raise KeyboardInterrupt
 
     try:
-        predicate = 'process == "StudyWidgets" OR eventMessage CONTAINS ' + json.dumps(bundle) + ' OR eventMessage BEGINSWITH "browser.options.trace " OR eventMessage BEGINSWITH "browser.selection.trace " OR eventMessage BEGINSWITH "ui.publication.trace " OR eventMessage BEGINSWITH "audio.playback.trace " OR eventMessage CONTAINS "AVAudioSession_iOS.mm" OR eventMessage CONTAINS "SessionCore.mm" OR eventMessage BEGINSWITH "typing.focus.trace " OR eventMessage BEGINSWITH "reminder.save.trace " OR process == "usernotificationsd"'
+        predicate = 'process == "StudyWidgets" OR eventMessage CONTAINS ' + json.dumps(bundle) + ' OR eventMessage BEGINSWITH "browser.options.trace " OR eventMessage BEGINSWITH "browser.selection.trace " OR eventMessage BEGINSWITH "ui.publication.trace " OR eventMessage BEGINSWITH "audio.playback.trace " OR eventMessage CONTAINS "AVAudioSession_iOS.mm" OR eventMessage CONTAINS "SessionCore.mm" OR eventMessage BEGINSWITH "typing.focus.trace " OR eventMessage BEGINSWITH "reminder.save.trace " OR process == "usernotificationsd" OR process == "AnkiPad" OR eventMessage CONTAINS "_UIFocusContainerGuide" OR eventMessage CONTAINS "Terminating app due to uncaught exception"'
         try:
             observer = subprocess.Popen(['xcrun', 'simctl', 'spawn', simulator, 'log', 'stream',
                 '--style', 'compact', '--level', 'info', '--predicate', predicate],
