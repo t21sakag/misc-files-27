@@ -20,9 +20,13 @@ class ReminderFlowTestSupport: StudyFlowTestSupport {
         }
     }
 
-    func setReminderSwitch(_ id: String, enabled: Bool, in app: XCUIApplication) {
+    func setReminderSwitch(_ id: String, enabled: Bool, in app: XCUIApplication, searchUpward: Bool = true) {
         let query = app.collectionViews["reminder-form"].switches.matching(identifier: id)
-        guard waitForTestControl(query, in: app, form: app.collectionViews["reminder-form"], purpose: .observation) != nil else { return }
+        // A lazy form drops offscreen AX rows. The caller knows whether its
+        // next setting precedes or follows the current viewport; preserve that
+        // direction instead of repeatedly dragging into the bottom boundary.
+        revealFormControl(query.element, in: app.collectionViews["reminder-form"],
+                          topInset: 40, bottomInset: 20, maximumAttempts: 12, searchUpward: searchUpward)
         setTestSwitch(query, enabled: enabled, in: app)
     }
 

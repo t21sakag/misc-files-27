@@ -373,7 +373,16 @@ class StudyFlowTestSupport: XCTestCase {
             form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: start))
                 .press(forDuration: 0.1, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: start + (upward ? -distance : distance))), withVelocity: .slow, thenHoldForDuration: 0.2)
         }
-        XCTFail("Form control did not become fully visible: " + form.debugDescription)
+        let evidence = "Form control did not become fully visible; searchUpward=\(searchUpward)\n"
+            + item.debugDescription + "\n" + form.debugDescription
+        XCTContext.runActivity(named: "Form reveal terminal state") { activity in
+            let hierarchy = XCTAttachment(string: evidence)
+            hierarchy.name = "Target query and terminal form"; hierarchy.lifetime = .keepAlways
+            let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+            screenshot.name = "Terminal form viewport"; screenshot.lifetime = .keepAlways
+            activity.add(hierarchy); activity.add(screenshot)
+        }
+        XCTFail(evidence)
     }
 
     var syncFixturePort: Int { 18891 }
