@@ -435,14 +435,18 @@ struct ContentView: View {
             Button(AppText.localized("今後は確認しない")) { model.allowMeteredSyncAlways() }
             Button(AppText.localized("キャンセル"), role: .cancel) {}
         } message: { Text(AppText.localized("モバイル回線などで同期すると、データ通信量がかかる場合があります。")) }
-        .confirmationDialog(AppText.localized("同期するデータを選択"), isPresented: Binding(get: { model.chooseFullSync && !model.busy && phase == .active }, set: { model.chooseFullSync = $0 }), titleVisibility: .visible) {
+        .confirmationDialog(AppText.localized("同期するデータを選択"), isPresented: Binding(get: { model.chooseFullSync && !model.busy && phase == .active }, set: {
+            // SwiftUI can repeat its dismissal write while updating the view.
+            // Publishing the same state again would invalidate that update.
+            if model.chooseFullSync != $0 { model.chooseFullSync = $0 }
+        }), titleVisibility: .visible) {
             if let decision = model.syncDecision {
                 if decision.canDownload { Button(AppText.localized("AnkiWebのデータをこのiPadにダウンロード"), role: .destructive) { model.confirmDirection = false } }
                 if decision.canUpload { Button(AppText.localized("このiPadのデータをAnkiWebにアップロード"), role: .destructive) { uploadConfirmation = ""; model.confirmDirection = true } }
                 Button(AppText.localized("キャンセル"), role: .cancel) { model.syncDecision = nil }
             }
         } message: { Text((model.syncDecision?.localSummary ?? "") + AppText.localized("\n一方のコレクション全体を使う必要があります。置き換える側だけの変更は失われます。")) }
-        .alert(AppText.localized("データを置き換えますか？"), isPresented: Binding(get: { model.confirmDirection != nil }, set: { if !$0 { model.confirmDirection = nil } })) {
+        .alert(AppText.localized("データを置き換えますか？"), isPresented: Binding(get: { model.confirmDirection != nil }, set: { if !$0, model.confirmDirection != nil { model.confirmDirection = nil } })) {
             if let upload = model.confirmDirection {
                 if upload { TextField(AppText.localized("アップロード と入力"), text: $uploadConfirmation) }
                 Button(AppText.localized("置き換えて同期"), role: .destructive) {
