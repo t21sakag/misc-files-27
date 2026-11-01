@@ -32,6 +32,12 @@ import UniformTypeIdentifiers
         }
         speech.delegate = speechDelegate
     }
+    private func tracePlayback(_ phase: String) {
+        #if DEBUG
+        guard UITestIsolation.namespace() != nil || NSClassFromString("XCTestCase") != nil else { return }
+        NSLog("audio.playback.trace phase=%@ main=%d", phase, Thread.isMainThread ? 1 : 0)
+        #endif
+    }
     var isPreparing: Bool { preparing }
     // Preparing belongs to the queue lifetime, so wait-for-audio cannot race startup.
     var isPlaying: Bool { preparing || player?.isPlaying == true || speech.isSpeaking || video != nil }
@@ -48,7 +54,13 @@ import UniformTypeIdentifiers
         completion = nil
         preferredVoices = [:]
         currentUtterance = nil; utteranceGeneration = nil
-        pending = []; player?.stop(); player = nil; speech.stopSpeaking(at: .immediate)
+        pending = []
+        tracePlayback("player-stop.begin")
+        player?.stop(); player = nil
+        tracePlayback("player-stop.end")
+        tracePlayback("speech-stop.begin")
+        speech.stopSpeaking(at: .immediate)
+        tracePlayback("speech-stop.end")
         finishVideo(continueQueue: false)
     }
     private func finishVideo(continueQueue: Bool) {
@@ -159,7 +171,9 @@ import UniformTypeIdentifiers
                     if !playVideo(url) { advance() }
                     return
                 }
+                tracePlayback("player-init.begin")
                 let audio = try AVAudioPlayer(contentsOf: url)
+                tracePlayback("player-init.end")
                 let delegate = AudioDelegate { [weak self] in
                     guard let self, self.generation == playbackGeneration else { return }
                     self.advance()
@@ -167,7 +181,10 @@ import UniformTypeIdentifiers
                 self.delegate = delegate
                 audio.delegate = delegate
                 player = audio
-                if !audio.play() { advance() }
+                tracePlayback("player-play.begin")
+                let started = audio.play()
+                tracePlayback("player-play.end")
+                if !started { advance() }
             } catch { advance() }
         } else if let tts = tag["tts"] as? [String: Any], let text = tts["fieldText"] as? String {
             let utterance = AVSpeechUtterance(string: text)
@@ -178,7 +195,9 @@ import UniformTypeIdentifiers
             utterance.rate = min(AVSpeechUtteranceMaximumSpeechRate, max(AVSpeechUtteranceMinimumSpeechRate, AVSpeechUtteranceDefaultSpeechRate * Float(speed)))
             currentUtterance = utterance
             utteranceGeneration = playbackGeneration
+            tracePlayback("speech-play.begin")
             speech.speak(utterance)
+            tracePlayback("speech-play.end")
         } else { advance() }
     }
     private final class SpeechDelegate: NSObject, AVSpeechSynthesizerDelegate {
