@@ -3,6 +3,10 @@ import AVFoundation
 
 struct SettingsView: View {
     @ObservedObject var model: StudyModel
+    private enum Destination: Hashable {
+        case background, gestures, touch, toolbar, keyboard, gamepad, licenses, reminders
+    }
+    @State private var navigationPath: [Destination] = []
     @Environment(\.dismiss) private var dismiss
     @State private var values: [String: Any] = [:]
     @State private var loaded = false
@@ -46,7 +50,7 @@ struct SettingsView: View {
     @State private var swipeReview: Bool = UserDefaults.standard.object(forKey: "swipeReview") as? Bool ?? true
     @State private var keepWhiteboard: Bool = UserDefaults.standard.object(forKey: "keepWhiteboard") as? Bool ?? false
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             Form {
                 if loaded {
                     Section(AppText.localized("アプリの言語")) {
@@ -93,9 +97,8 @@ struct SettingsView: View {
                         Toggle(AppText.localized("アプリのアニメーションを無効にする"), isOn: $removeAnimations).accessibilityIdentifier("remove-app-animations")
                         Text(AppText.localized("iPadの「視差効果を減らす」やE Inkテーマが有効な場合も、アプリの画面遷移を抑制します。"))
                             .font(.caption).foregroundStyle(.secondary)
-                        NavigationLink(AppText.localized("デッキ一覧の背景")) {
-                            DeckBackgroundSettingsView(root: model.engine.root, change: $deckBackgroundChange)
-                        }.accessibilityIdentifier("deck-background-open")
+                        NavigationLink(AppText.localized("デッキ一覧の背景"), value: Destination.background)
+                            .accessibilityIdentifier("deck-background-open")
                         VStack(alignment: .leading) { Text(AppText.localized("カードの拡大率: \(String(Int(reviewZoom * 100)) + "%")")); Slider(value: $reviewZoom, in: 0.5...2.5, step: 0.05) }
                         Stepper(AppText.localized("画像の拡大率: \(String(imageZoom) + "%")"), value: $imageZoom, in: 50...300, step: 10)
                             .accessibilityIdentifier("image-zoom")
@@ -136,11 +139,11 @@ struct SettingsView: View {
                             .font(.caption).foregroundStyle(.secondary)
                         Toggle(AppText.localized("入力式カードの解答欄に自動フォーカス"), isOn: $autoFocusTypeInAnswer).accessibilityIdentifier("auto-focus-type-answer")
                         Toggle(AppText.localized("スワイプで解答・評価"), isOn: $swipeReview)
-                        NavigationLink(AppText.localized("スワイプの割り当て")) { ReviewGestureSettingsView(configuration: $gestureConfiguration) }
-                        NavigationLink(AppText.localized("タッチ領域の割り当て")) { ReviewTouchSettingsView(configuration: $touchConfiguration) }.accessibilityIdentifier("touch-settings-open")
-                        NavigationLink(AppText.localized("操作バーの設定")) { ReviewToolbarSettingsView(configuration: $toolbarConfiguration) }.accessibilityIdentifier("toolbar-settings-open")
-                        NavigationLink(AppText.localized("キーボードの割り当て")) { ReviewKeyboardSettingsView(configuration: $keyboardConfiguration) }
-                        NavigationLink(AppText.localized("ゲームパッドの割り当て")) { ReviewGamepadSettingsView(configuration: $gamepadConfiguration) }
+                        NavigationLink(AppText.localized("スワイプの割り当て"), value: Destination.gestures)
+                        NavigationLink(AppText.localized("タッチ領域の割り当て"), value: Destination.touch).accessibilityIdentifier("touch-settings-open")
+                        NavigationLink(AppText.localized("操作バーの設定"), value: Destination.toolbar).accessibilityIdentifier("toolbar-settings-open")
+                        NavigationLink(AppText.localized("キーボードの割り当て"), value: Destination.keyboard)
+                        NavigationLink(AppText.localized("ゲームパッドの割り当て"), value: Destination.gamepad)
                         Toggle(AppText.localized("次のカードにも手書きを残す"), isOn: $keepWhiteboard)
                         Toggle(AppText.localized("音声再生ボタンを隠す"), isOn: boolean("reviewing", "hideAudioPlayButtons"))
                         Toggle(AppText.localized("解答表示時に問題側の音声を止める"), isOn: boolean("reviewing", "interruptAudioWhenAnswering"))
@@ -159,8 +162,8 @@ struct SettingsView: View {
                         Toggle(AppText.localized("追加先を現在のデッキにする"), isOn: boolean("editing", "addingDefaultsToCurrentDeck"))
                         Toggle(AppText.localized("画像をPNGで取り込む"), isOn: boolean("editing", "pasteImagesAsPng"))
                     }
-                    Section { NavigationLink(AppText.localized("ライセンスとソース")) { OpenSourceLicensesView() } }
-                    Section { NavigationLink(AppText.localized("学習リマインダー")) { ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks) }.accessibilityIdentifier("reminder-open") }
+                    Section { NavigationLink(AppText.localized("ライセンスとソース"), value: Destination.licenses) }
+                    Section { NavigationLink(AppText.localized("学習リマインダー"), value: Destination.reminders).accessibilityIdentifier("reminder-open") }
                     Section(AppText.localized("カードのJavaScript権限")) {
                         Toggle(AppText.localized("テンプレートからマイク録音を許可"), isOn: $allowTemplateAudioRecording).accessibilityIdentifier("allow-template-audio-recording")
                         Text(AppText.localized("有効にして保存すると、iPadOSのマイク許可も確認します。カメラへのアクセスは許可しません。"))
@@ -180,6 +183,11 @@ struct SettingsView: View {
                 } else { ProgressView() }
             }
             .accessibilityIdentifier("settings-form")
+            // Resolve destinations outside lazy rows; keep one owned path for
+            // native push/pop instead of tying destination lifetime to a row.
+            .navigationDestination(for: Destination.self) { destination in
+                settingsDestination(destination)
+            }
             .studyThemeSurface()
             .disabled(busy)
             .navigationTitle(AppText.localized("設定"))
@@ -252,6 +260,18 @@ struct SettingsView: View {
                 Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
             .task { do { values = try await model.engine.preferences(); automaticSync = model.automaticSyncEnabled; automaticTTS = ReviewSpeechPreferences.enabled(profileID: model.currentProfileID); allowCollectionAPI = UserDefaults.standard.bool(forKey: model.profilePreferenceKey("allowCollectionCardAPI")); loaded = true } catch { self.error = error.localizedDescription } }
+        }
+    }
+    @ViewBuilder private func settingsDestination(_ destination: Destination) -> some View {
+        switch destination {
+        case .background: DeckBackgroundSettingsView(root: model.engine.root, change: $deckBackgroundChange)
+        case .gestures: ReviewGestureSettingsView(configuration: $gestureConfiguration)
+        case .touch: ReviewTouchSettingsView(configuration: $touchConfiguration)
+        case .toolbar: ReviewToolbarSettingsView(configuration: $toolbarConfiguration)
+        case .keyboard: ReviewKeyboardSettingsView(configuration: $keyboardConfiguration)
+        case .gamepad: ReviewGamepadSettingsView(configuration: $gamepadConfiguration)
+        case .licenses: OpenSourceLicensesView()
+        case .reminders: ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks)
         }
     }
     private var timeboxMinutes: Binding<Int> {
