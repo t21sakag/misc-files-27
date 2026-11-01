@@ -18,18 +18,48 @@ MANIFEST = 'tests/toolbar-focus-reductions.json'
 PLAN = 'tests/toolbar-focus-reduction-plan.json'
 
 
-def generate():
-    raw = (ROOT / SOURCE).read_text()
+def source_parts(raw):
     lines = raw.splitlines(keepends=True)
-    starts = [i for i, line in enumerate(lines) if line.startswith('                    Section')]
+    begin = [i for i, line in enumerate(lines) if line == '                if loaded {\n']
     end = [i for i, line in enumerate(lines) if line == '                } else { ProgressView() }\n']
-    if len(end) != 1 or not starts or starts[-1] >= end[0]:
+    if len(begin) != 1 or len(end) != 1 or begin[0] >= end[0]:
         raise ValueError('Settings structure changed; inspect section boundaries before regenerating')
-    boundaries = starts[1:] + end
-    blocks = [''.join(lines[a:b]) for a, b in zip(starts, boundaries)]
+    if '"""' in ''.join(lines[begin[0]:end[0]]):
+        raise ValueError('Inspect multiline-string indentation before reducing settings')
+    blocks = []
+    index = begin[0] + 1
+    while index < end[0]:
+        line = lines[index]
+        if re.match(r'^ +Section\b', line):
+            indent = len(line) - len(line.lstrip())
+            if indent < 20:
+                raise ValueError('Unexpected section indentation')
+            stop = index + 1
+            if line.rstrip().endswith('{'):
+                while stop < end[0] and lines[stop] != ' ' * indent + '}\n':
+                    stop += 1
+                if stop >= end[0]:
+                    raise ValueError('Missing section end')
+                stop += 1
+            elif line.count('{') != line.count('}'):
+                raise ValueError('Inspect single-line section before reducing settings')
+            # Normalize only code indentation. Full-copy control below retains
+            # the exact source layout, including feature-preserving Groups.
+            blocks.append(''.join(value[indent-20:] if value.strip() else value for value in lines[index:stop]))
+            index = stop
+            continue
+        if line.strip() not in ('', 'Group {', '}') and not line.lstrip().startswith('//'):
+            raise ValueError('Unexpected content outside top-level settings sections')
+        index += 1
     labels = [re.search(r'AppText\.localized\("([^"]+)"\)', block).group(1) for block in blocks]
     if len(labels) != len(set(labels)) or labels.count('学習操作') != 1:
         raise ValueError('Ambiguous settings sections')
+    return ''.join(lines[:begin[0]+1]), blocks, labels, ''.join(lines[end[0]:])
+
+
+def generate():
+    raw = (ROOT / SOURCE).read_text()
+    prefix, blocks, labels, suffix = source_parts(raw)
     plan_raw = (ROOT / PLAN).read_text()
     plan = json.loads(plan_raw)
     selected_labels = {key: plan[key] for key in ('shared', 'left', 'right')}
@@ -49,23 +79,24 @@ def generate():
     assert set(variants['left']) | set(variants['right']) == set(variants['full'])
     assert {labels[i] for i in set(variants['left']) & set(variants['right'])} == shared
     digest = hashlib.sha256(raw.encode()).hexdigest()
-    prefix = ''.join(lines[:starts[0]])
-    suffix = ''.join(lines[end[0]:])
     chunks = ['#if DEBUG\n// Generated from SettingsView.swift; do not edit by hand.\n',
               '// Source SHA256: ' + digest + '\n']
     manifest = {'source': SOURCE, 'source_sha256': digest,
                 'plan': PLAN, 'plan_sha256': hashlib.sha256(plan_raw.encode()).hexdigest(),
-                'stage': plan['stage'], 'shared_sections': selected_labels['shared'], 'variants': {}}
+                'stage': plan['stage'], 'shared_sections': selected_labels['shared'],
+                'section_sha256': {label: hashlib.sha256(block.encode()).hexdigest() for label, block in zip(labels, blocks)},
+                'variants': {}}
     for name, selected in variants.items():
         typename = 'Toolbar' + name.title() + 'SettingsReductionView'
-        body = prefix + ''.join(blocks[i] for i in selected) + suffix
+        body = raw if name == 'full' else prefix + ''.join(blocks[i] for i in selected) + suffix
         assert body.count('struct SettingsView: View {') == 1
         body = body.replace('struct SettingsView: View {', 'struct ' + typename + ': ToolbarModelSettingsFocusView {', 1)
         field = '    @ObservedObject var model: StudyModel\n'
         assert body.count(field) == 1
         body = body.replace(field, field + '    init(model: StudyModel) { _model = ObservedObject(wrappedValue: model) }\n', 1)
         chunks += ['\n// Variant: ' + name + '\n', body]
-        manifest['variants'][name] = {'type': typename, 'sections': [labels[i] for i in selected]}
+        manifest['variants'][name] = {'type': typename, 'sections': [labels[i] for i in selected],
+                                     'retains_full_source_layout': name == 'full'}
     chunks.append('#endif\n')
     output = ''.join(chunks)
     manifest['generated_sha256'] = hashlib.sha256(output.encode()).hexdigest()

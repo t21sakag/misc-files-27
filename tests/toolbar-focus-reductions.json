@@ -1,9 +1,9 @@
 {
   "source": "ios/AnkiPad/SettingsView.swift",
-  "source_sha256": "95f8405605e884573758140474df57d913572651f052f45e6c94c62cb0016b8a",
+  "source_sha256": "06b5ee306c13a89197ef4acbd9a356b857f37f36b99e860df008835422ce6db9",
   "plan": "tests/toolbar-focus-reduction-plan.json",
-  "plan_sha256": "407a70394dc8ffd61c3e30dddbe71477f41fbd1e9adf72b44c59a5fc69149d5a",
-  "stage": "hold-first-six-split-remaining-seven",
+  "plan_sha256": "24de633edb6915c1e78b4724fd6e571cb5b598c3a85b231a9cc197d8fd8b9ea3",
+  "stage": "production-all-fourteen-sections-grouped-seven-plus-seven",
   "shared_sections": [
     "アプリの言語",
     "同期",
@@ -13,6 +13,22 @@
     "ブラウザの表示",
     "学習操作"
   ],
+  "section_sha256": {
+    "アプリの言語": "1603104ca201cbf6396d9b464dd97421f9c2ecbf23b961b040f2d70677d09559",
+    "同期": "baea47fa62ec76e87f4fb0e91c1f8a49885795265ef920f902620ef5a83aac6f",
+    "学習時間": "a0edecc6a04ca05adc2f3dcac20681f2b1e662c6fb4f4e6391b0381d7263a57d",
+    "表示": "5b8decba8d5622b87e9ccee72b8cf5268d353e2bd148752bd5e5d5310a9fc62e",
+    "評価ボタン": "9f0b03ab855ab65c0d52a7107d04d5adb421f144372e55bdfaeb7524dd41eea7",
+    "ブラウザの表示": "9c5badbe2c80c6b4d5dc34027ee010ef9fe7a0876a3489e10af640d18a8f61e2",
+    "音声": "d0118feed6ce35e3ef67b6f8f4ab19f5bce90181489a5afe2cef84895c6ab57b",
+    "学習操作": "73871bde1f4d1f515143c607399564e35f296f444b576e665a57319126c834cb",
+    "スケジュール": "38fd88ddb148bcbf2a0746026467ebf3914dbd4d8fe1da8f0ad1d906b06be1ce",
+    "検索と編集": "ce185b01fbda8a417f734a44d983ed8c3c25128450d152434c0cdaba0ae97ebc",
+    "ライセンスとソース": "7d650f1ec324ce4ac4825e949148fbb62396057ade3ca0ca73d664b3efa30829",
+    "学習リマインダー": "c4a24a9d16fa8286b4bb5d8fd7da28a79094b2f7f515fb02c921aa436a6211d5",
+    "カードのJavaScript権限": "d747d7fc35914f66fb0e31fe3b5a9f5b4684bf78f863e35adcf0a50a0bb25574",
+    "バックアップの保持数": "ecb5d4975d0cfef0cd3e797c051aa7dbf18c54a782cf76bddb062e87e45c5180"
+  },
   "variants": {
     "full": {
       "type": "ToolbarFullSettingsReductionView",
@@ -31,7 +47,8 @@
         "学習リマインダー",
         "カードのJavaScript権限",
         "バックアップの保持数"
-      ]
+      ],
+      "retains_full_source_layout": true
     },
     "left": {
       "type": "ToolbarLeftSettingsReductionView",
@@ -46,7 +63,8 @@
         "学習操作",
         "スケジュール",
         "検索と編集"
-      ]
+      ],
+      "retains_full_source_layout": false
     },
     "right": {
       "type": "ToolbarRightSettingsReductionView",
@@ -62,8 +80,9 @@
         "学習リマインダー",
         "カードのJavaScript権限",
         "バックアップの保持数"
-      ]
+      ],
+      "retains_full_source_layout": false
     }
   },
-  "generated_sha256": "7b663b03263f10b7f6297834a7413e7c930860f657d1026c98c09b8235387207"
+  "generated_sha256": "59093d9c9b99a3770b16b209d5253db46f418aa30e3a91ef8ba01ff1c6519224"
 }

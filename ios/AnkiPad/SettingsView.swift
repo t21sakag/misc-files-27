@@ -49,133 +49,137 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 if loaded {
-                    Section(AppText.localized("アプリの言語")) {
-                        Picker(AppText.localized("言語"), selection: $language) {
-                            ForEach(AppLanguageChoice.allCases) { Text($0.title).tag($0) }
-                        }.accessibilityIdentifier("app-language")
-                        Text(AppText.localized("保存後、アプリを終了して開き直すと適用します。同期や編集中のデータはそのままです。"))
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    Section(AppText.localized("同期")) {
-                        Toggle(AppText.localized("自動同期"), isOn: $automaticSync).accessibilityIdentifier("automatic-sync")
-                        Text(AppText.localized("起動・前面復帰時とバックグラウンド移行時に同期します。全体を置き換える同期には確認が必要です。未保存の編集がある間は待機します。"))
-                            .font(.caption).foregroundStyle(.secondary)
-                        Toggle(AppText.localized("従量課金の回線でも同期する"), isOn: $networkPreferences.allowMetered).accessibilityIdentifier("sync-allow-metered")
-                        Picker(AppText.localized("画像・音声の取得"), selection: $networkPreferences.mediaFetch) {
-                            ForEach(SyncMediaFetch.allCases) { Text($0.title).tag($0) }
-                        }.accessibilityIdentifier("sync-media-fetch")
-                        Toggle(AppText.localized("未同期の変更を表示"), isOn: $networkPreferences.showStatusBadge).accessibilityIdentifier("sync-status-badge")
-                        Stepper(AppText.localized("通信のタイムアウト: \(networkPreferences.ioTimeoutSecs)秒"), value: $networkPreferences.ioTimeoutSecs,
-                                in: SyncNetworkPreferences.minimumTimeout...SyncNetworkPreferences.maximumTimeout, step: 10)
-                            .accessibilityIdentifier("sync-timeout")
-                        Button(AppText.localized("次回の同期を一方向にする")) { confirmingOneWaySync = true }
-                            .disabled(busy || model.isSyncing).accessibilityIdentifier("sync-force-one-way")
-                    }
-                    Section(AppText.localized("学習時間")) {
-                        Stepper(AppText.localized("学習の区切り: \(timeboxMinutes.wrappedValue)分（0で無効）"), value: timeboxMinutes, in: 0...120)
-                            .accessibilityIdentifier("timebox-limit")
-                        Text(AppText.localized("指定時間を過ぎてカードに回答したときに、回答枚数を知らせます。続行か終了を選べます。"))
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    Section(AppText.localized("表示")) {
-                        Picker(AppText.localized("学習画面の操作"), selection: $displayMode) { ForEach(ReviewDisplayMode.allCases) { Text($0.title).tag($0) } }.accessibilityIdentifier("review-display-mode")
-                        Toggle(AppText.localized("学習の上部バーを表示"), isOn: $showTopbar)
-                        Toggle(AppText.localized("学習中にデッキ名を表示"), isOn: $showDeckTitle).accessibilityIdentifier("show-deck-title")
-                        Toggle(AppText.localized("学習の残り時間を表示"), isOn: $showETA).accessibilityIdentifier("show-review-eta")
-                        Text(AppText.localized("全画面でも画面を3回タップすると操作バーを表示できます。")).font(.caption).foregroundStyle(.secondary)
-                        Picker(AppText.localized("テーマ"), selection: $appearance) { Text(AppText.localized("システム")).tag("system"); Text(AppText.localized("ライト")).tag("light"); Text(AppText.localized("ダーク")).tag("dark") }.accessibilityIdentifier("app-theme-mode")
-                        Picker(AppText.localized("昼のテーマ"), selection: $dayTheme) {
-                            ForEach(StudyDayTheme.allCases) { Text($0.title).tag($0) }
-                        }.accessibilityIdentifier("day-theme")
-                        Picker(AppText.localized("夜のテーマ"), selection: $nightTheme) {
-                            ForEach(StudyNightTheme.allCases) { Text($0.title).tag($0) }
-                        }.accessibilityIdentifier("night-theme")
-                        Toggle(AppText.localized("アプリのアニメーションを無効にする"), isOn: $removeAnimations).accessibilityIdentifier("remove-app-animations")
-                        Text(AppText.localized("iPadの「視差効果を減らす」やE Inkテーマが有効な場合も、アプリの画面遷移を抑制します。"))
-                            .font(.caption).foregroundStyle(.secondary)
-                        NavigationLink(AppText.localized("デッキ一覧の背景")) {
-                            DeckBackgroundSettingsView(root: model.engine.root, change: $deckBackgroundChange)
-                        }.accessibilityIdentifier("deck-background-open")
-                        VStack(alignment: .leading) { Text(AppText.localized("カードの拡大率: \(String(Int(reviewZoom * 100)) + "%")")); Slider(value: $reviewZoom, in: 0.5...2.5, step: 0.05) }
-                        Stepper(AppText.localized("画像の拡大率: \(String(imageZoom) + "%")"), value: $imageZoom, in: 50...300, step: 10)
-                            .accessibilityIdentifier("image-zoom")
-                        Toggle(AppText.localized("カード内容を上下の中央に表示"), isOn: $centerVertically).accessibilityIdentifier("center-vertically")
-                        Toggle(AppText.localized("学習中は画面を消灯しない"), isOn: $keepScreenOn)
-                        Toggle(AppText.localized("学習枚数を表示"), isOn: boolean("reviewing", "showRemainingDueCounts"))
-                        Toggle(AppText.localized("評価ボタンに次回の間隔を表示"), isOn: boolean("reviewing", "showIntervalsOnButtons"))
-                    }
-                    Section(AppText.localized("評価ボタン")) {
-                        Picker(AppText.localized("表示位置"), selection: $answerPosition) {
-                            ForEach(AnswerButtonPosition.allCases) { Text($0.title).tag($0) }
-                        }.accessibilityIdentifier("answer-position")
-                        Toggle(AppText.localized("大きな評価ボタン（2行）"), isOn: $largeAnswerButtons).accessibilityIdentifier("answer-large")
-                        Text(AppText.localized("ボタンの大きさ: \(String(Int(answerSize)) + "%")"))
-                        Slider(value: $answerSize, in: 10...200, step: 10).accessibilityIdentifier("answer-size")
-                        Text(AppText.localized("非表示でも、設定済みのスワイプ・タッチ領域・キーボードで解答できます。"))
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    Section(AppText.localized("ブラウザの表示")) {
-                        Stepper(AppText.localized("文字サイズ: \(String(browserFontPercent) + "%")"), value: $browserFontPercent, in: 10...200, step: 10)
-                            .accessibilityIdentifier("browser-font-size")
-                        Toggle(AppText.localized("音声ファイル名を表示"), isOn: $browserMediaFilenames).accessibilityIdentifier("browser-media-filenames")
-                    }
-                    Section(AppText.localized("音声")) {
-                        Toggle(AppText.localized("音声がないカードを読み上げる"), isOn: $automaticTTS).accessibilityIdentifier("tts-enabled")
-                        Text(AppText.localized("学習画面の「読み上げ音声を選択」から、デッキとカードの面に合わせて音声を選べます。"))
-                    }
-                    Section(AppText.localized("学習操作")) {
-                        LabeledContent(AppText.localized("解答表示の長押し（ミリ秒）")) {
-                            TextField("0〜2000", text: $answerHoldMilliseconds).keyboardType(.numberPad)
-                                .multilineTextAlignment(.trailing).frame(width: 100).accessibilityIdentifier("answer-hold-time")
+                    Group {
+                        Section(AppText.localized("アプリの言語")) {
+                            Picker(AppText.localized("言語"), selection: $language) {
+                                ForEach(AppLanguageChoice.allCases) { Text($0.title).tag($0) }
+                            }.accessibilityIdentifier("app-language")
+                            Text(AppText.localized("保存後、アプリを終了して開き直すと適用します。同期や編集中のデータはそのままです。"))
+                                .font(.caption).foregroundStyle(.secondary)
                         }
-                        LabeledContent(AppText.localized("ボタンの連打防止（ミリ秒）")) {
-                            TextField("0〜1000", text: $buttonIntervalMilliseconds).keyboardType(.numberPad)
-                                .multilineTextAlignment(.trailing).frame(width: 100).accessibilityIdentifier("review-button-interval")
+                        Section(AppText.localized("同期")) {
+                            Toggle(AppText.localized("自動同期"), isOn: $automaticSync).accessibilityIdentifier("automatic-sync")
+                            Text(AppText.localized("起動・前面復帰時とバックグラウンド移行時に同期します。全体を置き換える同期には確認が必要です。未保存の編集がある間は待機します。"))
+                                .font(.caption).foregroundStyle(.secondary)
+                            Toggle(AppText.localized("従量課金の回線でも同期する"), isOn: $networkPreferences.allowMetered).accessibilityIdentifier("sync-allow-metered")
+                            Picker(AppText.localized("画像・音声の取得"), selection: $networkPreferences.mediaFetch) {
+                                ForEach(SyncMediaFetch.allCases) { Text($0.title).tag($0) }
+                            }.accessibilityIdentifier("sync-media-fetch")
+                            Toggle(AppText.localized("未同期の変更を表示"), isOn: $networkPreferences.showStatusBadge).accessibilityIdentifier("sync-status-badge")
+                            Stepper(AppText.localized("通信のタイムアウト: \(networkPreferences.ioTimeoutSecs)秒"), value: $networkPreferences.ioTimeoutSecs,
+                                    in: SyncNetworkPreferences.minimumTimeout...SyncNetworkPreferences.maximumTimeout, step: 10)
+                                .accessibilityIdentifier("sync-timeout")
+                            Button(AppText.localized("次回の同期を一方向にする")) { confirmingOneWaySync = true }
+                                .disabled(busy || model.isSyncing).accessibilityIdentifier("sync-force-one-way")
                         }
-                        Text(AppText.localized("長押し時間を0にすると通常のタップで解答を表示します。連打防止は解答表示・評価ボタンの誤操作を防ぎます。"))
-                            .font(.caption).foregroundStyle(.secondary)
-                        Toggle(AppText.localized("入力式カードの解答欄に自動フォーカス"), isOn: $autoFocusTypeInAnswer).accessibilityIdentifier("auto-focus-type-answer")
-                        Toggle(AppText.localized("スワイプで解答・評価"), isOn: $swipeReview)
-                        NavigationLink(AppText.localized("スワイプの割り当て")) { ReviewGestureSettingsView(configuration: $gestureConfiguration) }
-                        NavigationLink(AppText.localized("タッチ領域の割り当て")) { ReviewTouchSettingsView(configuration: $touchConfiguration) }.accessibilityIdentifier("touch-settings-open")
-                        NavigationLink(AppText.localized("操作バーの設定")) { ReviewToolbarSettingsView(configuration: $toolbarConfiguration) }.accessibilityIdentifier("toolbar-settings-open")
-                        NavigationLink(AppText.localized("キーボードの割り当て")) { ReviewKeyboardSettingsView(configuration: $keyboardConfiguration) }
-                        NavigationLink(AppText.localized("ゲームパッドの割り当て")) { ReviewGamepadSettingsView(configuration: $gamepadConfiguration) }
-                        Toggle(AppText.localized("次のカードにも手書きを残す"), isOn: $keepWhiteboard)
-                        Toggle(AppText.localized("音声再生ボタンを隠す"), isOn: boolean("reviewing", "hideAudioPlayButtons"))
-                        Toggle(AppText.localized("解答表示時に問題側の音声を止める"), isOn: boolean("reviewing", "interruptAudioWhenAnswering"))
-                    }
-                    Section(AppText.localized("スケジュール")) {
-                        Stepper(AppText.localized("日付を切り替える時刻: \(integer("scheduling", "rollover").wrappedValue)時"), value: integer("scheduling", "rollover"), in: 0...23)
-                        Stepper(AppText.localized("先取り学習: \(integer("scheduling", "learnAheadSecs").wrappedValue / 60)分"), value: integer("scheduling", "learnAheadSecs"), in: 0...86400, step: 60)
-                        Picker(AppText.localized("新規と復習の順序"), selection: string("scheduling", "newReviewMix", fallback: "DISTRIBUTE")) {
-                            Text(AppText.localized("混ぜる")).tag("DISTRIBUTE"); Text(AppText.localized("復習を先に")).tag("REVIEWS_FIRST"); Text(AppText.localized("新規を先に")).tag("NEW_FIRST")
+                        Section(AppText.localized("学習時間")) {
+                            Stepper(AppText.localized("学習の区切り: \(timeboxMinutes.wrappedValue)分（0で無効）"), value: timeboxMinutes, in: 0...120)
+                                .accessibilityIdentifier("timebox-limit")
+                            Text(AppText.localized("指定時間を過ぎてカードに回答したときに、回答枚数を知らせます。続行か終了を選べます。"))
+                                .font(.caption).foregroundStyle(.secondary)
                         }
-                        Toggle(AppText.localized("学習負荷の分散"), isOn: boolean("reviewing", "loadBalancerEnabled"))
+                        Section(AppText.localized("表示")) {
+                            Picker(AppText.localized("学習画面の操作"), selection: $displayMode) { ForEach(ReviewDisplayMode.allCases) { Text($0.title).tag($0) } }.accessibilityIdentifier("review-display-mode")
+                            Toggle(AppText.localized("学習の上部バーを表示"), isOn: $showTopbar)
+                            Toggle(AppText.localized("学習中にデッキ名を表示"), isOn: $showDeckTitle).accessibilityIdentifier("show-deck-title")
+                            Toggle(AppText.localized("学習の残り時間を表示"), isOn: $showETA).accessibilityIdentifier("show-review-eta")
+                            Text(AppText.localized("全画面でも画面を3回タップすると操作バーを表示できます。")).font(.caption).foregroundStyle(.secondary)
+                            Picker(AppText.localized("テーマ"), selection: $appearance) { Text(AppText.localized("システム")).tag("system"); Text(AppText.localized("ライト")).tag("light"); Text(AppText.localized("ダーク")).tag("dark") }.accessibilityIdentifier("app-theme-mode")
+                            Picker(AppText.localized("昼のテーマ"), selection: $dayTheme) {
+                                ForEach(StudyDayTheme.allCases) { Text($0.title).tag($0) }
+                            }.accessibilityIdentifier("day-theme")
+                            Picker(AppText.localized("夜のテーマ"), selection: $nightTheme) {
+                                ForEach(StudyNightTheme.allCases) { Text($0.title).tag($0) }
+                            }.accessibilityIdentifier("night-theme")
+                            Toggle(AppText.localized("アプリのアニメーションを無効にする"), isOn: $removeAnimations).accessibilityIdentifier("remove-app-animations")
+                            Text(AppText.localized("iPadの「視差効果を減らす」やE Inkテーマが有効な場合も、アプリの画面遷移を抑制します。"))
+                                .font(.caption).foregroundStyle(.secondary)
+                            NavigationLink(AppText.localized("デッキ一覧の背景")) {
+                                DeckBackgroundSettingsView(root: model.engine.root, change: $deckBackgroundChange)
+                            }.accessibilityIdentifier("deck-background-open")
+                            VStack(alignment: .leading) { Text(AppText.localized("カードの拡大率: \(String(Int(reviewZoom * 100)) + "%")")); Slider(value: $reviewZoom, in: 0.5...2.5, step: 0.05) }
+                            Stepper(AppText.localized("画像の拡大率: \(String(imageZoom) + "%")"), value: $imageZoom, in: 50...300, step: 10)
+                                .accessibilityIdentifier("image-zoom")
+                            Toggle(AppText.localized("カード内容を上下の中央に表示"), isOn: $centerVertically).accessibilityIdentifier("center-vertically")
+                            Toggle(AppText.localized("学習中は画面を消灯しない"), isOn: $keepScreenOn)
+                            Toggle(AppText.localized("学習枚数を表示"), isOn: boolean("reviewing", "showRemainingDueCounts"))
+                            Toggle(AppText.localized("評価ボタンに次回の間隔を表示"), isOn: boolean("reviewing", "showIntervalsOnButtons"))
+                        }
+                        Section(AppText.localized("評価ボタン")) {
+                            Picker(AppText.localized("表示位置"), selection: $answerPosition) {
+                                ForEach(AnswerButtonPosition.allCases) { Text($0.title).tag($0) }
+                            }.accessibilityIdentifier("answer-position")
+                            Toggle(AppText.localized("大きな評価ボタン（2行）"), isOn: $largeAnswerButtons).accessibilityIdentifier("answer-large")
+                            Text(AppText.localized("ボタンの大きさ: \(String(Int(answerSize)) + "%")"))
+                            Slider(value: $answerSize, in: 10...200, step: 10).accessibilityIdentifier("answer-size")
+                            Text(AppText.localized("非表示でも、設定済みのスワイプ・タッチ領域・キーボードで解答できます。"))
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        Section(AppText.localized("ブラウザの表示")) {
+                            Stepper(AppText.localized("文字サイズ: \(String(browserFontPercent) + "%")"), value: $browserFontPercent, in: 10...200, step: 10)
+                                .accessibilityIdentifier("browser-font-size")
+                            Toggle(AppText.localized("音声ファイル名を表示"), isOn: $browserMediaFilenames).accessibilityIdentifier("browser-media-filenames")
+                        }
+                        Section(AppText.localized("音声")) {
+                            Toggle(AppText.localized("音声がないカードを読み上げる"), isOn: $automaticTTS).accessibilityIdentifier("tts-enabled")
+                            Text(AppText.localized("学習画面の「読み上げ音声を選択」から、デッキとカードの面に合わせて音声を選べます。"))
+                        }
                     }
-                    Section(AppText.localized("検索と編集")) {
-                        Toggle(AppText.localized("追加後に編集画面を閉じる"), isOn: $closeAfterAdd)
-                        Toggle(AppText.localized("検索でアクセントを区別しない"), isOn: boolean("editing", "ignoreAccentsInSearch"))
-                        Toggle(AppText.localized("追加先を現在のデッキにする"), isOn: boolean("editing", "addingDefaultsToCurrentDeck"))
-                        Toggle(AppText.localized("画像をPNGで取り込む"), isOn: boolean("editing", "pasteImagesAsPng"))
-                    }
-                    Section { NavigationLink(AppText.localized("ライセンスとソース")) { OpenSourceLicensesView() } }
-                    Section { NavigationLink(AppText.localized("学習リマインダー")) { ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks) }.accessibilityIdentifier("reminder-open") }
-                    Section(AppText.localized("カードのJavaScript権限")) {
-                        Toggle(AppText.localized("テンプレートからマイク録音を許可"), isOn: $allowTemplateAudioRecording).accessibilityIdentifier("allow-template-audio-recording")
-                        Text(AppText.localized("有効にして保存すると、iPadOSのマイク許可も確認します。カメラへのアクセスは許可しません。"))
-                            .font(.caption).foregroundStyle(.secondary)
-                        Toggle(AppText.localized("カードから外部アプリを開く"), isOn: $allowCardExternalLaunch).accessibilityIdentifier("allow-card-external-launch")
-                        Text(AppText.localized("通常のWebリンクはこの設定に関係なく開けます。別のアプリを起動するリンクは、許可した場合だけ開きます。"))
-                            .font(.caption).foregroundStyle(.secondary)
-                        Toggle(AppText.localized("全ノートの読み取り・タグ変更を許可"), isOn: $allowCollectionAPI).accessibilityIdentifier("allow-collection-card-api")
-                        Text(AppText.localized("有効にすると、カード内のJavaScriptが現在のカード以外のノートの内容も読み取り、タグを変更できます。")).font(.caption).foregroundStyle(.secondary)
-                    }
-                    Section(AppText.localized("バックアップの保持数")) {
-                        Stepper(AppText.localized("日次: \(integer("backups", "daily").wrappedValue)"), value: integer("backups", "daily"), in: 0...365)
-                        Stepper(AppText.localized("週次: \(integer("backups", "weekly").wrappedValue)"), value: integer("backups", "weekly"), in: 0...104)
-                        Stepper(AppText.localized("月次: \(integer("backups", "monthly").wrappedValue)"), value: integer("backups", "monthly"), in: 0...120)
-                        Stepper(AppText.localized("作成間隔: \(integer("backups", "minimumIntervalMins").wrappedValue)分"), value: integer("backups", "minimumIntervalMins"), in: 0...1440)
+                    Group {
+                        Section(AppText.localized("学習操作")) {
+                            LabeledContent(AppText.localized("解答表示の長押し（ミリ秒）")) {
+                                TextField("0〜2000", text: $answerHoldMilliseconds).keyboardType(.numberPad)
+                                    .multilineTextAlignment(.trailing).frame(width: 100).accessibilityIdentifier("answer-hold-time")
+                            }
+                            LabeledContent(AppText.localized("ボタンの連打防止（ミリ秒）")) {
+                                TextField("0〜1000", text: $buttonIntervalMilliseconds).keyboardType(.numberPad)
+                                    .multilineTextAlignment(.trailing).frame(width: 100).accessibilityIdentifier("review-button-interval")
+                            }
+                            Text(AppText.localized("長押し時間を0にすると通常のタップで解答を表示します。連打防止は解答表示・評価ボタンの誤操作を防ぎます。"))
+                                .font(.caption).foregroundStyle(.secondary)
+                            Toggle(AppText.localized("入力式カードの解答欄に自動フォーカス"), isOn: $autoFocusTypeInAnswer).accessibilityIdentifier("auto-focus-type-answer")
+                            Toggle(AppText.localized("スワイプで解答・評価"), isOn: $swipeReview)
+                            NavigationLink(AppText.localized("スワイプの割り当て")) { ReviewGestureSettingsView(configuration: $gestureConfiguration) }
+                            NavigationLink(AppText.localized("タッチ領域の割り当て")) { ReviewTouchSettingsView(configuration: $touchConfiguration) }.accessibilityIdentifier("touch-settings-open")
+                            NavigationLink(AppText.localized("操作バーの設定")) { ReviewToolbarSettingsView(configuration: $toolbarConfiguration) }.accessibilityIdentifier("toolbar-settings-open")
+                            NavigationLink(AppText.localized("キーボードの割り当て")) { ReviewKeyboardSettingsView(configuration: $keyboardConfiguration) }
+                            NavigationLink(AppText.localized("ゲームパッドの割り当て")) { ReviewGamepadSettingsView(configuration: $gamepadConfiguration) }
+                            Toggle(AppText.localized("次のカードにも手書きを残す"), isOn: $keepWhiteboard)
+                            Toggle(AppText.localized("音声再生ボタンを隠す"), isOn: boolean("reviewing", "hideAudioPlayButtons"))
+                            Toggle(AppText.localized("解答表示時に問題側の音声を止める"), isOn: boolean("reviewing", "interruptAudioWhenAnswering"))
+                        }
+                        Section(AppText.localized("スケジュール")) {
+                            Stepper(AppText.localized("日付を切り替える時刻: \(integer("scheduling", "rollover").wrappedValue)時"), value: integer("scheduling", "rollover"), in: 0...23)
+                            Stepper(AppText.localized("先取り学習: \(integer("scheduling", "learnAheadSecs").wrappedValue / 60)分"), value: integer("scheduling", "learnAheadSecs"), in: 0...86400, step: 60)
+                            Picker(AppText.localized("新規と復習の順序"), selection: string("scheduling", "newReviewMix", fallback: "DISTRIBUTE")) {
+                                Text(AppText.localized("混ぜる")).tag("DISTRIBUTE"); Text(AppText.localized("復習を先に")).tag("REVIEWS_FIRST"); Text(AppText.localized("新規を先に")).tag("NEW_FIRST")
+                            }
+                            Toggle(AppText.localized("学習負荷の分散"), isOn: boolean("reviewing", "loadBalancerEnabled"))
+                        }
+                        Section(AppText.localized("検索と編集")) {
+                            Toggle(AppText.localized("追加後に編集画面を閉じる"), isOn: $closeAfterAdd)
+                            Toggle(AppText.localized("検索でアクセントを区別しない"), isOn: boolean("editing", "ignoreAccentsInSearch"))
+                            Toggle(AppText.localized("追加先を現在のデッキにする"), isOn: boolean("editing", "addingDefaultsToCurrentDeck"))
+                            Toggle(AppText.localized("画像をPNGで取り込む"), isOn: boolean("editing", "pasteImagesAsPng"))
+                        }
+                        Section { NavigationLink(AppText.localized("ライセンスとソース")) { OpenSourceLicensesView() } }
+                        Section { NavigationLink(AppText.localized("学習リマインダー")) { ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks) }.accessibilityIdentifier("reminder-open") }
+                        Section(AppText.localized("カードのJavaScript権限")) {
+                            Toggle(AppText.localized("テンプレートからマイク録音を許可"), isOn: $allowTemplateAudioRecording).accessibilityIdentifier("allow-template-audio-recording")
+                            Text(AppText.localized("有効にして保存すると、iPadOSのマイク許可も確認します。カメラへのアクセスは許可しません。"))
+                                .font(.caption).foregroundStyle(.secondary)
+                            Toggle(AppText.localized("カードから外部アプリを開く"), isOn: $allowCardExternalLaunch).accessibilityIdentifier("allow-card-external-launch")
+                            Text(AppText.localized("通常のWebリンクはこの設定に関係なく開けます。別のアプリを起動するリンクは、許可した場合だけ開きます。"))
+                                .font(.caption).foregroundStyle(.secondary)
+                            Toggle(AppText.localized("全ノートの読み取り・タグ変更を許可"), isOn: $allowCollectionAPI).accessibilityIdentifier("allow-collection-card-api")
+                            Text(AppText.localized("有効にすると、カード内のJavaScriptが現在のカード以外のノートの内容も読み取り、タグを変更できます。")).font(.caption).foregroundStyle(.secondary)
+                        }
+                        Section(AppText.localized("バックアップの保持数")) {
+                            Stepper(AppText.localized("日次: \(integer("backups", "daily").wrappedValue)"), value: integer("backups", "daily"), in: 0...365)
+                            Stepper(AppText.localized("週次: \(integer("backups", "weekly").wrappedValue)"), value: integer("backups", "weekly"), in: 0...104)
+                            Stepper(AppText.localized("月次: \(integer("backups", "monthly").wrappedValue)"), value: integer("backups", "monthly"), in: 0...120)
+                            Stepper(AppText.localized("作成間隔: \(integer("backups", "minimumIntervalMins").wrappedValue)分"), value: integer("backups", "minimumIntervalMins"), in: 0...1440)
+                        }
                     }
                 } else { ProgressView() }
             }
