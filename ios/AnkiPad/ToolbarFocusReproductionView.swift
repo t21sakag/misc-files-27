@@ -307,7 +307,7 @@ struct ToolbarFocusStepperControls: ToolbarFocusNativeControls {
             .accessibilityIdentifier("focus-native-stepper-timeout")
         Stepper(AppText.localized("学習の区切り: \(timebox)分（0で無効）"), value: $timebox, in: 0...120)
             .accessibilityIdentifier("focus-native-stepper-timebox")
-        Stepper(AppText.localized("画像の拡大率: \(zoom)%"), value: $zoom, in: 50...300, step: 10)
+        Stepper(AppText.localized("画像の拡大率: \(String(zoom) + "%")"), value: $zoom, in: 50...300, step: 10)
             .accessibilityIdentifier("focus-native-stepper-zoom")
     }
 }

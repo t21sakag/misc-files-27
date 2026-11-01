@@ -4508,6 +4508,232 @@
         }
       ],
       "checked_at": "2026-11-01T15:29:45.443513+00:00"
+    },
+    {
+      "id": "20261102-focus-native-localization-preflight",
+      "covers": [
+        [
+          41325418848,
+          1
+        ],
+        [
+          41323994258,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41323994258,
+            1
+          ],
+          "kind": "application",
+          "finding": "AnkiPad SIGABRT/NSInternalInconsistencyException after exact native Back; owned log now records parentEnvironment != nil and focus deferral after parent appears."
+        },
+        {
+          "attempt": [
+            41325418848,
+            1
+          ],
+          "kind": "application",
+          "finding": "New DEBUG diagnostic Stepper label interpolates Int as %lld% while existing translation uses %@. Resource gate rejects before Apple/UI. A real diagnostic-source resource defect; not a tap failure or untested product fix. Missing final local resource check allowed an avoidable CI attempt."
+        }
+      ],
+      "root_cause": "The original application abort has an orphaned UIKit focus-guide parent environment; which parent control/lifecycle supplies it remains unresolved. The next diagnostic batch did not start because its newly added label changed the existing localized interpolation type. This second failure is independent and was caught by a valid early contract gate.",
+      "common_resolution": "Keep native interactions/keyboard and unchanged production SettingsView. Correct diagnostic zoom label to the exact String interpolation already used in production. Add final localization_resources_smoke.py to shared environment policy and execute it through this review record, along with final syntax/catalog/query/dispatch/observer/transfer checks. Do not weaken resource coverage or skip a DEBUG file. Resume exactly the three independent text/slider/stepper comparisons with one shared build; isolate any failed case afterward.",
+      "rule_review": {
+        "semantic_labels": "Original parent native Back label remains exact and unique; coordinate152,292 unchanged. The new diagnostic label was a format-key mismatch, not an AX label ambiguity. Correct it to the same existing production String interpolation and preserve complete semantic queries.",
+        "foreground_scope": "Original child/settings route remains foreground scoped; AnkiPad owned crash process7134 is confirmed. New native parents use separate DEBUG entry and the same presented navigation/form with local configuration owner. No underlying view is accepted as success.",
+        "unique_reads_and_actions": "Native Switch contact638.5,402 and Back152,292 align with actual unique frames. Three comparison cases use shared readiness, native-type observation, common scroll and direct Switch. Their control types are already observed by existing production tests. No first duplicate or alternate tap is added.",
+        "live_state": "Original UIKit ViewDidAppear16:08:04.911 then focus deferral16:08:05.038 precedes assertion16:08:05.099. XCTest lost connection inside Back, so no parent success is inferred. All new cases require actual foreground/parent Form after Back. Fast translation rejection proves no UI execution, not success of those cases.",
+        "keyboard_and_scroll": "Maintain portrait/hardware keyboard/native back; do not swizzle focus or hide valid input. Inert-row scroll and presented local state each passed independently. New category tests use shared form reveal and keyboard policy; input controls are observed, not edited or forcibly focused.",
+        "environment": "The resource validator validly detects a new untranslated interpolation before UI. Swift syntax/catalog did not cover this, so final localization_resources_smoke.py is now explicitly required in shared environment rules for any localized label, including DEBUG diagnostics. Correct existing key type rather than excluding source or weakening gate. All dependencies and selector coverage are checked after final edits.",
+        "first_failure_evidence": "Original413239 pre-Back AX and recording67s show child/on; recording73s shows Home. Numeric Back152,292/Switch638.5,402 match intended targets. Actual AnkiPad ips and owned live.log give NSInternalInconsistencyException parentEnvironment != nil;6330957bytes,not truncated. Second413254 job metadata and failed-step log identify exact resource assertion/file/line; no fabricated UI evidence exists.",
+        "failure_classification": "413239 is a legitimate application focus abort;413254 is a diagnostic application-label resource defect plus insufficient local preflight. UI never started in413254, but the existing UI workflow attempt policy counts this failed attempt; honor exact-pair review rather than bypassing it. The gate itself allowed1prior failure and did not cause either failure.",
+        "runtime_warnings": "Original failed UI summary has warnings empty but0/1passed. Second workflow fails before simulator/UI and has no UI summary; do not report it as warning-free UI. Native warning gate and existing tests remain unchanged.",
+        "device_evidence": "No normal-entry fallthrough, Release IPA or physical iPad fix is established. Diagnostic successes constrain hypotheses only. No new IPA; last promoted build176 remains unchanged."
+      },
+      "evidence": [
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41323994258",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/live.log",
+          "sha256": "dc27f195f248b031feebec23e87307c09e53c5336e7f291792c7d8505b6f0936"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41323994258",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "input-events.json",
+          "sha256": "b9e9d1613cad6fba704e2d8d6c148e5ce82b06684e3bb9298778b18426038f1a"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41323994258",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/96CB110E-4333-431F-B918-A54A14095ABF.ips",
+          "sha256": "1bd3300665e1d538eb1b52c0ea346fd71d089cb1835a664aaa651caa9faab097"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41323994258",
+          "artifact_name": "screenshots",
+          "artifact_entry": "C8C1F023-40DB-44C4-9DBC-3C457BECB740.mp4",
+          "sha256": "d3f62e5edc7d4b518df7b0165c7f27a94c75186e70ed95f6ee3158ad238e2ac9"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41325418848",
+          "artifact_name": "workflow-log",
+          "artifact_entry": "Test native translations and language policy",
+          "sha256": "64eee4c9cdcac4403bfb212552c18b7a80b324c1781d9755683404f1ca1482ef"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41325418848",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "ui-review-gate.json",
+          "sha256": "19b3181d9e57cb9d5898921a5efc373774ea6ab400d8ff2c7a19bb52e12b07ab"
+        }
+      ],
+      "next_scope": [
+        "ToolbarFocusReproductionTests/testNativeTextFieldsParentCanReturnFromProductionToolbar",
+        "ToolbarFocusReproductionTests/testNativeSlidersParentCanReturnFromProductionToolbar",
+        "ToolbarFocusReproductionTests/testNativeSteppersParentCanReturnFromProductionToolbar"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "c2a28764f6aec7bcbb0d6bdf2b05260f1faa5aa2ca244e26fbb141248d6849c7",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "45d959519814394757bf391ceaa314f51e44b6f8bc75d71371108b1d6535f19b",
+        "ios/AnkiPadUITests/ControlLabelMatch.swift": "48027c8ba45064cc037cdeb9c2a15186e6fd78c6879f5bd50ff6077b0361ea9a",
+        "ios/AnkiPadUITests/ToolbarFocusReproductionTests.swift": "741b2875c3a0e611b4cf7329867aa6f805b20e1da9aa2fd1b8d5f741dbb9668a",
+        "ios/AnkiPad/AnkiPadApp.swift": "128721a8d4ee7acc70dc3c5fd8d66922582c18d89a635a96ddffc09c02fa6e76",
+        "ios/AnkiPad/ToolbarFocusReproductionView.swift": "98407341cd5d2db4e251b043530f9a6ac97b17b0d14d4c8e14800ebc106d8a99",
+        "ios/AnkiPad/ReviewToolbarConfiguration.swift": "58dce1a97c34240927ad3e2cb49f950f4a4a9af3d64166473c0dc8f867107a23",
+        "ios/AnkiPad/SettingsView.swift": "95f8405605e884573758140474df57d913572651f052f45e6c94c62cb0016b8a",
+        "scripts/ui-failure-review.py": "cf95fd7fdeac4dea406f2c37ebd2f0c0724d314eb9a69d5257176683ac351227",
+        "scripts/run-ui-with-diagnostics.py": "b7677ee03361d4592bd481dde68ff039745a392fee827b47cbf6869bc9ac2d7c",
+        "scripts/select-ui-tests.py": "732734ed97efb93bdfc441da5bc007763774be1802637428776e554cac287dee",
+        "scripts/ui-case-groups.json": "6e62c874457607a58267781b5c08a8ac50befac19d7abafb9c8c1e87dbb12cdf",
+        "scripts/plan-ui-batches.py": "bb01f40241a348812dabedf20e504f97a24695dd0c2762f961ffd8d0944912c1",
+        ".github/workflows/ipa.yml": "ccf8de157e4a7ebe9ad2bed3b644d0ad8225b2a5a439a45a87fbfe0b1c801f75",
+        "tests/ui_failure_review_smoke.py": "62aa3d5171dd34dca650013f791cfb8c3d4d29eeb58fb2e10f72790b518b66de",
+        "tests/ui_case_groups_smoke.py": "c5ae926865ab1ab97984a9d3d3152d373f7f8c17b5f427173678c33a5cd45f5e",
+        "tests/ci_scope_smoke.py": "8a8137900644d98a0797e53e3b0cb10cd9f60e435e85ef5d1608e5afd15ebe31",
+        "tests/ui_batch_transfer_smoke.py": "a8730ed3e1a3643b012efcc69157eec57eb9fe14930264185a8a5868a9e2d902",
+        "tests/localization_resources_smoke.py": "48526fb1fe518ef757038ee492640fd239b7e90f67692c9b7454dd73ab824c95",
+        "tests/widget_diagnostics_smoke.py": "f076a05b15247d85074db80232ed0e2afa49ef022c2cacc1f776ba70a42adc78"
+      },
+      "checks": [
+        {
+          "name": "Final Swift syntax209; not Apple typecheck",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "8eb590317cc2c74312c18f3642342a2a20a9aaac26bdc29c11a243fc8ef7a643"
+        },
+        {
+          "name": "Full catalog112",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "eb5156a49b8251f66672938275049fd705b15a488e47c169fe0921238bfed9d9"
+        },
+        {
+          "name": "Dispatch choices132",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2c498dfa49b0ad8164190f3cc935a46a2254cfda0b28c83cbe05f5eee5d58256"
+        },
+        {
+          "name": "UI query lint43",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "431b3e09253572a251104e4e8d84441322ae036f8e1075d838e3b480367ae0a1"
+        },
+        {
+          "name": "Review guard chronology and pair regression",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Bounded actual diagnostics observer",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "Actual workflow diagnostics routing",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "Five disjoint batches and compiled products transfer",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        },
+        {
+          "name": "Batch runner failure and prerequisite integrity",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "Exact three-case native control comparison",
+          "argv": [
+            "python3",
+            "scripts/select-ui-tests.py",
+            "focus-native-controls",
+            "ui"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b6397b13259ad1677dd22326ddde7b75e23d13c03d9aef2eb4019b44e989fb70"
+        },
+        {
+          "name": "Normal and DEBUG launch/reproduction parse",
+          "argv": [
+            "python3",
+            "-c",
+            "import os,subprocess; from pathlib import Path; files=['ios/AnkiPad/AnkiPadApp.swift','ios/AnkiPad/ToolbarFocusReproductionView.swift','ios/AnkiPadUITests/ToolbarFocusReproductionTests.swift']; [subprocess.run([os.environ['ANKIPAD_SWIFTC'],'-frontend','-parse','-swift-version','5',*flags,*files],check=True) for flags in ([],['-D','DEBUG'])]; print('PASS: normal and DEBUG parse; no Apple typecheck')"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "561260f7a5fc845a3c31d2419a57b1722e453a7cb9145c19d8773ad59541a6de"
+        },
+        {
+          "name": "Final localized resources including DEBUG diagnostics",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ff142c89cced8c75849ee3d4edb4fb9b39e866ae9e4320ea24169a6dd609a131"
+        }
+      ],
+      "checked_at": "2026-11-01T16:20:23.540365+00:00"
     }
   ]
 }
