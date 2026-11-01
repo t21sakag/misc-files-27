@@ -15,7 +15,7 @@ final class ControlFlowTests: StudyFlowTestSupport {
         let target = app.buttons.matching(identifier: id)
         created.press(forDuration: 1)
         tapTestMenuAction(titles: ["削除"], in: app)
-        tapTestControl(app.buttons.matching(identifier: "deck-delete-confirm"), in: app, keyboard: .keep)
+        tapTestAlertAction("deck-delete-confirm", in: app.popovers.sheets, application: app)
         requireTestCondition("Confirmed deck target is removed", in: app) { target.count == 0 }
         waitForTestControl(app.buttons.matching(identifier: "deck-1"), in: app, purpose: .observation)
         app.terminate(); app.launchArguments = []; app.launch()

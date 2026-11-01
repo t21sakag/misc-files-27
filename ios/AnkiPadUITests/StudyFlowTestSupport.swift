@@ -56,9 +56,11 @@ class StudyFlowTestSupport: XCTestCase {
         let result = XCTWaiter.wait(for: [expected], timeout: timeout)
         if result == .completed || condition() { return true }
         XCTContext.runActivity(named: "Required UI state failed: " + description) { activity in
-            let hierarchy = XCTAttachment(string: app.debugDescription)
+            let hierarchy = XCTAttachment(string: "Application state: \(app.state)\n" + app.debugDescription)
             hierarchy.name = "Terminal hierarchy for " + description; hierarchy.lifetime = .keepAlways
-            let screenshot = XCTAttachment(screenshot: app.screenshot())
+            // Keep evidence even when the application has crashed. Asking a
+            // terminated application for its screenshot hides the real error.
+            let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
             screenshot.name = "Terminal state for " + description; screenshot.lifetime = .keepAlways
             activity.add(hierarchy); activity.add(screenshot)
         }
@@ -73,10 +75,10 @@ class StudyFlowTestSupport: XCTestCase {
         let matches = query.allElementsBoundByIndex.prefix(12).map {
             "id=\($0.identifier) label=\($0.label) frame=\($0.frame) enabled=\($0.isEnabled) hittable=\($0.isHittable)"
         }.joined(separator: "\n")
-        let evidence = reason + "\n" + query.debugDescription + "\n" + matches + "\n" + app.debugDescription
+        let evidence = reason + "\nApplication state: \(app.state)\n" + query.debugDescription + "\n" + matches + "\n" + app.debugDescription
         XCTContext.runActivity(named: "Control prerequisite failed") { activity in
             let hierarchy = XCTAttachment(string: evidence); hierarchy.name = "Hierarchy and target frames"; hierarchy.lifetime = .keepAlways
-            let screenshot = XCTAttachment(screenshot: app.screenshot()); screenshot.lifetime = .keepAlways
+            let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); screenshot.lifetime = .keepAlways
             activity.add(hierarchy); activity.add(screenshot)
         }
         XCTFail(evidence)
@@ -139,7 +141,7 @@ class StudyFlowTestSupport: XCTestCase {
         return element
     }
 
-    /// Native alerts can export a Button containing a second Button with the
+    /// Native alerts/confirmation sheets can export a Button containing a second Button with the
     /// same identifier/frame. In the observed action row, only the outer action
     /// is a direct child of an Other container; containing() includes self and
     /// does not disambiguate these wrappers. Preserve strict unique readiness.
