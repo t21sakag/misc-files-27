@@ -6,10 +6,18 @@ import UniformTypeIdentifiers
 #if DEBUG
 @MainActor enum NativeAudioDiagnostics {
     static var successfulCompletions = 0
+    static var successfulSpeechCompletions = 0
+    static var lastCompletedSpeechVoiceID = ""
     static func completed(_ success: Bool) {
         guard success, UITestIsolation.namespace() != nil,
               ProcessInfo.processInfo.arguments.contains("--uitest-audio-note") else { return }
         successfulCompletions += 1
+    }
+    static func speechCompleted(voiceID: String) {
+        guard UITestIsolation.namespace() != nil,
+              ProcessInfo.processInfo.arguments.contains("--uitest-speech-choice") else { return }
+        successfulSpeechCompletions += 1
+        lastCompletedSpeechVoiceID = voiceID
     }
 }
 #endif
@@ -39,6 +47,9 @@ import UniformTypeIdentifiers
         speechDelegate.finished = { [weak self] utterance in
             guard let self, self.currentUtterance === utterance,
                   self.utteranceGeneration == self.generation else { return }
+            #if DEBUG
+            NativeAudioDiagnostics.speechCompleted(voiceID: utterance.voice?.identifier ?? "")
+            #endif
             self.currentUtterance = nil; self.utteranceGeneration = nil
             self.advance()
         }

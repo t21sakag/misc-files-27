@@ -48,13 +48,25 @@ struct ReviewSpeechVoiceView: View {
             .studyThemeSurface().navigationTitle(AppText.localized("読み上げ音声"))
             .safeAreaInset(edge: .bottom) {
                     TimelineView(.periodic(from: .now, by: 0.2)) { _ in
-                        Button(model.audio.isPlaying ? AppText.localized("試聴を停止") : AppText.localized("試聴"), systemImage: model.audio.isPlaying ? "stop.circle" : "play.circle") {
-                            do {
-                                if model.audio.isPlaying { model.audio.stop() }
-                                else { try model.previewSpeechChoice(request, choice: choice) }
-                            } catch { self.error = error.localizedDescription }
-                        }.disabled(choice.mode == .off).accessibilityIdentifier("speech-preview")
-                            .accessibilityValue(model.audio.isPlaying ? AppText.localized("再生中") : AppText.localized("停止中"))
+                        VStack {
+                            Button(model.audio.isPlaying ? AppText.localized("試聴を停止") : AppText.localized("試聴"), systemImage: model.audio.isPlaying ? "stop.circle" : "play.circle") {
+                                do {
+                                    if model.audio.isPlaying { model.audio.stop() }
+                                    else { try model.previewSpeechChoice(request, choice: choice) }
+                                } catch { self.error = error.localizedDescription }
+                            }.disabled(choice.mode == .off).accessibilityIdentifier("speech-preview")
+                                .accessibilityValue(model.audio.isPlaying ? AppText.localized("再生中") : AppText.localized("停止中"))
+                            #if DEBUG
+                            if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-speech-choice") {
+                                Text("Native speech completions")
+                                    .accessibilityIdentifier("native-speech-completions")
+                                    .accessibilityValue(String(NativeAudioDiagnostics.successfulSpeechCompletions))
+                                Text("Last completed native voice")
+                                    .accessibilityIdentifier("native-speech-completed-voice")
+                                    .accessibilityValue(NativeAudioDiagnostics.lastCompletedSpeechVoiceID)
+                            }
+                            #endif
+                        }
                     }.padding().frame(maxWidth: .infinity).background(.bar)
             }
             .toolbar {

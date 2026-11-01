@@ -13,126 +13,140 @@ final class SpeechFlowTests: StudyFlowTestSupport {
         XCTAssertGreaterThan(Date().timeIntervalSince(start), 0.1)
         XCTAssertFalse(audio.isPlaying)
     }
-    private func tapReady(_ item: XCUIElement) {
-        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND enabled == true AND hittable == true"), object: item)
-        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 30), .completed)
-        item.tap()
-    }
     private func enableTTS(_ app: XCUIApplication) {
-        let menu = app.buttons["collection-menu"]
-        XCTAssertTrue(menu.waitForExistence(timeout: 30)); menu.tap(); app.buttons["設定"].tap()
-        let outer = app.switches["tts-enabled"]
-        revealSettingsControl(outer, in: app)
-        let inner = outer.switches.firstMatch
-        let item = inner.exists ? inner : outer
-        if item.value as? String != "1" {
-            if inner.exists { inner.tap() } else { outer.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap() }
+        tapTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
+        tapTestMenuAction(titles: ["設定"], in: app)
+        let toggle = app.switches.matching(identifier: "tts-enabled")
+        revealSettingsControl(toggle.element, in: app)
+        guard setTestSwitch(toggle, enabled: true, in: app) else { return }
+        tapTestControl(app.buttons.matching(identifier: "settings-save"), in: app)
+        requireTestCondition("Settings close after saving speech enablement", in: app) {
+            !app.navigationBars["設定"].exists
         }
-        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '1'"), object: item)
-        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 10), .completed)
-        app.buttons["settings-save"].tap()
-        XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30))
     }
     private func openChoice(_ app: XCUIApplication) {
-        let menu = app.buttons["reviewer-menu"]
-        XCTAssertTrue(menu.waitForExistence(timeout: 20))
-        menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        let item = app.buttons["review-speech-choice"].firstMatch
-        XCTAssertTrue(item.waitForExistence(timeout: 20)); item.tap()
-        XCTAssertTrue(app.navigationBars["読み上げ音声"].waitForExistence(timeout: 20), app.debugDescription)
+        tapTestControl(app.buttons.matching(identifier: "reviewer-menu"), in: app)
+        tapTestMenuAction(titles: ["読み上げ音声を選択"], in: app)
+        waitForTestControl(app.navigationBars.matching(identifier: "読み上げ音声"), in: app, purpose: .observation)
     }
     private func filterEnglishVoices(_ app: XCUIApplication) {
-        let search = app.textFields["speech-search"].firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 20)); search.tap(); search.typeText("en-US\n")
-        let hide = app.buttons["Hide keyboard"]
-        if hide.exists && hide.isHittable { hide.tap() }
+        guard let search = typeInEmptyTestField(app.textFields.matching(identifier: "speech-search"), text: "en-US", in: app) else { return }
+        // Submit separately: the newline is an action, not search field content.
+        search.typeText("\n")
+        dismissTestKeyboard(in: app)
+    }
+    private func closeChoice(_ app: XCUIApplication, action: String) {
+        tapTestControl(app.buttons.matching(identifier: action), in: app)
+        requireTestCondition("Speech picker closes after " + action, in: app) {
+            !app.navigationBars["読み上げ音声"].exists
+        }
     }
     private func choose(_ app: XCUIApplication, _ id: String) {
-        let item = app.buttons[id].firstMatch
-        XCTAssertTrue(item.waitForExistence(timeout: 20)); item.tap()
-        app.buttons["speech-apply"].tap()
-        XCTAssertTrue(app.navigationBars["読み上げ音声"].waitForNonExistence(timeout: 30))
+        tapTestControl(app.buttons.matching(identifier: id), in: app, form: app.collectionViews["speech-voices-list"])
+        closeChoice(app, action: "speech-apply")
     }
-    func testInstalledVoiceSelectionPersistsAndQuestionAnswerChoicesAreSeparate() {
+    private func assertChoice(_ app: XCUIApplication, _ id: String, selected: Bool = true) {
+        guard let row = waitForTestControl(app.buttons.matching(identifier: id), in: app,
+                                          form: app.collectionViews["speech-voices-list"], purpose: .observation) else { return }
+        XCTAssertEqual(row.value as? String == "選択中", selected, "Saved speech choice: " + id)
+    }
+    func testInstalledVoiceSelectionPersistsAndQuestionAnswerChoicesAreSeparate() throws {
         let app = makeApplication()
+        // Exercise the real editor with short speech content. The general API
+        // fixture includes long prose/math; its playback length is unrelated to
+        // voice selection. Do not inject preferences, voices or a completion.
+        let sample = "This is a voice sample for checking that the selected installed speech voice plays correctly and finishes normally."
+        app.launchArguments = ["--uitest-speech-choice"]
         app.launch()
-        let deck = app.buttons["deck-1"]
-        XCTAssertTrue(deck.waitForExistence(timeout: 30)); deck.tap()
-        XCTAssertTrue(app.webViews.staticTexts["AnkiDroid API metadata verified"].waitForExistence(timeout: 30))
+        tapTestControl(app.buttons.matching(identifier: "add-note"), in: app)
+        let form = app.collectionViews["note-form"]
+        typeInEmptyTestField(app.textViews.matching(identifier: "note-field-0"), text: sample, in: app, form: form)
+        typeInEmptyTestField(app.textViews.matching(identifier: "note-field-1"), text: "Answer example.", in: app, form: form)
+        tapTestControl(app.buttons.matching(identifier: "note-save"), in: app)
+        waitForTestControl(app.staticTexts.matching(identifier: "note-added"), in: app, purpose: .observation)
+        tapTestControl(app.buttons.matching(identifier: "note-close"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
+        waitForTestControl(app.webViews.staticTexts.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern([sample]))), in: app, purpose: .observation)
         openChoice(app)
         filterEnglishVoices(app)
-        let available = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'speech-choice-' AND identifier != 'speech-choice-system' AND identifier != 'speech-choice-off' AND label CONTAINS 'en-US'")).firstMatch
-        XCTAssertTrue(available.waitForExistence(timeout: 20), "The picker must expose real installed voices")
-        let voice = available.identifier
-        available.tap()
-        XCTAssertEqual(available.value as? String, "選択中", app.debugDescription)
-        let preview = app.buttons["speech-preview"].firstMatch
-        XCTAssertTrue(preview.waitForExistence(timeout: 20)); preview.tap()
-        let speaking = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "再生中"), object: preview)
-        XCTAssertEqual(XCTWaiter.wait(for: [speaking], timeout: 15), .completed, app.debugDescription)
-        preview.tap()
-        app.buttons["speech-apply"].tap()
-        XCTAssertTrue(app.navigationBars["読み上げ音声"].waitForNonExistence(timeout: 30))
-        app.terminate(); app.launchArguments = []; app.launch()
-        XCTAssertTrue(deck.waitForExistence(timeout: 30)); deck.tap()
-        XCTAssertTrue(app.buttons["reveal"].waitForExistence(timeout: 30))
+        let installed = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'speech-choice-' AND identifier != 'speech-choice-system' AND identifier != 'speech-choice-off' AND label CONTAINS 'en-US'"))
+        requireTestCondition("Real installed English voices are listed", in: app) { installed.count > 0 }
+        // Collect semantic IDs as data, then resolve the selected ID uniquely.
+        // Never choose a first duplicate accessibility element for an action.
+        let ids = Set(installed.allElementsBoundByIndex.map { $0.identifier }).sorted()
+        let voice = try XCTUnwrap(ids.first, "The picker must expose a real installed voice")
+        tapTestControl(app.buttons.matching(identifier: voice), in: app, form: app.collectionViews["speech-voices-list"])
+        assertChoice(app, voice)
+        guard let counter = waitForTestControl(app.staticTexts.matching(identifier: "native-speech-completions"), in: app, purpose: .observation),
+              let completedVoice = waitForTestControl(app.staticTexts.matching(identifier: "native-speech-completed-voice"), in: app, purpose: .observation) else { return }
+        let before = try XCTUnwrap(Int(counter.value as? String ?? ""))
+        guard let preview = tapTestControl(app.buttons.matching(identifier: "speech-preview"), in: app) else { return }
+        requireTestCondition("Selected voice preview starts", in: app, timeout: 15) { preview.value as? String == "再生中" }
+        requireTestCondition("Selected installed voice actually completes native synthesis", in: app) {
+            (Int(counter.value as? String ?? "") ?? 0) > before
+                && completedVoice.value as? String == String(voice.dropFirst("speech-choice-".count))
+                && preview.value as? String == "停止中"
+        }
+        // Preserve independent coverage of actively stopping a second preview.
+        tapTestControl(app.buttons.matching(identifier: "speech-preview"), in: app)
+        requireTestCondition("Second preview starts before stop", in: app, timeout: 15) { preview.value as? String == "再生中" }
+        tapTestControl(app.buttons.matching(identifier: "speech-preview"), in: app)
+        requireTestCondition("Stop ends the preview queue", in: app) { preview.value as? String == "停止中" }
+        closeChoice(app, action: "speech-apply")
+        app.terminate(); app.launch()
+        tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "reveal"), in: app)
         openChoice(app)
         filterEnglishVoices(app)
-        XCTAssertEqual(app.buttons[voice].firstMatch.value as? String, "選択中", "Actual voice choice must survive relaunch")
+        assertChoice(app, voice)
         choose(app, "speech-choice-off")
-        tapReady(app.buttons["reveal"])
-        XCTAssertTrue(app.buttons["answer-2"].waitForExistence(timeout: 20))
+        tapTestControl(app.buttons.matching(identifier: "reveal"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "answer-2"), in: app)
         openChoice(app)
-        XCTAssertEqual(app.buttons["speech-choice-system"].firstMatch.value as? String, "選択中")
-        XCTAssertNotEqual(app.buttons["speech-choice-off"].firstMatch.value as? String, "選択中", "Front off choice must not leak to back")
-        app.buttons["speech-cancel"].tap()
-        app.buttons["デッキ"].tap()
+        assertChoice(app, "speech-choice-system")
+        assertChoice(app, "speech-choice-off", selected: false)
+        closeChoice(app, action: "speech-cancel")
+        tapTestControl(app.buttons.matching(identifier: "デッキ"), in: app)
         enableTTS(app)
-        app.terminate(); app.launchArguments = []; app.launch()
-        XCTAssertTrue(deck.waitForExistence(timeout: 30)); deck.tap()
-        XCTAssertTrue(app.webViews.staticTexts["AnkiDroid API metadata verified"].waitForExistence(timeout: 30))
+        app.terminate(); app.launch()
+        tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
+        waitForTestControl(app.webViews.staticTexts.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern([sample]))), in: app, purpose: .observation)
         XCTAssertFalse(app.navigationBars["読み上げ音声"].exists, "Saved off choice must suppress automatic picker")
         openChoice(app)
-        XCTAssertEqual(app.buttons["speech-choice-off"].firstMatch.value as? String, "選択中")
-        app.buttons["speech-cancel"].tap()
-        XCTAssertFalse(app.alerts.firstMatch.exists)
+        assertChoice(app, "speech-choice-off")
+        closeChoice(app, action: "speech-cancel")
+        XCTAssertFalse(app.alerts.element.exists)
     }
 
     func testAutomaticSpeechChoiceAndNestedReferencePickerCanCancelAndResume() {
         let app = makeApplication()
         app.launch()
-        XCTAssertTrue(app.buttons["add-note"].waitForExistence(timeout: 30)); app.buttons["add-note"].tap()
-        let front = app.textViews["note-field-0"], back = app.textViews["note-field-1"]
-        XCTAssertTrue(front.waitForExistence(timeout: 20)); front.tap(); front.typeText("Automatic speech next card")
-        for _ in 0..<8 { if back.exists && back.isHittable { break }; app.collectionViews["note-form"].swipeUp() }
-        XCTAssertTrue(back.waitForExistence(timeout: 20)); back.tap(); back.typeText("Back without native audio")
-        app.buttons["note-save"].tap()
-        XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30)); app.buttons["note-close"].tap()
+        tapTestControl(app.buttons.matching(identifier: "add-note"), in: app)
+        let form = app.collectionViews["note-form"]
+        typeInEmptyTestField(app.textViews.matching(identifier: "note-field-0"), text: "Automatic speech next card", in: app, form: form)
+        typeInEmptyTestField(app.textViews.matching(identifier: "note-field-1"), text: "Back without native audio", in: app, form: form)
+        tapTestControl(app.buttons.matching(identifier: "note-save"), in: app)
+        waitForTestControl(app.staticTexts.matching(identifier: "note-added"), in: app, purpose: .observation)
+        tapTestControl(app.buttons.matching(identifier: "note-close"), in: app)
         enableTTS(app)
-        let deck = app.buttons["deck-1"]
-        XCTAssertTrue(deck.waitForExistence(timeout: 30)); deck.tap()
-        XCTAssertTrue(app.navigationBars["読み上げ音声"].waitForExistence(timeout: 30), "Unconfigured fallback must ask for a voice")
+        tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
+        waitForTestControl(app.navigationBars.matching(identifier: "読み上げ音声"), in: app, purpose: .observation)
         choose(app, "speech-choice-system")
-        XCTAssertTrue(app.buttons["reveal"].waitForExistence(timeout: 20)); tapReady(app.buttons["reveal"])
-        XCTAssertTrue(app.buttons["answer-2"].waitForExistence(timeout: 20), app.debugDescription); tapReady(app.buttons["answer-2"])
-        XCTAssertTrue(app.webViews.staticTexts["Automatic speech next card"].waitForExistence(timeout: 30))
-        tapReady(app.buttons["reveal"])
-        XCTAssertTrue(app.navigationBars["読み上げ音声"].waitForExistence(timeout: 30))
-        app.buttons["speech-cancel"].tap()
-        XCTAssertTrue(app.navigationBars["読み上げ音声"].waitForNonExistence(timeout: 20))
-        app.buttons["reviewer-menu"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        app.buttons["自分の声を録音・再生"].firstMatch.tap()
-        let reference = app.buttons["voice-reference"]
-        XCTAssertTrue(reference.waitForExistence(timeout: 20))
-        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: reference)
-        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed)
-        reference.tap()
-        XCTAssertTrue(app.navigationBars["読み上げ音声"].waitForExistence(timeout: 30), "Reference fallback must present above its voice panel")
+        tapTestControl(app.buttons.matching(identifier: "reveal"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "answer-2"), in: app)
+        waitForTestControl(app.webViews.staticTexts.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["Automatic speech next card"]))), in: app, purpose: .observation)
+        tapTestControl(app.buttons.matching(identifier: "reveal"), in: app)
+        waitForTestControl(app.navigationBars.matching(identifier: "読み上げ音声"), in: app, purpose: .observation)
+        closeChoice(app, action: "speech-cancel")
+        tapTestControl(app.buttons.matching(identifier: "reviewer-menu"), in: app)
+        tapTestMenuAction(titles: ["自分の声を録音・再生"], in: app)
+        tapTestControl(app.buttons.matching(identifier: "voice-reference"), in: app)
+        waitForTestControl(app.navigationBars.matching(identifier: "読み上げ音声"), in: app, purpose: .observation)
         choose(app, "speech-choice-off")
-        XCTAssertTrue(app.navigationBars["自分の声"].waitForExistence(timeout: 20))
-        app.navigationBars["自分の声"].buttons["閉じる"].tap()
-        XCTAssertTrue(app.buttons["answer-2"].waitForExistence(timeout: 20))
-        XCTAssertTrue(app.webViews.staticTexts["Back without native audio"].exists)
-        XCTAssertFalse(app.alerts.firstMatch.exists)
+        waitForTestControl(app.navigationBars.matching(identifier: "自分の声"), in: app, purpose: .observation)
+        tapTestControl(app.navigationBars["自分の声"].buttons.matching(identifier: "閉じる"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "answer-2"), in: app)
+        waitForTestControl(app.webViews.staticTexts.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["Back without native audio"]))), in: app, purpose: .observation)
+        XCTAssertFalse(app.alerts.element.exists)
     }
 }
