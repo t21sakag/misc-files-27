@@ -3,6 +3,17 @@ import AVFoundation
 import AVKit
 import UniformTypeIdentifiers
 
+#if DEBUG
+@MainActor enum NativeAudioDiagnostics {
+    static var successfulCompletions = 0
+    static func completed(_ success: Bool) {
+        guard success, UITestIsolation.namespace() != nil,
+              ProcessInfo.processInfo.arguments.contains("--uitest-audio-note") else { return }
+        successfulCompletions += 1
+    }
+}
+#endif
+
 @MainActor final class CardAudio {
     private var filePlayer: FileAudioPlayer?
     private var filePlaying = false
@@ -276,7 +287,12 @@ final class FileAudioPlayer: @unchecked Sendable {
     private final class Delegate: NSObject, AVAudioPlayerDelegate {
         let done: @Sendable (Bool, String?) -> Void
         init(done: @escaping @Sendable (Bool, String?) -> Void) { self.done = done }
-        func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) { done(flag, nil) }
+        func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+            #if DEBUG
+            Task { @MainActor in NativeAudioDiagnostics.completed(flag) }
+            #endif
+            done(flag, nil)
+        }
         func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) { done(false, error?.localizedDescription) }
     }
 }

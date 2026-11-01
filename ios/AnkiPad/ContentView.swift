@@ -815,6 +815,13 @@ struct ContentView: View {
             }
             .overlay(alignment: .topLeading) {
                 #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--uitest-audio-note"), UITestIsolation.namespace() != nil {
+                    TimelineView(.periodic(from: .now, by: 0.2)) { _ in
+                        Text("Native audio completion").font(.caption2).allowsHitTesting(false)
+                            .accessibilityIdentifier("native-audio-completions")
+                            .accessibilityValue(String(NativeAudioDiagnostics.successfulCompletions))
+                    }
+                }
                 if ProcessInfo.processInfo.arguments.contains("--uitest-fixture") {
                     Text("swipe enabled=\(swipeReview) busy=\(model.busy) blocked=\(model.reviewingInteractionBlocked) ready=\(model.schedulerReady) pan=\(lastReviewSwipe)")
                         .font(.caption2).foregroundStyle(.secondary).allowsHitTesting(false)

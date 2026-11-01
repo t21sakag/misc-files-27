@@ -218,10 +218,15 @@ struct AudioRecorderView: View {
             VStack(spacing: 24) {
                 Image(systemName: recorder.recording ? "waveform" : "mic").font(.system(size: 60)).foregroundStyle(recorder.recording ? .red : .primary)
                 Text(recorder.recording ? AppText.localized("録音中") : AppText.localized("音声を録音"))
-                if recorder.recording { Button(AppText.localized("停止"), systemImage: "stop.circle") { recorder.stop() } }
+                if recorder.recording { Button(AppText.localized("停止"), systemImage: "stop.circle") { recorder.stop() }.accessibilityIdentifier("note-record-stop") }
                 else {
-                    Button(recorder.file == nil ? AppText.localized("録音を開始") : AppText.localized("録り直す"), systemImage: "record.circle") { Task { await recorder.start() } }.disabled(recorder.requestingPermission)
+                    Button(recorder.file == nil ? AppText.localized("録音を開始") : AppText.localized("録り直す"), systemImage: "record.circle") { Task { await recorder.start() } }.disabled(recorder.requestingPermission).accessibilityIdentifier("note-record-start")
                     if recorder.file != nil { Button(AppText.localized("再生して確認"), systemImage: "play.circle") { recorder.preview() } }
+                }
+                TimelineView(.periodic(from: .now, by: 0.2)) { _ in
+                    Text(AppText.localized("録音時間: \(String(format: "%.1f", recorder.duration))秒"))
+                        .monospacedDigit().accessibilityIdentifier("note-record-duration")
+                        .accessibilityValue(String(recorder.duration))
                 }
                 if saving { ProgressView() }
             }
@@ -238,7 +243,7 @@ struct AudioRecorderView: View {
                         do { try await insert(file); recorder.discard(); dismiss() }
                         catch { recorder.error = error.localizedDescription }
                     }
-                }.disabled(recorder.recording || recorder.file == nil || saving) }
+                }.disabled(recorder.recording || recorder.file == nil || saving).accessibilityIdentifier("note-record-insert") }
             }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .background { recorder.finish() }

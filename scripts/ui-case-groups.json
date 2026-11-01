@@ -180,5 +180,8 @@
     "testBrowserPreviewAllResultsAndContextStartKeepBothCards",
     "testNotesPreviewUsesRepresentativesUntilMultipleRowsSelected",
     "testBrowserSelectionOrderSurvivesDeselectionAndReselection"
+  ],
+  "NoteRecordingFlowTests": [
+    "testRecordedNoteInsertionSurvivesSheetCleanupAndRelaunchWithPlayableMedia"
   ]
 }
