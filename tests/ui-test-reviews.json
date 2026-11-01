@@ -4073,6 +4073,192 @@
         }
       ],
       "checked_at": "2026-11-01T05:07:44.824883+00:00"
+    },
+    {
+      "id": "20261101-sync-presentation-native-input",
+      "covers": [
+        [
+          41289550085,
+          1
+        ],
+        [
+          41288486262,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41288486262,
+            1
+          ],
+          "kind": "application",
+          "finding": "All original conflict/download UI assertions pass, but publication warning fails CI. Actual binding stack shows chooseFullSync true->false then false->false during native dismissal and confirmDirection nil->nil."
+        },
+        {
+          "attempt": [
+            41289550085,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "Fails before login submission: unique enabled/hittable direct native switch stays0. AX frame(607,689.5,63,28) contains synthesized tap(638.5,703.5). Recording shows control off before/after, secure field focus and input-assistant/password bar before contact. No native binding callback/responder observation in this attempt; cannot yet distinguish native focus interaction, application binding or automation behavior."
+        }
+      ],
+      "root_cause": "Known sync publication defect includes redundant native binding writes; equality guards are implemented but not yet reached by the second attempt. The new switch failure is undetermined despite correct semantic target and actual pointer coordinates. It is not evidence to change the tap variant.",
+      "common_resolution": "Retain the exact native-child switch action and required value. Add read-only synthetic DEBUG native responder state and actual AccountView binding/onChange logs, plus pre-action hierarchy/screenshot. Common switch wait now rechecks the same terminal value after observer timeout. Expand keyboard rules to distinguish hidden software keyboard from active responder/input assistant. No injected value, repeated tap, focus dismissal workaround, increased timeout or warning exclusion. Next scope is the same one conflict case to establish the missing causal evidence and validate the publication guard if reached.",
+      "rule_review": {
+        "semantic_labels": "Both runs reach the same typed custom-server-toggle/direct native child. Direction titles/count summary and replacement alert resolve uniquely in412884. No label changes are warranted.",
+        "foreground_scope": "Terminal AX identifies foreground AnkiWeb account-form (120,226,580,660) and child switch (607,689.5,63,28), with underlying collection behind the sheet. All action queries are typed; direct child is unique. New readonly diagnostics inspect actual key-window responder without mutating focus.",
+        "unique_reads_and_actions": "Actual synthesized contact(638.5,703.5) equals child frame center. Do not change tap strategy or pick a parent/first duplicate. Shared resolver keeps one native child and value checks. Observe real Toggle setter and subsequent State change to separate no callback from state/AX mismatch.",
+        "live_state": "412895 terminal value remains0, so failure is genuine unmet state rather than an expired waiter alone. Add same-postcondition recheck to setTestSwitch for consistency with other helpers; do not accept0 or fabricate a successful switch. New telemetry reads true current state; publication equality guards keep legitimate transitions immediate.",
+        "keyboard_and_scroll": "Terminal row and thumb are fully inside account-form; no screen clipping is shown. Video before contact retains secure field cursor/input-assistant bar while no full software keyboard appears. A hidden Keyboard and an ended responder are distinct. Cause is still unproved; observe native responder class/secure state before action, do not add another tap or bypass common keyboard checks.",
+        "environment": "Both Apple builds succeed and own independent iPadOS27 simulators. Actual selected sync fixture preflight passes;412884 completes real authentication/sync.412895 stops before request, so server success does not explain switch failure. Metadata also shows302s preflight and slower cache/build in second run; no cache-speed claim is inferred.",
+        "first_failure_evidence": "Compared complete terminal AX81CCC..., failure PNG076113..., actual recordingC885...(169-178s, contact171.327s), numeric input event5CBCF... from input-events.json, and prior runtime warning/caller stack. Native exact contact is correct; add missing binding/responder observation rather than speculative tap repair. Pre-action AX/PNG now retained for this diagnostic flag.",
+        "failure_classification": "412884 is an application runtime warning despite1/1 passed assertions;412895 is an undetermined native control state failure before sync. No app/runner crash or inspection failure is used as a selector diagnosis. These are two failed UI attempts and require this review before another run.",
+        "runtime_warnings": "Keep runtimeWarnings empty gate.412884 has1 publication warning;412895 has none only because it did not reach direction dismissal. Therefore equality-guard fix is still unverified. Do not declare publication resolved from the second run.",
+        "device_evidence": "All observations concern iPadOS27 simulator. Physical input behavior, audio/permissions/notification delivery and SideStore signing remain separate unverified work."
+      },
+      "evidence": [
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41288486262",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "28270045fdbf93fad9864f2d45e52b94a33638bfe21533fa37ebdd40b9135c81"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41288486262",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/live.log",
+          "sha256": "31bb03738359f6c162c3e435db4fb4e924663155807f233a058c149de98b760c"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41289550085",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "cf981908d932bac795d564774360aa86c8edea57bdcc9757ae52cb3e7301d0ff"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41289550085",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "input-events.json",
+          "sha256": "9b9c30060ee6b4ed6a5b6577ab7a909e6ee4333f3801f05ecd4b35926d72ed94"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41289550085",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "screenshots/81CCC614-9ADD-4D2D-B379-6238BAF997E4.txt",
+          "sha256": "742630c792f88deb233acd4309520e93d2355b10d89a3e9d99ec23e075703e3a"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41289550085",
+          "artifact_name": "screenshots",
+          "artifact_entry": "07611367-A80C-4C6A-88FB-C9469A7E870D.png",
+          "sha256": "849903cda7a718662159b60619ec056a570d11e1521008aa5e81fcf4cc41fea6"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41289550085",
+          "artifact_name": "screenshots",
+          "artifact_entry": "C885759C-DE94-44AC-AC5B-3673272C51AD.mp4",
+          "sha256": "a85ea5c9f2611be2864b4f9beedf7ed4e1fa43dfda45bad0380946f6421c3b4d"
+        }
+      ],
+      "next_scope": [
+        "StudyFlowTests/testFullSyncConflictShowsLocalCounts"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "0665c439be136ecadf2f682da33daa1c43da30d0b0b78e28ca297dda9e7b736c",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "82e986303e931aea9ddc6a26eb71226141b764eeeebd019d0d88a2c98f27a9d6",
+        "ios/AnkiPadUITests/StudyFlowTests.swift": "ae2e63067094500ad72c536fc81144239f229c082c0b053ccde742a5521f2078",
+        "ios/AnkiPad/AccountView.swift": "847d04a908d6feced5deaca06f0c39b3f4ced9f0af4c258680d9c72f8eb9792c",
+        "ios/AnkiPad/AnkiPadApp.swift": "249a000db09227d7db034babfe69c2b73d8a3017a4c3df00eea54ec0fe1701bb",
+        "ios/AnkiPad/ContentView.swift": "94cf75fe51f1c308efcef8c0e3e2340e8c00f2b43b6fa3a2625523e4c8a1fb0c",
+        "scripts/run-ui-with-diagnostics.py": "4dfde1fab9f1a137fafd1b3aa01acc0b16e2dae541a6edead63f0d9a415235b2",
+        "scripts/ui-failure-review.py": "38490cbc3c96b4ae9822ccab92c6b41dd26da4dd65563f927bfb0b70c1cb4f50",
+        "scripts/select-ui-tests.py": "78f26be80747fabe6bd96c4f1d0f8251f8b5ad13d8f28e0a1368bac5a489e19b",
+        "scripts/ui-case-groups.json": "d674dae2428384d519f1981aba0d5a0ad26033cbb5119b5058a8a3c041c45cda",
+        ".github/workflows/ipa.yml": "6fd335835e7d0bca24349daf9673cc0d45e718972169eb25b43be67e7255d8dc",
+        "tests/widget_diagnostics_smoke.py": "c6d3cd96408a5a5a60482ad35ff8b7974fe3ae0b68d62429ad1c3f9761da3fb4",
+        "tests/ui_case_groups_smoke.py": "06fcad67edfe27e1f8be167497f099b1c32d82f14b3f65fe89fd640e9fd1131b"
+      },
+      "checks": [
+        {
+          "name": "Final Swift syntax207; no Apple SDK typecheck",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b1213adf9f9e7dc6874db3391c423135be8985a32791a8d0f1098ef891003803"
+        },
+        {
+          "name": "Full case catalog105",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "c231b6573bf3b0726a66bc1a3b297e64ff1fece1d4d7722a680d6421879ff6d1"
+        },
+        {
+          "name": "Dispatch choices118",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "4fabd9999fe078e9017072592eefe64f4e34bcf5cf24a4a38f44c5db0e3545a8"
+        },
+        {
+          "name": "UI query lint",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e78d8e473c6b9680e25c652b4ea6b95c5d834a4196bb4edd97cf96bc1178c27c"
+        },
+        {
+          "name": "Review gate regression",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Actual bounded diagnostics observer",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "Actual workflow diagnostics routing",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "Exact conflict scope",
+          "argv": [
+            "python3",
+            "scripts/select-ui-tests.py",
+            "sync-direction",
+            "ui"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b4a6f4129c6910b521b146932d13be16cd7fe958ae1827c02bc1d6daaacf94a4"
+        }
+      ],
+      "checked_at": "2026-11-01T09:06:48.065645+00:00"
     }
   ]
 }

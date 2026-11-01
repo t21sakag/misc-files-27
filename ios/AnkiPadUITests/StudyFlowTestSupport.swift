@@ -168,7 +168,8 @@ class StudyFlowTestSupport: XCTestCase {
             guard tapTestControl(native, in: app) != nil else { return false }
         }
         let changed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in control.value as? String == desired }, object: nil)
-        guard XCTWaiter.wait(for: [changed], timeout: 10) == .completed else {
+        let result = XCTWaiter.wait(for: [changed], timeout: 10)
+        guard result == .completed || control.value as? String == desired else {
             controlFailure(native, in: app, reason: "Native switch did not reach the requested state"); return false
         }
         return true
@@ -363,8 +364,16 @@ class StudyFlowTestSupport: XCTestCase {
     func configureSyncEndpoint(_ app: XCUIApplication, server: String) {
         let form = app.collectionViews["account-form"]
         let toggle = app.switches.matching(identifier: "custom-server-toggle")
-        guard waitForTestControl(toggle, in: app, form: form, purpose: .observation) != nil,
-              setTestSwitch(toggle, enabled: true, in: app) else { return }
+        guard waitForTestControl(toggle, in: app, form: form, purpose: .observation) != nil else { return }
+        if app.launchArguments.contains("--uitest-presentation-trace") {
+            XCTContext.runActivity(named: "Before custom server native switch") { activity in
+                let hierarchy = XCTAttachment(string: app.debugDescription)
+                hierarchy.name = "Native input state before switch"; hierarchy.lifetime = .keepAlways
+                let screen = XCTAttachment(screenshot: app.screenshot()); screen.lifetime = .keepAlways
+                activity.add(hierarchy); activity.add(screen)
+            }
+        }
+        guard setTestSwitch(toggle, enabled: true, in: app) else { return }
         typeInEmptyTestField(app.textFields.matching(identifier: "custom-server-endpoint"), text: server, in: app, form: form)
     }
 
