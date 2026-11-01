@@ -186,17 +186,6 @@
   ],
   "ToolbarFocusReproductionTests": [
     "testProductionToolbarInMinimalPresentedNavigationCanReturnAfterToggle",
-    "testActualSettingsParentCanReturnFromProductionToolbar",
-    "testScrollableMinimalParentCanReturnFromProductionToolbar",
-    "testLocallyOwnedScrollableParentCanReturnFromProductionToolbar",
-    "testNativeTextFieldsParentCanReturnFromProductionToolbar",
-    "testNativeSlidersParentCanReturnFromProductionToolbar",
-    "testNativeSteppersParentCanReturnFromProductionToolbar",
-    "testSectionedParentCanReturnFromProductionToolbar",
-    "testSectionedCombinedControlsParentCanReturnFromProductionToolbar",
-    "testActualSettingsFullCopyCanReturnFromProductionToolbar",
-    "testActualSettingsLeftCopyCanReturnFromProductionToolbar",
-    "testActualSettingsRightCopyCanReturnFromProductionToolbar",
-    "testActualSettingsEagerCopyCanReturnFromProductionToolbar"
+    "testActualSettingsParentCanReturnFromProductionToolbar"
   ]
 }

@@ -8,57 +8,6 @@ import AVFoundation
     @MainActor static func main() {
         #if DEBUG
         if UITestIsolation.namespace() != nil,
-           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-eager-copy") {
-            ToolbarSettingsReductionApp<ToolbarEagerSettingsReductionView>.main()
-            return
-        }
-        if UITestIsolation.namespace() != nil,
-           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-full-copy") {
-            ToolbarSettingsReductionApp<ToolbarFullSettingsReductionView>.main()
-            return
-        }
-        if UITestIsolation.namespace() != nil,
-           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-left-copy") {
-            ToolbarSettingsReductionApp<ToolbarLeftSettingsReductionView>.main()
-            return
-        }
-        if UITestIsolation.namespace() != nil,
-           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-right-copy") {
-            ToolbarSettingsReductionApp<ToolbarRightSettingsReductionView>.main()
-            return
-        }
-        if UITestIsolation.namespace() != nil,
-           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-section")
-            || ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-section-combined") {
-            ToolbarSectionFocusReproductionApp.main()
-            return
-        }
-        if UITestIsolation.namespace() != nil,
-           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-text") {
-            ToolbarNativeControlFocusReproductionApp<ToolbarFocusTextControls>.main()
-            return
-        }
-        if UITestIsolation.namespace() != nil,
-           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-slider") {
-            ToolbarNativeControlFocusReproductionApp<ToolbarFocusSliderControls>.main()
-            return
-        }
-        if UITestIsolation.namespace() != nil,
-           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-stepper") {
-            ToolbarNativeControlFocusReproductionApp<ToolbarFocusStepperControls>.main()
-            return
-        }
-        if UITestIsolation.namespace() != nil,
-           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-owner") {
-            ToolbarLocalOwnerFocusReproductionApp.main()
-            return
-        }
-        if UITestIsolation.namespace() != nil,
-           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-scroll") {
-            ToolbarScrollFocusReproductionApp.main()
-            return
-        }
-        if UITestIsolation.namespace() != nil,
            ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-parent") {
             ToolbarParentFocusReproductionApp.main()
             return

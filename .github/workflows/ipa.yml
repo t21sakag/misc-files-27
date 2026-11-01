@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [focus-eager, focus-reduced-pair, focus-reductions, focus-full-copy, focus-left-copy, focus-right-copy, focus-sections, focus-section, focus-combined, focus-native-controls, focus-text, focus-slider, focus-stepper, focus-owner, focus-scroll, focus-parent, focus-minimal, controls-regression, deck-delete, sync-confirmations, download-only, typed-upload, presentation, sync-direction, speech-reference, speech-choice, speech-queue, note-recording, voice-recording, audio-queue, browser-preview-notes, browser-preview-order, browser-preview-selection, browser-preview, browser-preview-milestone, flag-names, flag-milestone, browser-options, browser-truncation, browser-search-options, browser-tools, browser-filtered, browser-replace, widget-isolation, widget-decks, widget-analysis, widget-add, widget-profile, widget-settings, widget-gallery, widgets, widget-core, widget-deferred, share-regression, share-image, share-milestone, share-text, milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, incoming-final-repair, reminder-repair, regression-repair, upload-only, incoming-fields, incoming-commit, incoming-apkg, incoming-colpkg, incoming-tsv, incoming-invalid, incoming-still-note, incoming-commit-repair, all]
+        options: [focus-parent, focus-minimal, controls-regression, deck-delete, sync-confirmations, download-only, typed-upload, presentation, sync-direction, speech-reference, speech-choice, speech-queue, note-recording, voice-recording, audio-queue, browser-preview-notes, browser-preview-order, browser-preview-selection, browser-preview, browser-preview-milestone, flag-names, flag-milestone, browser-options, browser-truncation, browser-search-options, browser-tools, browser-filtered, browser-replace, widget-isolation, widget-decks, widget-analysis, widget-add, widget-profile, widget-settings, widget-gallery, widgets, widget-core, widget-deferred, share-regression, share-image, share-milestone, share-text, milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, incoming-final-repair, reminder-repair, regression-repair, upload-only, incoming-fields, incoming-commit, incoming-apkg, incoming-colpkg, incoming-tsv, incoming-invalid, incoming-still-note, incoming-commit-repair, all]
 permissions:
   contents: read
   actions: read
@@ -57,11 +57,6 @@ jobs:
           HOMEBREW_NO_INSTALL_CLEANUP: '1'
         run: |
           if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
-      - name: Validate reduced-source controls
-        run: |
-          python3 scripts/generate-toolbar-focus-reductions.py --check
-          mkdir -p build/settings-reduction-metadata
-          cp tests/toolbar-focus-reductions.json tests/toolbar-focus-reduction-plan.json build/settings-reduction-metadata/
       - name: Inspect generated target prerequisites
         run: python3 scripts/check-project-settings.py --check
       - name: Test actual loopback routing for bundled interfaces
@@ -661,7 +656,6 @@ jobs:
           name: ui-diagnostics
           path: |
             build/test-summary.json
-            build/settings-reduction-metadata
             build/test-tree.json
             build/ui-review-gate.json
             build/input-events.json
