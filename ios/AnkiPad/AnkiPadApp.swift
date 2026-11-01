@@ -34,7 +34,9 @@ import AVFoundation
         didSet { widgetRefreshNeeded = true; scheduleWidgetRefresh() }
     }
     @Published var profilesReady = false
-    @Published var showingProfiles = false
+    @Published var showingProfiles = false {
+        didSet { tracePresentationMutation("showingProfiles", previous: String(oldValue), current: String(showingProfiles)) }
+    }
     private var deferredProfileImport: URL?
     private var deferredProfileImportLease: IncomingImportFile?
     private var deferredProfileImportReceipt: SharedInboxReceipt?
@@ -123,12 +125,16 @@ import AVFoundation
     @Published var backendPage: BackendPageRequest?
     @Published var isSyncing = false
     @Published var syncStatus = ""
-    @Published var chooseFullSync = false
+    @Published var chooseFullSync = false {
+        didSet { tracePresentationMutation("chooseFullSync", previous: String(oldValue), current: String(chooseFullSync)) }
+    }
     @Published var meteredSyncPrompt = false
     /// Whether the pending full-sync choice was prepared with media syncing allowed.
     private var fullSyncIncludesMedia = true
     @Published var syncDecision: SyncDecision?
-    @Published var confirmDirection: Bool?
+    @Published var confirmDirection: Bool? {
+        didSet { tracePresentationMutation("confirmDirection", previous: String(describing: oldValue), current: String(describing: confirmDirection)) }
+    }
     @Published var lastSync: Date?
     @Published var localSyncState: LocalSyncState?
     @Published var automaticSyncEnabled = true
@@ -144,8 +150,21 @@ import AVFoundation
     private var syncSessionID: UUID?
     private var syncAbortTask: Task<Void, Never>?
     private var timebox = ReviewTimebox()
-    @Published var timeboxReport: ReviewTimebox.Report?
+    @Published var timeboxReport: ReviewTimebox.Report? {
+        didSet { tracePresentationMutation("timeboxReport", previous: String(oldValue != nil), current: String(timeboxReport != nil)) }
+    }
     private var started = Date()
+
+    private func tracePresentationMutation(_ property: String, previous: String, current: String) {
+        #if DEBUG
+        guard UITestIsolation.namespace() != nil,
+              ProcessInfo.processInfo.arguments.contains("--uitest-presentation-trace") else { return }
+        // Record only presentation state and its actual caller; no note,
+        // account or sync payloads. Observing must not schedule a mutation.
+        NSLog("ui.publication.trace property=%@ previous=%@ current=%@ stack=%@", property, previous, current,
+              Thread.callStackSymbols.prefix(40).joined(separator: " | "))
+        #endif
+    }
 
     func run(automatic: Bool = false, _ operation: @escaping () async throws -> Void) {
         guard profilesReady, !busy else { return }

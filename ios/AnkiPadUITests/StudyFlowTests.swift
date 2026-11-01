@@ -32,17 +32,16 @@ final class StudyFlowTests: StudyFlowTestSupport {
 
     func testFullSyncConflictShowsLocalCounts() {
         let app = makeApplication()
-        let profile = prepareSyncProfile(app, name: "Conflict safety check")
+        let profile = prepareSyncProfile(app, name: "Conflict safety check", extraArguments: ["--uitest-presentation-trace"])
         loginToSyncFixture(app, username: "fixture@example.test")
-        let download = app.buttons["AnkiWebのデータをこのiPadにダウンロード"]
-        XCTAssertTrue(download.waitForExistence(timeout: 60), app.debugDescription)
-        XCTAssertTrue(app.buttons["このiPadのデータをAnkiWebにアップロード"].exists)
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "このiPad: デッキ 1個・カード 1枚")).firstMatch.exists, app.debugDescription)
-        download.tap()
-        let replace = app.alerts.buttons["置き換えて同期"]
-        XCTAssertTrue(replace.waitForExistence(timeout: 20))
-        replace.tap()
-        XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60), app.debugDescription)
+        let download = app.buttons.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["AnkiWebのデータをこのiPadにダウンロード"])))
+        guard waitForTestControl(download, in: app, timeout: 60) != nil else { return }
+        waitForTestControl(app.buttons.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["このiPadのデータをAnkiWebにアップロード"]))), in: app)
+        waitForTestControl(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "このiPad: デッキ 1個・カード 1枚")), in: app, purpose: .observation)
+        tapTestControl(download, in: app)
+        let confirmation = app.alerts.matching(identifier: "データを置き換えますか？")
+        tapTestAlertAction(titles: ["置き換えて同期"], in: confirmation, application: app)
+        waitForTestControl(app.staticTexts.matching(identifier: "同期しました"), in: app, timeout: 60, purpose: .observation)
         removeSyncProfile(app, id: profile)
     }
 

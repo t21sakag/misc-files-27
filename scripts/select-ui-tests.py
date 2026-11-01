@@ -28,6 +28,7 @@ suites = {
     'note-recording': ['testRecordedNoteInsertionSurvivesSheetCleanupAndRelaunchWithPlayableMedia'],
     'voice-recording': ['testReviewRecordingReferenceComparisonAndTemporaryCleanup'],
     'voice': ['testCardAudioQueueCompletesOnceAndCancellationDoesNotReplay', 'testReviewRecordingReferenceComparisonAndTemporaryCleanup'],
+    'sync-direction': ['testFullSyncConflictShowsLocalCounts'],
     'speech-reference': ['testAutomaticSpeechChoiceAndNestedReferencePickerCanCancelAndResume'],
     'speech-choice': ['testInstalledVoiceSelectionPersistsAndQuestionAnswerChoicesAreSeparate'],
     'speech-queue': ['testNativeSpeechSynthesisQueueCompletes'],

@@ -361,36 +361,21 @@ class StudyFlowTestSupport: XCTestCase {
     }
 
     func configureSyncEndpoint(_ app: XCUIApplication, server: String) {
-        let control = app.switches["custom-server-toggle"].switches.firstMatch
-        for _ in 0..<4 {
-            if control.exists && control.isHittable { break }
-            app.collectionViews["account-form"].swipeUp()
-        }
-        XCTAssertTrue(control.waitForExistence(timeout: 15), app.debugDescription)
-        for _ in 0..<2 {
-            if control.value as? String == "1" { break }
-            control.tap()
-            let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '1'"), object: control)
-            if XCTWaiter.wait(for: [enabled], timeout: 3) == .completed { break }
-            app.collectionViews["account-form"].swipeUp()
-        }
-        XCTAssertEqual(control.value as? String, "1", app.debugDescription)
-        let endpoint = app.textFields["custom-server-endpoint"]
-        XCTAssertTrue(endpoint.waitForExistence(timeout: 20), app.debugDescription)
-        endpoint.tap(); endpoint.typeText(server)
+        let form = app.collectionViews["account-form"]
+        let toggle = app.switches.matching(identifier: "custom-server-toggle")
+        guard waitForTestControl(toggle, in: app, form: form, purpose: .observation) != nil,
+              setTestSwitch(toggle, enabled: true, in: app) else { return }
+        typeInEmptyTestField(app.textFields.matching(identifier: "custom-server-endpoint"), text: server, in: app, form: form)
     }
 
     func loginToSyncFixture(_ app: XCUIApplication, username value: String, server: String? = nil) {
-        let account = app.buttons["ankiweb-account"]
-        XCTAssertTrue(account.waitForExistence(timeout: 30))
-        account.tap()
-        let username = app.textFields["login-username"]
-        XCTAssertTrue(username.waitForExistence(timeout: 20))
-        username.tap(); username.typeText(value)
-        app.secureTextFields["login-password"].tap()
-        app.secureTextFields["login-password"].typeText("fixture-password")
+        tapTestControl(app.buttons.matching(identifier: "ankiweb-account"), in: app)
+        let form = app.collectionViews["account-form"]
+        typeInEmptyTestField(app.textFields.matching(identifier: "login-username"), text: value, in: app, form: form)
+        guard let password = tapTestControl(app.secureTextFields.matching(identifier: "login-password"), in: app, form: form) else { return }
+        password.typeText("fixture-password")
         configureSyncEndpoint(app, server: server ?? syncEndpoint())
-        app.buttons["login-submit"].tap()
+        tapTestControl(app.buttons.matching(identifier: "login-submit"), in: app, form: form)
     }
 
     func waitForSyncIdle(_ app: XCUIApplication) {
