@@ -231,7 +231,7 @@ import UniformTypeIdentifiers
 
 /// All native player access belongs to AudioSessionCoordinator's executor.
 /// Each clip has its own instance; stale cleanup cannot stop a replacement.
-private final class FileAudioPlayer: @unchecked Sendable {
+final class FileAudioPlayer: @unchecked Sendable {
     private var player: AVAudioPlayer?
     private var delegate: Delegate?
     private static func trace(_ phase: String) {
@@ -241,12 +241,21 @@ private final class FileAudioPlayer: @unchecked Sendable {
         #endif
     }
     func play(_ url: URL, lease: AudioSessionLease, finished: @escaping @Sendable () -> Void) throws -> Bool {
+        try preview(url, reset: true, lease: lease) { _, _ in finished() }
+    }
+    func preview(_ url: URL, reset: Bool, lease: AudioSessionLease,
+                 completed: @escaping @Sendable (Bool, String?) -> Void) throws -> Bool {
         guard lease.isValid else { return false }
+        if reset || player == nil {
         Self.trace("player-init.begin")
         let audio = try AVAudioPlayer(contentsOf: url)
         Self.trace("player-init.end")
-        let delegate = Delegate(done: finished)
-        self.delegate = delegate; player = audio; audio.delegate = delegate
+        player = audio
+        }
+        guard let audio = player else { return false }
+        let delegate = Delegate(done: completed)
+        self.delegate = delegate; audio.delegate = delegate
+        if audio.currentTime >= audio.duration { audio.currentTime = 0 }
         guard lease.isValid else { stop(); return false }
         Self.trace("player-play.begin")
         let started = audio.play()
@@ -254,14 +263,20 @@ private final class FileAudioPlayer: @unchecked Sendable {
         guard lease.isValid else { stop(); return false }
         return started
     }
+    func pause() {
+        Self.trace("player-pause.begin")
+        player?.pause()
+        Self.trace("player-pause.end")
+    }
     func stop() {
         Self.trace("player-stop.begin")
         player?.stop(); player = nil; delegate = nil
         Self.trace("player-stop.end")
     }
     private final class Delegate: NSObject, AVAudioPlayerDelegate {
-        let done: @Sendable () -> Void
-        init(done: @escaping @Sendable () -> Void) { self.done = done }
-        func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) { done() }
+        let done: @Sendable (Bool, String?) -> Void
+        init(done: @escaping @Sendable (Bool, String?) -> Void) { self.done = done }
+        func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) { done(flag, nil) }
+        func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) { done(false, error?.localizedDescription) }
     }
 }

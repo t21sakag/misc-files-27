@@ -1,7 +1,7 @@
 import SwiftUI
 import AVFoundation
 
-@MainActor final class NoteAudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate, AVAudioPlayerDelegate {
+@MainActor final class NoteAudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
     @Published var recording = false
     @Published var file: URL?
     @Published var error: String?
@@ -9,7 +9,8 @@ import AVFoundation
     @Published private(set) var recordedDuration: TimeInterval = 0
     var duration: TimeInterval { recording ? recorder?.currentTime ?? 0 : recordedDuration }
     private var recorder: AVAudioRecorder?
-    private var playback: AVAudioPlayer?
+    private var playback: FileAudioPlayer?
+    private var playbackEndedDuringStart = false
     private var session: AudioSessionLease?
     private var playbackPreparation: Task<Void, Never>?
     private var playbackGeneration = UUID()
@@ -62,12 +63,14 @@ import AVFoundation
     }
     func stop() {
         if recording { recordedDuration = recorder?.currentTime ?? 0 }
+        traceRecording("recorder-stop.begin")
         recorder?.stop()
+        traceRecording("recorder-stop.end")
         recording = false
     }
     func togglePreview() {
         guard !requestingPermission, !recording, file != nil else { return }
-        if preparingPlayback || playback?.isPlaying == true {
+        if preparingPlayback || playing {
             playbackGeneration = UUID()
             playbackPreparation?.cancel(); playbackPreparation = nil
             if preparingPlayback, let session {
@@ -75,7 +78,8 @@ import AVFoundation
                 self.session = nil
             }
             preparingPlayback = false
-            playback?.pause(); playing = false
+            if let playback { AudioSessionCoordinator.shared.cleanup { playback.pause() } }
+            playing = false
         } else { preparePreview(reset: playback == nil) }
     }
     func preview() {
@@ -87,22 +91,34 @@ import AVFoundation
         playbackPreparation?.cancel()
         let generation = UUID(); playbackGeneration = generation
         let lease = sessionLease()
-        preparingPlayback = true
-        playback?.pause(); playing = false
+        if reset, let playback { AudioSessionCoordinator.shared.cleanup { playback.stop() }; self.playback = nil }
+        let worker = playback ?? FileAudioPlayer()
+        playback = worker
+        preparingPlayback = true; playbackEndedDuringStart = false
+        AudioSessionCoordinator.shared.cleanup { worker.pause() }
+        playing = false
         playbackPreparation = Task { @MainActor [weak self] in
             do {
                 try await AudioSessionCoordinator.shared.prepare(.playback, lease: lease)
                 guard let self, self.playbackGeneration == generation, !Task.isCancelled else { return }
                 guard lease.isValid else { self.finish(); return }
-                self.preparingPlayback = false; self.playbackPreparation = nil
-                if reset || self.playback == nil {
-                    self.playback = try AVAudioPlayer(contentsOf: file)
-                    self.playback?.delegate = self
+                let started = try await AudioSessionCoordinator.shared.perform(lease: lease) { [weak self] in
+                    try worker.preview(file, reset: reset, lease: lease) { success, message in
+                        Task { @MainActor in
+                            guard let self, self.playbackGeneration == generation, self.playback === worker else { return }
+                            if !success {
+                                self.finish()
+                                self.error = message ?? AppText.localized("録音の再生を完了できませんでした。")
+                            } else if self.preparingPlayback { self.playbackEndedDuringStart = true }
+                            else { self.playing = false }
+                        }
+                    }
                 }
-                guard let playback = self.playback else { return }
-                if playback.currentTime >= playback.duration { playback.currentTime = 0 }
-                guard playback.play() else { throw EngineError(message: AppText.localized("録音を再生できませんでした。")) }
-                self.playing = true
+                guard self.playbackGeneration == generation, !Task.isCancelled else { return }
+                guard lease.isValid else { self.finish(); return }
+                self.preparingPlayback = false; self.playbackPreparation = nil
+                guard started else { throw EngineError(message: AppText.localized("録音を再生できませんでした。")) }
+                self.playing = !self.playbackEndedDuringStart
             } catch {
                 guard let self, self.playbackGeneration == generation, !Task.isCancelled else { return }
                 self.preparingPlayback = false; self.playbackPreparation = nil
@@ -112,26 +128,10 @@ import AVFoundation
     }
     func discard() {
         finish()
-        stop(); playback?.stop(); playback = nil; recorder = nil
+        stop(); recorder = nil
         if let file { try? FileManager.default.removeItem(at: file) }
         file = nil
         recordedDuration = 0
-    }
-    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        let identity = ObjectIdentifier(player)
-        Task { @MainActor in
-            guard let current = self.playback, ObjectIdentifier(current) == identity else { return }
-            self.playing = false
-            if !flag { self.error = AppText.localized("録音の再生を完了できませんでした。") }
-        }
-    }
-    nonisolated func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
-        let identity = ObjectIdentifier(player)
-        let message = error?.localizedDescription ?? AppText.localized("録音を読み取れませんでした。")
-        Task { @MainActor in
-            guard let current = self.playback, ObjectIdentifier(current) == identity else { return }
-            self.finish(); self.error = message
-        }
     }
     private func invalidatePermissionRequest() {
         permissionGeneration = UUID()
@@ -139,7 +139,8 @@ import AVFoundation
     }
     func finish() {
         invalidatePermissionRequest()
-        playback?.stop()
+        if let playback { AudioSessionCoordinator.shared.cleanup { playback.stop() } }
+        playback = nil
         playing = false
         stop()
         playbackGeneration = UUID()
