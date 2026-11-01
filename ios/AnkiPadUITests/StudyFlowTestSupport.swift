@@ -82,6 +82,13 @@ class StudyFlowTestSupport: XCTestCase {
         }
         guard visible() else { return true }
         let hide = app.buttons.matching(NSPredicate(format: "label IN %@", ["Hide keyboard", "キーボードを隠す"]))
+        guard app.alerts.count == 0 else {
+            // A keyboard action is outside a native alert. XCTest can treat
+            // that intended alert as an interruption and cancel its edits.
+            // Input and alert actions must preserve this foreground keyboard.
+            controlFailure(hide, in: app, reason: "Cannot dismiss the keyboard outside a foreground alert; use the input/alert keep policy")
+            return false
+        }
         let settled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
             !visible() || hide.allElementsBoundByIndex.filter { $0.isHittable }.count == 1
         }, object: nil)
@@ -181,7 +188,7 @@ class StudyFlowTestSupport: XCTestCase {
     @discardableResult
     func typeInEmptyTestField(_ query: XCUIElementQuery, text: String, in app: XCUIApplication,
                               form: XCUIElement? = nil) -> XCUIElement? {
-        guard !text.isEmpty, let field = tapTestControl(query, in: app, form: form) else { return nil }
+        guard !text.isEmpty, let field = tapTestControl(query, in: app, form: form, keyboard: app.alerts.count == 0 ? .dismiss : .keep) else { return nil }
         let value = field.value as? String
         guard value == "" || (field.placeholderValue != nil && value == field.placeholderValue) else {
             controlFailure(query, in: app, reason: "Expected an empty field before inserting test text"); return nil
@@ -198,7 +205,7 @@ class StudyFlowTestSupport: XCTestCase {
     @discardableResult
     func replaceTestField(_ query: XCUIElementQuery, expected: String, with text: String, in app: XCUIApplication,
                           form: XCUIElement? = nil) -> XCUIElement? {
-        guard let field = tapTestControl(query, in: app, form: form) else { return nil }
+        guard let field = tapTestControl(query, in: app, form: form, keyboard: app.alerts.count == 0 ? .dismiss : .keep) else { return nil }
         guard field.value as? String == expected else {
             controlFailure(query, in: app, reason: "Field did not contain the expected replacement source"); return nil
         }
