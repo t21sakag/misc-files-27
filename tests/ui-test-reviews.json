@@ -3875,6 +3875,204 @@
         }
       ],
       "checked_at": "2026-11-01T03:52:26.346117+00:00"
+    },
+    {
+      "id": "20261101-recorder-finalization",
+      "covers": [
+        [
+          41273983442,
+          1
+        ],
+        [
+          41273100821,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41273983442,
+            1
+          ],
+          "kind": "application",
+          "finding": "Both native PCM and recording preview UI assertions pass; exact recorder-record begin/end(main1) brackets SDK978. Preview play/pause runs off main, warning comes from recording start."
+        },
+        {
+          "attempt": [
+            41273100821,
+            1
+          ],
+          "kind": "application",
+          "finding": "Apple compile stopped before UI due to traceRecording declaration omitted by a copy-order error. Syntax-only validation could not detect name resolution. Corrected905e1ab compiles and runs both UI cases."
+        }
+      ],
+      "root_cause": "AVAudioRecorder.record itself activates the native session on main, just as AVAudioPlayer.play did. Separate prior compilation failure came from copying a stale private file over a public-only diagnostic addition.",
+      "common_resolution": "FileAudioRecorder owns native init/record/currentTime/stop/delegate on the shared audio executor. Synchronous stop enqueues a non-cancellable finalization immediately, before session release. UI retains recording state until closure completes, samples duration asynchronously, and awaits finalization before insertion or preview. Insert owns a queued copy so background discard cannot delete its source mid-import. Cancelled unpublished starts stop and delete their private file. Record only the changed recording case next; retain successful PCM at milestone.",
+      "rule_review": {
+        "semantic_labels": "No semantic label or title mismatch occurred. Preserve existing recording/replay/compare/cleanup UI assertions and labels. Add only a selector alias for the already existing recording case.",
+        "foreground_scope": "412739 actual reviewer/voice UI passes. No presenter change needed. Native recorder callbacks return structural/error state to main with worker identity; no raw AVAudioRecorder state is read by UI.",
+        "unique_reads_and_actions": "No tap selector edits. All recorder state reads occur through one worker on the serial executor. Existing sample test waits for actual seconds and preview-state transitions, rather than assuming an input tap succeeded.",
+        "live_state": "recording remains true until queued native stop/file closure completes. A cancellable UI wait cannot cancel that finalization; late completions check result identity. Insert gets its own copy after closure and removes it after import, while discard deletes the original in executor order. Duration comes from native samples, not fabricated wall-clock time.",
+        "keyboard_and_scroll": "No keyboard/scroll failure in either attempt. Keep helper contracts; do not alter taps or timeouts for a native recording warning or a compile error.",
+        "environment": "Prior corrected source905e1ab compiled and exercised the actual recording flow. New native recorder worker is Apple-unverified. Core strict-concurrency checks execute finalization, cancellation/multiple waiters, release ordering and real file copy/discard lifetime on Linux. Final edited recorder/coordinator source is copied after all edits and byte-compared before publication; parsing is explicitly not Apple name-resolution proof.",
+        "first_failure_evidence": "Owned app log04:55:46.878 recorder-record.begin(main1),46.879 SDK978,47.148 end proves blocking start. Stop boundaries have no matching SDK warning. Both UI tests passed, so no failed control AX is claimed. Compile diagnostics from412731 identify missing helper by exact source line; the actual905 source contains its definition. Preserve bounded phase logging for new main0 recorder operations.",
+        "failure_classification": "One application compilation defect and one genuine application native-thread runtime warning. Keep them distinct from UI automation defects. Neither is resolved by changing tap strategy; next native recording test must pass with no warning.",
+        "runtime_warnings": "412739 summary aggregates one warning at recorder.record; two UI assertions pass. Retain explicit empty runtimeWarnings gate and raw SDK log checks. PCM already passed clean; do not repeatedly rerun it for recorder-only correction.",
+        "device_evidence": "Simulator recording and file lifecycle only. Physical microphone routes/Bluetooth/background deadlines/SideStore and other speech/recognition paths remain unverified."
+      },
+      "evidence": [
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41273983442",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "test-summary.json",
+          "sha256": "efe8e08cf4ffe6cc366a0177023a639e7925d4e29a4fc03e0fe25ee75d0dccea"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41273983442",
+          "artifact_name": "ui-diagnostics",
+          "artifact_entry": "widget-diagnostics/live.log",
+          "sha256": "6096db2fe36d0e13849a360adb15d95716f7691dc013be59c53bbc0b106f63b1"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41273983442",
+          "artifact_name": "compile-metrics",
+          "artifact_entry": "simulator-build.log",
+          "sha256": "af990282944eced6476ce5d936e05ad17f54fdeae3c54e629775731d9039d8f0"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41273100821",
+          "artifact_name": "compile-metrics",
+          "artifact_entry": "simulator-build.log",
+          "sha256": "2ad8407bcddf50277880bfb3e8d2cab8de13502daf8952df469409197b8a12ae"
+        }
+      ],
+      "next_scope": [
+        "AudioFlowTests/testReviewRecordingReferenceComparisonAndTemporaryCleanup"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "5fb7b069e3d79dbdd1bf643b0e7a6f12c068ea0af6d422404e069314fb3ae0e9",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "7e8dc25d208c3d2517d212311fe10753714be33eeccdf06c4b5f473627d97fc4",
+        "ios/AnkiPadUITests/AudioFlowTests.swift": "1e9d692e4acbffc6074a5d6a4cea6925114ffe0daa95ea4eb645139d0186c657",
+        "ios/AnkiPad/AudioSessionCoordinator.swift": "da1dfb1b4798339e482fb56738de69516f9bc3d0497b74fa8377160adbe16f29",
+        "ios/AnkiPad/CardAudio.swift": "cb658de1404e9ea693b8e88262ec49b0412ce9933a7b1c1145bfa229ab800a4e",
+        "ios/AnkiPad/AudioRecorderView.swift": "6ba9f97a089fc0efb255399dcd8927cbddca3e63def745fde82d813565550730",
+        "ios/AnkiPad/CardScriptSpeech.swift": "9da8fda76d625fad256fe815a2be103fd43ca2e2eb9cd72d2506cdfbfe4395bf",
+        "ios/AnkiPad/CardScriptRecognition.swift": "836b3bcb1223497e68ddd45f17aa8ff02d160b121332ab69e1cd425ee4544e3d",
+        "ios/project.yml": "8c56f96b75de28025a7e368745e3c31556b8e03b841868adaeb072a93817f009",
+        "scripts/run-ui-with-diagnostics.py": "d5ae137bcc231b8ec235c1284248e64085bf393590a60aa4cdf93a6be20eb9fe",
+        "scripts/select-ui-tests.py": "9b68fda0053360e4eed5a88b46dd36c0abb961a93bc1d3750cd5b2699949eb14",
+        "scripts/ui-case-groups.json": "2a5c23ba2ad2bf6648706619346b462a7524f646d32caa4dde3579bfd43c7262",
+        "scripts/summarize-ui-results.py": "8c867c654eb08bdb351c98f85d99457a8994b9d01a3fa90907ef2fba02852471",
+        ".github/workflows/ipa.yml": "9c4c197feb3837e581ef7c1f022a373088444df8173d80f165092d8e32de5d1c",
+        "tests/widget_diagnostics_smoke.py": "94f888b42879725b5865b16f74b98504952f82aead1ed863d83b274e9413c224",
+        "tests/ui_case_groups_smoke.py": "63c24a56d31dcd5742c1076eb7bc3858d3d68f0bd6a0df8c9fa770e2b3beed90",
+        "tests/audio_session_coordinator_smoke.swift": "0c52286db7f75ad73d7a66bdef960642eccf7db5db4068bf4f65fd45acd70a37",
+        "ios/AnkiPad/AnkiPadApp.swift": "e96791b0cc2165f11fcc187625f4e558a7bd98bdd21b20b70f75fc1e6c38f949"
+      },
+      "checks": [
+        {
+          "name": "Swift syntax206; no Apple SDK typecheck",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6dd47774badaacb41be3ad7ec0828603e98c31174351e02bb7e49786c26446cc"
+        },
+        {
+          "name": "Actual queue ownership strict-concurrency compilation",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-strict-concurrency=complete",
+            "-warnings-as-errors",
+            "-parse-as-library",
+            "ios/AnkiPad/AudioSessionCoordinator.swift",
+            "tests/audio_session_coordinator_smoke.swift",
+            "-o",
+            "build/audio-session-coordinator-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "Actual queue ownership execution",
+          "argv": [
+            "build/audio-session-coordinator-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "4be50bcbca4790fe1d3fd918fbb5799fd4f2d76cd443d2dc62c0da0fa838c5e4"
+        },
+        {
+          "name": "Case catalog104 and audio alias",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b659ab3258a77884dca6555f8251fadec48e764e7c54b2c0b22c074362f072ca"
+        },
+        {
+          "name": "Dispatch choices113",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6191e4f2b91e5ba97d025f906cd86073425bd1100ab9cd6b10666880013d1ce0"
+        },
+        {
+          "name": "UI query lint",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2ee1b0b21abca8f7697d081672551182916e7c909e397420c22c90d89ab03eef"
+        },
+        {
+          "name": "Gate regression",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Native stage and SDK observer predicates",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "Actual workflow diagnostic routing",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "Exact changed recording scope",
+          "argv": [
+            "python3",
+            "scripts/select-ui-tests.py",
+            "voice-recording",
+            "ui"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6724f65e2f39da345c7feba53da5030347133877811c23109a2591cd6bb03f17"
+        }
+      ],
+      "checked_at": "2026-11-01T05:07:44.824883+00:00"
     }
   ]
 }

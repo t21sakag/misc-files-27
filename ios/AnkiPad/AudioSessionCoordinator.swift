@@ -20,6 +20,24 @@ final class AudioSessionLease: @unchecked Sendable {
     }
 }
 
+/// A queued finalization completes even when its UI waiter is cancelled.
+final class AudioFinalization<Value: Sendable>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var result: Value?
+    private var waiters: [CheckedContinuation<Value, Never>] = []
+    func value() async -> Value {
+        await withCheckedContinuation { continuation in
+            lock.lock()
+            if let result { lock.unlock(); continuation.resume(returning: result) }
+            else { waiters.append(continuation); lock.unlock() }
+        }
+    }
+    fileprivate func complete(_ value: Value) {
+        lock.lock(); result = value; let waiting = waiters; waiters.removeAll(); lock.unlock()
+        waiting.forEach { $0.resume(returning: value) }
+    }
+}
+
 /// One serial executor owns every native category/activation change. No caller
 /// waits synchronously on the main thread, and an old owner cannot deactivate
 /// a newer recording or playback session.
@@ -88,6 +106,12 @@ final class AudioSessionCoordinator: @unchecked Sendable {
                 catch { continuation.resume(throwing: error) }
             }
         }
+    }
+    /// Enqueue now, before release or a replacement can overtake file closure.
+    func finalize<Value: Sendable>(_ operation: @escaping @Sendable () -> Value) -> AudioFinalization<Value> {
+        let result = AudioFinalization<Value>()
+        queue.async { result.complete(operation()) }
+        return result
     }
     /// Cleanup refers to one player instance, even after its lease is cancelled.
     func cleanup(_ operation: @escaping @Sendable () -> Void) { queue.async(execute: operation) }

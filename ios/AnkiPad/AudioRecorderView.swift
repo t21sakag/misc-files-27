@@ -1,14 +1,16 @@
 import SwiftUI
 import AVFoundation
 
-@MainActor final class NoteAudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
+@MainActor final class NoteAudioRecorder: NSObject, ObservableObject {
     @Published var recording = false
     @Published var file: URL?
     @Published var error: String?
     @Published private(set) var playing = false
     @Published private(set) var recordedDuration: TimeInterval = 0
-    var duration: TimeInterval { recording ? recorder?.currentTime ?? 0 : recordedDuration }
-    private var recorder: AVAudioRecorder?
+    var duration: TimeInterval { recordedDuration }
+    private var recorder: FileAudioRecorder?
+    private var recordingFinalization: AudioFinalization<TimeInterval>?
+    private var durationUpdates: Task<Void, Never>?
     private var playback: FileAudioPlayer?
     private var playbackEndedDuringStart = false
     private var session: AudioSessionLease?
@@ -17,12 +19,6 @@ import AVFoundation
     private var preparingPlayback = false
     private var permissionGeneration = UUID()
     @Published private(set) var requestingPermission = false
-    private func traceRecording(_ phase: String) {
-        #if DEBUG
-        guard UITestIsolation.namespace() != nil else { return }
-        NSLog("audio.playback.trace phase=%@ main=%d", phase, Thread.isMainThread ? 1 : 0)
-        #endif
-    }
     private func sessionLease() -> AudioSessionLease {
         if let session, session.isValid { return session }
         let identity = UUID()
@@ -36,6 +32,8 @@ import AVFoundation
         return lease
     }
     func start() async {
+        guard !requestingPermission, !recording || recordingFinalization != nil else { return }
+        await awaitFinalization()
         guard !requestingPermission, !recording else { return }
         finish()
         error = nil
@@ -55,27 +53,75 @@ import AVFoundation
             try await AudioSessionCoordinator.shared.prepare(.recording, lease: lease)
             guard permissionGeneration == generation, lease.isValid else { return }
             let url = FileManager.default.temporaryDirectory.appendingPathComponent("recording-" + UUID().uuidString + ".m4a")
-            let recorder = try AVAudioRecorder(url: url, settings: [AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 44100, AVNumberOfChannelsKey: 1, AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue])
-            recorder.delegate = self
-            self.recorder = recorder
-            file = url
-            traceRecording("recorder-record.begin")
-            let started = recorder.record()
-            traceRecording("recorder-record.end")
+            let worker = FileAudioRecorder(url: url)
+            recorder = worker
+            let started = try await AudioSessionCoordinator.shared.perform(lease: lease) { [weak self, weak worker] in
+                guard let worker else { return false }
+                return try worker.start(lease: lease) { [weak self, weak worker] message in
+                    Task { @MainActor in
+                        guard let self, let worker, self.recorder === worker else { return }
+                        self.error = message ?? AppText.localized("録音中にエラーが発生しました。")
+                        self.discard()
+                    }
+                }
+            }
+            guard permissionGeneration == generation, lease.isValid else { return }
             guard started else { throw EngineError(message: AppText.localized("録音を開始できませんでした。")) }
+            file = url
             recording = true
+            durationUpdates = Task { @MainActor [weak self, weak worker] in
+                while !Task.isCancelled {
+                    guard let self, let worker, self.recorder === worker else { return }
+                    do {
+                        let value = try await AudioSessionCoordinator.shared.perform(lease: lease) { worker.duration }
+                        guard self.recorder === worker, !Task.isCancelled else { return }
+                        self.recordedDuration = value
+                        try await Task.sleep(nanoseconds: 200_000_000)
+                    } catch { return }
+                }
+            }
         } catch {
             guard permissionGeneration == generation else { return }
             self.error = error.localizedDescription
             discard()
         }
     }
+    private func awaitFinalization() async {
+        guard let result = recordingFinalization else { return }
+        let duration = await result.value()
+        guard recordingFinalization === result else { return }
+        recordedDuration = file == nil ? 0 : duration
+        recording = false; recordingFinalization = nil
+    }
+    func finalizedFile() async -> URL? {
+        await awaitFinalization()
+        guard !recording, !requestingPermission, let file else { return nil }
+        // The insert operation owns a copy. Closing the sheet or background
+        // cleanup may discard the original while the engine is importing it.
+        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("recording-insert-" + UUID().uuidString + ".m4a")
+        let copy = AudioSessionCoordinator.shared.finalize { () -> Result<URL, Error> in
+            Result { try FileManager.default.copyItem(at: file, to: destination); return destination }
+        }
+        switch await copy.value() {
+        case .success(let url): return url
+        case .failure(let failure): error = failure.localizedDescription; return nil
+        }
+    }
     func stop() {
-        if recording { recordedDuration = recorder?.currentTime ?? 0 }
-        traceRecording("recorder-stop.begin")
-        recorder?.stop()
-        traceRecording("recorder-stop.end")
-        recording = false
+        durationUpdates?.cancel(); durationUpdates = nil
+        guard let worker = recorder else {
+            if recordingFinalization == nil { recording = false }
+            return
+        }
+        recorder = nil
+        let published = file == worker.url
+        let result = AudioSessionCoordinator.shared.finalize {
+            let duration = worker.stop()
+            if !published { try? FileManager.default.removeItem(at: worker.url) }
+            return duration
+        }
+        recordingFinalization = result
+        Task { @MainActor [weak self] in await self?.awaitFinalization() }
     }
     func togglePreview() {
         guard !requestingPermission, !recording, file != nil else { return }
@@ -108,13 +154,14 @@ import AVFoundation
         playing = false
         playbackPreparation = Task { @MainActor [weak self] in
             do {
+                await self?.awaitFinalization()
                 try await AudioSessionCoordinator.shared.prepare(.playback, lease: lease)
                 guard let self, self.playbackGeneration == generation, !Task.isCancelled else { return }
                 guard lease.isValid else { self.finish(); return }
                 let started = try await AudioSessionCoordinator.shared.perform(lease: lease) { [weak self] in
-                    try worker.preview(file, reset: reset, lease: lease) { success, message in
+                    try worker.preview(file, reset: reset, lease: lease) { [weak self, weak worker] success, message in
                         Task { @MainActor in
-                            guard let self, self.playbackGeneration == generation, self.playback === worker else { return }
+                            guard let self, let worker, self.playbackGeneration == generation, self.playback === worker else { return }
                             if !success {
                                 self.finish()
                                 self.error = message ?? AppText.localized("録音の再生を完了できませんでした。")
@@ -137,8 +184,9 @@ import AVFoundation
     }
     func discard() {
         finish()
-        stop(); recorder = nil
-        if let file { try? FileManager.default.removeItem(at: file) }
+        if let file {
+            AudioSessionCoordinator.shared.cleanup { try? FileManager.default.removeItem(at: file) }
+        }
         file = nil
         recordedDuration = 0
     }
@@ -157,15 +205,7 @@ import AVFoundation
         if let session { AudioSessionCoordinator.shared.release(session, deactivate: true) }
         session = nil
     }
-    nonisolated func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
-        let message = error?.localizedDescription ?? AppText.localized("録音中にエラーが発生しました。")
-        let failedRecorder = ObjectIdentifier(recorder)
-        Task { @MainActor in
-            guard let current = self.recorder, ObjectIdentifier(current) == failedRecorder else { return }
-            self.finish()
-            self.error = message
-        }
-    }
+
 }
 struct AudioRecorderView: View {
     let insert: (URL) async throws -> Void
@@ -190,10 +230,11 @@ struct AudioRecorderView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { recorder.discard(); dismiss() }.disabled(saving) }
                 ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("挿入")) {
-                    guard let file = recorder.file else { return }
                     recorder.stop(); saving = true
                     Task {
                         defer { saving = false }
+                        guard let file = await recorder.finalizedFile() else { return }
+                        defer { try? FileManager.default.removeItem(at: file) }
                         do { try await insert(file); recorder.discard(); dismiss() }
                         catch { recorder.error = error.localizedDescription }
                     }
@@ -285,5 +326,47 @@ struct ReviewVoiceView: View {
                 Button(AppText.localized("閉じる"), role: .cancel) { recorder.error = nil }
             } message: { Text(recorder.error ?? "") }
         }
+    }
+}
+
+final class FileAudioRecorder: @unchecked Sendable {
+    let url: URL
+    private var recorder: AVAudioRecorder?
+    private var delegate: Delegate?
+    private var stoppedDuration: TimeInterval = 0
+    init(url: URL) { self.url = url }
+    var duration: TimeInterval { recorder?.currentTime ?? stoppedDuration }
+    private static func trace(_ phase: String) {
+        #if DEBUG
+        guard UITestIsolation.namespace() != nil else { return }
+        NSLog("audio.playback.trace phase=%@ main=%d", phase, Thread.isMainThread ? 1 : 0)
+        #endif
+    }
+    func start(lease: AudioSessionLease, failed: @escaping @Sendable (String?) -> Void) throws -> Bool {
+        guard lease.isValid else { return false }
+        let native = try AVAudioRecorder(url: url, settings: [AVFormatIDKey: kAudioFormatMPEG4AAC,
+            AVSampleRateKey: 44100, AVNumberOfChannelsKey: 1, AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue])
+        let delegate = Delegate(failed: failed)
+        self.delegate = delegate; recorder = native; native.delegate = delegate
+        guard lease.isValid else { _ = stop(); return false }
+        Self.trace("recorder-record.begin")
+        let started = native.record()
+        Self.trace("recorder-record.end")
+        guard lease.isValid else { _ = stop(); return false }
+        return started
+    }
+    func stop() -> TimeInterval {
+        guard let recorder else { return stoppedDuration }
+        stoppedDuration = recorder.currentTime
+        Self.trace("recorder-stop.begin")
+        recorder.stop()
+        Self.trace("recorder-stop.end")
+        self.recorder = nil; delegate = nil
+        return stoppedDuration
+    }
+    private final class Delegate: NSObject, AVAudioRecorderDelegate {
+        let failed: @Sendable (String?) -> Void
+        init(failed: @escaping @Sendable (String?) -> Void) { self.failed = failed }
+        func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) { failed(error?.localizedDescription) }
     }
 }

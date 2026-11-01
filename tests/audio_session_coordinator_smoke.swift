@@ -112,6 +112,36 @@ private final class Probe: @unchecked Sendable {
         coordinator.cleanup { probe.revoked("cleanup") }
         await barrier(coordinator)
         precondition(probe.events.last == "revoked.cleanup", "Cancelled player cleanup was lost")
+        let finalLease = AudioSessionLease()
+        try await coordinator.prepare(.recording, lease: finalLease)
+        let finalized = coordinator.finalize { probe.revoked("file-finalized"); return 41 }
+        coordinator.release(finalLease, deactivate: true)
+        let cancelledWaiter = Task { await finalized.value() }
+        cancelledWaiter.cancel()
+        let cancelledValue = await cancelledWaiter.value
+        precondition(cancelledValue == 41, "Cancellation lost file finalization")
+        let secondValue = await finalized.value()
+        precondition(secondValue == 41, "Other consumers lost finalized value")
+        await barrier(coordinator)
+        let finalIndex = probe.events.firstIndex(of: "revoked.file-finalized")!
+        precondition(probe.events[(finalIndex + 1)...].contains("deactivate"), "Session release overtook file finalization")
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let source = directory.appendingPathComponent("recording.m4a")
+        let owned = directory.appendingPathComponent("insert.m4a")
+        let bytes = Data([1, 2, 3, 4])
+        let closed = coordinator.finalize { () -> Result<Void, Error> in Result { try bytes.write(to: source) } }
+        let copied = coordinator.finalize { () -> Result<URL, Error> in
+            Result { try FileManager.default.copyItem(at: source, to: owned); return owned }
+        }
+        coordinator.cleanup { try? FileManager.default.removeItem(at: source) }
+        try await closed.value().get()
+        let insertURL = try await copied.value().get()
+        await barrier(coordinator)
+        precondition(!FileManager.default.fileExists(atPath: source.path))
+        let copiedBytes = try Data(contentsOf: insertURL)
+        precondition(copiedBytes == bytes, "Discard destroyed the finalized insert copy")
         print("PASS: audio configuration/deactivation run off main; shared playback, cancelled/failed category rollback, incompatible replacement and old-owner cleanup preserve the live session")
     }
 }
