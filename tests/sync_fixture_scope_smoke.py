@@ -11,6 +11,9 @@ def scope(name):
     return subprocess.check_output(['python3',str(root/'scripts/select-ui-tests.py'),name,'ui'],text=True).splitlines()
 assert ports(scope('regression-repair')) == [18901]
 assert ports(scope('upload-only')) == [18901]
+assert ports(scope('download-only')) == [18901]
+assert ports(scope('typed-upload')) == [18891]
+assert ports(scope('sync-confirmations')) == [18891,18901]
 assert ports(scope('automatic')) == [18891,18901]
 assert ports(scope('incoming-core')) == []
 assert ports(scope('reminder-repair')) == []

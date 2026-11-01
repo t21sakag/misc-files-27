@@ -47,22 +47,25 @@ final class StudyFlowTests: StudyFlowTestSupport {
 
     func testFullSyncWithLocalDataRequiresTypedUploadConfirmation() {
         let app = makeApplication()
-        let profile = prepareSyncProfile(app, name: "Upload safety check")
+        let profile = prepareSyncProfile(app, name: "Upload safety check", extraArguments: ["--uitest-presentation-trace"])
         loginToSyncFixture(app, username: "empty@example.test")
-        let replace = app.alerts.buttons["置き換えて同期"]
-        XCTAssertTrue(replace.waitForExistence(timeout: 60), app.debugDescription)
+        let confirmation = app.alerts.matching(identifier: "データを置き換えますか？")
+        let actions = alertActions(titles: ["置き換えて同期"], in: confirmation)
+        guard let replace = waitForTestControl(actions, in: app, keyboard: .keep, timeout: 60, purpose: .observation) else { return }
         XCTAssertFalse(replace.isEnabled, "Upload requires explicit typed confirmation")
-        XCTAssertTrue(app.alerts.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "このiPad: デッキ")).firstMatch.exists)
-        let confirmation = app.alerts.textFields.firstMatch
-        XCTAssertTrue(confirmation.exists)
-        confirmation.tap(); confirmation.typeText("アップロード")
-        XCTAssertTrue(replace.isEnabled)
-        replace.tap()
-        XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60), app.debugDescription)
-        app.buttons["ankiweb-account"].tap()
-        app.buttons["logout"].tap()
-        app.buttons["閉じる"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["login-entry"].waitForExistence(timeout: 20))
+        waitForTestControl(confirmation.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "このiPad: デッキ")),
+                           in: app, keyboard: .keep, purpose: .observation)
+        typeInEmptyTestField(confirmation.textFields, text: "アップロードしない", in: app)
+        XCTAssertFalse(replace.isEnabled, "A different phrase must not authorize replacement")
+        replaceTestField(confirmation.textFields, expected: "アップロードしない", with: "アップロード", in: app)
+        requireTestCondition("Only the exact upload phrase enables replacement", in: app) { replace.isEnabled }
+        tapTestAlertAction(titles: ["置き換えて同期"], in: confirmation, application: app)
+        waitForTestControl(app.staticTexts.matching(identifier: "同期しました"), in: app,
+                           keyboard: .keep, timeout: 60, purpose: .observation)
+        tapTestControl(app.buttons.matching(identifier: "ankiweb-account"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "logout"), in: app)
+        tapTestControl(app.navigationBars["AnkiWeb"].buttons.matching(identifier: "閉じる"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "login-entry"), in: app)
         removeSyncProfile(app, id: profile)
     }
 

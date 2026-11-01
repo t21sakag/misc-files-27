@@ -141,9 +141,14 @@ class StudyFlowTestSupport: XCTestCase {
 
     @discardableResult
     func tapTestAlertAction(titles: [String], in alert: XCUIElementQuery, application: XCUIApplication) -> XCUIElement? {
-        let actions = alert.descendants(matching: .other).children(matching: .button)
+        tapTestControl(alertActions(titles: titles, in: alert), in: application, keyboard: .keep)
+    }
+
+    /// Disabled native alert actions still need unique passive observation.
+    /// Use the same foreground wrapper resolution for reads and activation.
+    func alertActions(titles: [String], in alert: XCUIElementQuery) -> XCUIElementQuery {
+        alert.descendants(matching: .other).children(matching: .button)
             .matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(titles)))
-        return tapTestControl(actions, in: application, keyboard: .keep)
     }
 
     /// Native submenu cells can omit the source accessibility identifier.

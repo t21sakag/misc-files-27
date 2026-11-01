@@ -75,45 +75,49 @@ final class AutomaticSyncTests: StudyFlowTestSupport {
 
     func testAutomaticFullUploadRequiresDirectionChoice() {
         let app = makeApplication(automaticSync: true)
-        let profile = prepareSyncProfile(app, name: "Automatic upload choice check")
+        let profile = prepareSyncProfile(app, name: "Automatic upload choice check", extraArguments: ["--uitest-presentation-trace"])
         loginToSyncFixture(app, username: "empty@example.test")
-        let replace = app.alerts.buttons["置き換えて同期"]
-        XCTAssertTrue(replace.waitForExistence(timeout: 60), app.debugDescription)
-        XCTAssertFalse(replace.isEnabled)
-        app.alerts.buttons["キャンセル"].tap()
+        let confirmation = app.alerts.matching(identifier: "データを置き換えますか？")
+        let replace = alertActions(titles: ["置き換えて同期"], in: confirmation)
+        guard let initial = waitForTestControl(replace, in: app, keyboard: .keep, timeout: 60, purpose: .observation) else { return }
+        XCTAssertFalse(initial.isEnabled, "Empty confirmation cannot upload a local collection")
+        tapTestAlertAction(titles: ["キャンセル"], in: confirmation, application: app)
+        requireTestCondition("Initial upload confirmation cancels", in: app) { confirmation.count == 0 }
         // Avoid a background transition here: relaunch must initiate this check.
-        app.terminate(); app.launchArguments = []; app.launch()
-        let upload = app.buttons["このiPadのデータをAnkiWebにアップロード"]
-        XCTAssertTrue(upload.waitForExistence(timeout: 60), app.debugDescription)
-        XCTAssertFalse(app.alerts.textFields.firstMatch.exists)
+        app.terminate(); app.launchArguments = ["--uitest-presentation-trace"]; app.launch()
+        let upload = app.buttons.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["このiPadのデータをAnkiWebにアップロード"])))
+        waitForTestControl(upload, in: app, timeout: 60)
+        XCTAssertEqual(app.alerts.textFields.count, 0, "Automatic full sync must stop at direction selection")
         XCTAssertFalse(app.staticTexts["同期しました"].exists)
-        upload.tap()
-        XCTAssertTrue(replace.waitForExistence(timeout: 20))
-        XCTAssertFalse(replace.isEnabled)
-        app.alerts.buttons["キャンセル"].tap()
+        tapTestControl(upload, in: app)
+        guard let next = waitForTestControl(replace, in: app, keyboard: .keep, purpose: .observation) else { return }
+        XCTAssertFalse(next.isEnabled, "Choosing upload must still require explicit typed confirmation")
+        tapTestAlertAction(titles: ["キャンセル"], in: confirmation, application: app)
+        requireTestCondition("Automatic upload confirmation cancels without syncing", in: app) { confirmation.count == 0 }
+        XCTAssertFalse(app.staticTexts["同期しました"].exists)
         removeSyncProfile(app, id: profile)
     }
 
     func testAutomaticFullDownloadRequiresDirectionChoice() {
         let app = makeApplication(automaticSync: true)
-        let profile = prepareSyncProfile(app, name: "Automatic full download check", withFixture: false)
+        let profile = prepareSyncProfile(app, name: "Automatic full download check", withFixture: false,
+                                         extraArguments: ["--uitest-presentation-trace"])
         loginToSyncFixture(app, username: "fixture@example.test", server: syncEndpoint(delayed: true))
-        XCTAssertTrue(app.staticTexts.matching(identifier: "空のコレクションにAnkiWebからダウンロード中…").firstMatch.waitForExistence(timeout: 60))
+        guard waitForTestControl(app.staticTexts.matching(identifier: "空のコレクションにAnkiWebからダウンロード中…"), in: app,
+                                keyboard: .keep, timeout: 60, purpose: .observation) != nil else { return }
         app.terminate(); app.launch()
-        let interrupted = app.alerts.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "前回の同期が中断されました")).firstMatch
-        XCTAssertTrue(interrupted.waitForExistence(timeout: 30), app.debugDescription)
-        app.alerts.buttons["閉じる"].tap()
-        let download = app.buttons["AnkiWebのデータをこのiPadにダウンロード"]
-        XCTAssertTrue(download.waitForExistence(timeout: 60), app.debugDescription)
-        XCTAssertFalse(app.buttons["このiPadのデータをAnkiWebにアップロード"].exists)
-        XCTAssertFalse(app.staticTexts["同期しました"].exists)
-        download.tap()
-        let replace = app.alerts.buttons["置き換えて同期"].firstMatch
-        XCTAssertTrue(replace.waitForExistence(timeout: 20), app.debugDescription)
-        let actionable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true AND enabled == true"), object: replace)
-        XCTAssertEqual(XCTWaiter.wait(for: [actionable], timeout: 20), .completed, app.debugDescription)
-        replace.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60), app.debugDescription)
+        let interrupted = app.alerts.matching(identifier: "処理できませんでした")
+        waitForTestControl(interrupted.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "前回の同期が中断されました")),
+                           in: app, keyboard: .keep, timeout: 30, purpose: .observation)
+        tapTestAlertAction(titles: ["閉じる"], in: interrupted, application: app)
+        let download = app.buttons.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["AnkiWebのデータをこのiPadにダウンロード"])))
+        waitForTestControl(download, in: app, timeout: 60)
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["このiPadのデータをAnkiWebにアップロード"]))).count, 0)
+        XCTAssertFalse(app.staticTexts["同期しました"].exists, "Automatic recovery must not replace the collection before confirmation")
+        tapTestControl(download, in: app)
+        tapTestAlertAction(titles: ["置き換えて同期"], in: app.alerts.matching(identifier: "データを置き換えますか？"), application: app)
+        waitForTestControl(app.staticTexts.matching(identifier: "同期しました"), in: app,
+                           keyboard: .keep, timeout: 60, purpose: .observation)
         removeSyncProfile(app, id: profile)
     }
 
