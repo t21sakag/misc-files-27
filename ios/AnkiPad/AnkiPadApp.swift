@@ -8,6 +8,11 @@ import AVFoundation
     @MainActor static func main() {
         #if DEBUG
         if UITestIsolation.namespace() != nil,
+           ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-eager-copy") {
+            ToolbarSettingsReductionApp<ToolbarEagerSettingsReductionView>.main()
+            return
+        }
+        if UITestIsolation.namespace() != nil,
            ProcessInfo.processInfo.arguments.contains("--uitest-toolbar-focus-full-copy") {
             ToolbarSettingsReductionApp<ToolbarFullSettingsReductionView>.main()
             return

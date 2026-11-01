@@ -28,6 +28,7 @@ suites = {
     'note-recording': ['testRecordedNoteInsertionSurvivesSheetCleanupAndRelaunchWithPlayableMedia'],
     'voice-recording': ['testReviewRecordingReferenceComparisonAndTemporaryCleanup'],
     'voice': ['testCardAudioQueueCompletesOnceAndCancellationDoesNotReplay', 'testReviewRecordingReferenceComparisonAndTemporaryCleanup'],
+    'focus-eager': ['testActualSettingsEagerCopyCanReturnFromProductionToolbar'],
     'focus-reduced-pair': ['testActualSettingsLeftCopyCanReturnFromProductionToolbar', 'testActualSettingsRightCopyCanReturnFromProductionToolbar'],
     'focus-reductions': ['testActualSettingsFullCopyCanReturnFromProductionToolbar', 'testActualSettingsLeftCopyCanReturnFromProductionToolbar', 'testActualSettingsRightCopyCanReturnFromProductionToolbar'],
     'focus-full-copy': ['testActualSettingsFullCopyCanReturnFromProductionToolbar'],

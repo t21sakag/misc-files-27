@@ -196,6 +196,7 @@
     "testSectionedCombinedControlsParentCanReturnFromProductionToolbar",
     "testActualSettingsFullCopyCanReturnFromProductionToolbar",
     "testActualSettingsLeftCopyCanReturnFromProductionToolbar",
-    "testActualSettingsRightCopyCanReturnFromProductionToolbar"
+    "testActualSettingsRightCopyCanReturnFromProductionToolbar",
+    "testActualSettingsEagerCopyCanReturnFromProductionToolbar"
   ]
 }

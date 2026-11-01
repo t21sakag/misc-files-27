@@ -2,8 +2,8 @@
   "source": "ios/AnkiPad/SettingsView.swift",
   "source_sha256": "95f8405605e884573758140474df57d913572651f052f45e6c94c62cb0016b8a",
   "plan": "tests/toolbar-focus-reduction-plan.json",
-  "plan_sha256": "d00e452f4c07ff4963d273f8e59f50f7284e25e65f8556d64f997670d639b5e1",
-  "stage": "hold-first-six-split-remaining-seven",
+  "plan_sha256": "e5a18035317f7838060d5cb393b4873b46d72a465ced730a68c0e70e6233df5d",
+  "stage": "full-original-form-style-eager-prototype",
   "shared_sections": [
     "アプリの言語",
     "同期",
@@ -48,7 +48,8 @@
         "カードのJavaScript権限",
         "バックアップの保持数"
       ],
-      "retains_full_source_layout": true
+      "retains_full_source_layout": true,
+      "renderer": "platform-form"
     },
     "left": {
       "type": "ToolbarLeftSettingsReductionView",
@@ -64,7 +65,8 @@
         "スケジュール",
         "検索と編集"
       ],
-      "retains_full_source_layout": false
+      "retains_full_source_layout": false,
+      "renderer": "platform-form"
     },
     "right": {
       "type": "ToolbarRightSettingsReductionView",
@@ -81,8 +83,30 @@
         "カードのJavaScript権限",
         "バックアップの保持数"
       ],
-      "retains_full_source_layout": false
+      "retains_full_source_layout": false,
+      "renderer": "platform-form"
+    },
+    "eager": {
+      "type": "ToolbarEagerSettingsReductionView",
+      "sections": [
+        "アプリの言語",
+        "同期",
+        "学習時間",
+        "表示",
+        "評価ボタン",
+        "ブラウザの表示",
+        "音声",
+        "学習操作",
+        "スケジュール",
+        "検索と編集",
+        "ライセンスとソース",
+        "学習リマインダー",
+        "カードのJavaScript権限",
+        "バックアップの保持数"
+      ],
+      "retains_full_source_layout": true,
+      "renderer": "eager-native-sections"
     }
   },
-  "generated_sha256": "7b663b03263f10b7f6297834a7413e7c930860f657d1026c98c09b8235387207"
+  "generated_sha256": "ae664e4ab7471372d9496440f6079159877d90b81e766c9b8240e5d23106512e"
 }

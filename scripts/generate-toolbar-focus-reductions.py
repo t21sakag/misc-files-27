@@ -78,6 +78,7 @@ def generate():
     }
     assert set(variants['left']) | set(variants['right']) == set(variants['full'])
     assert {labels[i] for i in set(variants['left']) & set(variants['right'])} == shared
+    variants['eager'] = variants['full']
     digest = hashlib.sha256(raw.encode()).hexdigest()
     chunks = ['#if DEBUG\n// Generated from SettingsView.swift; do not edit by hand.\n',
               '// Source SHA256: ' + digest + '\n']
@@ -88,7 +89,11 @@ def generate():
                 'variants': {}}
     for name, selected in variants.items():
         typename = 'Toolbar' + name.title() + 'SettingsReductionView'
-        body = raw if name == 'full' else prefix + ''.join(blocks[i] for i in selected) + suffix
+        body = raw if name in ('full', 'eager') else prefix + ''.join(blocks[i] for i in selected) + suffix
+        if name == 'eager':
+            marker = '            .accessibilityIdentifier("settings-form")\n'
+            assert body.count(marker) == 1
+            body = body.replace(marker, '            .formStyle(ToolbarEagerFormStyle())\n' + marker, 1)
         assert body.count('struct SettingsView: View {') == 1
         body = body.replace('struct SettingsView: View {', 'struct ' + typename + ': ToolbarModelSettingsFocusView {', 1)
         field = '    @ObservedObject var model: StudyModel\n'
@@ -96,7 +101,8 @@ def generate():
         body = body.replace(field, field + '    init(model: StudyModel) { _model = ObservedObject(wrappedValue: model) }\n', 1)
         chunks += ['\n// Variant: ' + name + '\n', body]
         manifest['variants'][name] = {'type': typename, 'sections': [labels[i] for i in selected],
-                                     'retains_full_source_layout': name == 'full'}
+                                     'retains_full_source_layout': name in ('full', 'eager'),
+                                     'renderer': 'eager-native-sections' if name == 'eager' else 'platform-form'}
     chunks.append('#endif\n')
     output = ''.join(chunks)
     manifest['generated_sha256'] = hashlib.sha256(output.encode()).hexdigest()

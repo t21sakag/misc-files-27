@@ -204,14 +204,34 @@ final class ToolbarFocusReproductionTests: StudyFlowTestSupport {
         exerciseReducedSettingsParent("--uitest-toolbar-focus-right-copy")
     }
 
+    func testActualSettingsEagerCopyCanReturnFromProductionToolbar() {
+        exerciseReducedSettingsParent("--uitest-toolbar-focus-eager-copy")
+    }
+
     private func exerciseReducedSettingsParent(_ argument: String) {
         let app = makeApplication()
         app.launchArguments = [argument, "--uitest-fixture"]
         app.launch()
         tapTestControl(app.buttons.matching(identifier: "focus-reduced-settings"), in: app)
+        let isEager = argument == "--uitest-toolbar-focus-eager-copy"
+        let parentForm = isEager
+            ? app.scrollViews.matching(NSPredicate(format: "identifier IN %@", ["settings-form", "settings-eager-scroll"]))
+            : app.collectionViews.matching(identifier: "settings-form")
         let link = app.buttons.matching(identifier: "toolbar-settings-open")
-        revealSettingsControl(link.element, in: app)
-        tapTestControl(link, in: app)
+        if isEager {
+            guard waitForTestControl(app.buttons.matching(identifier: "settings-save"), in: app) != nil else { return }
+            XCTContext.runActivity(named: "Eager form native rendering inventory") { activity in
+                let hierarchy = XCTAttachment(string: app.debugDescription)
+                hierarchy.name = "Eager form native rendering inventory"; hierarchy.lifetime = .keepAlways
+                let screen = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); screen.lifetime = .keepAlways
+                activity.add(hierarchy); activity.add(screen)
+            }
+            guard let scroll = waitForTestControl(parentForm, in: app, purpose: .observation) else { return }
+            tapTestControl(link, in: app, form: scroll)
+        } else {
+            revealSettingsControl(link.element, in: app)
+            tapTestControl(link, in: app)
+        }
         guard setTestSwitch(app.switches.matching(identifier: "toolbar-enabled"), enabled: true, in: app) else { return }
         XCTContext.runActivity(named: "Actual settings reduction before native back " + argument) { activity in
             let hierarchy = XCTAttachment(string: app.debugDescription)
@@ -222,7 +242,7 @@ final class ToolbarFocusReproductionTests: StudyFlowTestSupport {
         tapTestControl(app.navigationBars["操作バーの設定"].buttons.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["設定", "戻る", "Back"]))), in: app)
         requireTestCondition("Actual settings reduction retains its parent " + argument, in: app) {
             app.state == .runningForeground && !app.navigationBars["操作バーの設定"].exists
-                && app.navigationBars["設定"].exists && app.collectionViews["settings-form"].exists
+                && app.navigationBars["設定"].exists && parentForm.count == 1
         }
         tapTestControl(app.buttons.matching(identifier: "settings-cancel"), in: app)
         waitForTestControl(app.buttons.matching(identifier: "focus-reduced-settings"), in: app)
