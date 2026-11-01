@@ -26,8 +26,12 @@ if 'stream' not in sys.argv:
     raise SystemExit(149)
 Path(os.environ['PROBE_STARTED']).write_text('started')
 print('launch', flush=True)
+print('*** Assertion failure earliest-focus-fixture', flush=True)
 if os.environ.get('LARGE_LOG'):
     sys.stdout.buffer.write(b'x' * (9 * 1024 * 1024)); sys.stdout.buffer.flush()
+    print('', flush=True)
+if os.environ.get('MANY_CRITICAL'):
+    for index in range(2000): print('*** Assertion failure event-' + str(index) + ' ' + ('y' * 100), flush=True)
 assert any('browser.options.trace' in value for value in sys.argv)
 assert any('audio.playback.trace' in value and 'AVAudioSession_iOS.mm' in value and 'SessionCore.mm' in value for value in sys.argv)
 assert any('reminder.save.trace' in value and 'typing.focus.trace' in value and 'usernotificationsd' in value for value in sys.argv)
@@ -58,6 +62,19 @@ while True: time.sleep(1)
         assert b'browser.options.trace phase=load.end' in (output/'live.log').read_bytes()
         assert b'browser.selection.trace phase=all.enter' in (output/'live.log').read_bytes()
         assert b'fixture focus reason' in (output/'live.log').read_bytes()
+        critical = (output/'critical.log').read_bytes()
+        assert b'earliest-focus-fixture' not in (output/'live.log').read_bytes()
+        assert b'earliest-focus-fixture' in critical and b'fixture focus reason' in critical
+        assert not report['critical_truncated'] and report['critical_bytes_saved'] == len(critical)
+        assert report['line_buffer_bytes_dropped'] > 0
+        os.environ.pop('LARGE_LOG')
+        os.environ['MANY_CRITICAL'] = '1'
+        assert module.run(simulator, bundle, base/'many', command) == 7
+        many = json.loads((base/'many/live-collection.json').read_text())
+        critical = (base/'many/critical.log').read_bytes()
+        assert many['critical_truncated'] and len(critical) <= module.CRITICAL_LIMIT
+        assert b'earliest-focus-fixture' in critical and b'event-1999 ' not in critical
+        os.environ.pop('MANY_CRITICAL')
         # An observer failure must not replace a successful UI command's result.
         executable.write_text('#!/usr/bin/env python3\nraise SystemExit(149)\n')
         assert module.run(simulator, bundle, base/'unavailable', [sys.executable, '-c', 'pass']) == 0

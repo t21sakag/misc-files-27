@@ -1,7 +1,18 @@
 {
   "source": "ios/AnkiPad/SettingsView.swift",
   "source_sha256": "95f8405605e884573758140474df57d913572651f052f45e6c94c62cb0016b8a",
-  "shared_section": "学習操作",
+  "plan": "tests/toolbar-focus-reduction-plan.json",
+  "plan_sha256": "407a70394dc8ffd61c3e30dddbe71477f41fbd1e9adf72b44c59a5fc69149d5a",
+  "stage": "hold-first-six-split-remaining-seven",
+  "shared_sections": [
+    "アプリの言語",
+    "同期",
+    "学習時間",
+    "表示",
+    "評価ボタン",
+    "ブラウザの表示",
+    "学習操作"
+  ],
   "variants": {
     "full": {
       "type": "ToolbarFullSettingsReductionView",
@@ -31,16 +42,22 @@
         "表示",
         "評価ボタン",
         "ブラウザの表示",
-        "学習操作"
+        "音声",
+        "学習操作",
+        "スケジュール",
+        "検索と編集"
       ]
     },
     "right": {
       "type": "ToolbarRightSettingsReductionView",
       "sections": [
-        "音声",
+        "アプリの言語",
+        "同期",
+        "学習時間",
+        "表示",
+        "評価ボタン",
+        "ブラウザの表示",
         "学習操作",
-        "スケジュール",
-        "検索と編集",
         "ライセンスとソース",
         "学習リマインダー",
         "カードのJavaScript権限",
@@ -48,5 +65,5 @@
       ]
     }
   },
-  "generated_sha256": "1980975640736bbd16a7dbf097702db826591dfd96dc6b26803f0325b8e71956"
+  "generated_sha256": "7b663b03263f10b7f6297834a7413e7c930860f657d1026c98c09b8235387207"
 }

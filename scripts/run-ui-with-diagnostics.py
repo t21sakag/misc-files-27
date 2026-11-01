@@ -17,6 +17,9 @@ import threading
 import uuid
 
 LIMIT = 8 * 1024 * 1024
+CRITICAL_LIMIT = 64 * 1024
+LINE_LIMIT = 16 * 1024
+CRITICAL_MARKERS = (b'*** Assertion failure', b'*** Terminating app due to uncaught exception')
 
 
 def run(simulator, bundle, output, command):
@@ -27,6 +30,8 @@ def run(simulator, bundle, output, command):
     report = {'simulator': simulator, 'log_exit': None, 'bytes_seen': 0, 'bytes_saved': 0,
               'truncated': False, 'test_exit': None}
     chunks = deque()
+    critical_lines = []
+    critical_size = 0
     size = 0
     ready = threading.Event()
     observer = None
@@ -34,8 +39,20 @@ def run(simulator, bundle, output, command):
     child = None
     old_handlers = {}
 
+    def keep_critical(line):
+        nonlocal critical_size
+        if not any(marker in line for marker in CRITICAL_MARKERS):
+            return
+        report['critical_bytes_seen'] = report.get('critical_bytes_seen', 0) + len(line)
+        # Preserve the first failure even when later successful cases flood
+        # the rolling live log. This separate capture is also bounded.
+        if critical_size + len(line) <= CRITICAL_LIMIT:
+            critical_lines.append(line)
+            critical_size += len(line)
+
     def drain():
         nonlocal size
+        pending = b''
         while data := os.read(observer.stdout.fileno(), 4096):
             ready.set()
             report['bytes_seen'] += len(data)
@@ -43,6 +60,17 @@ def run(simulator, bundle, output, command):
             size += len(data)
             while size > LIMIT:
                 size -= len(chunks.popleft())
+            pending += data
+            while b'\n' in pending:
+                line, pending = pending.split(b'\n', 1)
+                keep_critical(line + b'\n')
+            # Simulator logs can contain very long unrelated lines. Never
+            # turn the extra evidence buffer into an unbounded allocation.
+            if len(pending) > LINE_LIMIT:
+                report['line_buffer_bytes_dropped'] = report.get('line_buffer_bytes_dropped', 0) + len(pending) - LINE_LIMIT
+                pending = pending[-LINE_LIMIT:]
+        if pending:
+            keep_critical(pending)
         ready.set()
 
     def forward(signum, _frame):
@@ -88,6 +116,9 @@ def run(simulator, bundle, output, command):
         report['bytes_saved'] = len(log)
         report['truncated'] = report['bytes_seen'] > len(log)
         (output/'live.log').write_bytes(log)
+        report['critical_bytes_saved'] = critical_size
+        report['critical_truncated'] = report.get('critical_bytes_seen', 0) > critical_size
+        (output/'critical.log').write_bytes(b''.join(critical_lines))
         (output/'live-collection.json').write_text(json.dumps(report, indent=2)+'\n')
 
 

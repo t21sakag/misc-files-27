@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = 'ios/AnkiPad/SettingsView.swift'
 OUTPUT = 'ios/AnkiPad/ToolbarSettingsReductions.generated.swift'
 MANIFEST = 'tests/toolbar-focus-reductions.json'
+PLAN = 'tests/toolbar-focus-reduction-plan.json'
 
 
 def generate():
@@ -29,22 +30,32 @@ def generate():
     labels = [re.search(r'AppText\.localized\("([^"]+)"\)', block).group(1) for block in blocks]
     if len(labels) != len(set(labels)) or labels.count('学習操作') != 1:
         raise ValueError('Ambiguous settings sections')
-    shared = labels.index('学習操作')
-    others = [i for i in range(len(blocks)) if i != shared]
-    middle = len(others) // 2
+    plan_raw = (ROOT / PLAN).read_text()
+    plan = json.loads(plan_raw)
+    selected_labels = {key: plan[key] for key in ('shared', 'left', 'right')}
+    if any(len(value) != len(set(value)) for value in selected_labels.values()):
+        raise ValueError('Duplicate reduction-plan section')
+    shared = set(selected_labels['shared'])
+    left, right = set(selected_labels['left']), set(selected_labels['right'])
+    if '学習操作' not in shared or shared & (left | right) or left & right:
+        raise ValueError('Only declared shared sections can overlap')
+    if not left or not right or shared | left | right != set(labels):
+        raise ValueError('Reduction plan must cover every actual source section')
     variants = {
         'full': list(range(len(blocks))),
-        'left': sorted([shared] + others[:middle]),
-        'right': sorted([shared] + others[middle:]),
+        'left': [i for i, label in enumerate(labels) if label in shared | left],
+        'right': [i for i, label in enumerate(labels) if label in shared | right],
     }
     assert set(variants['left']) | set(variants['right']) == set(variants['full'])
-    assert set(variants['left']) & set(variants['right']) == {shared}
+    assert {labels[i] for i in set(variants['left']) & set(variants['right'])} == shared
     digest = hashlib.sha256(raw.encode()).hexdigest()
     prefix = ''.join(lines[:starts[0]])
     suffix = ''.join(lines[end[0]:])
     chunks = ['#if DEBUG\n// Generated from SettingsView.swift; do not edit by hand.\n',
               '// Source SHA256: ' + digest + '\n']
-    manifest = {'source': SOURCE, 'source_sha256': digest, 'shared_section': labels[shared], 'variants': {}}
+    manifest = {'source': SOURCE, 'source_sha256': digest,
+                'plan': PLAN, 'plan_sha256': hashlib.sha256(plan_raw.encode()).hexdigest(),
+                'stage': plan['stage'], 'shared_sections': selected_labels['shared'], 'variants': {}}
     for name, selected in variants.items():
         typename = 'Toolbar' + name.title() + 'SettingsReductionView'
         body = prefix + ''.join(blocks[i] for i in selected) + suffix
