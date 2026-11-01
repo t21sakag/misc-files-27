@@ -1,0 +1,52 @@
+{
+  "source": "ios/AnkiPad/SettingsView.swift",
+  "source_sha256": "95f8405605e884573758140474df57d913572651f052f45e6c94c62cb0016b8a",
+  "shared_section": "学習操作",
+  "variants": {
+    "full": {
+      "type": "ToolbarFullSettingsReductionView",
+      "sections": [
+        "アプリの言語",
+        "同期",
+        "学習時間",
+        "表示",
+        "評価ボタン",
+        "ブラウザの表示",
+        "音声",
+        "学習操作",
+        "スケジュール",
+        "検索と編集",
+        "ライセンスとソース",
+        "学習リマインダー",
+        "カードのJavaScript権限",
+        "バックアップの保持数"
+      ]
+    },
+    "left": {
+      "type": "ToolbarLeftSettingsReductionView",
+      "sections": [
+        "アプリの言語",
+        "同期",
+        "学習時間",
+        "表示",
+        "評価ボタン",
+        "ブラウザの表示",
+        "学習操作"
+      ]
+    },
+    "right": {
+      "type": "ToolbarRightSettingsReductionView",
+      "sections": [
+        "音声",
+        "学習操作",
+        "スケジュール",
+        "検索と編集",
+        "ライセンスとソース",
+        "学習リマインダー",
+        "カードのJavaScript権限",
+        "バックアップの保持数"
+      ]
+    }
+  },
+  "generated_sha256": "1980975640736bbd16a7dbf097702db826591dfd96dc6b26803f0325b8e71956"
+}

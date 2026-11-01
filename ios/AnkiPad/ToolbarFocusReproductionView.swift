@@ -405,4 +405,45 @@ struct ToolbarSectionSettingsReproductionView: View {
         }
     }
 }
+
+/// Actual SettingsView copies keep its state and modifiers intact while only
+/// its top-level sections are reduced. The full copy controls for this entry.
+protocol ToolbarModelSettingsFocusView: View {
+    @MainActor init(model: StudyModel)
+}
+
+struct ToolbarSettingsReductionApp<Settings: ToolbarModelSettingsFocusView>: App {
+    @UIApplicationDelegateAdaptor(ReviewNotificationAppDelegate.self) private var notificationDelegate
+    @AppStorage("appearance") private var appearance = "system"
+    init() {
+        do { try UITestIsolation.prepare() }
+        catch { fatalError("Could not initialize isolated UI test storage: \(error)") }
+    }
+    var body: some Scene {
+        WindowGroup {
+            StudyThemeContainer { ToolbarSettingsReductionRoot<Settings>() }
+                .environment(\.locale, AppText.locale)
+                .preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil)
+        }
+    }
+}
+
+struct ToolbarSettingsReductionRoot<Settings: ToolbarModelSettingsFocusView>: View {
+    @StateObject private var model = StudyModel()
+    var body: some View {
+        NavigationStack {
+            List {
+                Button(AppText.localized("設定")) { model.showingSettings = true }
+                    .disabled(!model.profilesReady || model.busy || model.error != nil)
+                    .accessibilityIdentifier("focus-reduced-settings")
+                if let error = model.error {
+                    Text(error).accessibilityIdentifier("focus-reduced-error")
+                }
+            }
+            .studyThemeSurface().navigationTitle("Parent checks")
+        }
+        .sheet(isPresented: $model.showingSettings) { Settings(model: model) }
+        .task { model.bootstrap() }
+    }
+}
 #endif

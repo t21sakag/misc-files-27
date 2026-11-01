@@ -193,6 +193,9 @@
     "testNativeSlidersParentCanReturnFromProductionToolbar",
     "testNativeSteppersParentCanReturnFromProductionToolbar",
     "testSectionedParentCanReturnFromProductionToolbar",
-    "testSectionedCombinedControlsParentCanReturnFromProductionToolbar"
+    "testSectionedCombinedControlsParentCanReturnFromProductionToolbar",
+    "testActualSettingsFullCopyCanReturnFromProductionToolbar",
+    "testActualSettingsLeftCopyCanReturnFromProductionToolbar",
+    "testActualSettingsRightCopyCanReturnFromProductionToolbar"
   ]
 }
