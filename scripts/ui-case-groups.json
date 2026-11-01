@@ -185,6 +185,7 @@
     "testRecordedNoteInsertionSurvivesSheetCleanupAndRelaunchWithPlayableMedia"
   ],
   "ToolbarFocusReproductionTests": [
-    "testProductionToolbarInMinimalPresentedNavigationCanReturnAfterToggle"
+    "testProductionToolbarInMinimalPresentedNavigationCanReturnAfterToggle",
+    "testActualSettingsParentCanReturnFromProductionToolbar"
   ]
 }

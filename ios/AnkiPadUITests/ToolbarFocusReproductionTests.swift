@@ -33,4 +33,34 @@ final class ToolbarFocusReproductionTests: StudyFlowTestSupport {
         waitForTestControl(app.buttons.matching(identifier: "focus-repro-settings"), in: app)
         XCTAssertFalse(app.alerts.element.exists)
     }
+
+    func testActualSettingsParentCanReturnFromProductionToolbar() {
+        let app = makeApplication()
+        app.launchArguments = ["--uitest-toolbar-focus-parent", "--uitest-fixture"]
+        app.launch()
+        tapTestControl(app.buttons.matching(identifier: "focus-parent-settings"), in: app)
+        let link = app.buttons.matching(identifier: "toolbar-settings-open")
+        revealSettingsControl(link.element, in: app)
+        tapTestControl(link, in: app)
+        guard setTestSwitch(app.switches.matching(identifier: "toolbar-enabled"), enabled: true, in: app) else { return }
+        XCTContext.runActivity(named: "Actual parent toolbar before native back") { activity in
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "Actual parent before back"; hierarchy.lifetime = .keepAlways
+            let screen = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); screen.lifetime = .keepAlways
+            activity.add(hierarchy); activity.add(screen)
+        }
+        let back = app.navigationBars["操作バーの設定"].buttons.matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(["設定", "戻る", "Back"])))
+        tapTestControl(back, in: app)
+        requireTestCondition("Actual parent retains its foreground form after native back", in: app) {
+            app.state == .runningForeground && !app.navigationBars["操作バーの設定"].exists
+                && app.navigationBars["設定"].exists && app.collectionViews["settings-form"].exists
+        }
+        tapTestControl(app.buttons.matching(identifier: "settings-cancel"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "focus-parent-settings"), in: app)
+        // Check the real non-diagnostic entry using the same persisted fixture.
+        app.terminate(); app.launchArguments = []; app.launch()
+        waitForTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "deck-1"), in: app, purpose: .observation)
+        XCTAssertFalse(app.alerts.element.exists)
+    }
 }

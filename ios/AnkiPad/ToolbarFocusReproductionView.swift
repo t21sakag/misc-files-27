@@ -56,4 +56,41 @@ struct ToolbarFocusReproductionView: View {
         }
     }
 }
+
+/// Second comparison: retain actual parent, data owner and its native sheet
+/// binding; keep the outer scene small to isolate omitted main-root consumers.
+struct ToolbarParentFocusReproductionApp: App {
+    @UIApplicationDelegateAdaptor(ReviewNotificationAppDelegate.self) private var notificationDelegate
+    @AppStorage("appearance") private var appearance = "system"
+    init() {
+        do { try UITestIsolation.prepare() }
+        catch { fatalError("Could not initialize isolated UI test storage: \(error)") }
+    }
+    var body: some Scene {
+        WindowGroup {
+            StudyThemeContainer { ToolbarParentFocusReproductionView() }
+                .environment(\.locale, AppText.locale)
+                .preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil)
+        }
+    }
+}
+
+struct ToolbarParentFocusReproductionView: View {
+    @StateObject private var model = StudyModel()
+    var body: some View {
+        NavigationStack {
+            List {
+                Button(AppText.localized("設定")) { model.showingSettings = true }
+                    .disabled(!model.profilesReady || model.busy || model.error != nil)
+                    .accessibilityIdentifier("focus-parent-settings")
+                if let error = model.error {
+                    Text(error).accessibilityIdentifier("focus-parent-error")
+                }
+            }
+            .studyThemeSurface().navigationTitle("Parent checks")
+        }
+        .sheet(isPresented: $model.showingSettings) { SettingsView(model: model) }
+        .task { model.bootstrap() }
+    }
+}
 #endif
