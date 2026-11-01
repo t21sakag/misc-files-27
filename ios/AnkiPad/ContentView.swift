@@ -369,7 +369,9 @@ struct ContentView: View {
                 showingSharedInbox = false
             }
         }
-        .sheet(isPresented: $model.showingProfiles, onDismiss: openPendingExternalRequest) { ProfileManagerView(model: model) }
+        .sheet(isPresented: Binding(get: { model.showingProfiles }, set: {
+            if model.showingProfiles != $0 { model.showingProfiles = $0 }
+        }), onDismiss: openPendingExternalRequest) { ProfileManagerView(model: model) }
         .sheet(isPresented: $model.showingSharedDecks, onDismiss: openPendingExternalRequest) { SharedDeckBrowserView(model: model) }
         .sheet(isPresented: $model.showingBrowser, onDismiss: {
             browserLinkSearch = nil; browserSessionActive = false; openPendingExternalRequest()
@@ -607,7 +609,7 @@ struct ContentView: View {
         .onChange(of: model.reviewingInteractionBlocked) { _, blocked in
             if blocked { model.pauseReviewInteraction() } else { model.resumeReviewInteraction(); model.scheduleConditionalReminderRefresh(); openPendingReminder(); model.processPendingAutomaticSync() }
         }
-        .alert(AppText.localized("学習の区切り"), isPresented: Binding(get: { model.timeboxReport != nil && !model.busy && phase == .active }, set: { if !$0 { model.timeboxReport = nil } })) {
+        .alert(AppText.localized("学習の区切り"), isPresented: Binding(get: { model.timeboxReport != nil && !model.busy && phase == .active }, set: { if !$0, model.timeboxReport != nil { model.timeboxReport = nil } })) {
             Button(AppText.localized("続ける")) { model.timeboxReport = nil }.accessibilityIdentifier("timebox-continue")
             Button(AppText.localized("学習を終了")) { model.leave() }.accessibilityIdentifier("timebox-finish")
         } message: { Text(model.timeboxReport?.message ?? "") }

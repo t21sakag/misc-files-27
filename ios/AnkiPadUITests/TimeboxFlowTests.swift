@@ -3,49 +3,43 @@ import XCTest
 final class TimeboxFlowTests: StudyFlowTestSupport {
     func testTimeboxReportsRealElapsedMinuteAndCanContinueOrFinish() {
         let app = makeApplication()
+        app.launchArguments += ["--uitest-presentation-trace"]
         app.launch()
-        XCTAssertTrue(app.buttons["add-note"].waitForExistence(timeout: 30))
-        app.buttons["add-note"].tap()
-        let front = app.textViews["note-field-0"]
-        XCTAssertTrue(front.waitForExistence(timeout: 20))
-        front.tap(); front.typeText("Second timebox card")
-        app.buttons["note-save"].tap()
-        XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30))
-        app.buttons["note-close"].tap()
-        app.buttons["collection-menu"].tap(); app.buttons["設定"].tap()
-        let limit = app.steppers["timebox-limit"]
-        let form = app.collectionViews["settings-form"]
-        for _ in 0..<8 {
-            if limit.exists && limit.isHittable { break }
-            form.swipeUp()
-        }
-        waitUntilHittable(limit)
-        limit.coordinate(withNormalizedOffset: CGVector(dx: 0.96, dy: 0.5)).tap()
-        XCTAssertTrue(limit.label.contains("1分"), app.debugDescription)
-        app.buttons["settings-save"].tap()
-        app.terminate(); app.launchArguments = []; app.launch()
-        let deck = app.buttons["deck-1"]
-        XCTAssertTrue(deck.waitForExistence(timeout: 30)); deck.tap()
-        XCTAssertTrue(app.buttons["reveal"].waitForExistence(timeout: 30))
-        XCTAssertFalse(app.alerts["学習の区切り"].exists, "Starting review must start a fresh interval")
+        tapTestControl(app.buttons.matching(identifier: "add-note"), in: app)
+        typeInEmptyTestField(app.textViews.matching(identifier: "note-field-0"), text: "Second timebox card", in: app,
+                             form: app.collectionViews["note-form"])
+        tapTestControl(app.buttons.matching(identifier: "note-save"), in: app)
+        waitForTestControl(app.staticTexts.matching(identifier: "note-added"), in: app, purpose: .observation)
+        tapTestControl(app.buttons.matching(identifier: "note-close"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
+        tapTestMenuAction(titles: ["設定"], in: app)
+        let limit = app.steppers.matching(identifier: "timebox-limit")
+        revealSettingsControl(limit.element, in: app)
+        guard let stepper = waitForTestControl(limit, in: app) else { return }
+        tapTestControl(stepper.buttons.matching(NSPredicate(format: "identifier ENDSWITH '-Increment'")), in: app)
+        requireTestCondition("Timebox setting reaches one minute", in: app) { stepper.label.contains("1分") }
+        tapTestControl(app.buttons.matching(identifier: "settings-save"), in: app)
+        app.terminate(); app.launchArguments = ["--uitest-presentation-trace"]; app.launch()
+        tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "reveal"), in: app)
+        let notice = app.alerts.matching(identifier: "学習の区切り")
+        XCTAssertEqual(notice.count, 0, "Starting review must start a fresh interval")
         func waitMinuteAndAnswer() {
             let deadline = Date().addingTimeInterval(62)
-            let elapsed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in Date() >= deadline }, object: nil)
-            XCTAssertEqual(XCTWaiter.wait(for: [elapsed], timeout: 65), .completed)
-            XCTAssertFalse(app.alerts["学習の区切り"].exists, "The reminder is checked after an answer, not during a card")
-            app.buttons["reveal"].tap()
-            let good = app.buttons["answer-2"]
-            XCTAssertTrue(good.waitForExistence(timeout: 20)); good.tap()
-            XCTAssertTrue(app.alerts["学習の区切り"].waitForExistence(timeout: 30), app.debugDescription)
-            XCTAssertTrue(app.alerts.staticTexts["1分で1枚に回答しました。"].exists, app.debugDescription)
+            requireTestCondition("Real timebox interval exceeds sixty seconds", in: app, timeout: 65) { Date() >= deadline }
+            XCTAssertEqual(notice.count, 0, "The reminder is checked after an answer, not during a card")
+            tapTestControl(app.buttons.matching(identifier: "reveal"), in: app)
+            tapTestControl(app.buttons.matching(identifier: "answer-2"), in: app)
+            waitForTestControl(notice, in: app, purpose: .observation)
+            waitForTestControl(notice.staticTexts.matching(identifier: "1分で1枚に回答しました。"), in: app, purpose: .observation)
         }
         waitMinuteAndAnswer()
-        app.buttons["timebox-continue"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["reveal"].waitForExistence(timeout: 20))
+        tapTestAlertAction("timebox-continue", in: notice, application: app)
+        waitForTestControl(app.buttons.matching(identifier: "reveal"), in: app)
         waitMinuteAndAnswer()
-        app.buttons["timebox-finish"].firstMatch.tap()
-        XCTAssertTrue(deck.waitForExistence(timeout: 30))
-        deck.tap()
-        XCTAssertFalse(app.alerts["学習の区切り"].exists, "Reopening a deck must not reuse the old interval")
+        tapTestAlertAction("timebox-finish", in: notice, application: app)
+        tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
+        waitForTestControl(app.buttons.matching(identifier: "reveal"), in: app)
+        XCTAssertEqual(notice.count, 0, "Reopening a deck must not reuse the old interval")
     }
 }

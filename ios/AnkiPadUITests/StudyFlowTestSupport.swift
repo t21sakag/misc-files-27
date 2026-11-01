@@ -193,6 +193,22 @@ class StudyFlowTestSupport: XCTestCase {
         return field
     }
 
+    /// Replacement starts from known content and verifies the entire result;
+    /// native placeholder or duplicate fields must not be treated as data.
+    @discardableResult
+    func replaceTestField(_ query: XCUIElementQuery, expected: String, with text: String, in app: XCUIApplication,
+                          form: XCUIElement? = nil) -> XCUIElement? {
+        guard let field = tapTestControl(query, in: app, form: form) else { return nil }
+        guard field.value as? String == expected else {
+            controlFailure(query, in: app, reason: "Field did not contain the expected replacement source"); return nil
+        }
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: expected.count) + text)
+        guard field.value as? String == text else {
+            controlFailure(query, in: app, reason: "Field did not contain exactly the replacement text"); return nil
+        }
+        return field
+    }
+
     /// Readiness is also required before reading a value: remote widgets can
     /// expose both placeholder/redaction and live nodes with the same ID.
     @discardableResult
