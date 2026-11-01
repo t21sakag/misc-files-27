@@ -25,7 +25,7 @@ final class AnswerLayoutFlowTests: StudyFlowTestSupport {
         toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
         let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '1'"), object: toggle)
         XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 10), .completed)
-        let form = app.collectionViews["settings-form"]
+        let form = app.scrollViews["settings-form"]
         let size = app.sliders["answer-size"]
         for _ in 0..<12 {
             let targetY = size.exists ? size.frame.midY : CGFloat.greatestFiniteMagnitude

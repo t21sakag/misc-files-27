@@ -53,7 +53,7 @@ final class ToolbarFocusReproductionTests: StudyFlowTestSupport {
         tapTestControl(back, in: app)
         requireTestCondition("Actual parent retains its foreground form after native back", in: app) {
             app.state == .runningForeground && !app.navigationBars["操作バーの設定"].exists
-                && app.navigationBars["設定"].exists && app.collectionViews["settings-form"].exists
+                && app.navigationBars["設定"].exists && app.scrollViews.matching(identifier: "settings-form").count == 1
         }
         tapTestControl(app.buttons.matching(identifier: "settings-cancel"), in: app)
         waitForTestControl(app.buttons.matching(identifier: "focus-parent-settings"), in: app)
@@ -214,9 +214,7 @@ final class ToolbarFocusReproductionTests: StudyFlowTestSupport {
         app.launch()
         tapTestControl(app.buttons.matching(identifier: "focus-reduced-settings"), in: app)
         let isEager = argument == "--uitest-toolbar-focus-eager-copy"
-        let parentForm = isEager
-            ? app.scrollViews.matching(NSPredicate(format: "identifier IN %@", ["settings-form", "settings-eager-scroll"]))
-            : app.collectionViews.matching(identifier: "settings-form")
+        let parentForm = app.scrollViews.matching(identifier: "settings-form")
         let link = app.buttons.matching(identifier: "toolbar-settings-open")
         if isEager {
             guard waitForTestControl(app.buttons.matching(identifier: "settings-save"), in: app) != nil else { return }

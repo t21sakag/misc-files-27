@@ -59,6 +59,10 @@ def source_parts(raw):
 
 def eager_content(raw):
     """Keep picker bodies/tags/IDs verbatim while making their labels visible."""
+    if '            SettingsForm {\n' in raw:
+        labels = re.findall(r'LabeledContent\(AppText\.localized\("([^"]+)"\)\) \{\n +Picker\("", selection:', raw)
+        assert len(labels) == 8, 'Inspect explicit production picker labels'
+        return raw, labels
     marker = '            Form {\n'
     assert raw.count(marker) == 1
     body = raw.replace(marker, '            ToolbarEagerSettingsForm {\n', 1)
@@ -140,8 +144,8 @@ def generate():
                 'plan': PLAN, 'plan_sha256': hashlib.sha256(plan_raw.encode()).hexdigest(),
                 'stage': plan['stage'], 'shared_sections': selected_labels['shared'],
                 'section_sha256': {label: hashlib.sha256(block.encode()).hexdigest() for label, block in zip(labels, blocks)},
-                'renderer_sources': {'ios/AnkiPad/ToolbarEagerSettingsForm.swift':
-                                     hashlib.sha256((ROOT / 'ios/AnkiPad/ToolbarEagerSettingsForm.swift').read_bytes()).hexdigest()},
+                'renderer_sources': {'ios/AnkiPad/SettingsForm.swift':
+                                     hashlib.sha256((ROOT / 'ios/AnkiPad/SettingsForm.swift').read_bytes()).hexdigest()},
                 'variants': {}}
     for name, selected in variants.items():
         typename = 'Toolbar' + name.title() + 'SettingsReductionView'
@@ -156,7 +160,7 @@ def generate():
         chunks += ['\n// Variant: ' + name + '\n', body]
         manifest['variants'][name] = {'type': typename, 'sections': [labels[i] for i in selected],
                                      'retains_full_source_layout': name in ('full', 'eager'),
-                                     'renderer': 'direct-eager-sections' if name == 'eager' else 'platform-form'}
+                                     'renderer': 'direct-eager-sections' if name == 'eager' or '            SettingsForm {\n' in raw else 'platform-form'}
         if name == 'eager':
             manifest['variants'][name]['explicit_picker_labels'] = picker_labels
     chunks.append('#endif\n')

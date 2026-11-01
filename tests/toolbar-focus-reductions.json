@@ -1,9 +1,9 @@
 {
   "source": "ios/AnkiPad/SettingsView.swift",
-  "source_sha256": "95f8405605e884573758140474df57d913572651f052f45e6c94c62cb0016b8a",
+  "source_sha256": "36c22dd803d8cf7ed0b6ead5fa88471600b7cfd477a186b7b9e83018b2dfd0e4",
   "plan": "tests/toolbar-focus-reduction-plan.json",
-  "plan_sha256": "21a28cd190ff182d047ce349a902decb20632592203f6c9c003905caaf39f0d8",
-  "stage": "direct-raw-sections-explicit-native-choice-labels",
+  "plan_sha256": "f6a9890b3347d07838f7f82116843ef1005fcaffcbaa7b6cd1d7b5f556c44a48",
+  "stage": "production-direct-settings-form-all-fourteen-sections",
   "shared_sections": [
     "アプリの言語",
     "同期",
@@ -14,15 +14,15 @@
     "学習操作"
   ],
   "section_sha256": {
-    "アプリの言語": "1603104ca201cbf6396d9b464dd97421f9c2ecbf23b961b040f2d70677d09559",
-    "同期": "baea47fa62ec76e87f4fb0e91c1f8a49885795265ef920f902620ef5a83aac6f",
+    "アプリの言語": "8b1c2a6903ed795127092947ae9860d794c783c33f1ad8c3f0714909866810d1",
+    "同期": "202bd7b1065a06ab71bdd90b46856a88256652e7b83c79c3d6f1bc3132fd324d",
     "学習時間": "a0edecc6a04ca05adc2f3dcac20681f2b1e662c6fb4f4e6391b0381d7263a57d",
-    "表示": "5b8decba8d5622b87e9ccee72b8cf5268d353e2bd148752bd5e5d5310a9fc62e",
-    "評価ボタン": "9f0b03ab855ab65c0d52a7107d04d5adb421f144372e55bdfaeb7524dd41eea7",
+    "表示": "4efc2996de2a4a890f5f6cee1630f692c835948d739cc997b4723310e03a34fd",
+    "評価ボタン": "5c123f4d51881bd75509647f00ecf7155a0827cd3a2042319bfd89c16a4ecf20",
     "ブラウザの表示": "9c5badbe2c80c6b4d5dc34027ee010ef9fe7a0876a3489e10af640d18a8f61e2",
     "音声": "d0118feed6ce35e3ef67b6f8f4ab19f5bce90181489a5afe2cef84895c6ab57b",
     "学習操作": "73871bde1f4d1f515143c607399564e35f296f444b576e665a57319126c834cb",
-    "スケジュール": "38fd88ddb148bcbf2a0746026467ebf3914dbd4d8fe1da8f0ad1d906b06be1ce",
+    "スケジュール": "ce807d996e2b5d278ac92dfa36990e38fe2576142b759d21bed2ddf4bcab5f09",
     "検索と編集": "ce185b01fbda8a417f734a44d983ed8c3c25128450d152434c0cdaba0ae97ebc",
     "ライセンスとソース": "7d650f1ec324ce4ac4825e949148fbb62396057ade3ca0ca73d664b3efa30829",
     "学習リマインダー": "c4a24a9d16fa8286b4bb5d8fd7da28a79094b2f7f515fb02c921aa436a6211d5",
@@ -30,7 +30,7 @@
     "バックアップの保持数": "ecb5d4975d0cfef0cd3e797c051aa7dbf18c54a782cf76bddb062e87e45c5180"
   },
   "renderer_sources": {
-    "ios/AnkiPad/ToolbarEagerSettingsForm.swift": "04579ace11aa8504ebbdc1487659d999bb83f64bf060431f49ef6554d2d708c7"
+    "ios/AnkiPad/SettingsForm.swift": "604aca93805b2b126d23d34a0e6bf603a61a7e39f91070d177512ef733282612"
   },
   "variants": {
     "full": {
@@ -52,7 +52,7 @@
         "バックアップの保持数"
       ],
       "retains_full_source_layout": true,
-      "renderer": "platform-form"
+      "renderer": "direct-eager-sections"
     },
     "left": {
       "type": "ToolbarLeftSettingsReductionView",
@@ -69,7 +69,7 @@
         "検索と編集"
       ],
       "retains_full_source_layout": false,
-      "renderer": "platform-form"
+      "renderer": "direct-eager-sections"
     },
     "right": {
       "type": "ToolbarRightSettingsReductionView",
@@ -87,7 +87,7 @@
         "バックアップの保持数"
       ],
       "retains_full_source_layout": false,
-      "renderer": "platform-form"
+      "renderer": "direct-eager-sections"
     },
     "eager": {
       "type": "ToolbarEagerSettingsReductionView",
@@ -121,5 +121,5 @@
       ]
     }
   },
-  "generated_sha256": "5215744180db2bca3d0113aa19448bc5a3d4358763e04b52996fcacece63a579"
+  "generated_sha256": "8af195308f96f5bdd2c13a496c8855ca3cfc4dbcbab1a91d9cab35ca7d00c2fc"
 }

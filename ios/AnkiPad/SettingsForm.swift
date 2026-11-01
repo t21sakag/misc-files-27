@@ -1,9 +1,8 @@
-#if DEBUG
 import SwiftUI
 
-/// Diagnostic full-content container: resolve the original sections directly,
-/// before platform Form styling removes visible control labels.
-struct ToolbarEagerSettingsForm<Content: View>: View {
+/// Keep native settings controls mounted while navigating to child screens.
+/// All section headers, controls and footers retain their original bindings.
+struct SettingsForm<Content: View>: View {
     private let content: Content
     init(@ViewBuilder content: () -> Content) { self.content = content() }
     var body: some View {
@@ -40,4 +39,3 @@ struct ToolbarEagerSettingsForm<Content: View>: View {
         .accessibilityIdentifier("settings-eager-scroll")
     }
 }
-#endif

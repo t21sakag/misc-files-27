@@ -15,7 +15,7 @@ final class LanguageFlowTests: StudyFlowTestSupport {
         func settings(_ title: String) {
             XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
             app.buttons["collection-menu"].tap(); app.buttons[title].tap()
-            XCTAssertTrue(app.collectionViews["settings-form"].waitForExistence(timeout: 20), app.debugDescription)
+            XCTAssertTrue(app.scrollViews["settings-form"].waitForExistence(timeout: 20), app.debugDescription)
         }
         func choose(_ title: String) {
             let picker = app.buttons["app-language"]

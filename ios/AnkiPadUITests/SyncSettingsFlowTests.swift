@@ -5,7 +5,7 @@ final class SyncSettingsFlowTests: StudyFlowTestSupport {
         let menu = app.buttons["collection-menu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 30))
         menu.tap(); app.buttons["設定"].tap()
-        XCTAssertTrue(app.collectionViews["settings-form"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.scrollViews["settings-form"].waitForExistence(timeout: 20))
     }
     private func setSwitch(_ app: XCUIApplication, _ id: String, enabled: Bool) {
         let outer = app.switches[id]
@@ -53,7 +53,7 @@ final class SyncSettingsFlowTests: StudyFlowTestSupport {
         let oneWay = app.buttons["sync-force-one-way"]
         for _ in 0..<5 {
             if oneWay.exists && oneWay.isHittable { break }
-            app.collectionViews["settings-form"].swipeUp()
+            app.scrollViews["settings-form"].swipeUp()
         }
         waitUntilHittable(oneWay); oneWay.tap()
         let prompt = app.alerts["次回の同期を一方向にしますか？"]

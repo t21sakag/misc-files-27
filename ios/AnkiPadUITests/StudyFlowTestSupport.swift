@@ -337,7 +337,8 @@ class StudyFlowTestSupport: XCTestCase {
     }
 
     func revealSettingsControl(_ item: XCUIElement, in app: XCUIApplication) {
-        let form = app.collectionViews["settings-form"]
+        guard let form = waitForTestControl(app.scrollViews.matching(identifier: "settings-form"),
+                                            in: app, keyboard: .keep, purpose: .observation) else { return }
         revealFormControl(item, in: form)
     }
 
