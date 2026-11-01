@@ -16,8 +16,39 @@ spec.loader.exec_module(review)
 
 def run(number, result='failure', mode='ui', attempt=1, steps=None):
     return {'id': number, 'run_attempt': attempt, 'updated_at': f'2026-10-30T10:{number:02}:00Z',
+            'run_started_at': f'2026-10-30T10:{number:02}:00Z',
             'status': 'completed', 'conclusion': result, 'display_title': 'Misc checks · '+mode,
-            'jobs': [{'steps': steps or []}]}
+            'jobs': [{'started_at': f'2026-10-30T10:{number:02}:00Z', 'steps': [{'name': 'Set up job', 'conclusion': 'success', 'started_at': f'2026-10-30T10:{number:02}:00Z'}] + (steps or [])}]}
+
+
+original_api = review.github_json
+try:
+    early = run(10)
+    reset = run(20, 'success')
+    late = run(10, attempt=2)
+    late['jobs'][0]['steps'][0]['started_at'] = '2026-10-30T11:00:00Z'
+    newest = run(30)
+    latest = [newest, late, reset]
+    calls = []
+    def api(path):
+        calls.append(path)
+        if '/workflows/' in path:
+            return {'workflow_runs': copy.deepcopy(latest)}
+        import re
+        match = re.search(r'/runs/(\d+)/attempts/(\d+)(/jobs\?per_page=100)?$', path)
+        assert match, path
+        key = (int(match[1]), int(match[2]))
+        record = {(10, 1): early, (10, 2): late, (20, 1): reset, (30, 1): newest}[key]
+        return {'jobs': copy.deepcopy(record['jobs'])} if match[3] else copy.deepcopy(record)
+    review.github_json = api
+    collected = review.online_history('fixture/repo', 'main', 0, 1)
+    assert {review.identity(r) for r in collected} == {(10, 1), (10, 2), (20, 1), (30, 1)}
+    assert [review.identity(r) for r in review.recent_failures(collected)] == [(10, 2), (30, 1)]
+    assert len(calls) == len(set(calls)), 'Do not refetch an attempt or poll history'
+    latest = [late, reset]
+    assert [review.identity(r) for r in review.recent_failures(review.online_history('fixture/repo', 'main', 0, 1))] == [(10, 2)]
+finally:
+    review.github_json = original_api
 
 
 with tempfile.TemporaryDirectory() as directory:
@@ -36,19 +67,38 @@ with tempfile.TemporaryDirectory() as directory:
     assert review.decision([run(3, 'cancelled'), *failures], empty, workspace)['decision'] == 'review_required'
     gate_only = run(3, steps=[{'name': review.GATE, 'conclusion': 'failure'}])
     assert review.decision([gate_only, *failures], empty, workspace)['failed_attempts'] == [[2,1],[1,1]]
-    rerun = run(1, attempt=2); rerun['updated_at'] = '2026-10-30T11:00:00Z'
+    rerun = run(1, attempt=2); rerun['jobs'][0]['steps'][0]['started_at'] = '2026-10-30T11:00:00Z'
     assert review.decision([rerun, failures[1]], empty, workspace)['failed_attempts'] == [[1,2],[1,1]]
     assert review.decision([run(1), run(1)], empty, workspace)['decision'] == 'allow'
+    # A delayed update of an old failed run must not move it after a later
+    # successful validation. The next actual failure is only the first one.
+    delayed = run(1); delayed['updated_at'] = '2026-11-01T12:00:00Z'
+    assert review.recent_failures([delayed, run(2, 'success'), run(3)]) == [run(3)]
+    assert review.decision([delayed, run(2, 'success'), run(3)], empty, workspace)['decision'] == 'allow'
+    delayed['run_started_at'] = '2026-11-01T13:00:00Z'
+    delayed['created_at'] = '2026-11-01T13:00:00Z'
+    delayed['jobs'][0]['started_at'] = '2026-11-01T13:00:00Z'
+    assert review.decision([delayed, run(2, 'success'), run(3)], empty, workspace)['decision'] == 'allow'
+    assert review.decision([delayed, run(2, 'success'), run(3), run(4)], empty, workspace)['failed_attempts'] == [[4,1],[3,1]]
+    # Stable start ordering must also retain a late rerun of an older run ID.
+    assert review.recent_failures([run(2, 'success'), rerun, run(1)]) == [rerun]
+    missing = run(1, attempt=2); del missing['jobs'][0]['steps'][0]['started_at']
+    try:
+        review.recent_failures([missing])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('Missing executed step start must not fall back to run/job metadata clocks')
     named = run(3); named['display_title'] = 'Check ui'
     assert review.is_ui_attempt(named)
     named['display_title'] = 'Check compile'
     assert not review.is_ui_attempt(named)
     legacy = run(4); legacy['display_title'] = 'Misc checks'
-    legacy['jobs'][0]['steps'] = [{'name': 'Execute selected UI cases without rebuilding', 'conclusion': 'failure'}]
+    legacy['jobs'][0]['steps'] += [{'name': 'Execute selected UI cases without rebuilding', 'conclusion': 'failure'}]
     assert review.decision([legacy, run(2)], empty, workspace)['decision'] == 'review_required'
     for name in ['Plan serial UI batches', 'Plan independent UI batches']:
         fallback = run(4); fallback['display_title'] = 'Misc checks'
-        fallback['jobs'][0]['steps'] = [{'name': name, 'conclusion': 'success'}]
+        fallback['jobs'][0]['steps'] += [{'name': name, 'conclusion': 'success'}]
         assert review.is_ui_attempt(fallback), name
     draft = {
         'id': 'local-regression', 'covers': [[2,1],[1,1]],

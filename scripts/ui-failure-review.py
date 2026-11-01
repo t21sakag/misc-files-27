@@ -54,10 +54,32 @@ def is_ui_attempt(run):
         'Plan independent UI batches') and step.get('conclusion') in ('success', 'failure') for step in steps)
 
 
+def attempt_order(run):
+    # Run/job metadata clocks can disagree with the actual execution log.
+    # Order attempts by executed steps; skipped jobs have no execution start.
+    # This also orders a late rerun of an older run ID correctly.
+    starts = [step.get('started_at') or step.get('startedAt')
+              for job in run.get('jobs', []) for step in job.get('steps', [])
+              if step.get('conclusion') != 'skipped']
+    times = []
+    for started in filter(None, starts):
+        if not isinstance(started, str):
+            raise ValueError('Invalid validation step start timestamp')
+        timestamp = datetime.fromisoformat(started.replace('Z', '+00:00'))
+        if timestamp.tzinfo is None:
+            raise ValueError('Validation step start timestamp needs a timezone')
+        times.append(timestamp)
+    if not times:
+        raise ValueError('Missing executed validation step start timestamp')
+    return min(times), *identity(run)
+
+
 def recent_failures(runs):
     failures = []
     seen = set()
-    for run in sorted(runs, key=lambda value: value['updated_at'], reverse=True):
+    eligible = [run for run in runs if run.get('status', 'completed') == 'completed'
+                and is_ui_attempt(run) and run.get('conclusion') in FAILURES | {'success'}]
+    for run in sorted(eligible, key=attempt_order, reverse=True):
         key = identity(run)
         if key in seen or run.get('status', 'completed') != 'completed':
             continue
@@ -159,20 +181,25 @@ def online_history(repo, branch, current_run, current_attempt):
     query = urlencode({'branch': branch, 'status': 'completed', 'per_page': 30})
     runs = github_json(f'repos/{repo}/actions/workflows/ipa.yml/runs?{query}')['workflow_runs']
     runs = [run for run in runs if int(run['id']) != current_run]
-    for attempt in range(current_attempt-1, max(0, current_attempt-3), -1):
-        runs.append(github_json(f'repos/{repo}/actions/runs/{current_run}/attempts/{attempt}'))
+    # Obtain each completed attempt once. Older reruns can interleave with
+    # newer runs, so stopping before their jobs are ordered can miss a success
+    # or a genuine second failure. Keep this preflight bounded and fail closed.
+    candidates = {identity(run): run for run in runs if run_mode(run) not in ('configuration', 'compile', 'ipa')}
+    pending = [(current_run, current_attempt)] if current_attempt > 1 else []
+    pending += [(int(run['id']), int(run.get('run_attempt', 1))) for run in candidates.values()]
+    for run_id, attempt_count in pending:
+        for attempt in range(attempt_count - 1, 0, -1):
+            key = (run_id, attempt)
+            if key in candidates:
+                continue
+            if len(candidates) >= 64:
+                raise ValueError('Validation history exceeds the bounded attempt window')
+            candidates[key] = github_json(f'repos/{repo}/actions/runs/{run_id}/attempts/{attempt}')
     selected = []
-    for run in sorted(runs, key=lambda value: value['updated_at'], reverse=True):
-        mode = run_mode(run)
-        if mode is not None and mode not in ('ui', 'full'):
-            continue
+    for run in candidates.values():
         attempt = int(run.get('run_attempt', 1))
         run['jobs'] = github_json(f'repos/{repo}/actions/runs/{run["id"]}/attempts/{attempt}/jobs?per_page=100')['jobs']
         selected.append(run)
-        if len(recent_failures(selected)) == 2:
-            break
-        if run['conclusion'] == 'success' and is_ui_attempt(run):
-            break
     return selected
 
 
