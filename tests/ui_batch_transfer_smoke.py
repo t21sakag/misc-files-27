@@ -34,10 +34,6 @@ assert 'NewTests/testNewFeature' in sum(planner.plan(changed, durations)['batche
 with tempfile.TemporaryDirectory() as directory:
     base = Path(directory); a = base/'producer'; b = base/'consumer'; tools = base/'tools'
     a.mkdir(); b.mkdir(); tools.mkdir()
-    project = a/'ios/AnkiPad.xcodeproj'; project.mkdir(parents=True)
-    (project/'project.pbxproj').write_text('Verified producer project')
-    scheme = project/'xcshareddata/xcschemes/AnkiPad.xcscheme'; scheme.parent.mkdir(parents=True)
-    scheme.write_text('Verified producer scheme')
     fake = tools/'xcodebuild'; fake.write_text('#!/bin/sh\nprintf "Xcode 27\\nBuild fake\\n"\n'); fake.chmod(0o755)
     env = dict(os.environ, PATH=str(tools)+os.pathsep+os.environ['PATH'])
     products = a/'build/simulator/Build/Products'; products.mkdir(parents=True)
@@ -61,8 +57,6 @@ with tempfile.TemporaryDirectory() as directory:
     assert rejected.returncode != 0 and not (b/'build/simulator').exists()
     subprocess.run(['python3', script, 'unpack', '--source', 'abc'], cwd=b, env=env, check=True, stdout=subprocess.DEVNULL)
     out = b/'build/simulator/Build/Products'
-    assert (b/'ios/AnkiPad.xcodeproj/project.pbxproj').read_text() == 'Verified producer project'
-    assert (b/'ios/AnkiPad.xcodeproj/xcshareddata/xcschemes/AnkiPad.xcscheme').read_text() == 'Verified producer scheme'
     assert json.loads((b/'build/project-settings.json').read_text())==settings
     assert (out/'App.app/PlugIns/Tests.xctest/ReceivedFixtures/preview.apkg').read_bytes()==b'compiled test resource'
     assert (out/'App.app/App').read_bytes() == binary.read_bytes()

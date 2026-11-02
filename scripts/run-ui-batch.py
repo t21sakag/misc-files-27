@@ -10,7 +10,6 @@ import subprocess
 ap = argparse.ArgumentParser()
 ap.add_argument('batch', type=int)
 ap.add_argument('simulator')
-ap.add_argument('--project-launch', action='store_true')
 args = ap.parse_args()
 plan = json.loads(Path('build/ui-batches.json').read_text())
 cases = plan['batches'][args.batch]
@@ -29,20 +28,11 @@ if any(case.endswith(('/testNotesPreviewUsesRepresentativesUntilMultipleRowsSele
     assert len(packages) == 1, ('Expected one compiled preview fixture', packages)
     prerequisites += ['--preview-package', str(packages[0])]
 subprocess.run(prerequisites, check=True)
-launcher = ['-xctestrun', str(products[0])]
-if args.project_launch:
-    project = Path('ios/AnkiPad.xcodeproj')
-    assert (project / 'project.pbxproj').is_file(), 'Verified producer project was not transferred'
-    launcher = ['-project', str(project), '-scheme', 'AnkiPad', '-configuration', 'Debug',
-                '-sdk', 'iphonesimulator', '-derivedDataPath', 'build/simulator',
-                'ARCHS=arm64', 'ONLY_ACTIVE_ARCH=YES', 'CODE_SIGNING_ALLOWED=YES', 'CODE_SIGN_IDENTITY=-',
-                'ANKIPAD_SOURCE_COMMIT=' + os.environ['GITHUB_SHA'],
-                'CURRENT_PROJECT_VERSION=' + os.environ['GITHUB_RUN_NUMBER']]
-Path('build/batch-launch.json').write_text(json.dumps({'launcher': 'project' if args.project_launch else 'xctestrun',
+Path('build/batch-launch.json').write_text(json.dumps({'launcher': 'xctestrun',
     'source': os.environ.get('GITHUB_SHA'), 'cases': cases, 'compiles': False}, indent=2) + '\n')
 result = subprocess.run([sys.executable, str(Path(__file__).with_name('run-ui-with-diagnostics.py')),
     '--simulator', args.simulator, '--',
-    'xcodebuild', 'test-without-building', *launcher,
+    'xcodebuild', 'test-without-building', '-xctestrun', str(products[0]),
     '-destination', 'id='+args.simulator, '-parallel-testing-enabled', 'NO',
     '-resultBundlePath', 'build/UITests.xcresult',
     *['-only-testing:AnkiPadUITests/'+c for c in cases]])

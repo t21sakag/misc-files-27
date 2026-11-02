@@ -1,12 +1,10 @@
 """Exercise exact native selections through the real independent-batch planner."""
 import json
-import os
 from pathlib import Path
 import re
 import subprocess
 import sys
 import tempfile
-import textwrap
 
 root = Path(__file__).resolve().parents[1]
 workflow = (root / '.github/workflows/ipa.yml').read_text()
@@ -55,21 +53,6 @@ with tempfile.TemporaryDirectory() as directory:
         assert condition(consumer, 'full', suite)
     assert condition(step_condition('Execute selected UI cases without rebuilding'), 'ui', 'widget-gallery')
     assert not condition(consumer, 'ui', 'widget-gallery')
-    # Execute the actual consumer launch shell, not a duplicate routing table.
-    tools = base/'tools'; tools.mkdir()
-    fake = tools/'python3'
-    fake.write_text('#!'+sys.executable+'\nimport json,os,sys\nfrom pathlib import Path\nPath(os.environ["CAPTURE_ARGUMENTS"]).write_text(json.dumps(sys.argv[1:]))\n')
-    fake.chmod(0o755)
-    step = workflow.split('      - name: Execute assigned cases without compiling\n', 1)[1].split('      - name:', 1)[0]
-    shell = textwrap.dedent(step.split('        run: |\n', 1)[1])
-    for suite in [*expected, 'all']:
-        captured = base/'arguments.json'
-        env = dict(os.environ, PATH=str(tools)+os.pathsep+os.environ['PATH'], UI_SUITE=suite,
-                   BATCH_INDEX='0', SIMULATOR_ID='00000000-0000-4000-8000-000000000000', CAPTURE_ARGUMENTS=str(captured))
-        subprocess.run(['bash', '-e', '-c', shell], env=env, check=True)
-        arguments = json.loads(captured.read_text())
-        assert arguments[:3] == ['scripts/run-ui-batch.py', '0', env['SIMULATOR_ID']]
-        assert ('--project-launch' in arguments) == (suite=='native-notification')
     for text in ['', '-only-testing:AnkiPadUITests/UnknownTests/testMissing\n', 'all\n']:
         path.write_text(text)
         rejected = subprocess.run([sys.executable, str(root / 'scripts/plan-ui-batches.py'), '--selections', str(path), '--output', str(output)],
