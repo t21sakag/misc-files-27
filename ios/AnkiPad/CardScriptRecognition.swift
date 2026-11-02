@@ -12,7 +12,7 @@ struct CardScriptEvent {
 
 @MainActor final class CardScriptRecognition {
     private var language: String?
-    private var generation = UUID()
+    private var lifecycle = CardRecognitionSession()
     private var engine: AVAudioEngine?
     private var recognizer: SFSpeechRecognizer?
     private var request: SFSpeechAudioBufferRecognitionRequest?
@@ -23,16 +23,15 @@ struct CardScriptEvent {
     func setLanguage(_ language: String) -> Bool { self.language = language; return true }
     func start(callback: @escaping ([String]?, String?) -> Void) async -> Bool {
         cancel()
-        let token = UUID()
-        generation = token
+        let token = lifecycle.begin()
         self.callback = callback
         let authorization = await withCheckedContinuation { continuation in
             SFSpeechRecognizer.requestAuthorization { continuation.resume(returning: $0) }
         }
-        guard generation == token else { return false }
+        guard lifecycle.canStart(token) else { return false }
         guard authorization == .authorized else { callback(nil, "Speech recognition permission not granted."); cancel(); return false }
         let microphone = await AVAudioApplication.requestRecordPermission()
-        guard generation == token else { return false }
+        guard lifecycle.canStart(token) else { return false }
         guard microphone else { callback(nil, "Record audio permission not granted."); cancel(); return false }
         let locale = language.map { Locale(identifier: $0) } ?? .current
         guard let recognizer = SFSpeechRecognizer(locale: locale), recognizer.isAvailable else {
@@ -49,7 +48,8 @@ struct CardScriptEvent {
             }
             session = lease
             try await AudioSessionCoordinator.shared.prepare(.recognition, lease: lease)
-            guard generation == token, lease.isValid else { return false }
+            guard lifecycle.canStart(token), lease.isValid else { return false }
+            lifecycle.didStart(token)
             let engine = AVAudioEngine()
             let request = SFSpeechAudioBufferRecognitionRequest()
             request.shouldReportPartialResults = false
@@ -66,7 +66,7 @@ struct CardScriptEvent {
                 let matches = result?.transcriptions.map(\.formattedString) ?? []
                 let message = error?.localizedDescription
                 Task { @MainActor in
-                    guard let self, self.generation == token else { return }
+                    guard let self, self.lifecycle.isCurrent(token) else { return }
                     if final {
                         self.callback?(matches.isEmpty ? nil : matches, matches.isEmpty ? "No speech recognition results found." : nil)
                         self.cancel()
@@ -80,13 +80,15 @@ struct CardScriptEvent {
             try engine.start()
             return true
         } catch {
-            guard generation == token else { return false }
+            guard lifecycle.isCurrent(token) else { return false }
             callback(nil, error.localizedDescription)
             cancel()
             return false
         }
     }
     @discardableResult func finish() -> Bool {
+        lifecycle.stopInput()
+        if engine == nil { callback = nil }
         engine?.stop()
         if hasTap { engine?.inputNode.removeTap(onBus: 0); hasTap = false }
         request?.endAudio()
@@ -94,7 +96,7 @@ struct CardScriptEvent {
         return true
     }
     func cancel() {
-        generation = UUID()
+        lifecycle.cancel()
         finish()
         task?.cancel()
         task = nil; request = nil; engine = nil; recognizer = nil; callback = nil

@@ -145,6 +145,8 @@ jobs:
           build/review-speech-smoke
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/CardScriptSpeechLanguage.swift tests/card_script_language_smoke.swift -o build/card-script-language-smoke
           build/card-script-language-smoke
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/CardRecognitionSession.swift tests/card_recognition_session_smoke.swift -o build/card-recognition-session-smoke
+          build/card-recognition-session-smoke
       - name: Test reminder configuration validity and persistence
         run: |
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/ReviewReminderConfiguration.swift tests/reminder_configuration_smoke.swift -o build/reminder-configuration-smoke

@@ -3,6 +3,8 @@ set -euo pipefail
 ankipad_swiftc=${1:-swiftc}
 mkdir -p build/local-swift
 "$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/CardScriptSpeechLanguage.swift tests/card_script_language_smoke.swift -o build/local-swift/card-script-language-smoke
+"$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/CardRecognitionSession.swift tests/card_recognition_session_smoke.swift -o build/local-swift/card-recognition-session-smoke
+build/local-swift/card-recognition-session-smoke
 build/local-swift/card-script-language-smoke
 python3 scripts/check-swift-syntax.py --swiftc "$ankipad_swiftc"
 "$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/local-swift/sync-decision-smoke
