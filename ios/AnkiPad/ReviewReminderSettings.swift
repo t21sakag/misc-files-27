@@ -63,14 +63,19 @@ import UserNotifications
         let generation = UUID()
         generations[profile.id] = generation
         defer { saving = false; record("finished") }
+        record("load previous configuration")
         let old = try load(profileID: profile.id)
+        record("create notification center")
         let center = UNUserNotificationCenter.current()
+        record("notification center ready")
         var next = desired
         next.requestIDs = []
         if desired.enabled {
             let granted: Bool
             if requestPermission {
-                record("await authorization; status=" + String((await center.notificationSettings()).authorizationStatus.rawValue))
+                record("await authorization settings")
+                let settings = await center.notificationSettings()
+                record("await authorization; status=" + String(settings.authorizationStatus.rawValue))
                 granted = try await center.requestAuthorization(options: [.alert, .sound])
                 record("authorization returned; granted=" + String(granted))
             }

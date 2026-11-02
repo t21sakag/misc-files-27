@@ -236,7 +236,10 @@ class StudyFlowTestSupport: XCTestCase {
         guard field.value as? String == expected else {
             controlFailure(query, in: app, reason: "Field did not contain the expected replacement source"); return nil
         }
-        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: expected.count) + text)
+        // Tapping a populated field can move its caret into the source text.
+        // Native Select All replaces the complete value regardless of caret.
+        field.typeKey("a", modifierFlags: .command)
+        field.typeText(text)
         guard field.value as? String == text else {
             controlFailure(query, in: app, reason: "Field did not contain exactly the replacement text"); return nil
         }

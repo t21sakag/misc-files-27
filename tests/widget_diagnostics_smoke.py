@@ -28,6 +28,7 @@ Path(os.environ['PROBE_STARTED']).write_text('started')
 print('launch', flush=True)
 print('*** Assertion failure earliest-focus-fixture', flush=True)
 print('usernotificationsd: Source is not authorized, UNErrorDomain Code=1', flush=True)
+print('reminder.save.trace await authorization settings', flush=True)
 print('reminder.save.trace OS add failed; domain=UNErrorDomain; code=2003', flush=True)
 print('ui.publication.trace account=server.binding proposed=Optional(true) state=server=false;busy=false;responder=none;secure=false', flush=True)
 if os.environ.get('LARGE_LOG'):
@@ -80,6 +81,7 @@ while True: time.sleep(1)
         assert b'earliest-focus-fixture' not in (output/'live.log').read_bytes()
         assert b'earliest-focus-fixture' in critical and b'fixture focus reason' in critical
         assert b'Source is not authorized' in critical
+        assert b'await authorization settings' in critical
         assert b'domain=UNErrorDomain; code=2003' in critical
         assert b'account=server.binding' in critical
         assert not report['critical_truncated'] and report['critical_bytes_saved'] == len(critical)
