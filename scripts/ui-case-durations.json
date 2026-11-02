@@ -9,6 +9,7 @@
   "AutomaticSyncTests/testAutomaticSyncRunsAtStartupAndForeground": 71.978,
   "BackendThemeFlowTests/testBundledPagesUseNativeNightThemeAndRemainInteractive": 202.424,
   "BrowserAppearanceFlowTests/testBrowserFontAndSoundNamesPersistAfterRelaunch": 127.958,
+  "BrowserToolsFlowTests/testBrowserPreviewAllResultsAndContextStartKeepBothCards": 363.861,
   "ButtonTimingFlowTests/testRevealHoldPersistsCancelsOutsideAndAcceptsSustainedPress": 216.396,
   "CardAPIFlowTests/testAnkiDroidCardJavaScriptReadsNativeMetadata": 46.575,
   "CardAPIFlowTests/testJavaScriptDialogsReturnNativeInputAndDecisions": 47.667,
@@ -84,5 +85,11 @@
   "ThemeFlowTests/testDayAndNightThemeChoicesPersistAndStyleNativeAndCardSurfaces": 332.418,
   "ThemePanelFlowTests/testDarkAndBlackThemesReachAccountProfilesEditorAndMaintenance": 200.274,
   "TimeboxFlowTests/testTimeboxReportsRealElapsedMinuteAndCanContinueOrFinish": 195.726,
-  "TypingFocusFlowTests/testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks": 118.014
+  "TypingFocusFlowTests/testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks": 118.014,
+  "WidgetGalleryFlowTests/testAddNoteWidgetOpensEmptyDraftAndCancelKeepsDueCount": 321.746,
+  "WidgetGalleryFlowTests/testAnalysisWidgetShowsStoredDeckCountsAndOpensReview": 344.525,
+  "WidgetGalleryFlowTests/testDeckListWidgetSelectsDeckAndOpensItsReview": 321.831,
+  "WidgetGalleryFlowTests/testFixedSummarySurvivesActiveProfileSwitchAndOpensItsOwnProfile": 382.644,
+  "WidgetGalleryFlowTests/testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp": 244.827,
+  "WidgetGalleryFlowTests/testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount": 162.555
 }
