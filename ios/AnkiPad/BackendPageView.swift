@@ -198,7 +198,10 @@ struct BackendWebView: UIViewRepresentable {
             Task { @MainActor in
                 do {
                     if method == "deck_options_ready" { replyHandler("", nil); return }
-                    if method == "import_done" { await acceptSharedContent(); close(); replyHandler("", nil); return }
+                    // The bundled importer sends this before it renders its
+                    // result log. Acknowledge committed shared input, but keep
+                    // the result visible until an explicit close request.
+                    if method == "import_done" { await acceptSharedContent(); replyHandler("", nil); return }
                     if ["deck_options_require_close", "import_dialog_require_close", "close_edit_current", "close_add_cards"].contains(method) { close(); replyHandler("", nil); return }
                     if method == "ask_user" || method == "show_message_box" {
                         let request = try await model.engine.call("_decode/" + method, ["data": input])

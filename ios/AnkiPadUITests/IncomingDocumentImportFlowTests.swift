@@ -76,11 +76,19 @@ final class IncomingDocumentImportFlowTests: StudyFlowTestSupport {
         let confirm = app.buttons["incoming-import-confirm"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 30), app.debugDescription)
         try FileManager.default.removeItem(at: file)
-        confirm.tap()
-        let load = app.webViews.buttons["読み込む"]
-        XCTAssertTrue(load.waitForExistence(timeout: 45), app.debugDescription)
+        tapTestControl(app.buttons.matching(identifier: "incoming-import-confirm"), in: app)
+        let web = try XCTUnwrap(waitForTestCardWebView(in: app, purpose: .observation))
+        let load = try XCTUnwrap(waitForTestControl(web.buttons.matching(NSPredicate(format: "label == %@", "読み込む")), in: app))
         tapScreenFrame(load, in: app)
-        XCTAssertTrue(app.buttons["backend-close"].waitForNonExistence(timeout: 40), app.debugDescription)
+        // Real result data from the bundled ImportLogPage remains visible;
+        // receiving import_done must not dismiss it before it can be read.
+        let importedRow = web.staticTexts.matching(NSPredicate(format: "label == %@", "Received TSV question,Received TSV answer"))
+        XCTAssertNotNil(waitForTestControl(importedRow, in: app, purpose: .observation))
+        tapTestControl(app.buttons.matching(identifier: "backend-close"), in: app)
+        requireTestCondition("Import log closed explicitly", in: app) {
+            app.buttons.matching(identifier: "backend-close").count == 0
+                && app.buttons.matching(identifier: "collection-menu").count == 1
+        }
         waitForSyncIdle(app)
         assertBrowserContains(app, text: "Received TSV question", exists: true)
         assertBrowserContains(app, text: "TSV existing sentinel", exists: true)
