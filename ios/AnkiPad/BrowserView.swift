@@ -32,6 +32,8 @@ struct BrowserView: View {
     @State private var findReplace: FindReplaceRequest?
     @State private var selectionExport: SelectionExportRequest?
     @State private var busy = false
+    @State private var searchInFlight: UUID?
+    private var interactionBlocked: Bool { busy || searchInFlight != nil }
     @State private var error: String?
     @State private var deleteConfirm = false
     @State private var tagPrompt = false
@@ -44,11 +46,11 @@ struct BrowserView: View {
     @State private var fieldSearch = false
     @State private var searchHistory: [BrowserSearchRequest] = []
     @State private var activeSearchRequest: BrowserSearchRequest?
-    @State private var renderedSearch = ""
     @State private var historyRequest: BrowserSearchHistoryRequest?
     @State private var columnPicker = false
     @State private var saveSearchPrompt = false
     @State private var searchName = ""
+    @State private var savedSearchValue = ""
     @State private var manageSearches = false
     @State private var managingTags = false
     @State private var repositionPrompt = false
@@ -64,6 +66,17 @@ struct BrowserView: View {
         _positionPreferenceKey = State(initialValue: model.profilePreferenceKey("lastBrowserSearch"))
         _query = State(initialValue: initialSearch ?? model.browserSearch)
     }
+    private struct SearchTaskIdentity: Hashable {
+        let loaded: Bool
+        let request: BrowserSearchRequest
+        let revision: Int
+        let notesMode: Bool
+        let showMediaFilenames: Bool
+    }
+    private var searchTaskIdentity: SearchTaskIdentity {
+        SearchTaskIdentity(loaded: loaded, request: effectiveSearchRequest, revision: revision,
+                           notesMode: config.notesMode, showMediaFilenames: showMediaFilenames)
+    }
     var body: some View {
         NavigationStack { dialogs }
             .task {
@@ -74,13 +87,14 @@ struct BrowserView: View {
             .onAppear { traceSelection("appear") }
             .onChange(of: editMode.isEditing) { _, _ in traceSelection("editing.changed") }
             .onDisappear { savePosition() }
-            .task(id: "\(loaded)-\(query)-\(revision)-\(config.notesMode)-\(showMediaFilenames)") { await search() }
+            .task(id: searchTaskIdentity) { await search() }
     }
     private var list: some View {
         List(selection: Binding(get: { selected }, set: { next in
             traceSelection("binding.set", incoming: next.count)
             updateSelection(next)
         })) {
+            if effectiveSearchRequest.hasFilters { activeFilterSummary }
             Section {
                 ForEach(rows) { row in
                     Group {
@@ -95,21 +109,58 @@ struct BrowserView: View {
                         Button(AppText.localized("今日は表示しない")) { mutate { try await model.engine.bury(row.cardIDs) } }
                     }
                 }
-                if rows.count < ids.count { Button(AppText.localized("さらに表示（\(rows.count) / \(ids.count)）"), action: loadMore).disabled(busy) }
+                if rows.count < ids.count { Button(AppText.localized("さらに表示（\(rows.count) / \(ids.count)）"), action: loadMore).disabled(interactionBlocked) }
             } header: {
                 Text(config.notesMode
                      ? AppText.localized("\(ids.count)ノート · \(selected.count)件選択中")
                      : AppText.localized("\(ids.count)枚 · \(selected.count)件選択中"))
                     .accessibilityIdentifier("browser-results").accessibilityValue(completedQuery)
             }
-            if busy { ProgressView() }
+            if interactionBlocked { ProgressView() }
         }
         .environment(\.editMode, $editMode)
         .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: AppText.localized("検索（deck:、tag:、is:due など）"))
-        .onSubmit(of: .search) { rememberSearch(query) }
+        .onSubmit(of: .search) { rememberSearch() }
         .studyThemeSurface()
         .navigationTitle(config.notesMode ? AppText.localized("ノートブラウザー") : AppText.localized("カードブラウザー"))
         .toolbar { toolbar }
+    }
+    private func filterChip<Value>(_ title: String, names: [String], key: WritableKeyPath<BrowserSearchRequest, [Value]>, id: String) -> some View {
+        Button { updateFilter(key, values: []) } label: {
+            Label(title + ": " + names.joined(separator: ", "), systemImage: "xmark.circle")
+        }
+        .buttonStyle(.bordered).disabled(interactionBlocked)
+        .accessibilityIdentifier("browser-filter-chip-" + id)
+        .accessibilityHint(AppText.localized("この絞り込みを解除"))
+    }
+    private var activeFilterSummary: some View {
+        ScrollView(.horizontal) {
+            HStack {
+                if !effectiveSearchRequest.deckIDs.isEmpty {
+                    filterChip(AppText.localized("デッキ"), names: effectiveSearchRequest.deckIDs.map { id in model.decks.first(where: { $0.id == id })?.name ?? id }, key: \.deckIDs, id: "decks")
+                }
+                if !effectiveSearchRequest.flags.isEmpty {
+                    filterChip(AppText.localized("フラグ"), names: effectiveSearchRequest.flags.map { model.flagLabels.name($0.rawValue) }, key: \.flags, id: "flags")
+                }
+                if !effectiveSearchRequest.tags.isEmpty {
+                    filterChip(AppText.localized("タグ"), names: effectiveSearchRequest.tags, key: \.tags, id: "tags")
+                }
+                if !effectiveSearchRequest.noteTypeIDs.isEmpty {
+                    filterChip(AppText.localized("ノートタイプ"), names: effectiveSearchRequest.noteTypeIDs.map { id in types.first(where: { $0.id == id })?.name ?? id }, key: \.noteTypeIDs, id: "types")
+                }
+                if !effectiveSearchRequest.cardStates.isEmpty {
+                    filterChip(AppText.localized("状態"), names: effectiveSearchRequest.cardStates.map { state in
+                        switch state {
+                        case .new: return AppText.localized("新規")
+                        case .learning: return AppText.localized("学習中")
+                        case .review: return AppText.localized("復習")
+                        case .buried: return AppText.localized("今日非表示")
+                        case .suspended: return AppText.localized("保留")
+                        }
+                    }, key: \.cardStates, id: "states")
+                }
+            }
+        }.accessibilityIdentifier("browser-active-filters")
     }
     @ViewBuilder private func rowView(_ row: BrowserCard) -> some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -163,32 +214,34 @@ struct BrowserView: View {
             Button(AppText.localized("検索条件を編集")) { searchFilters = true }.accessibilityIdentifier("browser-search-filters")
             Button(AppText.localized("フィールドを検索")) { fieldSearch = true }.accessibilityIdentifier("browser-field-search")
             Menu(AppText.localized("状態")) {
-                Button(AppText.localized("すべて")) { submitSearch("") }
-                Button(AppText.localized("新規")) { submitFilter(BrowserSearchRequest(cardStates: [.new])) }; Button(AppText.localized("学習中")) { submitFilter(BrowserSearchRequest(cardStates: [.learning])) }
-                Button(AppText.localized("復習")) { submitFilter(BrowserSearchRequest(cardStates: [.review])) }; Button(AppText.localized("期日到来")) { submitSearch("is:due") }
-                Button(AppText.localized("保留")) { submitFilter(BrowserSearchRequest(cardStates: [.suspended])) }; Button(AppText.localized("今日非表示")) { submitFilter(BrowserSearchRequest(cardStates: [.buried])) }
-                Button(AppText.localized("マーク付き")) { submitSearch("tag:marked") }
+                Button(AppText.localized("すべて")) { updateFilter(\.cardStates, values: []) }
+                Button(AppText.localized("新規")) { updateFilter(\.cardStates, values: [.new]) }; Button(AppText.localized("学習中")) { updateFilter(\.cardStates, values: [.learning]) }
+                Button(AppText.localized("復習")) { updateFilter(\.cardStates, values: [.review]) }; Button(AppText.localized("期日到来")) { submitSearch("is:due") }
+                Button(AppText.localized("保留")) { updateFilter(\.cardStates, values: [.suspended]) }; Button(AppText.localized("今日非表示")) { updateFilter(\.cardStates, values: [.buried]) }
+                Button(AppText.localized("マーク付き")) { updateFilter(\.tags, values: ["marked"]) }
             }
-            Menu(AppText.localized("デッキ")) { ForEach(model.decks) { deck in Button(deck.name) { submitFilter(BrowserSearchRequest(deckIDs: [deck.id])) } } }
+            Menu(AppText.localized("デッキ")) { ForEach(model.decks) { deck in Button(deck.name) { updateFilter(\.deckIDs, values: [deck.id]) } } }
             Menu(AppText.localized("タグ")) {
                 Button(AppText.localized("タグ管理")) { managingTags = true }
-                ForEach(tags, id: \.self) { tag in Button(tag) { submitFilter(BrowserSearchRequest(tags: [tag])) } }
+                ForEach(tags, id: \.self) { tag in Button(tag) { updateFilter(\.tags, values: [tag]) } }
             }
-            Menu(AppText.localized("ノートタイプ")) { ForEach(types) { type in Button(type.name) { submitFilter(BrowserSearchRequest(noteTypeIDs: [type.id])) } } }
-            Menu(AppText.localized("フラグ")) { ForEach(0..<8, id: \.self) { value in Button(model.flagLabels.name(value)) { submitFilter(BrowserSearchRequest(flags: [BrowserSearchFlag(rawValue: value)!])) }.accessibilityIdentifier("browser-filter-flag-\(value)") } }.accessibilityIdentifier("browser-filter-flags")
+            Menu(AppText.localized("ノートタイプ")) { ForEach(types) { type in Button(type.name) { updateFilter(\.noteTypeIDs, values: [type.id]) } } }
+            Menu(AppText.localized("フラグ")) { ForEach(0..<8, id: \.self) { value in Button(model.flagLabels.name(value)) { updateFilter(\.flags, values: [BrowserSearchFlag(rawValue: value)!]) }.accessibilityIdentifier("browser-filter-flag-\(value)") } }.accessibilityIdentifier("browser-filter-flags")
             Menu(AppText.localized("保存した検索")) {
                 ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in Button(name) { submitSearch(config.savedSearches[name] ?? "") } }
-                Button(AppText.localized("この検索を保存")) { searchName = ""; saveSearchPrompt = true }.disabled(query.isEmpty)
+                Button(AppText.localized("この検索を保存")) {
+                    withResolvedSearch { value in searchName = ""; savedSearchValue = value; saveSearchPrompt = true }
+                }.disabled(effectiveSearchRequest.isEmpty)
                 Button(AppText.localized("保存した検索を管理")) { manageSearches = true }
             }
             Button(AppText.localized("フィルターデッキを作成")) {
-                filteredDeck = FilteredDeckRequest(initialSearch: query)
+                withResolvedSearch { filteredDeck = FilteredDeckRequest(initialSearch: $0) }
             }.accessibilityIdentifier("browser-create-filtered")
             Button(AppText.localized("検索と置換")) { findReplace = FindReplaceRequest(noteIDs: []) }
                 .accessibilityIdentifier("browser-find-replace")
             Button(AppText.localized("取り消す")) { mutate { try await model.engine.undo() } }
             Button(AppText.localized("やり直す")) { mutate { _ = try await model.engine.call("CollectionService.Redo") } }
-        } label: { Image(systemName: "line.3.horizontal.decrease.circle") }.disabled(busy).accessibilityIdentifier("browser-filter-menu")
+        } label: { Image(systemName: "line.3.horizontal.decrease.circle") }.disabled(interactionBlocked).accessibilityIdentifier("browser-filter-menu")
     }
     private var actionsMenu: some View {
         Menu {
@@ -219,7 +272,7 @@ struct BrowserView: View {
                 Button(AppText.localized("新規カードに戻す")) { performCards { try await model.engine.forget($0) } }
                 Button(AppText.localized("ノートを削除"), role: .destructive) { deleteConfirm = true }
             }.disabled(selected.isEmpty)
-        } label: { Image(systemName: "ellipsis.circle") }.disabled(busy).accessibilityIdentifier("browser-actions-menu")
+        } label: { Image(systemName: "ellipsis.circle") }.disabled(interactionBlocked).accessibilityIdentifier("browser-actions-menu")
     }
     private var sheets: some View {
         list
@@ -239,19 +292,19 @@ struct BrowserView: View {
             .sheet(item: $historyRequest) { request in
                 BrowserSearchHistoryView(entries: $searchHistory, preferenceKey: request.preferenceKey, resolve: { entry in
                     try await request.engine.browserSearchQuery(entry)
-                }) { entry, resolved in
+                }) { entry, _ in
                     guard model.currentProfile.id == request.profileID else {
                         throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
                     }
-                    try commitSearch(entry, resolved: resolved)
+                    try commitSearch(entry)
                 }
             }
             .sheet(isPresented: $searchFilters) {
-                BrowserSearchFiltersView(model: model, request: effectiveSearchRequest, tags: tags, noteTypes: types) { entry, resolved in
-                    try commitSearch(entry, resolved: resolved)
+                BrowserSearchFiltersView(model: model, request: effectiveSearchRequest, tags: tags, noteTypes: types) { entry, _ in
+                    try commitSearch(entry)
                 }
             }
-            .sheet(isPresented: $fieldSearch) { BrowserFieldSearchView(model: model, currentSearch: query, currentRequest: effectiveSearchRequest) { entry, resolved in try commitSearch(entry, resolved: resolved) } }
+            .sheet(isPresented: $fieldSearch) { BrowserFieldSearchView(model: model, currentRequest: effectiveSearchRequest) { entry, _ in try commitSearch(entry) } }
             .sheet(isPresented: $browserOptions, onDismiss: {
                 mutateOpening {
                     let saved = try await model.engine.browserConfiguration()
@@ -302,7 +355,7 @@ struct BrowserView: View {
             }
             .alert(AppText.localized("検索を保存"), isPresented: $saveSearchPrompt) {
                 TextField(AppText.localized("名前"), text: $searchName)
-                Button(AppText.localized("保存")) { config.savedSearches[searchName] = query; saveConfig() }.disabled(searchName.isEmpty)
+                Button(AppText.localized("保存")) { config.savedSearches[searchName] = savedSearchValue; saveConfig() }.disabled(searchName.isEmpty)
                 Button(AppText.localized("キャンセル"), role: .cancel) {}
             }
             .alert(AppText.localized("処理できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
@@ -320,11 +373,11 @@ struct BrowserView: View {
                 let restore = try await model.engine.call("ConfigService.GetConfigBool", ["key": "RESTORE_POSITION_BROWSER"])["val"] as? Bool ?? false
                 let request = try BrowserSearchPosition.initialRequest(query: query, explicit: hasExplicitInitialSearch,
                     defaultQuery: defaultQuery, restore: restore, key: positionPreferenceKey)
-                let resolved = request.hasFilters ? try await model.engine.browserSearchQuery(request) : request.query
+                if request.hasFilters { _ = try await model.engine.browserSearchQuery(request) }
                 guard model.currentProfile.id == openingProfileID else {
                     throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
                 }
-                activeSearchRequest = request; renderedSearch = resolved; query = resolved
+                activeSearchRequest = request; query = request.query
             }
             guard model.currentProfile.id == openingProfileID else {
                 throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
@@ -340,41 +393,70 @@ struct BrowserView: View {
         catch { NSLog("browser.search.position.save.failed") }
     }
     private var effectiveSearchRequest: BrowserSearchRequest {
-        query == renderedSearch ? activeSearchRequest ?? BrowserSearchRequest(query: query) : BrowserSearchRequest(query: query)
+        var request = activeSearchRequest ?? BrowserSearchRequest()
+        request.query = query
+        return request
     }
-    private func commitSearch(_ request: BrowserSearchRequest, resolved: String) throws {
+    private func commitSearch(_ request: BrowserSearchRequest) throws {
+        guard model.currentProfile.id == openingProfileID else {
+            throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
+        }
         let updated = try BrowserSearchHistory.remember(request, key: model.profilePreferenceKey("browserSearchHistory"))
-        searchHistory = updated; activeSearchRequest = request; renderedSearch = resolved; query = resolved
+        searchHistory = updated; activeSearchRequest = request; query = request.query
     }
-    private func rememberSearch(_ value: String) {
-        do { try commitSearch(effectiveSearchRequest, resolved: value) }
+    private func rememberSearch() {
+        do { try commitSearch(effectiveSearchRequest) }
         catch { self.error = AppText.localized("検索履歴を保存できませんでした。") }
     }
     private func submitSearch(_ value: String) {
-        do { try commitSearch(BrowserSearchRequest(query: value), resolved: value) }
-        catch { self.error = AppText.localized("検索履歴を保存できませんでした。") }
+        var request = effectiveSearchRequest
+        request.query = value
+        submitRequest(request)
     }
-    private func submitFilter(_ request: BrowserSearchRequest) {
+    private func updateFilter<Value>(_ key: WritableKeyPath<BrowserSearchRequest, [Value]>, values: [Value]) {
+        var request = effectiveSearchRequest
+        request[keyPath: key] = values
+        submitRequest(request)
+    }
+    private func submitRequest(_ request: BrowserSearchRequest) {
         let engine = model.engine, profileID = model.currentProfile.id
         mutateOpening {
-            let resolved = try await engine.browserSearchQuery(request)
+            if request.hasFilters { _ = try await engine.browserSearchQuery(request) }
             guard model.currentProfile.id == profileID else {
                 throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
             }
-            try commitSearch(request, resolved: resolved)
+            try commitSearch(request)
+        }
+    }
+    private func withResolvedSearch(_ action: @escaping (String) -> Void) {
+        let request = effectiveSearchRequest, engine = model.engine, profileID = model.currentProfile.id
+        mutateOpening {
+            let value = request.hasFilters ? try await engine.browserSearchQuery(request) : request.query
+            guard model.currentProfile.id == profileID, profileID == openingProfileID else {
+                throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
+            }
+            action(value)
         }
     }
     private func search() async {
         guard loaded, model.currentProfile.id == openingProfileID else { return }
+        let identity = searchTaskIdentity
+        let request = identity.request, snapshot = config, filenames = showMediaFilenames
+        let engine = model.engine, profileID = openingProfileID
         do {
             try await Task.sleep(nanoseconds: 250_000_000)
-            busy = true
-            defer { busy = false }
-            let result = try await model.engine.searchBrowserIDs(query, config: config)
             try Task.checkCancellation()
-            let cards = try await model.engine.browserRows(Array(result.prefix(100)), config: config, showMediaFilenames: showMediaFilenames)
+            let token = UUID()
+            searchInFlight = token
+            defer { if searchInFlight == token { searchInFlight = nil } }
+            let resolved = request.hasFilters ? try await engine.browserSearchQuery(request) : request.query
             try Task.checkCancellation()
-            ids = result; rows = cards; updateSelection(selected.intersection(Set(ids))); completedQuery = query
+            let result = try await engine.searchBrowserIDs(resolved, config: snapshot)
+            try Task.checkCancellation()
+            let cards = try await engine.browserRows(Array(result.prefix(100)), config: snapshot, showMediaFilenames: filenames)
+            try Task.checkCancellation()
+            guard model.currentProfile.id == profileID, searchTaskIdentity == identity else { return }
+            ids = result; rows = cards; updateSelection(selected.intersection(Set(ids))); completedQuery = resolved
         } catch is CancellationError {} catch { self.error = error.localizedDescription }
     }
     private func edit(_ row: BrowserCard) { editor = config.notesMode ? EditorRequest(noteID: row.noteID, deckID: row.deckID) : EditorRequest(cardID: row.id, deckID: row.deckID) }

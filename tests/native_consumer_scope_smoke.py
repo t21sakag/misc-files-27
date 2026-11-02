@@ -27,6 +27,13 @@ expected['native-searches'] = expected['native-history'] | expected['native-fiel
     'BrowserToolsFlowTests/testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch',
     'BrowserToolsFlowTests/testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch',
 }
+expected['native-search-state'] = expected['native-history'] | {
+    'BrowserSearchFiltersFlowTests/testStructuredFilterORCancelFieldIntersectionAndClear',
+    'BrowserSearchFiltersFlowTests/testStructuredFiltersSurviveRawTypingAndFilterOnlyFieldAND',
+    'BrowserSearchFiltersFlowTests/testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch',
+    'BrowserSearchFiltersFlowTests/testSavedSearchAndFilteredDeckUseCompleteResolvedRequest',
+}
+
 
 def condition(expression, mode, suite):
     values = {'env.CI_MODE': mode, 'env.UI_SUITE': suite, 'inputs.mode': mode, 'inputs.ui_suite': suite}
@@ -71,4 +78,4 @@ with tempfile.TemporaryDirectory() as directory:
         rejected = subprocess.run([sys.executable, str(root / 'scripts/plan-ui-batches.py'), '--selections', str(path), '--output', str(output)],
                                   capture_output=True, text=True)
         assert rejected.returncode != 0
-print('PASS: exact single/pair native scopes use independent consumers, preserve full routing and reject invalid selections')
+print('PASS: exact native scopes use independent consumers, preserve full routing and reject invalid selections')

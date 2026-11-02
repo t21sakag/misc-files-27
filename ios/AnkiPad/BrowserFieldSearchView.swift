@@ -12,7 +12,7 @@ extension Engine {
 
 @MainActor struct BrowserFieldSearchView: View {
     @ObservedObject var model: StudyModel
-    let currentSearch: String
+    @State private var currentSearch = ""
     let currentRequest: BrowserSearchRequest
     let apply: (BrowserSearchRequest, String) throws -> Void
     private let engine: Engine
@@ -27,8 +27,8 @@ extension Engine {
     @State private var active = true
     @State private var error: String?
 
-    init(model: StudyModel, currentSearch: String, currentRequest: BrowserSearchRequest, apply: @escaping (BrowserSearchRequest, String) throws -> Void) {
-        self.model = model; self.currentSearch = currentSearch; self.currentRequest = currentRequest; self.apply = apply
+    init(model: StudyModel, currentRequest: BrowserSearchRequest, apply: @escaping (BrowserSearchRequest, String) throws -> Void) {
+        self.model = model; self.currentRequest = currentRequest; self.apply = apply
         engine = model.engine; profileID = model.currentProfile.id
     }
     private func title(_ mode: BrowserFieldSearchMode) -> String {
@@ -53,7 +53,7 @@ extension Engine {
                     TextField(AppText.localized("検索文字列"), text: $text)
                         .accessibilityIdentifier("field-search-text")
                 }
-                if !currentSearch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if !currentRequest.isEmpty {
                     Toggle(AppText.localized("現在の検索条件と組み合わせる"), isOn: $combine)
                         .accessibilityIdentifier("field-search-combine")
                     Text(currentSearch).font(.footnote).foregroundStyle(.secondary)
@@ -82,8 +82,9 @@ extension Engine {
                             if let name = item["name"] as? String { names.insert(name) }
                         }
                     }
+                    let resolved = currentRequest.hasFilters ? try await engine.browserSearchQuery(currentRequest) : currentRequest.query
                     guard !Task.isCancelled, active else { return }
-                    fields = names.sorted(); field = fields.first ?? ""; busy = false
+                    currentSearch = resolved; fields = names.sorted(); field = fields.first ?? ""; busy = false
                 } catch { if active { self.error = error.localizedDescription; busy = false } }
             }
             .onDisappear { active = false }

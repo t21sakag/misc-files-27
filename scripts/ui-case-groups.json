@@ -196,6 +196,9 @@
     "testCommittedSearchHistoryReuseCancelAndRelaunch"
   ],
   "BrowserSearchFiltersFlowTests": [
-    "testStructuredFilterORCancelFieldIntersectionAndClear"
+    "testStructuredFilterORCancelFieldIntersectionAndClear",
+    "testStructuredFiltersSurviveRawTypingAndFilterOnlyFieldAND",
+    "testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch",
+    "testSavedSearchAndFilteredDeckUseCompleteResolvedRequest"
   ]
 }

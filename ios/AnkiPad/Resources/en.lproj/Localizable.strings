@@ -881,3 +881,5 @@
 "絞り込みを解除" = "Clear filters";
 
 "同じ項目ではいずれかに一致し、異なる項目はすべてに一致するカードを検索します。" = "Match any selection within each category and all selected categories.";
+
+"この絞り込みを解除" = "Remove this filter";
