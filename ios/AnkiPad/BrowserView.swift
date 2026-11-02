@@ -40,6 +40,7 @@ struct BrowserView: View {
     @State private var days = ""
     @State private var movePrompt = false
     @State private var browserOptions = false
+    @State private var searchFilters = false
     @State private var fieldSearch = false
     @State private var searchHistory: [BrowserSearchRequest] = []
     @State private var activeSearchRequest: BrowserSearchRequest?
@@ -159,6 +160,7 @@ struct BrowserView: View {
                     historyRequest = BrowserSearchHistoryRequest(preferenceKey: key, profileID: model.currentProfile.id, engine: model.engine)
                 } catch { self.error = AppText.localized("検索履歴を読み込めませんでした。") }
             }.accessibilityIdentifier("browser-history-open")
+            Button(AppText.localized("検索条件を編集")) { searchFilters = true }.accessibilityIdentifier("browser-search-filters")
             Button(AppText.localized("フィールドを検索")) { fieldSearch = true }.accessibilityIdentifier("browser-field-search")
             Menu(AppText.localized("状態")) {
                 Button(AppText.localized("すべて")) { submitSearch("") }
@@ -241,6 +243,11 @@ struct BrowserView: View {
                     guard model.currentProfile.id == request.profileID else {
                         throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
                     }
+                    try commitSearch(entry, resolved: resolved)
+                }
+            }
+            .sheet(isPresented: $searchFilters) {
+                BrowserSearchFiltersView(model: model, request: effectiveSearchRequest, tags: tags, noteTypes: types) { entry, resolved in
                     try commitSearch(entry, resolved: resolved)
                 }
             }

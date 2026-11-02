@@ -875,3 +875,9 @@
 "検索履歴を保存できませんでした。" = "Could not save search history.";
 
 "この検索条件を読み込めませんでした。" = "Could not load these search criteria.";
+
+"検索条件を編集" = "Edit search filters";
+
+"絞り込みを解除" = "Clear filters";
+
+"同じ項目ではいずれかに一致し、異なる項目はすべてに一致するカードを検索します。" = "Match any selection within each category and all selected categories.";

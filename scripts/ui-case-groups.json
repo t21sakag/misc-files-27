@@ -194,5 +194,8 @@
   ],
   "BrowserSearchHistoryFlowTests": [
     "testCommittedSearchHistoryReuseCancelAndRelaunch"
+  ],
+  "BrowserSearchFiltersFlowTests": [
+    "testStructuredFilterORCancelFieldIntersectionAndClear"
   ]
 }
