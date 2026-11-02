@@ -5204,6 +5204,255 @@
         }
       ],
       "checked_at": "2026-11-02T01:23:00.616243+00:00"
+    },
+    {
+      "id": "20261102-native-permission-event-review",
+      "covers": [
+        [
+          41377700253,
+          1
+        ],
+        [
+          41380433865,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41377700253,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Native server switch and actual sync advanced correctly. Common caret-dependent replacement left suffix after deleting only text before insertion point. Notification stopped before authorization with insufficient first-phase evidence; no claim of OSadd2003 recurrence."
+        },
+        {
+          "attempt": [
+            41380433865,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Whole-field native replacement passes complete typed-upload case. Notification permission request began28.635s after save; actual OS prompt appeared28.915s after save, beyond one-shot3s allow probe. Terminal screenshot and172s video show unhandled Allow. No OS add attempted."
+        }
+      ],
+      "root_cause": "Two common harness contract gaps: caret-dependent replacement rather than full verified source selection; optional permission handling checked only early and then ignored OS prompt during app transition wait. The latest native settings reply arrived late during simulator service initialization. Earlier SourceNotAuthorized2003 after grantedauthorization is separate and remains unresolved.",
+      "common_resolution": "Keep native Command+A replacement and all before/after full-value and upload safety assertions; latest typed-upload passed. Introduce one shared reminder save completion observer for all reminder suites: wait for actual OS prompt OR app success/error, resolve one real Allow with shared control helper if present, then wait for real settings return and reject errors. Keep existing30s event deadlines, no sleeps/tap retries/pregrant/OS add changes. Capture both app and SpringBoard hierarchy at terminal failure. Resume only original notification authorization case in relocated consumer; do not repeat successful sync/widgets or build IPA/full.",
+      "rule_review": {
+        "semantic_labels": "Exact Allow/許可 labels retained in typed SpringBoard alert-button query, never Dont Allow. Video172s and terminal PNG explicitly show actual OS notification alert. All native schedule/count identities unchanged.",
+        "foreground_scope": "OS prompt belongs to SpringBoard, while app AX shows disabled reminder form and truncated awaitauthorization phase. Shared event observer inspects both processes instead of inferring prompt absence from app-only hierarchy; action remains scoped to OS alerts and native button type.",
+        "unique_reads_and_actions": "Permit detection requires observed OS query count>0; actual tap still uses strict shared unique/actionable resolver. Duplicate buttons fail instead of firstMatch. All reminder entrypoints use the shared completion observer, removing ConditionalRefresh arbitrary first allow. Pending IDs still read from real OS.",
+        "live_state": "Require real settings navigation and no app error after authorization; authorization status alone is insufficient. Preserve initial7/replacement7disjoint/cancel0 and actual persisted IDs assertions. Error becomes immediate failed outcome rather than another blind spinner wait. Latest sync exactphrase/invalidphrase and realupload assertions passed.",
+        "keyboard_and_scroll": "Numeric savepointer410,874 lands on actual native save and trace begins at03:08:35.876. No coordinate/tap variation or new scroll. Whole-field replacement now uses native Command+A after exact verified original, preserving resulting full-value check; latest actual typed-upload passes. Existing shared keyboard/reveal policies stay.",
+        "environment": "Critical trace now proves notificationSettings returns after28.634s and SpringBoard initializes notifications then presents request. This explains missed3s probe, not earlier grantedauthorization/add2003. Keep real capability/source checks and verified products, no pregrant/permission bypass or manufactured pending requests. Shared wait event deadline remains30s.",
+        "first_failure_evidence": "Latest terminalPNG8B022E and video9310F7 at172s show actual unhandled Allow prompt. App terminalAX alone truncates phase; boundedcritical records full preawait phases. Save synthesizedevent BDE191 is410,874. Both failed attempts have exact formal summaries and runtimeWarnings[]. Retain earlier replacement AX/screenshot evidence and raw binding values.",
+        "failure_classification": "413777 sync is proved common textreplacement harness defect; notification before-auth unresolved at that time. 413804 sync passes after repair; notification is proved harness permission-event defect with slow OSservice response. Do not misclassify latest hang as prior2003, or declare old2003 fixed without actual OS storage success. Both run attempts count as failures under gate despite sync complement.",
+        "runtime_warnings": "All four nativecase summaries across these2attempts have runtimeWarnings=[]; notifications still fail. Next originalcase requires completed summary/exact identity/skip0/warnings[] and actual OS schedule, not logfile Passed alone.",
+        "device_evidence": "Simulator focused complements8/12 originalfull failures do not make full green or demonstrate realiPad delivery/audio/re-signing. Latest promotedIPA176 unchanged. Remaining4original notification-related cases and physical milestones remain tracked."
+      },
+      "evidence": [
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41377700253",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "test-summary.json",
+          "sha256": "4e27d96fb57e8eb49419fafd5f2fe1314a7217de075d0b25aacde2315a404f49"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41377700253",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "widget-diagnostics/critical.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41377700253",
+          "artifact_name": "ui-diagnostics-1",
+          "artifact_entry": "test-summary.json",
+          "sha256": "ab191a354502448ce44472e5db863860faaf49c01002ee78902cdfebd7ba4fd1"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41377700253",
+          "artifact_name": "ui-diagnostics-1",
+          "artifact_entry": "widget-diagnostics/critical.log",
+          "sha256": "e36834305c5af6717cbca44e70febf53899e4a61121e319ed5dc7431a371e6bc"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41380433865",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "test-summary.json",
+          "sha256": "2dbf4b2ab4b59ae06731818d3b29aeb1b4166a9d47dfaf58581fe005b337d3dc"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41380433865",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "widget-diagnostics/critical.log",
+          "sha256": "f6a725b0f0147c6882c92ae0674de2540f9e39b946acc6416672a43afd14512d"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41380433865",
+          "artifact_name": "ui-diagnostics-1",
+          "artifact_entry": "test-summary.json",
+          "sha256": "9aa2a37539ae69505dac5a15b1b2cc4c5ab1080c861bb5bb67a7230022b1ea66"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41380433865",
+          "artifact_name": "ui-diagnostics-1",
+          "artifact_entry": "widget-diagnostics/critical.log",
+          "sha256": "50cfef05f89ed6bc70aa251487c20729045725e6b33c9356422d2bb140afe430"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41380433865",
+          "artifact_name": "screenshots-0",
+          "artifact_entry": "8B022E6E-A647-440A-AA7E-BC4DAE34533B.png",
+          "sha256": "37df380bc04ed6afb4e87be252d0b875bdab2196da5abee55118b008d84c51e0"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41380433865",
+          "artifact_name": "screenshots-0",
+          "artifact_entry": "9310F7FC-7D50-416A-B322-11DBE6A079F9.mp4",
+          "sha256": "5e4976b8cc8ab20843902d46c9b15bad2ec8222331a766ee784607e3fa26fae0"
+        }
+      ],
+      "next_scope": [
+        "NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "5b4c04ad8c65f5553aec80211e5664c05d964da8c059420d66b5365761791f29",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "1bc35ad71dcd24f833091155ca72fc4c9eac0bc1013923a7d33418c255910fa5",
+        "ios/AnkiPadUITests/NotificationAuthorizationFlowTests.swift": "3986bedb780391425c8db241ccdce1fc92c6c427c55dc65334892edc03d0b582",
+        "ios/AnkiPadUITests/ReminderFlowTestSupport.swift": "569928dae20df0e861f150c476764e953af625699930b98802ce6552b63c5298",
+        "ios/AnkiPadUITests/ConditionalRefreshFlowTests.swift": "6629514791e0556db9f46872a2281f62f7504901d1ad14eaf2da3eac116e382e",
+        "ios/AnkiPad/ReviewReminderSettings.swift": "a45bcb93beaf1a04d98ef4c836edcb9eeb424c3b83b7e54a6ccb16029c21cf42",
+        "ios/AnkiPad/AccountView.swift": "1d81db6dee45d5545dabe97710b773844751c88535ab7fe977285c6db446f739",
+        "scripts/run-ui-with-diagnostics.py": "f65c93dc706ed52081941858a87fd8ad3b819912c7f6162e2f33f802ade00c70",
+        "scripts/run-ui-batch.py": "d8574110664bdcf4a7b57ba8788bafd9e7cf44b077354efe3fa49f2bbed5f6a6",
+        "scripts/ui-products.py": "0f9b0c344b6c88cbc1cd8c4770c329a59f3290cb10c938ebfc4ac6d9aee63c63",
+        "scripts/plan-ui-batches.py": "6f655f53f37a4041433e285efb074253bd12a5525c27d96aca22f0a269f921f4",
+        "scripts/select-ui-tests.py": "ad317bf942b4abb57944a3b9cfa07cd8ec3fabe1feff25a8827ffa9ce7919009",
+        ".github/workflows/ipa.yml": "58c63a88e493d9aa44413feea496c7753407b171238ffbf9fc0105989801e6ef"
+      },
+      "checks": [
+        {
+          "name": "Swift syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "8604ca91fc328f2dae09c0c9db11fd2db08fc73cbb5f36cae074c6f4cc340a7c"
+        },
+        {
+          "name": "Swift DEBUGparse",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-frontend",
+            "-parse",
+            "-swift-version",
+            "5",
+            "-D",
+            "DEBUG",
+            "ios/AnkiPadUITests/StudyFlowTestSupport.swift",
+            "ios/AnkiPadUITests/NotificationAuthorizationFlowTests.swift",
+            "ios/AnkiPadUITests/ReminderFlowTestSupport.swift",
+            "ios/AnkiPadUITests/ConditionalRefreshFlowTests.swift",
+            "ios/AnkiPad/ReviewReminderSettings.swift",
+            "ios/AnkiPad/AccountView.swift"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "tests/ui_case_groups_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b9377cf28949c5c590b41ecffc841472c1df275ba193d20fa8d2746eaa521987"
+        },
+        {
+          "name": "tests/ci_scope_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2c498dfa49b0ad8164190f3cc935a46a2254cfda0b28c83cbe05f5eee5d58256"
+        },
+        {
+          "name": "scripts/check-ui-query-predicates.py",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5e04a26ff9799fff9634c77c94ce5a00b862d061156719918ccbcd21a3821200"
+        },
+        {
+          "name": "tests/localization_resources_smoke.py",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "aaf188bc97dc8eeba2c167d0746e40000f6d5a77b9ff864ea1a5683391fbb3a9"
+        },
+        {
+          "name": "tests/native_consumer_scope_smoke.py",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "1773f95facfc9de83cd13704169196ad40e9ef4c378f45bba1acf1847e9b6f90"
+        },
+        {
+          "name": "tests/ui_batch_transfer_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        },
+        {
+          "name": "tests/ui_batch_runner_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "tests/widget_diagnostics_smoke.py",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "tests/ui_workflow_diagnostics_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "tests/ui_failure_review_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        }
+      ],
+      "checked_at": "2026-11-02T03:22:46.542062+00:00"
     }
   ]
 }

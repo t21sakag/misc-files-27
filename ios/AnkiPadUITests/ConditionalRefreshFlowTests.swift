@@ -32,14 +32,10 @@ final class ConditionalRefreshFlowTests: StudyFlowTestSupport {
             let button = minimum.buttons.matching(NSPredicate(format: "identifier ENDSWITH %@", increment ? "-Increment" : "-Decrement")).firstMatch
             XCTAssertTrue(button.exists, app.debugDescription); button.tap()
         }
-        func save(authorize: Bool = false) {
+        func save() {
             let button = app.buttons["reminder-save"]
             reveal(button); button.tap()
-            if authorize {
-                let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.buttons.matching(NSPredicate(format: "label IN %@", ["Allow", "許可"])).firstMatch
-                if allow.waitForExistence(timeout: 10) { allow.tap() }
-            }
-            XCTAssertTrue(app.navigationBars["学習リマインダー"].waitForNonExistence(timeout: 30), reminderFailureContext(app))
+            completeTestReminderSave(in: app)
             app.buttons["settings-save"].tap()
             XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30))
         }
@@ -72,7 +68,7 @@ final class ConditionalRefreshFlowTests: StudyFlowTestSupport {
         toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
         changeMinimum(true)
         chooseDeck("Empty reminder scope")
-        save(authorize: true)
+        save()
         open(); XCTAssertTrue(records().isEmpty, "Cards in other decks must not satisfy this empty scope")
         chooseDeck("すべてのデッキ")
         let noReviews = app.switches["reminder-no-reviews"]

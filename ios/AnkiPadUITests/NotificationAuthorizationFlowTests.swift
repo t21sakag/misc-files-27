@@ -26,16 +26,7 @@ final class NotificationAuthorizationFlowTests: StudyFlowTestSupport {
             let buttons = app.buttons.matching(identifier: "reminder-save")
             revealFormControl(buttons.element, in: form, topInset: 40, bottomInset: 10)
             tapTestControl(buttons, in: app)
-            let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-            let allow = springboard.alerts.buttons.matching(NSPredicate(format: "label IN %@", ["Allow", "許可"]))
-            // Optional OS prompt; if present its action must still be unique.
-            if allow.element.waitForExistence(timeout: 3) {
-                tapTestControl(allow, in: springboard, keyboard: .keep)
-            }
-            requireTestCondition("Reminder save completed without an error", in: app) {
-                !app.navigationBars["学習リマインダー"].exists
-            }
-            XCTAssertFalse(app.alerts.element.exists, reminderFailureContext(app))
+            completeTestReminderSave(in: app)
         }
         func snapshot() throws -> Set<String> {
             let statuses = app.staticTexts.matching(identifier: "reminder-native-schedule")

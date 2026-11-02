@@ -60,12 +60,14 @@ class StudyFlowTestSupport: XCTestCase {
     /// control lookup. A waiter timeout alone is not its current-state verdict.
     @discardableResult
     func requireTestCondition(_ description: String, in app: XCUIApplication, timeout: TimeInterval = 30,
+                              failureContext: (() -> String)? = nil,
                               condition: @escaping () -> Bool) -> Bool {
         let expected = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in condition() }, object: nil)
         let result = XCTWaiter.wait(for: [expected], timeout: timeout)
         if result == .completed || condition() { return true }
         XCTContext.runActivity(named: "Required UI state failed: " + description) { activity in
-            let hierarchy = XCTAttachment(string: "Application state: \(app.state)\n" + app.debugDescription)
+            let hierarchy = XCTAttachment(string: "Application state: \(app.state)\n" + app.debugDescription
+                + (failureContext.map { "\nAdditional process evidence:\n" + $0() } ?? ""))
             hierarchy.name = "Terminal hierarchy for " + description; hierarchy.lifetime = .keepAlways
             // Keep evidence even when the application has crashed. Asking a
             // terminated application for its screenshot hides the real error.
@@ -75,6 +77,31 @@ class StudyFlowTestSupport: XCTestCase {
         }
         XCTFail("Required UI state did not arrive: " + description)
         return false
+    }
+
+    /// Permission can arrive after the native save has begun. Observe the OS
+    /// prompt and the app outcome together, rather than probing permission once
+    /// and then waiting only for a transition blocked by that prompt.
+    func completeTestReminderSave(in app: XCUIApplication) {
+        let system = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let allow = system.alerts.buttons.matching(NSPredicate(format: "label IN %@", ["Allow", "許可"]))
+        let reminder = app.navigationBars["学習リマインダー"]
+        let settings = app.navigationBars["設定"]
+        guard requireTestCondition("Reminder permission prompt or save outcome", in: app,
+                                   failureContext: { system.debugDescription }, condition: {
+            allow.count > 0 || app.alerts.count > 0
+                || (!reminder.exists && settings.exists)
+        }) else { return }
+        if allow.count > 0 {
+            tapTestControl(allow, in: system, keyboard: .keep)
+        }
+        guard requireTestCondition("Reminder save outcome after authorization", in: app,
+                                   failureContext: { system.debugDescription }, condition: {
+            app.alerts.count > 0 || (!reminder.exists && settings.exists)
+        }) else { return }
+        XCTAssertEqual(app.alerts.count, 0, reminderFailureContext(app))
+        XCTAssertFalse(reminder.exists, reminderFailureContext(app))
+        XCTAssertTrue(settings.exists, reminderFailureContext(app))
     }
 
     enum TestKeyboardPolicy { case keep, dismiss }

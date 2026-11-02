@@ -33,15 +33,7 @@ class ReminderFlowTestSupport: StudyFlowTestSupport {
     func saveReminderSettings(in app: XCUIApplication, closeSettings: Bool = false) {
         tapTestControl(app.buttons.matching(identifier: "reminder-save"), in: app,
                        form: app.collectionViews["reminder-form"])
-        let system = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        let allow = system.alerts.buttons.matching(NSPredicate(format: "label IN %@", ["Allow", "許可"]))
-        if allow.element.waitForExistence(timeout: 3) {
-            tapTestControl(allow, in: system, keyboard: .keep)
-        }
-        requireTestCondition("Reminder save returned to settings without an error", in: app) {
-            !app.navigationBars["学習リマインダー"].exists && app.navigationBars["設定"].exists
-                && app.alerts.count == 0
-        }
+        completeTestReminderSave(in: app)
         if closeSettings {
             tapTestControl(app.buttons.matching(identifier: "settings-save"), in: app)
             waitForTestControl(app.buttons.matching(identifier: "collection-menu"), in: app, purpose: .observation)
