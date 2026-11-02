@@ -2,7 +2,8 @@ import XCTest
 
 final class BrowserSearchHistoryFlowTests: BrowserSearchTestSupport {
     private func submit(_ text: String, replacing previous: String, in app: XCUIApplication) throws {
-        let fields = app.searchFields
+        let fields = app.navigationBars.matching(identifier: "カードブラウザー").searchFields
+            .matching(NSPredicate(format: "label == %@", "検索（deck:、tag:、is:due など）"))
         let field: XCUIElement
         if previous.isEmpty { field = try XCTUnwrap(typeInEmptyTestField(fields, text: text, in: app)) }
         else { field = try XCTUnwrap(replaceTestField(fields, expected: previous, with: text, in: app)) }

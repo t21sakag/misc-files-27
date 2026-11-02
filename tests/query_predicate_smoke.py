@@ -18,3 +18,9 @@ for source in [
 ]:
     assert module.violations(source) == [], source
 print('PASS: unsupported query keys rejected; object readiness and literal labels accepted')
+
+for source in ['let fields = app.searchFields', 'app.searchFields.firstMatch', 'app.searchFields.element', 'app.searchFields.count', 'app.searchFields\n .allElementsBoundByIndex']:
+    assert module.unscoped_search_fields(source) == [1], source
+for source in ['app.navigationBars["カードブラウザー"].searchFields', 'app.searchFields["デッキを検索"]', 'app.searchFields.matching(NSPredicate(format: "label == %@", title))']:
+    assert module.unscoped_search_fields(source) == [], source
+print('PASS: root SearchField ambiguity rejected before CI; scoped or semantically narrowed queries remain allowed')
