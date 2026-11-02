@@ -88,6 +88,17 @@ import SwiftUI
                 if busy { ProgressView() }
             }
             .accessibilityIdentifier("search-filters-form")
+            #if DEBUG
+            .overlay(alignment: .bottomLeading) {
+                if UITestIsolation.namespace() != nil,
+                   ProcessInfo.processInfo.arguments.contains("--uitest-browser-input-trace") {
+                    BrowserInputDiagnosticsView(readValue: {
+                        BrowserInputDiagnostics.read(loaded: true, busy: busy, notes: false)
+                            + "\nmodel_flags=\(request.flags.map(\.rawValue));model_states=\(request.cardStates.map(\.rawValue));query_empty=\(request.query.isEmpty)"
+                    }).fixedSize().accessibilityIdentifier("browser-native-input-state").allowsHitTesting(false)
+                }
+            }
+            #endif
             .disabled(busy).studyThemeSurface().navigationTitle(AppText.localized("検索条件"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

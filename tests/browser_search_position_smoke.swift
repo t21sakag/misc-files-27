@@ -18,8 +18,8 @@ import Foundation
         let reopened = UserDefaults(suiteName: suite)!
         let restored = try BrowserSearchPosition.request(key: key, defaults: reopened)
         precondition(restored == structured)
-        let selected = try BrowserSearchPosition.initialRequest(query: "", explicit: false, defaultQuery: "", restore: true, key: key, defaults: defaults)
-        precondition(selected == structured, "Restoration must preserve IDs for late collection resolution")
+        let selected = BrowserSearchPosition.initialRequest(query: "", explicit: false, defaultQuery: "")
+        precondition(selected == BrowserSearchRequest(), "A new browser must not reuse a closed session's filters")
         let isolated = try BrowserSearchPosition.request(key: second, defaults: defaults)
         precondition(isolated == nil)
         try BrowserSearchPosition.save(BrowserSearchRequest(), key: second, defaults: defaults)
@@ -28,14 +28,14 @@ import Foundation
         for invalid: Any in [Data("broken".utf8), Data("{\"version\":2,\"request\":{\"q\":\"x\"}}".utf8), Data("{\"version\":1,\"request\":{\"q\":\"\",\"f\":[8]}}".utf8), ["unexpected"]] {
             defaults.set(invalid, forKey: key)
             let original = defaults.object(forKey: key) as! NSObject
-            let explicitEmpty = try BrowserSearchPosition.initialRequest(query: "", explicit: true, defaultQuery: "default", restore: true, key: key, defaults: defaults)
+            let explicitEmpty = BrowserSearchPosition.initialRequest(query: "", explicit: true, defaultQuery: "default")
             precondition(explicitEmpty == BrowserSearchRequest())
-            let existing = try BrowserSearchPosition.initialRequest(query: "current", explicit: false, defaultQuery: "default", restore: true, key: key, defaults: defaults)
+            let existing = BrowserSearchPosition.initialRequest(query: "current", explicit: false, defaultQuery: "default")
             precondition(existing.query == "current")
-            let configured = try BrowserSearchPosition.initialRequest(query: "", explicit: false, defaultQuery: "default", restore: true, key: key, defaults: defaults)
+            let configured = BrowserSearchPosition.initialRequest(query: "", explicit: false, defaultQuery: "default")
             precondition(configured.query == "default")
-            let disabled = try BrowserSearchPosition.initialRequest(query: "", explicit: false, defaultQuery: "", restore: false, key: key, defaults: defaults)
-            precondition(disabled == BrowserSearchRequest(), "Disabled restore must not read corrupt storage")
+            let disabled = BrowserSearchPosition.initialRequest(query: "", explicit: false, defaultQuery: "")
+            precondition(disabled == BrowserSearchRequest(), "New browser policy must not read corrupt session storage")
             do {
                 try BrowserSearchPosition.save(structured, key: key, defaults: defaults)
                 preconditionFailure("Unsupported position data was overwritten")
@@ -43,6 +43,6 @@ import Foundation
         }
         let untouched = try BrowserSearchPosition.request(key: second, defaults: defaults)
         precondition(untouched == BrowserSearchRequest())
-        print("PASS: typed last request preserves literals, stable IDs, reload, empty reset and profile isolation; corrupt/future data stays intact")
+        print("PASS: last-session snapshot preserves literals, stable IDs and profiles; fresh/explicit/default browser policy is independent of session data and scheduler preferences")
     }
 }

@@ -1,7 +1,8 @@
 import Foundation
 
-/// The last browser request is independent of the recent-search MRU. Keeping
-/// IDs here allows position restoration to resolve renamed decks and types.
+/// A profile-local last-session snapshot, separate from the recent-search MRU.
+/// A normal new browser opening starts from its explicit/current/default text;
+/// it must not treat a scheduler's new-card position preference as search state.
 enum BrowserSearchPosition {
     enum Failure: Error { case invalidData, unsupportedVersion }
     private struct Storage: Codable { var version = 1; var request: BrowserSearchRequest }
@@ -17,12 +18,9 @@ enum BrowserSearchPosition {
         return nil
     }
 
-    static func initialRequest(query: String, explicit: Bool, defaultQuery: String, restore: Bool,
-                               key: String, defaults: UserDefaults = .standard) throws -> BrowserSearchRequest {
+    static func initialRequest(query: String, explicit: Bool, defaultQuery: String) -> BrowserSearchRequest {
         if explicit || !query.isEmpty { return BrowserSearchRequest(query: query) }
-        if !defaultQuery.isEmpty { return BrowserSearchRequest(query: defaultQuery) }
-        if restore, let last = try request(key: key, defaults: defaults) { return last }
-        return BrowserSearchRequest()
+        return BrowserSearchRequest(query: defaultQuery)
     }
 
     static func save(_ request: BrowserSearchRequest, key: String, defaults: UserDefaults = .standard) throws {

@@ -370,10 +370,8 @@ struct BrowserView: View {
             types = try await model.engine.noteTypes()
             if query.isEmpty && !hasExplicitInitialSearch {
                 let defaultQuery = try await model.engine.call("ConfigService.GetConfigString", ["key": "DEFAULT_SEARCH_TEXT"])["val"] as? String ?? ""
-                let restore = try await model.engine.call("ConfigService.GetConfigBool", ["key": "RESTORE_POSITION_BROWSER"])["val"] as? Bool ?? false
-                let request = try BrowserSearchPosition.initialRequest(query: query, explicit: hasExplicitInitialSearch,
-                    defaultQuery: defaultQuery, restore: restore, key: positionPreferenceKey)
-                if request.hasFilters { _ = try await model.engine.browserSearchQuery(request) }
+                let request = BrowserSearchPosition.initialRequest(query: query, explicit: hasExplicitInitialSearch,
+                    defaultQuery: defaultQuery)
                 guard model.currentProfile.id == openingProfileID else {
                     throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
                 }

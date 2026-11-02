@@ -21,5 +21,13 @@ with tempfile.TemporaryDirectory() as directory:
     assert engine.call('ConfigService.GetConfigBool', {'key': 'BROWSER_TABLE_SHOW_NOTES_MODE'})['val']
     assert engine.call('ConfigService.GetConfigString', {'key': 'DEFAULT_SEARCH_TEXT'})['val'] == 'cafe'
     assert len(engine.call('SearchService.SearchNotes', {'search': 'cafe'})['ids']) == 1
+    card_ids = engine.call('SearchService.SearchCards', {'search': ''})['ids']
+    for restore in [False, True]:
+        engine.call('SchedulerService.ScheduleCardsAsNew', {'cardIds': card_ids, 'log': False,
+            'restorePosition': restore, 'resetCounts': False, 'context': 'BROWSER'})
+        scheduler = engine.call('SchedulerService.ScheduleCardsAsNewDefaults', {'context': 'BROWSER'})
+        assert scheduler.get('restorePosition', False) is restore
+        assert engine.call('ConfigService.GetConfigBool', {'key': 'RESTORE_POSITION_BROWSER'}).get('val', False) is restore
+        assert engine.call('ConfigService.GetConfigString', {'key': 'DEFAULT_SEARCH_TEXT'})['val'] == 'cafe'
     engine.close()
-print('PASS: real accent-sensitive search and notes/default-search preferences survive collection reopen')
+print('PASS: real accent-sensitive search and notes/default-search preferences survive collection reopen; restore-position belongs to schedule-as-new defaults')

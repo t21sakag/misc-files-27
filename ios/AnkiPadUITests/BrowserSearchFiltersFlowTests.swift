@@ -11,7 +11,19 @@ final class BrowserSearchFiltersFlowTests: BrowserSearchTestSupport {
         guard let container = waitForTestControl(form, in: app, purpose: .observation) else { return }
         let flag = app.switches.matching(identifier: "search-filters-flag-\(value)")
         guard waitForTestControl(flag, in: app, form: container, purpose: .observation) != nil else { return }
-        setTestSwitch(flag, enabled: enabled, in: app)
+        if app.launchArguments.contains("--uitest-browser-input-trace") {
+            let value = nativeInputEvidence(app)
+            let diagnostic = XCTAttachment(string: value + "\n" + app.debugDescription)
+            diagnostic.name = "Before switch resolution " + String(value.prefix(80)); diagnostic.lifetime = .keepAlways; add(diagnostic)
+            let screen = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); screen.lifetime = .keepAlways; add(screen)
+        }
+        setTestSwitch(flag, enabled: enabled, in: app, failureContext: { self.nativeInputEvidence(app) })
+    }
+    private func nativeInputEvidence(_ app: XCUIApplication) -> String {
+        guard app.launchArguments.contains("--uitest-browser-input-trace") else { return "Native browser trace disabled" }
+        guard let value = waitForTestControl(app.staticTexts.matching(identifier: "browser-native-input-state"), in: app,
+                                             keyboard: .keep, purpose: .observation) else { return "Native trace missing" }
+        return value.value as? String ?? "Native trace value missing"
     }
     private func expectFlag(_ value: Int, enabled: Bool, in app: XCUIApplication) {
         guard let flag = waitForTestControl(app.switches.matching(identifier: "search-filters-flag-\(value)"), in: app, purpose: .observation) else { return }
@@ -26,7 +38,7 @@ final class BrowserSearchFiltersFlowTests: BrowserSearchTestSupport {
         }
     }
     func testStructuredFilterORCancelFieldIntersectionAndClear() throws {
-        let (app, back) = try fixture()
+        let (app, back) = try fixture(extraArguments: ["--uitest-browser-input-trace"])
         openFilters(app)
         typeInEmptyTestField(app.textFields.matching(identifier: "search-filters-query"), text: "row", in: app)
         setFlag(0, enabled: true, in: app); setFlag(1, enabled: true, in: app)
@@ -97,7 +109,7 @@ final class BrowserSearchFiltersFlowTests: BrowserSearchTestSupport {
         expectRows([0], in: app); rawSearch("row0", in: app)
     }
     func testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch() throws {
-        let (app, _) = try fixture()
+        let (app, _) = try fixture(extraArguments: ["--uitest-browser-input-trace"])
         openFilters(app); setFlag(0, enabled: true, in: app); setNewState(true, in: app); applyFilters(app)
         _ = try compiledSearch(containing: ["flag:0", "is:new"], in: app); expectRows([0, 1, 2, 3, 4], in: app)
         let field = try XCTUnwrap(typeInEmptyTestField(browserSearchFields(app), text: "row1", in: app))
@@ -157,6 +169,31 @@ final class BrowserSearchFiltersFlowTests: BrowserSearchTestSupport {
         tapTestControl(app.navigationBars.buttons.matching(NSPredicate(format: "label == %@", "閉じる")), in: app)
         app.terminate(); app.launchArguments = []; app.launch()
         openBrowser("", in: app); expectRows([0, 1, 2, 3, 4], in: app)
+    }
+
+    func testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable() throws {
+        let (app, _) = try fixture()
+        let field = try XCTUnwrap(typeInEmptyTestField(browserSearchFields(app), text: "row1", in: app))
+        field.typeText("\n")
+        _ = try compiledSearch(containing: ["row1"], in: app); expectRows([1], in: app)
+        tapTestControl(app.navigationBars.buttons.matching(NSPredicate(format: "label == %@", "閉じる")), in: app)
+        // Ordinary collection-menu opening has no explicit URL search. A closed
+        // session must not be restored because a card-forgetting preference is on.
+        tapTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-open"), in: app)
+        requireTestCondition("A normal new browser starts with its empty default", in: app) {
+            let result = app.staticTexts.matching(identifier: "browser-results")
+            return result.count == 1 && result.element.value as? String == ""
+        }
+        expectRows([0, 1, 2, 3, 4], in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["最近の検索"], in: app)
+        tapTestControl(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@", "browser-history-query-", "row1")), in: app)
+        requireTestCondition("Recent search remains explicitly reusable after a fresh opening", in: app) {
+            app.buttons.matching(identifier: "browser-history-close").count == 0
+                && app.staticTexts["browser-results"].value as? String == "row1"
+        }
+        expectRows([1], in: app); rawSearch("row1", in: app)
     }
 
 }

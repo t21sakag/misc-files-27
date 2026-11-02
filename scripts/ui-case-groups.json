@@ -199,6 +199,7 @@
     "testStructuredFilterORCancelFieldIntersectionAndClear",
     "testStructuredFiltersSurviveRawTypingAndFilterOnlyFieldAND",
     "testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch",
-    "testSavedSearchAndFilteredDeckUseCompleteResolvedRequest"
+    "testSavedSearchAndFilteredDeckUseCompleteResolvedRequest",
+    "testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable"
   ]
 }

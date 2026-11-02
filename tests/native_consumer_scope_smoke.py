@@ -34,6 +34,15 @@ expected['native-search-state'] = expected['native-history'] | {
     'BrowserSearchFiltersFlowTests/testSavedSearchAndFilteredDeckUseCompleteResolvedRequest',
 }
 
+expected['native-browser-opening'] = {
+    'BrowserSearchFiltersFlowTests/testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable',
+    'BrowserToolsFlowTests/testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch',
+}
+expected['native-search-repair'] = {
+    'BrowserSearchFiltersFlowTests/testStructuredFilterORCancelFieldIntersectionAndClear',
+    'BrowserSearchFiltersFlowTests/testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch',
+    'BrowserSearchFiltersFlowTests/testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable',
+}
 
 def condition(expression, mode, suite):
     values = {'env.CI_MODE': mode, 'env.UI_SUITE': suite, 'inputs.mode': mode, 'inputs.ui_suite': suite}

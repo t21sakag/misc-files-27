@@ -5,6 +5,9 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-search-repair': ['testStructuredFilterORCancelFieldIntersectionAndClear', 'testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch', 'testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable'],
+    'native-browser-opening': ['testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable', 'testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch'],
+    'browser-fresh-open': ['testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable'],
     'native-search-state': ['testStructuredFiltersSurviveRawTypingAndFilterOnlyFieldAND', 'testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch', 'testSavedSearchAndFilteredDeckUseCompleteResolvedRequest', 'testStructuredFilterORCancelFieldIntersectionAndClear', 'testCommittedSearchHistoryReuseCancelAndRelaunch'],
     'search-state-input': ['testStructuredFiltersSurviveRawTypingAndFilterOnlyFieldAND'],
     'search-state-history': ['testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch'],

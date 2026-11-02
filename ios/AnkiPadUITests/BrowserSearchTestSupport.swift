@@ -1,7 +1,7 @@
 import XCTest
 
 class BrowserSearchTestSupport: StudyFlowTestSupport {
-    func fixture() throws -> (XCUIApplication, String) {
+    func fixture(extraArguments: [String] = []) throws -> (XCUIApplication, String) {
         let bundle = Bundle(for: Self.self)
         let source = try XCTUnwrap(bundle.url(forResource: "field-search", withExtension: "apkg", subdirectory: "ReceivedFixtures"))
         let manifest = try XCTUnwrap(bundle.url(forResource: "field-search", withExtension: "json", subdirectory: "ReceivedFixtures"))
@@ -12,7 +12,7 @@ class BrowserSearchTestSupport: StudyFlowTestSupport {
         defer { try? FileManager.default.removeItem(at: directory) }
         let copy = directory.appendingPathComponent("fields.apkg")
         try Data(contentsOf: source).write(to: copy)
-        let app = makeApplication(); app.launchArguments = []; app.launch()
+        let app = makeApplication(); app.launchArguments = extraArguments; app.launch()
         _ = waitForTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
         app.open(copy)
         tapTestControl(app.buttons.matching(identifier: "incoming-import-confirm"), in: app)
