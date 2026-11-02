@@ -38,6 +38,7 @@ struct BrowserView: View {
     @State private var days = ""
     @State private var movePrompt = false
     @State private var browserOptions = false
+    @State private var fieldSearch = false
     @State private var columnPicker = false
     @State private var saveSearchPrompt = false
     @State private var searchName = ""
@@ -142,6 +143,7 @@ struct BrowserView: View {
                 }
                 Toggle(AppText.localized("逆順"), isOn: $config.backwards).onChange(of: config.backwards) { _, _ in saveConfig() }
             }
+            Button(AppText.localized("フィールドを検索")) { fieldSearch = true }.accessibilityIdentifier("browser-field-search")
             Menu(AppText.localized("状態")) {
                 Button(AppText.localized("すべて")) { query = "" }
                 Button(AppText.localized("新規")) { query = "is:new" }; Button(AppText.localized("学習中")) { query = "is:learn" }
@@ -216,6 +218,7 @@ struct BrowserView: View {
                     catch { self.error = error.localizedDescription }
                 }
             }) { TagManagerView(model: model) }
+            .sheet(isPresented: $fieldSearch) { BrowserFieldSearchView(model: model, currentSearch: query) { query = $0 } }
             .sheet(isPresented: $browserOptions, onDismiss: {
                 mutateOpening {
                     let saved = try await model.engine.browserConfiguration()

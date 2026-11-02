@@ -835,3 +835,29 @@
 
 "前のカード" = "Previous card";
 "次のカード" = "Next card";
+
+"文字列を含む" = "Contains text";
+
+"完全一致" = "Exact match";
+
+"空のフィールド" = "Empty field";
+
+"空でないフィールド" = "Non-empty field";
+
+"フィールドの存在" = "Field exists";
+
+"検索方法" = "Search method";
+
+"検索文字列" = "Search text";
+
+"現在の検索条件と組み合わせる" = "Combine with the current search";
+
+"検索できるフィールドがありません。" = "There are no fields to search.";
+
+"フィールドを検索" = "Search a field";
+
+"検索できませんでした" = "Search failed";
+
+"プロファイルが変わりました。検索画面を開き直してください。" = "The profile changed. Reopen the search screen.";
+
+"検索条件を作成できませんでした。" = "Could not create the search criteria.";
