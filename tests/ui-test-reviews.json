@@ -5712,6 +5712,258 @@
         }
       ],
       "checked_at": "2026-11-02T03:51:27.364119+00:00"
+    },
+    {
+      "id": "20261102-csv-results-independent-scope-review",
+      "covers": [
+        [
+          41382852122,
+          1
+        ],
+        [
+          41385459898,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41382852122,
+            1
+          ],
+          "kind": "environment",
+          "finding": "Actual acceptedmatchingbundle notificationSettings forwarded byOS neverreturned before UIpermission waiter; noOSprompt/add reached. Both processAX/video/numeric save point prove native activation, not tapmiss."
+        },
+        {
+          "attempt": [
+            41385459898,
+            1
+          ],
+          "kind": "environment",
+          "finding": "Read-only actualinstalledapp preflight reaches notificationSettings butOSdoesnotreply within120s; matchingbundleentitlement accepted, termination succeeds, noXCTest starts. This failsrun/environment, not a completed UIcase. No truncation in independent native logs."
+        }
+      ],
+      "root_cause": "Native notification service is unresponsive afterOSforwarding; precise platformcause and priorSource2003 remain unresolved. Read-only probe now proves this beforelongUI. Independently, CSV importer completion handler closed the result page before bundled ImportPage could render its log, contrary to Android and desktop semantics.",
+      "common_resolution": "Keep read-only notification gate and failedattempts; do not retry unsupported environment or treat successfulcompile asreset. Correct CSVimport_done to acknowledge committedreceipt withoutclosing, keep explicitclose separate. Update originalTSVcase to read actualimportedfields on result page before closing and retain source-removal/sentinel/import/relaunch assertions. Use common uniqueWebView/read/action/state helpers and exact observed-from-source resulttext. New AXexport needs actualverification, not presumed pass. Run onlyincoming-tsv1. Workflow scope concurrency now separates ref/mode/suite, retaining no cancellation and5batch/1XCTestworker; do not dispatch overlapping selectors or fillslots withsuccessfulreruns.",
+      "rule_review": {
+        "semantic_labels": "Preserve exact読み込む and backend-close. Resultrow expected complete fieldjoin Received TSV question,Received TSV answer derives from bundledDetailsTable.join comma, not partialtext. Actual AX type/uniqueness is unverified and must be diagnosed on firstfailure, not accepted bysource alone.",
+        "foreground_scope": "Use existing shared nativeOther/directWebView host for bundledWKWebView then exactButton/StaticText queries. Previousnotification failure captures both app andSpringBoard ratherthan app-only phase. No new pointer/tap variants.",
+        "unique_reads_and_actions": "Import button andresultrow use common strictunique/readiness; resultread mustvisibleframe andbutton musthittable. No newfirstMatch. Explicitclose mustreturn to collectionmenu withbackendclose absent through sharedsemanticwait. Existingfixture/browserhelpers retainoriginaldata assertions.",
+        "live_state": "ImportDone follows actual awaiteddoImport, then bundledUI rendersresponse; acknowledge aftercommit butpreserve resultview. Newtest requires actualbothimportedfields before manualclose, then note+sentinel and restartpersistence. Sharedreceiptaccept/defer behavior unchanged. Preflightready nevermeansOSauthorization orsuccessfulUIcase.",
+        "keyboard_and_scroll": "TSV has no newtextinput; sourcefile isdeleted afterstaging beforeconfirm. Sharedkeyboardpolicy/nativehost/reveal remain. No delayincrease; existing20/30scontrolwaits andsame terminalrecheck. Prior native save410,874 already correct; no retap.",
+        "environment": "Notification latest2 proveactual OSdependency failure, independently ofCSV/fixture. Read-only probe isretained andnotrunforCSV. Current compile413875 validatesnativevoicecorrections butdoesnotresetUIstreak. CSV selector needs importedfile/syntheticengine/browser, no notifservice. Differentworkflow suites canrunindependently under scopedlock; validate actualselectors and budget5beforelaunch.",
+        "first_failure_evidence": "413828 exactsummary/critical/fullnativeforwardtrace/app+SpringBoardAX76072B/terminalPNG65B047/video245s/saveevent410,874 were inspected. 413854 report actualnamespace/bundle/phase notificationSettings,OSacceptedentitlement/forward,120sdeadline,terminate true anduntruncated1105963bytes, noxcresult. CSV completiondifference proven frombundledImportPage/desktopmediasrv/AndroidCsvImporter source, nextactualUI evidence required.",
+        "failure_classification": "Bothlatestattempts OSservice environment/unresolvedpreciseroot, notnewappselector failures. CSVchange is separateprovedsemanticappdefect witholdtestassertingprematureclose; updatingassertion strengthens resultvisibility andpreserves safetychecks. compile success notUIproof; no successfulexistingcase reruns tooccupyslots.",
+        "runtime_warnings": "413828 completedUIruntimeWarnings[] butfailed. 413854 neverstartedXCTest so no claimwarnings[] orcasepass. NextCSV requirescompletedsummary exactidentity skip0 andruntimeWarnings[]; preserve warninggate.",
+        "device_evidence": "CSVsimulator UI doesnotprove OSsharedCSV/receipt cancellation/ack endtoend, physical iCloudfiles, audio, notifications orSideStore. LatestIPA176 remains. Full95/107+8focusedcomplements isnotcurrentfullgreen."
+      },
+      "evidence": [
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41382852122",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "test-summary.json",
+          "sha256": "8b1631e140f9ed6eb2ca9102700b54d1b134ac691912f1859c3a6c4096f35152"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41382852122",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "widget-diagnostics/critical.log",
+          "sha256": "4b28a377fd59a0237c8328369ec3672d0cb1b1e1361eb9cae3f6a58feb80f865"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41382852122",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "widget-diagnostics/live.log",
+          "sha256": "f1a76492cebfd6c9856c49ac42b61471b32c53599ce97a49451070da05d15c84"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41385459898",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "notification-preflight.json",
+          "sha256": "15abc39bf914d8400970b902c1ca85103ea6cacd352097fa64a8e0a810d6a925"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41385459898",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "notification-preflight-diagnostics/live.log",
+          "sha256": "8673cd9976a3404e34e2be37571e7bcd6ce10d3a2fbe320450d3161f5d6d4124"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41385459898",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "notification-preflight-diagnostics/live-collection.json",
+          "sha256": "41b3b3cc0e7ea9d9716e4f624b5d4360ca82a8eb6edd73cd1b46e42959bd2307"
+        }
+      ],
+      "next_scope": [
+        "IncomingDocumentImportFlowTests/testReceivedTSVSurvivesSourceRemovalAndImportsThroughBundledWebInterface"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "cefbe0cb31de9ea510aca3685d728ebe79f212a0c83e51f839d2f932384bec32",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "1bc35ad71dcd24f833091155ca72fc4c9eac0bc1013923a7d33418c255910fa5",
+        "ios/AnkiPadUITests/NotificationAuthorizationFlowTests.swift": "3986bedb780391425c8db241ccdce1fc92c6c427c55dc65334892edc03d0b582",
+        "ios/AnkiPadUITests/ReminderFlowTestSupport.swift": "569928dae20df0e861f150c476764e953af625699930b98802ce6552b63c5298",
+        "ios/AnkiPadUITests/ConditionalRefreshFlowTests.swift": "6629514791e0556db9f46872a2281f62f7504901d1ad14eaf2da3eac116e382e",
+        "ios/AnkiPad/ReviewReminderSettings.swift": "955da25a997ddafe769d9ecbfeed68c6c233e684ea856ebbbb71ad3ee5bbef2b",
+        "ios/AnkiPad/AccountView.swift": "1d81db6dee45d5545dabe97710b773844751c88535ab7fe977285c6db446f739",
+        "scripts/run-ui-with-diagnostics.py": "f65c93dc706ed52081941858a87fd8ad3b819912c7f6162e2f33f802ade00c70",
+        "scripts/run-ui-batch.py": "84ffd5f10f1360f7360b7f88dee46eed62ae074e85e95cd4876f6ea5ae562658",
+        "scripts/ui-products.py": "0f9b0c344b6c88cbc1cd8c4770c329a59f3290cb10c938ebfc4ac6d9aee63c63",
+        "scripts/plan-ui-batches.py": "6f655f53f37a4041433e285efb074253bd12a5525c27d96aca22f0a269f921f4",
+        "scripts/select-ui-tests.py": "ad317bf942b4abb57944a3b9cfa07cd8ec3fabe1feff25a8827ffa9ce7919009",
+        ".github/workflows/ipa.yml": "147887f780424e35ed7f55e3df399fb54f7d0350f10f78ab7b27d3f7c6917ae6",
+        "ios/AnkiPad/AnkiPadApp.swift": "d78f841ec6ae9d6ae1c48559dc818b855545277613cc71ebb3c88581c91eff3a",
+        "scripts/notification-preflight.py": "2796300a793d0f38dbe1e9bde8f0307f4981e00b5e54a28fd822140a2c7f8775",
+        "tests/notification_preflight_smoke.py": "82131a056e95a2ba9e87698a101dd48768fed3bab2b8b10a1eb3c51e44c95a3d",
+        "ios/AnkiPad/BackendPageView.swift": "96ea66d466896f8956d0aa06cb45df1a94688f5692a2874c29e1b155b71650e0",
+        "ios/AnkiPadUITests/IncomingDocumentImportFlowTests.swift": "c839e5f95f185703d9f85d2e3d1b7a13bfdd8f827792ebb757f17d2fe714ef5a",
+        "tests/native_consumer_scope_smoke.py": "4c5fa9fee1b3d8e65e069b08f133239a423ba57ea5bd315331b0aee34c5f5026"
+      },
+      "checks": [
+        {
+          "name": "Swift syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "f4deaf49688f8994e1c4a3e1055104bdff9efb31b0f6a8fa6dcc7c776432e235"
+        },
+        {
+          "name": "Swift DEBUGparse",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-frontend",
+            "-parse",
+            "-swift-version",
+            "5",
+            "-D",
+            "DEBUG",
+            "ios/AnkiPadUITests/StudyFlowTestSupport.swift",
+            "ios/AnkiPadUITests/NotificationAuthorizationFlowTests.swift",
+            "ios/AnkiPadUITests/ReminderFlowTestSupport.swift",
+            "ios/AnkiPadUITests/ConditionalRefreshFlowTests.swift",
+            "ios/AnkiPad/ReviewReminderSettings.swift",
+            "ios/AnkiPad/AccountView.swift",
+            "ios/AnkiPad/AnkiPadApp.swift",
+            "ios/AnkiPad/BackendPageView.swift",
+            "ios/AnkiPadUITests/IncomingDocumentImportFlowTests.swift"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "tests/ui_case_groups_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b9377cf28949c5c590b41ecffc841472c1df275ba193d20fa8d2746eaa521987"
+        },
+        {
+          "name": "tests/ci_scope_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2c498dfa49b0ad8164190f3cc935a46a2254cfda0b28c83cbe05f5eee5d58256"
+        },
+        {
+          "name": "scripts/check-ui-query-predicates.py",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5e04a26ff9799fff9634c77c94ce5a00b862d061156719918ccbcd21a3821200"
+        },
+        {
+          "name": "tests/localization_resources_smoke.py",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "aaf188bc97dc8eeba2c167d0746e40000f6d5a77b9ff864ea1a5683391fbb3a9"
+        },
+        {
+          "name": "tests/native_consumer_scope_smoke.py",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "1773f95facfc9de83cd13704169196ad40e9ef4c378f45bba1acf1847e9b6f90"
+        },
+        {
+          "name": "tests/ui_batch_transfer_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        },
+        {
+          "name": "tests/ui_batch_runner_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "tests/widget_diagnostics_smoke.py",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "tests/ui_workflow_diagnostics_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "tests/ui_failure_review_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Actual read-only native preflight and consumer fail-closed transaction",
+          "argv": [
+            "python3",
+            "tests/notification_preflight_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "920bd40c32ad8819951515389e7c469c5ff6c6dd340ca23cf74d0ddaf4993475"
+        },
+        {
+          "name": "Existing external prerequisites",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        }
+      ],
+      "checked_at": "2026-11-02T04:29:19.694683+00:00"
     }
   ]
 }

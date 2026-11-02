@@ -35,6 +35,8 @@ def step_condition(name):
 
 consumer = re.search(r'^  ui-batch:\n.*?^    if: ([^\n]+)$', workflow, re.M | re.S)[1]
 assert 'max-parallel: 5' in workflow
+assert "group: ipad-${{ github.ref }}-${{ inputs.mode || 'full' }}-${{ inputs.ui_suite || 'all' }}" in workflow
+assert 'cancel-in-progress: false' in workflow
 with tempfile.TemporaryDirectory() as directory:
     base = Path(directory)
     for suite, cases in expected.items():
