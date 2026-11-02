@@ -9,15 +9,24 @@ import time
 import zlib
 import zipfile
 
+def validate_package(package):
+    assert 0 < package.stat().st_size <= 4*1024*1024, 'Missing/oversized package'
+    with zipfile.ZipFile(package) as archive:
+        assert sum(entry.file_size for entry in archive.infolist()) <= 32*1024*1024, 'Oversized package contents'
+        assert {'collection.anki2','collection.anki21','collection.anki21b'}.intersection(archive.namelist()), 'No collection in package'
+        assert archive.testzip() is None, 'Corrupt package'
+
 parser=argparse.ArgumentParser()
 parser.add_argument('--simulator',required=True)
 parser.add_argument('--selections',type=Path,required=True)
 parser.add_argument('--output',type=Path,default=Path('build/ui-prerequisites.json'))
 parser.add_argument('--preview-package',type=Path,default=Path('ios/AnkiPadUITests/ReceivedFixtures/preview.apkg'))
+parser.add_argument('--field-package',type=Path,default=Path('ios/AnkiPadUITests/ReceivedFixtures/field-search.apkg'))
 args=parser.parse_args()
 selected=args.selections.read_text().splitlines()
 photo=not selected or any(line.endswith('/testPhotoShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia') for line in selected)
 preview=not selected or any(line.endswith(('/testNotesPreviewUsesRepresentativesUntilMultipleRowsSelected', '/testBrowserSelectionOrderSurvivesDeselectionAndReselection')) for line in selected)
+fields=not selected or any('/BrowserFieldSearchFlowTests/' in line for line in selected)
 report={'photo_required':photo,'fixture_valid':False,'photo_host_installed':False,'preview_package_required':preview}
 args.output.parent.mkdir(parents=True,exist_ok=True)
 try:
@@ -26,13 +35,19 @@ try:
     assert all(value in known for value in selected),'Unknown UI prerequisite selection'
     if preview:
         report['preview_package_valid']=False
-        package=args.preview_package
-        assert 0<package.stat().st_size<=4*1024*1024,'Missing/oversized preview package'
-        with zipfile.ZipFile(package) as archive:
-            assert sum(entry.file_size for entry in archive.infolist())<=32*1024*1024,'Oversized preview contents'
-            assert {'collection.anki2','collection.anki21','collection.anki21b'}.intersection(archive.namelist()),'No collection in preview package'
-            assert archive.testzip() is None,'Corrupt preview package'
+        validate_package(args.preview_package)
         report['preview_package_valid']=True
+    if fields:
+        report.update(field_package_required=True, field_package_valid=False, field_manifest_valid=False)
+        validate_package(args.field_package)
+        report['field_package_valid']=True
+        manifest=args.field_package.with_suffix('.json')
+        assert 0 < manifest.stat().st_size <= 4096, 'Missing/oversized field fixture manifest'
+        metadata=json.loads(manifest.read_text())
+        assert metadata.get('rows') == 5, 'Wrong field fixture row count'
+        assert all(isinstance(metadata.get(key),str) and 0<len(metadata[key])<=1024 and '\0' not in metadata[key] for key in ['front','back']), 'Invalid field names'
+        assert metadata['front'] != metadata['back'], 'Repeated field names'
+        report['field_manifest_valid']=True
     if photo:
         image=Path('build/occlusion-fixture.png').read_bytes()
         assert image[:8]==b'\x89PNG\r\n\x1a\n' and struct.unpack_from('>II',image,16)==(512,384),'Missing/wrong image fixture'

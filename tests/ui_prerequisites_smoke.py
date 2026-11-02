@@ -34,5 +34,19 @@ with tempfile.TemporaryDirectory() as directory:
     selected.write_text('-only-testing:AnkiPadUITests/BrowserToolsFlowTests/testBrowserSelectionOrderSurvivesDeselectionAndReselection\n')
     assert check(True)['preview_package_valid']
     package.write_bytes(b'broken package');assert not check(False)['preview_package_valid']
+    selected.write_text('-only-testing:AnkiPadUITests/BrowserFieldSearchFlowTests/testNamedFieldTextSearchCancelExactAndLiteralStar\n')
+    missing_field=check(False);assert missing_field['field_package_required'] and not missing_field['field_package_valid']
+    field_package=package.with_name('field-search.apkg')
+    with zipfile.ZipFile(field_package,'w') as archive:archive.writestr('collection.anki21b',b'container only; real engine separately proves exported/reimported notes')
+    no_manifest=check(False);assert no_manifest['field_package_valid'] and not no_manifest['field_manifest_valid']
+    field_manifest=field_package.with_suffix('.json')
+    field_manifest.write_text(json.dumps({'front':'Front','back':None,'rows':5}))
+    assert not check(False)['field_manifest_valid']
+    field_manifest.write_text(json.dumps({'front':'Front','back':'Back','rows':5}))
+    assert check(True)['field_manifest_valid']
+    selected.write_text('-only-testing:AnkiPadUITests/BrowserFieldSearchFlowTests/testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection\n')
+    assert check(True)['field_manifest_valid']
+    field_package.write_bytes(b'corrupt')
+    assert not check(False)['field_package_valid']
     selected.write_text('-only-testing:AnkiPadUITests/Missing/testUnknown\n');check(False)
 print('PASS: photo preflight rejects missing/corrupt pixels and unknown cases, records failures, checks preview packages before build/UI, and skips unrelated fixture dependencies')

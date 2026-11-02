@@ -27,6 +27,11 @@ if any(case.endswith(('/testNotesPreviewUsesRepresentativesUntilMultipleRowsSele
                 if path.parent.name == 'ReceivedFixtures']
     assert len(packages) == 1, ('Expected one compiled preview fixture', packages)
     prerequisites += ['--preview-package', str(packages[0])]
+if any(case.startswith('BrowserFieldSearchFlowTests/') for case in cases):
+    packages = [path for path in Path('build/simulator/Build/Products').rglob('field-search.apkg')
+                if path.parent.name == 'ReceivedFixtures']
+    assert len(packages) == 1, ('Expected one compiled field-search fixture', packages)
+    prerequisites += ['--field-package', str(packages[0])]
 subprocess.run(prerequisites, check=True)
 notification_cases = {
     'NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement',

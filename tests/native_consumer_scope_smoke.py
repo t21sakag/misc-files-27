@@ -19,6 +19,8 @@ expected['native-sync'] = {'StudyFlowTests/testFullSyncWithLocalDataRequiresType
 expected['native-failures'] = expected['native-notification'] | expected['native-sync']
 expected['native-widgets'] = {'WidgetGalleryFlowTests/testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount', 'WidgetGalleryFlowTests/testDeckListWidgetSelectsDeckAndOpensItsReview', 'WidgetGalleryFlowTests/testAddNoteWidgetOpensEmptyDraftAndCancelKeepsDueCount', 'WidgetGalleryFlowTests/testAnalysisWidgetShowsStoredDeckCountsAndOpensReview', 'WidgetGalleryFlowTests/testFixedSummarySurvivesActiveProfileSwitchAndOpensItsOwnProfile'}
 
+expected['native-fields'] = {'BrowserFieldSearchFlowTests/testNamedFieldTextSearchCancelExactAndLiteralStar', 'BrowserFieldSearchFlowTests/testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection'}
+
 
 def condition(expression, mode, suite):
     values = {'env.CI_MODE': mode, 'env.UI_SUITE': suite, 'inputs.mode': mode, 'inputs.ui_suite': suite}

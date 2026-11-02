@@ -5,6 +5,10 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-fields': ['testNamedFieldTextSearchCancelExactAndLiteralStar', 'testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection'],
+    'field-text': ['testNamedFieldTextSearchCancelExactAndLiteralStar'],
+    'field-boundaries': ['testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection'],
+    'field-search': ['testNamedFieldTextSearchCancelExactAndLiteralStar', 'testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection'],
     'share-regression': ['testReceivedAPKGImportsAfterOriginalIsRemovedAndPreservesExistingNotes', 'testReceivedTSVSurvivesSourceRemovalAndImportsThroughBundledWebInterface', 'testReceivedStillImageOpensOcclusionAndSavesRealMask'],
     'share-image': ['testPhotoShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia'],
     'share-milestone': ['testPhotoShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia', 'testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel'],

@@ -187,5 +187,9 @@
   "ToolbarFocusReproductionTests": [
     "testProductionToolbarInMinimalPresentedNavigationCanReturnAfterToggle",
     "testActualSettingsParentCanReturnFromProductionToolbar"
+  ],
+  "BrowserFieldSearchFlowTests": [
+    "testNamedFieldTextSearchCancelExactAndLiteralStar",
+    "testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection"
   ]
 }

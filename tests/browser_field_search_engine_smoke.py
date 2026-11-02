@@ -41,6 +41,17 @@ with tempfile.TemporaryDirectory() as temporary:
         after={nid:engine.call('NotesService.GetNote',{'nid':nid}) for nid in note_ids}
         assert before==after,'Search construction must not mutate notes'
         child.stdin.close();assert child.wait(timeout=10)==0
+        if len(sys.argv)>3:
+            folder=Path(sys.argv[3]);folder.mkdir(parents=True,exist_ok=True)
+            package=(folder/'field-search.apkg').resolve()
+            engine.call('ImportExportService.ExportAnkiPackage',{'outPath':str(package),
+                'options':{'withMedia':False,'withScheduling':False},'limit':{'wholeCollection':{}}})
+            (folder/'field-search.json').write_text(json.dumps({'front':front,'back':back,'rows':5})+'\n')
+            imported=Engine(Path(temporary)/'reimported')
+            presets=imported.call('ImportExportService.GetImportAnkiPackagePresets')
+            imported.call('ImportExportService.ImportAnkiPackage',{'packagePath':str(package),'options':presets})
+            assert len(imported.call('SearchService.SearchNotes',{'search':''})['ids'])==5
+            imported.close()
     finally:
         if child.poll() is None:child.kill();child.wait()
         engine.close()
