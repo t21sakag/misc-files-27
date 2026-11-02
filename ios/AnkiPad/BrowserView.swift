@@ -39,7 +39,9 @@ struct BrowserView: View {
     @State private var movePrompt = false
     @State private var browserOptions = false
     @State private var fieldSearch = false
-    @State private var searchHistory: [String] = []
+    @State private var searchHistory: [BrowserSearchRequest] = []
+    @State private var activeSearchRequest: BrowserSearchRequest?
+    @State private var renderedSearch = ""
     @State private var historyRequest: BrowserSearchHistoryRequest?
     @State private var columnPicker = false
     @State private var saveSearchPrompt = false
@@ -148,24 +150,26 @@ struct BrowserView: View {
             }
             Button(AppText.localized("最近の検索")) {
                 let key = model.profilePreferenceKey("browserSearchHistory")
-                searchHistory = BrowserSearchHistory.entries(key: key)
-                historyRequest = BrowserSearchHistoryRequest(preferenceKey: key, profileID: model.currentProfile.id)
+                do {
+                    searchHistory = try BrowserSearchHistory.entries(key: key)
+                    historyRequest = BrowserSearchHistoryRequest(preferenceKey: key, profileID: model.currentProfile.id, engine: model.engine)
+                } catch { self.error = AppText.localized("検索履歴を読み込めませんでした。") }
             }.accessibilityIdentifier("browser-history-open")
             Button(AppText.localized("フィールドを検索")) { fieldSearch = true }.accessibilityIdentifier("browser-field-search")
             Menu(AppText.localized("状態")) {
                 Button(AppText.localized("すべて")) { submitSearch("") }
-                Button(AppText.localized("新規")) { submitSearch("is:new") }; Button(AppText.localized("学習中")) { submitSearch("is:learn") }
-                Button(AppText.localized("復習")) { submitSearch("is:review") }; Button(AppText.localized("期日到来")) { submitSearch("is:due") }
-                Button(AppText.localized("保留")) { submitSearch("is:suspended") }; Button(AppText.localized("今日非表示")) { submitSearch("is:buried") }
+                Button(AppText.localized("新規")) { submitFilter(BrowserSearchRequest(cardStates: [.new])) }; Button(AppText.localized("学習中")) { submitFilter(BrowserSearchRequest(cardStates: [.learning])) }
+                Button(AppText.localized("復習")) { submitFilter(BrowserSearchRequest(cardStates: [.review])) }; Button(AppText.localized("期日到来")) { submitSearch("is:due") }
+                Button(AppText.localized("保留")) { submitFilter(BrowserSearchRequest(cardStates: [.suspended])) }; Button(AppText.localized("今日非表示")) { submitFilter(BrowserSearchRequest(cardStates: [.buried])) }
                 Button(AppText.localized("マーク付き")) { submitSearch("tag:marked") }
             }
-            Menu(AppText.localized("デッキ")) { ForEach(model.decks) { deck in Button(deck.name) { submitSearch("deck:" + quoted(deck.name)) } } }
+            Menu(AppText.localized("デッキ")) { ForEach(model.decks) { deck in Button(deck.name) { submitFilter(BrowserSearchRequest(deckIDs: [deck.id])) } } }
             Menu(AppText.localized("タグ")) {
                 Button(AppText.localized("タグ管理")) { managingTags = true }
-                ForEach(tags, id: \.self) { tag in Button(tag) { submitSearch("tag:" + quoted(tag)) } }
+                ForEach(tags, id: \.self) { tag in Button(tag) { submitFilter(BrowserSearchRequest(tags: [tag])) } }
             }
-            Menu(AppText.localized("ノートタイプ")) { ForEach(types) { type in Button(type.name) { submitSearch("mid:" + type.id) } } }
-            Menu(AppText.localized("フラグ")) { ForEach(0..<8, id: \.self) { value in Button(model.flagLabels.name(value)) { submitSearch("flag:\(value)") }.accessibilityIdentifier("browser-filter-flag-\(value)") } }.accessibilityIdentifier("browser-filter-flags")
+            Menu(AppText.localized("ノートタイプ")) { ForEach(types) { type in Button(type.name) { submitFilter(BrowserSearchRequest(noteTypeIDs: [type.id])) } } }
+            Menu(AppText.localized("フラグ")) { ForEach(0..<8, id: \.self) { value in Button(model.flagLabels.name(value)) { submitFilter(BrowserSearchRequest(flags: [BrowserSearchFlag(rawValue: value)!])) }.accessibilityIdentifier("browser-filter-flag-\(value)") } }.accessibilityIdentifier("browser-filter-flags")
             Menu(AppText.localized("保存した検索")) {
                 ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in Button(name) { submitSearch(config.savedSearches[name] ?? "") } }
                 Button(AppText.localized("この検索を保存")) { searchName = ""; saveSearchPrompt = true }.disabled(query.isEmpty)
@@ -227,15 +231,16 @@ struct BrowserView: View {
                 }
             }) { TagManagerView(model: model) }
             .sheet(item: $historyRequest) { request in
-                BrowserSearchHistoryView(entries: $searchHistory, preferenceKey: request.preferenceKey) { selected in
+                BrowserSearchHistoryView(entries: $searchHistory, preferenceKey: request.preferenceKey, resolve: { entry in
+                    try await request.engine.browserSearchQuery(entry)
+                }) { entry, resolved in
                     guard model.currentProfile.id == request.profileID else {
-                        error = AppText.localized("プロファイルが変わりました。検索画面を開き直してください。")
-                        return
+                        throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
                     }
-                    submitSearch(selected)
+                    try commitSearch(entry, resolved: resolved)
                 }
             }
-            .sheet(isPresented: $fieldSearch) { BrowserFieldSearchView(model: model, currentSearch: query) { submitSearch($0) } }
+            .sheet(isPresented: $fieldSearch) { BrowserFieldSearchView(model: model, currentSearch: query, currentRequest: effectiveSearchRequest) { entry, resolved in try commitSearch(entry, resolved: resolved) } }
             .sheet(isPresented: $browserOptions, onDismiss: {
                 mutateOpening {
                     let saved = try await model.engine.browserConfiguration()
@@ -304,14 +309,36 @@ struct BrowserView: View {
                 let restore = try await model.engine.call("ConfigService.GetConfigBool", ["key": "RESTORE_POSITION_BROWSER"])["val"] as? Bool ?? false
                 query = !defaultQuery.isEmpty ? defaultQuery : restore ? UserDefaults.standard.string(forKey: model.profilePreferenceKey("lastBrowserSearch")) ?? "" : ""
             }
-            searchHistory = BrowserSearchHistory.entries(key: model.profilePreferenceKey("browserSearchHistory"))
             loaded = true
+            do { searchHistory = try BrowserSearchHistory.entries(key: model.profilePreferenceKey("browserSearchHistory")) }
+            catch { self.error = AppText.localized("検索履歴を読み込めませんでした。") }
         } catch { self.error = error.localizedDescription }
     }
-    private func rememberSearch(_ value: String) {
-        searchHistory = BrowserSearchHistory.remember(value, key: model.profilePreferenceKey("browserSearchHistory"))
+    private var effectiveSearchRequest: BrowserSearchRequest {
+        query == renderedSearch ? activeSearchRequest ?? BrowserSearchRequest(query: query) : BrowserSearchRequest(query: query)
     }
-    private func submitSearch(_ value: String) { query = value; rememberSearch(value) }
+    private func commitSearch(_ request: BrowserSearchRequest, resolved: String) throws {
+        let updated = try BrowserSearchHistory.remember(request, key: model.profilePreferenceKey("browserSearchHistory"))
+        searchHistory = updated; activeSearchRequest = request; renderedSearch = resolved; query = resolved
+    }
+    private func rememberSearch(_ value: String) {
+        do { try commitSearch(effectiveSearchRequest, resolved: value) }
+        catch { self.error = AppText.localized("検索履歴を保存できませんでした。") }
+    }
+    private func submitSearch(_ value: String) {
+        do { try commitSearch(BrowserSearchRequest(query: value), resolved: value) }
+        catch { self.error = AppText.localized("検索履歴を保存できませんでした。") }
+    }
+    private func submitFilter(_ request: BrowserSearchRequest) {
+        let engine = model.engine, profileID = model.currentProfile.id
+        mutateOpening {
+            let resolved = try await engine.browserSearchQuery(request)
+            guard model.currentProfile.id == profileID else {
+                throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
+            }
+            try commitSearch(request, resolved: resolved)
+        }
+    }
     private func search() async {
         guard loaded else { return }
         do {

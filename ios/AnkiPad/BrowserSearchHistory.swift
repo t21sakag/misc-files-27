@@ -1,26 +1,40 @@
 import Foundation
 
-/// Local query history. The caller supplies the existing profile preference
-/// key so another profile never inherits searches. Queries are never logged.
-/// Structured filter-chip history remains separate from this raw-query adapter.
+/// One profile-scoped preference value. Legacy strings are read as literal
+/// queries and replaced only after a complete typed record encodes correctly.
 enum BrowserSearchHistory {
+    enum Failure: Error { case invalidData, unsupportedVersion }
+    private struct Storage: Codable { var version = 1; var entries: [BrowserSearchRequest] }
     static let maximumEntries = 30
-    static func entries(key: String, defaults: UserDefaults = .standard) -> [String] {
-        var seen = Set<String>()
-        return Array((defaults.stringArray(forKey: key) ?? []).filter {
-            !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && seen.insert($0).inserted
-        }.prefix(maximumEntries))
+    private static func bounded(_ values: [BrowserSearchRequest]) -> [BrowserSearchRequest] {
+        var seen = Set<BrowserSearchRequest>()
+        return Array(values.filter { !$0.isEmpty && seen.insert($0).inserted }.prefix(maximumEntries))
     }
-    @discardableResult static func remember(_ query: String, key: String, defaults: UserDefaults = .standard) -> [String] {
-        var values = entries(key: key, defaults: defaults)
-        guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return values }
-        values.removeAll { $0 == query }; values.insert(query, at: 0)
-        values = Array(values.prefix(maximumEntries)); defaults.set(values, forKey: key)
-        return values
+    static func entries(key: String, defaults: UserDefaults = .standard) throws -> [BrowserSearchRequest] {
+        if let data = defaults.data(forKey: key) {
+            let stored = try JSONDecoder().decode(Storage.self, from: data)
+            guard stored.version == 1 else { throw Failure.unsupportedVersion }
+            return bounded(stored.entries)
+        }
+        if let legacy = defaults.stringArray(forKey: key) { return bounded(legacy.map { BrowserSearchRequest(query: $0) }) }
+        guard defaults.object(forKey: key) == nil else { throw Failure.invalidData }
+        return []
     }
-    @discardableResult static func remove(_ query: String, key: String, defaults: UserDefaults = .standard) -> [String] {
-        let values = entries(key: key, defaults: defaults).filter { $0 != query }
-        defaults.set(values, forKey: key); return values
+    private static func save(_ values: [BrowserSearchRequest], key: String, defaults: UserDefaults) throws {
+        let data = try JSONEncoder().encode(Storage(entries: values))
+        defaults.set(data, forKey: key)
+    }
+    @discardableResult static func remember(_ request: BrowserSearchRequest, key: String,
+                                             defaults: UserDefaults = .standard) throws -> [BrowserSearchRequest] {
+        var values = try entries(key: key, defaults: defaults)
+        guard !request.isEmpty else { return values }
+        values.removeAll { $0 == request }; values.insert(request, at: 0)
+        values = bounded(values); try save(values, key: key, defaults: defaults); return values
+    }
+    @discardableResult static func remove(_ request: BrowserSearchRequest, key: String,
+                                           defaults: UserDefaults = .standard) throws -> [BrowserSearchRequest] {
+        let values = try entries(key: key, defaults: defaults).filter { $0 != request }
+        try save(values, key: key, defaults: defaults); return values
     }
     static func clear(key: String, defaults: UserDefaults = .standard) { defaults.removeObject(forKey: key) }
 }

@@ -27,11 +27,11 @@ with tempfile.TemporaryDirectory() as directory:
     engine.call('SchedulerService.BuryOrSuspendCards',{'cardIds':[cids[2]],'mode':'BURY_USER'})
     child=subprocess.Popen([sys.argv[2]],stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True)
     checks=0
-    def check(request, expected, decks=None, types=None):
+    def check(request, expected, decks=None, types=None, field=None):
         global checks
         if decks is None:decks={d['id']:d['name'] for d in engine.call('DecksService.GetDeckNames')['entries']}
         if types is None:types={d['id']:d['name'] for d in engine.call('NotetypesService.GetNotetypeNames')['entries']}
-        child.stdin.write(json.dumps({'request':request,'decks':decks,'types':types})+'\n');child.stdin.flush()
+        child.stdin.write(json.dumps({'request':request,'decks':decks,'types':types,'field':field})+'\n');child.stdin.flush()
         while True:
             line=child.stdout.readline();assert line,'Swift driver stopped'
             message=json.loads(line)
@@ -42,7 +42,8 @@ with tempfile.TemporaryDirectory() as directory:
         else:
             actual=engine.call('SearchService.SearchNotes',{'search':message['query']}).get('ids',[])
             assert set(actual)=={nids[i] for i in expected},(request,message,actual,expected)
-            assert message['encoded']['q']==request['q']
+            if field is None:assert message['encoded']['q']==request['q']
+            elif field.get('combine',True):assert message['encoded']['did']==request.get('did',[])
         checks+=1
         return message
     try:
@@ -69,11 +70,15 @@ with tempfile.TemporaryDirectory() as directory:
         check({'q':'','f':[8]},None)
         check({'q':'','s':[5]},None)
         check({'did':[deck2]},None)
+        back=schema['fields'][1]['name']
+        check({'q':'Structured','did':[deck2]},[2,3],field={'name':back,'mode':'contains','text':'unchanged'})
+        check({'q':'Structured0','did':[deck2]},[0,1,2,3],field={'name':back,'mode':'exact','text':'unchanged','combine':False})
         assert before==[engine.call('NotesService.GetNote',{'nid':nid}) for nid in nids]
         engine.call('DecksService.RenameDeck',{'deckId':deck2,'newName':'Structured renamed deck'})
         value=engine.call('NotetypesService.GetNotetype',{'ntid':type2});value['name']='Structured renamed type'
         engine.call('NotetypesService.UpdateNotetype',value)
         check({'q':'','did':[deck2],'ntid':[type2]},[3])
+        check({'q':'','did':[deck2],'ntid':[type2]},[3],field={'name':back,'mode':'exact','text':'unchanged'})
         assert engine.call('SearchService.SearchNotes',{'search':'deck:"Structured old deck"'}).get('ids',[])==[]
         child.stdin.close();assert child.wait(timeout=10)==0
     finally:

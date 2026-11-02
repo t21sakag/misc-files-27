@@ -1,6 +1,10 @@
 import SwiftUI
 
 extension Engine {
+    func browserFieldSearchRequest(_ request: BrowserFieldSearchRequest, base: BrowserSearchRequest) throws -> (BrowserSearchRequest, String) {
+        let combined = try request.buildRequest(combining: base) { try call("SearchService.BuildSearchString", $0) }
+        return (combined, try browserSearchQuery(combined))
+    }
     func browserFieldSearch(_ request: BrowserFieldSearchRequest) throws -> String {
         try request.build { try call("SearchService.BuildSearchString", $0) }
     }
@@ -9,7 +13,8 @@ extension Engine {
 @MainActor struct BrowserFieldSearchView: View {
     @ObservedObject var model: StudyModel
     let currentSearch: String
-    let apply: (String) -> Void
+    let currentRequest: BrowserSearchRequest
+    let apply: (BrowserSearchRequest, String) throws -> Void
     private let engine: Engine
     private let profileID: String
     @Environment(\.dismiss) private var dismiss
@@ -22,8 +27,8 @@ extension Engine {
     @State private var active = true
     @State private var error: String?
 
-    init(model: StudyModel, currentSearch: String, apply: @escaping (String) -> Void) {
-        self.model = model; self.currentSearch = currentSearch; self.apply = apply
+    init(model: StudyModel, currentSearch: String, currentRequest: BrowserSearchRequest, apply: @escaping (BrowserSearchRequest, String) throws -> Void) {
+        self.model = model; self.currentSearch = currentSearch; self.currentRequest = currentRequest; self.apply = apply
         engine = model.engine; profileID = model.currentProfile.id
     }
     private func title(_ mode: BrowserFieldSearchMode) -> String {
@@ -94,13 +99,13 @@ extension Engine {
         Task {
             defer { busy = false }
             do {
-                let query = try await engine.browserFieldSearch(request)
+                let (combined, query) = try await engine.browserFieldSearchRequest(request, base: currentRequest)
                 guard active else { return }
                 guard model.currentProfile.id == profileID else {
                     error = AppText.localized("プロファイルが変わりました。検索画面を開き直してください。")
                     return
                 }
-                apply(query); dismiss()
+                try apply(combined, query); dismiss()
             } catch { if active { self.error = AppText.localized("検索条件を作成できませんでした。") } }
         }
     }

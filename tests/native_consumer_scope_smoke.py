@@ -23,6 +23,10 @@ expected['native-fields'] = {'BrowserFieldSearchFlowTests/testNamedFieldTextSear
 
 expected['native-history'] = {'BrowserSearchHistoryFlowTests/testCommittedSearchHistoryReuseCancelAndRelaunch'}
 
+expected['native-searches'] = expected['native-history'] | expected['native-fields'] | {
+    'BrowserToolsFlowTests/testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch',
+    'BrowserToolsFlowTests/testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch',
+}
 
 def condition(expression, mode, suite):
     values = {'env.CI_MODE': mode, 'env.UI_SUITE': suite, 'inputs.mode': mode, 'inputs.ui_suite': suite}

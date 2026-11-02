@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-searches': ['testCommittedSearchHistoryReuseCancelAndRelaunch', 'testNamedFieldTextSearchCancelExactAndLiteralStar', 'testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection', 'testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch', 'testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch'],
     'native-history': ['testCommittedSearchHistoryReuseCancelAndRelaunch'],
     'search-history': ['testCommittedSearchHistoryReuseCancelAndRelaunch'],
     'native-fields': ['testNamedFieldTextSearchCancelExactAndLiteralStar', 'testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection'],

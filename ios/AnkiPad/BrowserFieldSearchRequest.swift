@@ -44,4 +44,22 @@ struct BrowserFieldSearchRequest {
         }
         return query
     }
+    /// Combine only the literal text parts. Stable filter IDs stay separate,
+    /// so a displayed old deck name is never reapplied after a rename.
+    func buildRequest(combining base: BrowserSearchRequest,
+                      backend: ([String: Any]) throws -> [String: Any]) throws -> BrowserSearchRequest {
+        var fieldOnly = self; fieldOnly.combineWithCurrent = false
+        let fieldQuery = try fieldOnly.build(using: backend)
+        guard combineWithCurrent else { return BrowserSearchRequest(query: fieldQuery) }
+        var result = base
+        if result.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { result.query = fieldQuery }
+        else {
+            guard let combined = try backend(["group": ["joiner": "AND", "nodes": [
+                ["parsableText": result.query], ["parsableText": fieldQuery]
+            ]]])["val"] as? String else { throw Failure.invalidBackendResponse }
+            result.query = combined
+        }
+        return result
+    }
+
 }

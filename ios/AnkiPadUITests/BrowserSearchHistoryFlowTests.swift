@@ -23,7 +23,7 @@ final class BrowserSearchHistoryFlowTests: BrowserSearchTestSupport {
         requireTestCondition("History dismissed", in: app) { app.buttons.matching(identifier: "browser-history-close").count == 0 }
     }
     private func expectHistory(_ expected: [String], in app: XCUIApplication) {
-        let rows = app.buttons.matching(identifier: "browser-history-query")
+        let rows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browser-history-query-"))
         requireTestCondition("Exact recent searches in MRU order", in: app) {
             rows.count == expected.count && rows.allElementsBoundByIndex.map(\.label) == expected
         }
@@ -37,7 +37,7 @@ final class BrowserSearchHistoryFlowTests: BrowserSearchTestSupport {
         closeHistory(app); expectRows([1], in: app)
         XCTAssertEqual(app.staticTexts["browser-results"].value as? String, "row1")
         openHistory(app)
-        let query = app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "browser-history-query", "row0"))
+        let query = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@", "browser-history-query-", "row0"))
         tapTestControl(query, in: app)
         requireTestCondition("History selection applies and closes", in: app) { app.buttons.matching(identifier: "browser-history-close").count == 0 }
         expectRows([0], in: app)
