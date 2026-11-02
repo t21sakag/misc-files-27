@@ -2,6 +2,8 @@
 set -euo pipefail
 ankipad_swiftc=${1:-swiftc}
 mkdir -p build/local-swift
+"$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/BrowserForgetOptions.swift tests/browser_forget_options_smoke.swift -o build/local-swift/browser-forget-options-smoke
+build/local-swift/browser-forget-options-smoke
 "$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/BrowserSearchRequest.swift ios/AnkiPad/BrowserSearchHistory.swift tests/browser_search_history_smoke.swift -o build/local-swift/browser-search-history-smoke
 build/local-swift/browser-search-history-smoke
 "$ankipad_swiftc" -swift-version 5 -parse-as-library ios/AnkiPad/BrowserSearchRequest.swift ios/AnkiPad/BrowserSearchPosition.swift tests/browser_search_position_smoke.swift -o build/local-swift/browser-search-position-smoke

@@ -29,6 +29,7 @@ struct BrowserView: View {
     @State private var changingType: BackendPageRequest?
     @State private var preview: CardPreviewRequest?
     @State private var filteredDeck: FilteredDeckRequest?
+    @State private var forgettingCards: BrowserForgetRequest?
     @State private var findReplace: FindReplaceRequest?
     @State private var selectionExport: SelectionExportRequest?
     @State private var busy = false
@@ -269,7 +270,7 @@ struct BrowserView: View {
                 Button(AppText.localized("タグを追加・削除")) { tagPrompt = true }
                 Button(AppText.localized("期日を変更")) { duePrompt = true }
                 Button(AppText.localized("新規カードの順番を変更")) { repositionPrompt = true }
-                Button(AppText.localized("新規カードに戻す")) { performCards { try await model.engine.forget($0) } }
+                Button(AppText.localized("新規カードに戻す")) { openForgetCards() }.accessibilityIdentifier("browser-forget-open")
                 Button(AppText.localized("ノートを削除"), role: .destructive) { deleteConfirm = true }
             }.disabled(selected.isEmpty)
         } label: { Image(systemName: "ellipsis.circle") }.disabled(interactionBlocked).accessibilityIdentifier("browser-actions-menu")
@@ -279,6 +280,9 @@ struct BrowserView: View {
             .sheet(item: $changingType, onDismiss: { revision += 1 }) { BackendPageView(model: model, request: $0) }
             .sheet(item: $editor, onDismiss: { revision += 1 }) { NoteEditorView(model: model, request: $0) }
             .sheet(item: $selectionExport) { SelectionExportView(model: model, request: $0) }
+            .sheet(item: $forgettingCards) { request in
+                BrowserForgetCardsView(model: model, request: request) { updateSelection([]); revision += 1 }
+            }
             .sheet(item: $filteredDeck, onDismiss: { revision += 1 }) { FilteredDeckView(model: model, request: $0) }
             .sheet(item: $findReplace, onDismiss: { revision += 1 }) { FindReplaceView(model: model, request: $0) }
             .sheet(item: $preview, onDismiss: { revision += 1 }) { CardPreviewView(model: model, request: $0) }
@@ -487,6 +491,21 @@ struct BrowserView: View {
     }
     private func chosenCards() async throws -> [String] { let ordered = ids.filter { selected.contains($0) }; return config.notesMode ? try await model.engine.cardIDsForNotes(ordered) : ordered }
     private func chosenNotes() async throws -> [String] { let ordered = ids.filter { selected.contains($0) }; return config.notesMode ? ordered : try await model.engine.noteIDsForCards(ordered) }
+    private func openForgetCards() {
+        let profileID = model.currentProfile.id, engine = model.engine
+        let ordered = ids.filter { selected.contains($0) }, notesMode = config.notesMode
+        mutateOpening {
+            guard profileID == openingProfileID else {
+                throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
+            }
+            let cards = notesMode ? try await engine.cardIDsForNotes(ordered) : ordered
+            guard model.currentProfile.id == profileID else {
+                throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
+            }
+            guard !cards.isEmpty else { return }
+            forgettingCards = BrowserForgetRequest(cardIDs: cards, profileID: profileID)
+        }
+    }
     private func changeType() {
         mutateOpening {
             let notes = try await chosenNotes()
