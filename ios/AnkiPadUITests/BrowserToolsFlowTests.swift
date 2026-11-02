@@ -40,8 +40,19 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
         tapTestControl(app.buttons.matching(identifier: "browser-options-open"), in: app)
         _ = waitForTestControl(app.buttons.matching(identifier: "browser-options-save"), in: app)
     }
+    private func browserInputEvidence(_ app: XCUIApplication) -> String {
+        guard app.launchArguments.contains("--uitest-browser-input-trace") else { return "Native browser trace disabled" }
+        let query = app.staticTexts.matching(identifier: "browser-native-input-state")
+        guard let state = waitForTestControl(query, in: app, keyboard: .keep, purpose: .observation) else { return "Native browser trace missing" }
+        return state.value as? String ?? "Native browser trace value missing"
+    }
     private func setOption(_ identifier: String, enabled: Bool, in app: XCUIApplication) {
-        setTestSwitch(app.switches.matching(identifier: identifier), enabled: enabled, in: app)
+        if app.launchArguments.contains("--uitest-browser-input-trace") {
+            let attachment = XCTAttachment(string: browserInputEvidence(app)); attachment.name = "Before native option " + identifier
+            attachment.lifetime = .keepAlways; add(attachment)
+        }
+        setTestSwitch(app.switches.matching(identifier: identifier), enabled: enabled, in: app,
+                      failureContext: { self.browserInputEvidence(app) })
     }
     private func previewFixtureBrowser() throws -> XCUIApplication {
         let source = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "preview", withExtension: "apkg", subdirectory: "ReceivedFixtures"))
@@ -246,7 +257,7 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
         XCTAssertEqual(XCTWaiter.wait(for: [expanded], timeout: 20), .completed, app.debugDescription)
     }
     func testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch() {
-        let app = makeApplication(); app.launchArguments = []; app.launch()
+        let app = makeApplication(); app.launchArguments = ["--uitest-browser-input-trace"]; app.launch()
         addNote("café", in: app)
         browser("cafe", count: 0, in: app)
         func editOptions() {

@@ -54,6 +54,16 @@ struct BrowserOptionsView: View {
                 Section { NavigationLink(AppText.localized("フラグ名を変更")) { FlagNamesView(model: model) }.accessibilityIdentifier("flag-names-open") }
                 if busy { ProgressView() }
             }
+            #if DEBUG
+            .overlay(alignment: .bottomLeading) {
+                if UITestIsolation.namespace() != nil,
+                   ProcessInfo.processInfo.arguments.contains("--uitest-browser-input-trace") {
+                    BrowserInputDiagnosticsView(readValue: {
+                        BrowserInputDiagnostics.read(loaded: loaded, busy: busy, notes: options.notesMode)
+                    }).frame(width: 1, height: 1).allowsHitTesting(false)
+                }
+            }
+            #endif
             .accessibilityIdentifier("browser-options-form")
             .disabled(!loaded || busy)
             .studyThemeSurface().navigationTitle(AppText.localized("ブラウザーの設定"))
