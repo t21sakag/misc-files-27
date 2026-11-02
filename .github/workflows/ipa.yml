@@ -12,7 +12,7 @@ on:
         description: 'uiモードで実行する操作テスト'
         type: choice
         default: changed
-        options: [focus-parent, focus-minimal, controls-regression, deck-delete, sync-confirmations, download-only, typed-upload, presentation, sync-direction, speech-reference, speech-choice, speech-queue, note-recording, voice-recording, audio-queue, browser-preview-notes, browser-preview-order, browser-preview-selection, browser-preview, browser-preview-milestone, flag-names, flag-milestone, browser-options, browser-truncation, browser-search-options, browser-tools, browser-filtered, browser-replace, widget-isolation, widget-decks, widget-analysis, widget-add, widget-profile, widget-settings, widget-gallery, widgets, widget-core, widget-deferred, share-regression, share-image, share-milestone, share-text, milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, incoming-final-repair, reminder-repair, regression-repair, upload-only, incoming-fields, incoming-commit, incoming-apkg, incoming-colpkg, incoming-tsv, incoming-invalid, incoming-still-note, incoming-commit-repair, all]
+        options: [native-consumers, native-notification, native-widget, focus-parent, focus-minimal, controls-regression, deck-delete, sync-confirmations, download-only, typed-upload, presentation, sync-direction, speech-reference, speech-choice, speech-queue, note-recording, voice-recording, audio-queue, browser-preview-notes, browser-preview-order, browser-preview-selection, browser-preview, browser-preview-milestone, flag-names, flag-milestone, browser-options, browser-truncation, browser-search-options, browser-tools, browser-filtered, browser-replace, widget-isolation, widget-decks, widget-analysis, widget-add, widget-profile, widget-settings, widget-gallery, widgets, widget-core, widget-deferred, share-regression, share-image, share-milestone, share-text, milestone, changed, profiles, shared, reviewer, sync, automatic, backups, repair, collapse, reminders, p1, images, controls, p1-next, voice, speech, occlusion, preview, whiteboard, network, timebox, appearance, answer-layout, layout-regression, card-appearance, templates, conditional-reminders, conditional-only, reminder-refresh, review-header, typing-focus, card-links, template-audio, script-dialogs, browser-appearance, themes, milestone-repair, button-timing, motion, motion-only, background, background-ui, background-storage, background-selection, theme-panels, theme-repair, batch-check, web-themes, web-theme-only, engine-languages, languages, language-only, incoming-core, incoming-browser, incoming-deferred, incoming-text, incoming-text-cancel, incoming-text-save, incoming-files, incoming-file-cancel, incoming-image, incoming-raster, notification-baseline, recovery-baseline, incoming-milestone, incoming-repair, incoming-final, incoming-collection-cancel, incoming-audio-video, incoming-occlusion, incoming-final-repair, reminder-repair, regression-repair, upload-only, incoming-fields, incoming-commit, incoming-apkg, incoming-colpkg, incoming-tsv, incoming-invalid, incoming-still-note, incoming-commit-repair, all]
 permissions:
   contents: read
   actions: read
@@ -43,6 +43,7 @@ jobs:
           python3 tests/ui_failure_review_smoke.py
           python3 tests/simulator_identity_smoke.py
           python3 tests/app_intents_metadata_smoke.py
+          python3 tests/native_consumer_scope_smoke.py
           python3 tests/ui_events_smoke.py
           python3 tests/query_predicate_smoke.py
           python3 tests/ui_workflow_diagnostics_smoke.py
@@ -205,7 +206,7 @@ jobs:
           xcrun simctl list runtimes
       - name: Start requested iPadOS 27 simulator before native setup
         id: ui-simulator
-        if: env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
+        if: env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && !startsWith(env.UI_SUITE, 'native-') && env.UI_SUITE != 'all'
         run: |
           simulator_id=$(python3 scripts/ci-simulator.py create)
           echo "simulator=$simulator_id" >> "$GITHUB_OUTPUT"
@@ -489,7 +490,7 @@ jobs:
         env:
           SIMULATOR_ID: ${{ steps.ui-simulator.outputs.simulator }}
         run: |
-          if [ "$CI_MODE" = ui ] && [ "$UI_SUITE" != batch-check ] && [ "$UI_SUITE" != all ]; then
+          if [ "$CI_MODE" = ui ] && [ "$UI_SUITE" != batch-check ] && [[ "$UI_SUITE" != native-* ]] && [ "$UI_SUITE" != all ]; then
             python3 scripts/select-sync-fixtures.py build/ui-test-arguments.txt > build/ui-sync-ports.txt
             sync_ports=()
             while IFS= read -r sync_port; do
@@ -528,7 +529,7 @@ jobs:
           echo "simulator=$SIMULATOR_ID" >> "$GITHUB_OUTPUT"
       - name: Check simulator and external UI prerequisites
         id: ui-prerequisites
-        if: env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
+        if: env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && !startsWith(env.UI_SUITE, 'native-') && env.UI_SUITE != 'all'
         env:
           SIMULATOR_ID: ${{ steps.ui-prepare.outputs.simulator }}
         run: |
@@ -571,16 +572,17 @@ jobs:
           key: ${{ steps.xcode-simulator.outputs.cache-primary-key }}
       - name: Plan independent UI batches
         id: ui-batch-plan
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'batch-check' || env.UI_SUITE == 'all'))
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'batch-check' || startsWith(env.UI_SUITE, 'native-') || env.UI_SUITE == 'all'))
         run: |
           proof_args=()
           if [ "$UI_SUITE" = batch-check ] && [ "$CI_MODE" != full ]; then proof_args+=(--proof); fi
+          if [[ "$UI_SUITE" = native-* ]] && [ "$CI_MODE" != full ]; then proof_args+=(--selections build/ui-test-arguments.txt); fi
           python3 scripts/plan-ui-batches.py "${proof_args[@]}" --output build/ui-batches.json >> "$GITHUB_OUTPUT"
       - name: Package compiled test products
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'batch-check' || env.UI_SUITE == 'all'))
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'batch-check' || startsWith(env.UI_SUITE, 'native-') || env.UI_SUITE == 'all'))
         run: python3 scripts/ui-products.py pack --source "$GITHUB_SHA"
       - uses: actions/upload-artifact@v4
-        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'batch-check' || env.UI_SUITE == 'all'))
+        if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'batch-check' || startsWith(env.UI_SUITE, 'native-') || env.UI_SUITE == 'all'))
         with:
           name: compiled-checks
           path: |
@@ -588,7 +590,7 @@ jobs:
             build/ui-products.json
           retention-days: 7
       - name: Execute selected UI cases without rebuilding
-        if: env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
+        if: env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && !startsWith(env.UI_SUITE, 'native-') && env.UI_SUITE != 'all'
         env:
           SIMULATOR_ID: ${{ steps.ui-prepare.outputs.simulator }}
         run: |
@@ -607,7 +609,7 @@ jobs:
           diagnostic_command=(python3 ../scripts/run-ui-with-diagnostics.py --simulator "$SIMULATOR_ID" --settings ../build/project-settings.json --output ../build/widget-diagnostics --)
           "${diagnostic_command[@]}" xcodebuild -project AnkiPad.xcodeproj -scheme AnkiPad -configuration Debug -sdk iphonesimulator "${ui_test_args[@]}" -parallel-testing-enabled "$parallel_ui" -parallel-testing-worker-count "$ui_workers" -maximum-concurrent-test-simulator-destinations 2 -destination "id=$SIMULATOR_ID" ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -derivedDataPath ../build/simulator -resultBundlePath ../build/UITests.xcresult CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- ANKIPAD_SOURCE_COMMIT="$GITHUB_SHA" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" test-without-building
       - name: Export structured UI failures and timing
-        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && !startsWith(env.UI_SUITE, 'native-') && env.UI_SUITE != 'all'
         run: |
           if [ -d build/UITests.xcresult ]; then
             xcrun xcresulttool get test-results summary --path build/UITests.xcresult > build/test-summary.json
@@ -621,14 +623,14 @@ jobs:
           SIMULATOR_ID: ${{ steps.ui-prepare.outputs.simulator }}
         run: python3 scripts/collect-widget-diagnostics.py --simulator "$SIMULATOR_ID"
       - name: Export simulator screenshots
-        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && !startsWith(env.UI_SUITE, 'native-') && env.UI_SUITE != 'all'
         run: |
           if [ -f build/UITests.xcresult/Info.plist ]; then
             xcrun xcresulttool export attachments --path build/UITests.xcresult --output-path build/screenshots
             python3 scripts/summarize-ui-events.py --directory build/screenshots --output build/input-events.json
           fi
       - uses: actions/upload-artifact@v4
-        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && !startsWith(env.UI_SUITE, 'native-') && env.UI_SUITE != 'all'
         with:
           name: test-results
           path: |
@@ -643,7 +645,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v4
-        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && !startsWith(env.UI_SUITE, 'native-') && env.UI_SUITE != 'all'
         with:
           name: screenshots
           path: |
@@ -652,7 +654,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v4
-        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && env.UI_SUITE != 'all'
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'batch-check' && !startsWith(env.UI_SUITE, 'native-') && env.UI_SUITE != 'all'
         with:
           name: ui-diagnostics
           path: |
@@ -671,7 +673,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - name: Remove owned test simulator
-        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'all' && env.UI_SUITE != 'batch-check'
+        if: always() && env.CI_MODE == 'ui' && env.UI_SUITE != 'all' && env.UI_SUITE != 'batch-check' && !startsWith(env.UI_SUITE, 'native-')
         run: python3 scripts/ci-simulator.py delete
       - uses: actions/upload-artifact@v4
         if: always()
@@ -714,7 +716,7 @@ jobs:
   ui-batch:
     name: Check batch ${{ matrix.batch }}
     needs: build
-    if: inputs.mode == 'full' || (inputs.mode == 'ui' && (inputs.ui_suite == 'batch-check' || inputs.ui_suite == 'all'))
+    if: inputs.mode == 'full' || (inputs.mode == 'ui' && (inputs.ui_suite == 'batch-check' || startsWith(inputs.ui_suite, 'native-') || inputs.ui_suite == 'all'))
     strategy:
       fail-fast: false
       max-parallel: 5

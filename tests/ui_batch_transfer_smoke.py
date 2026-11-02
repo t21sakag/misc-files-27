@@ -18,6 +18,16 @@ assert sorted(c for b in result['batches'] for c in b) == expected
 assert all(result['batches']) and len(result['batches']) == 5
 assert result == planner.plan(groups, durations), 'Non-deterministic scope'
 assert sum(map(len, planner.plan(groups, durations, True)['batches'])) == 2
+native_cases = ['NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement',
+                'WidgetGalleryFlowTests/testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp']
+native = planner.plan(groups, durations, selected=native_cases)
+assert sorted(case for batch in native['batches'] for case in batch) == sorted(native_cases)
+assert len(native['batches']) == 2 and all(len(batch) == 1 for batch in native['batches'])
+assert planner.plan(groups, durations, selected=native_cases[:1])['batches'] == [native_cases[:1]]
+for invalid in [[], native_cases * 2, ['UnknownTests/testMissing']]:
+    try: planner.plan(groups, durations, selected=invalid)
+    except ValueError: pass
+    else: raise AssertionError('Invalid consumer selection accepted')
 changed = dict(groups, NewTests=['testNewFeature'])
 assert 'NewTests/testNewFeature' in sum(planner.plan(changed, durations)['batches'], [])
 

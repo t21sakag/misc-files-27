@@ -19,7 +19,8 @@ import uuid
 LIMIT = 8 * 1024 * 1024
 CRITICAL_LIMIT = 64 * 1024
 LINE_LIMIT = 16 * 1024
-CRITICAL_MARKERS = (b'*** Assertion failure', b'*** Terminating app due to uncaught exception')
+CRITICAL_MARKERS = (b'*** Assertion failure', b'*** Terminating app due to uncaught exception',
+                    b'not authorized', b'UNErrorDomain Code=1')
 
 
 def run(simulator, bundle, output, command):
@@ -41,7 +42,7 @@ def run(simulator, bundle, output, command):
 
     def keep_critical(line):
         nonlocal critical_size
-        if not any(marker in line for marker in CRITICAL_MARKERS):
+        if not any(marker.lower() in line.lower() for marker in CRITICAL_MARKERS):
             return
         report['critical_bytes_seen'] = report.get('critical_bytes_seen', 0) + len(line)
         # Preserve the first failure even when later successful cases flood

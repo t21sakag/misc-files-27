@@ -27,6 +27,7 @@ if 'stream' not in sys.argv:
 Path(os.environ['PROBE_STARTED']).write_text('started')
 print('launch', flush=True)
 print('*** Assertion failure earliest-focus-fixture', flush=True)
+print('usernotificationsd: Source is not authorized, UNErrorDomain Code=1', flush=True)
 if os.environ.get('LARGE_LOG'):
     sys.stdout.buffer.write(b'x' * (9 * 1024 * 1024)); sys.stdout.buffer.flush()
     print('', flush=True)
@@ -42,6 +43,7 @@ print('*** Terminating app due to uncaught exception NSInvalidArgumentException,
 print('browser.options.trace phase=load.end loaded=1', flush=True)
 print('browser.selection.trace phase=all.enter rows=3 selected=0', flush=True)
 print('WidgetProbe timeline.request', flush=True)
+Path(os.environ['PROBE_EMITTED']).write_text('ready')
 while True: time.sleep(1)
 ''')
     executable.chmod(0o755)
@@ -49,10 +51,18 @@ while True: time.sleep(1)
     try:
         os.environ['PATH'] = str(base)+os.pathsep+os.environ['PATH']
         os.environ['PROBE_STARTED'] = str(base/'started')
+        os.environ['PROBE_EMITTED'] = str(base/'emitted')
         os.environ['LARGE_LOG'] = '1'
         simulator = str(uuid.uuid4()).upper()
         bundle = 'com.localtools.studyclient.widgets'
-        command = [sys.executable, '-c', 'import os,time; from pathlib import Path; assert Path(os.environ["PROBE_STARTED"]).is_file(); time.sleep(.3); raise SystemExit(7)']
+        command = [sys.executable, '-c',
+                   'import os,time\nfrom pathlib import Path\n'
+                   'assert Path(os.environ["PROBE_STARTED"]).is_file()\n'
+                   'deadline=time.monotonic()+20\n'
+                   'while not Path(os.environ["PROBE_EMITTED"]).is_file():\n'
+                   ' assert time.monotonic()<deadline,"Observer fixture did not finish emitting"\n'
+                   ' time.sleep(.01)\n'
+                   'raise SystemExit(7)']
         output = base/'live'
         assert module.run(simulator, bundle, output, command) == 7
         report = json.loads((output/'live-collection.json').read_text())
@@ -65,10 +75,12 @@ while True: time.sleep(1)
         critical = (output/'critical.log').read_bytes()
         assert b'earliest-focus-fixture' not in (output/'live.log').read_bytes()
         assert b'earliest-focus-fixture' in critical and b'fixture focus reason' in critical
+        assert b'Source is not authorized' in critical
         assert not report['critical_truncated'] and report['critical_bytes_saved'] == len(critical)
         assert report['line_buffer_bytes_dropped'] > 0
         os.environ.pop('LARGE_LOG')
         os.environ['MANY_CRITICAL'] = '1'
+        (base/'emitted').unlink()
         assert module.run(simulator, bundle, base/'many', command) == 7
         many = json.loads((base/'many/live-collection.json').read_text())
         critical = (base/'many/critical.log').read_bytes()
