@@ -2,6 +2,39 @@ import SwiftUI
 import UserNotifications
 
 #if DEBUG
+/// Read-only service preflight in the actual installed app identity. This
+/// neither requests authorization nor creates, replaces or removes requests.
+struct NotificationReadinessApp: App {
+    var body: some Scene {
+        WindowGroup { Color.clear.task { await inspect() } }
+    }
+
+    @MainActor private func inspect() async {
+        guard let namespace = UITestIsolation.namespace(), let root = UITestIsolation.support(),
+              let bundle = Bundle.main.bundleIdentifier else { return }
+        do {
+            try UITestIsolation.prepare()
+            let output = root.appendingPathComponent("notification-service.json")
+            func write(_ phase: String, status: Int? = nil, pending: Int? = nil) throws {
+                var record: [String: Any] = ["version": 1, "namespace": namespace,
+                                             "bundle": bundle, "phase": phase]
+                if let status { record["authorizationStatus"] = status }
+                if let pending { record["pendingCount"] = pending }
+                try JSONSerialization.data(withJSONObject: record, options: [.sortedKeys])
+                    .write(to: output, options: .atomic)
+            }
+            try write("notificationSettings")
+            let center = UNUserNotificationCenter.current()
+            let settings = await center.notificationSettings()
+            try write("pendingNotificationRequests", status: settings.authorizationStatus.rawValue)
+            let pending = await center.pendingNotificationRequests()
+            try write("complete", status: settings.authorizationStatus.rawValue, pending: pending.count)
+        } catch {
+            NSLog("Notification readiness probe failed: %@", String(describing: error))
+        }
+    }
+}
+
 @MainActor final class ReminderSaveDiagnostics: ObservableObject {
     static let shared = ReminderSaveDiagnostics()
     @Published var phase = "idle"

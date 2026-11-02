@@ -28,6 +28,19 @@ if any(case.endswith(('/testNotesPreviewUsesRepresentativesUntilMultipleRowsSele
     assert len(packages) == 1, ('Expected one compiled preview fixture', packages)
     prerequisites += ['--preview-package', str(packages[0])]
 subprocess.run(prerequisites, check=True)
+notification_cases = {
+    'NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement',
+    'ReminderFlowTests/testReminderNativeSchedulePersistsReplacesAndCancels',
+    'ConditionalReminderFlowTests/testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode',
+    'ConditionalRefreshFlowTests/testScopedReminderRecomputesAfterActualReview',
+}
+if notification_cases.intersection(cases):
+    applications = list(Path('build/simulator/Build/Products').glob('Debug-iphonesimulator/AnkiPad.app'))
+    assert len(applications) == 1, ('Expected one verified notification host', applications)
+    subprocess.run([sys.executable, str(Path(__file__).with_name('run-ui-with-diagnostics.py')),
+        '--simulator', args.simulator, '--output', 'build/notification-preflight-diagnostics', '--',
+        sys.executable, str(Path(__file__).with_name('notification-preflight.py')),
+        '--simulator', args.simulator, '--app', str(applications[0])], check=True)
 Path('build/batch-launch.json').write_text(json.dumps({'launcher': 'xctestrun',
     'source': os.environ.get('GITHUB_SHA'), 'cases': cases, 'compiles': False}, indent=2) + '\n')
 result = subprocess.run([sys.executable, str(Path(__file__).with_name('run-ui-with-diagnostics.py')),

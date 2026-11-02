@@ -5453,6 +5453,265 @@
         }
       ],
       "checked_at": "2026-11-02T03:22:46.542062+00:00"
+    },
+    {
+      "id": "20261102-native-service-readiness-review",
+      "covers": [
+        [
+          41380433865,
+          1
+        ],
+        [
+          41382852122,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41380433865,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Sync passes real typed-upload journey. Notification Allow appears28.915s after save and is missed by one-shot3s optional prompt handling; repaired shared event observer without extending30s event deadline."
+        },
+        {
+          "attempt": [
+            41382852122,
+            1
+          ],
+          "kind": "environment",
+          "finding": "Observer captures both process hierarchies and no OS prompt exists. Actual matchingbundle entitlement is accepted, both notificationSettings calls forwarded by usernotificationsd, neither returns before test ends. SpringBoard still constructing system bundle records; exact service cause unresolved."
+        }
+      ],
+      "root_cause": "Latest failure is earlier than OS permission: actual read-only notificationSettings service has no completion, despite matching actualapp entitlement. This is not a proven new native tap defect or Source2003 recurrence; the previous missed lateprompt was a separate proved harness issue. Existing bootstatus/photo prereqs do not establish native notification response readiness.",
+      "common_resolution": "Add capability-specific read-only preflight before long relocated notification cases: install same verified app products, launch DEBUG-only alternate App under new UUID namespace, await actual notificationSettings and pendingNotificationRequests, write version/bundle/namespace/phase/status/count atomically, then terminate. Program polls only bounded ownedfile for120s; no model polling, permission requests, notification mutations, sleeps inUI or weakened assertions. Accept native notDetermined/denied as responsive, never treat them as granted or journey success. Preserve separate bounded OSobserver diagnostics and classify missingreply as environment failure before XCTest. Resume only originalnative notification1 after finalcontract checks and this review; retain7/replace7/cancel0 and existing30s permission event handler. Earlier source2003 remains unresolved.",
+      "rule_review": {
+        "semantic_labels": "No visible labels or selectors changed since previousreview. Real OSAllow/許可 must still resolve unique native button. New probe contains no user UI labels and no command that grants permission; status0 or1 is accepted only as real readresponse.",
+        "foreground_scope": "Latest common failure captures bothapp andSpringBoard. TerminalPNG65B047 shows spinner withoutprompt; OSAX76072B confirms noAllow. DEBUG alternateApp only runs withvalidnamespace plus explicitflag; normalApp andRelease remain unchanged. Preflight uses exact installed mainapp bundle from Info.plist and separate UUID data root.",
+        "unique_reads_and_actions": "No tap repair is attempted; actualsave coordinates and begin trace establish successfulactivation. New probe validates protocol1/exactbundle/freshnamespace and complete typed response; oversize/unknownphase/stale/invalidstatus/count fail. It terminates before realXCUI; real pending identities and unique native prompt/control assertions unchanged.",
+        "live_state": "Only actual async OS completions produce complete phase. Existence of app/service/photo or bootstatus alone no longer suffices for notification journey. Probe accepts ungranted status as responsive and does not fabricate permission or requests; later UI must still request/verify real7/replaced7/cancel0. Cleanupfailure failsclosed before XCTest.",
+        "keyboard_and_scroll": "Latest failure preceded permission and OSadd. No evidence of targetmiss: actualform busy changes on save and fullnative phases start. Existing keyboard/scroll/controlhelper stay. Preserve native whole-source Command+A and exact typedupload assertion; latest sync was passed and is not rerun.",
+        "environment": "Usernotificationsd accepts matching entitlement at03:37:59.576 and forwards firstread; secondquery03:38:59.975 alsoforwarded; no native callback bycleanup03:39:39.247. SpringBoard continues LaunchServices initialization. Read-only preflight now measures actualapp service before expensiveXCTest and retains current API phase + separate logs, deadline120s. Root OSsourcecause remains undetermined; no runtime substitution or cache assertion.",
+        "first_failure_evidence": "Formal latestsummary exactnotificationidentity/failed1/skip0/runtimeWarnings[]; critical ends awaitauthorizationsettings. Read app+SpringBoard terminalAX76072B, PNG65B047 and live native serviceforward logs. Earlier413804 video172s/PNG8B022E prove different lateAllow event. Do not infer allspinner failures are2003 or OSbuttonmiss.",
+        "failure_classification": "413804 failureproved permission-event harness gap, while syncpassed. 413828 is native service response unavailable after forwarding, environment candidate/preciserootunresolved; not proven app defect or selector defect. Preflight failures are labeled environment and do not masquerade as completed UIcase failures/successes. Gate still counts failed UIrun attempts honestly.",
+        "runtime_warnings": "Both latestformalnative attempts runtimeWarnings[] but remain runfailures. Newreadiness success cannot reset UIgate or replace completed exactcase summary/warningproof; actual UI assertions must allpass.",
+        "device_evidence": "Readiness probe and future simulatorUI cannot establish realiPad notificationdelivery/audio/re-signing. Originalfull95/107,focusedcomplements8/12,remainingnotification4tracked. LatestpromotedIPA176 unchanged; no IPA/full as partofrepair."
+      },
+      "evidence": [
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41380433865",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "test-summary.json",
+          "sha256": "2dbf4b2ab4b59ae06731818d3b29aeb1b4166a9d47dfaf58581fe005b337d3dc"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41380433865",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "widget-diagnostics/critical.log",
+          "sha256": "f6a725b0f0147c6882c92ae0674de2540f9e39b946acc6416672a43afd14512d"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41380433865",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "widget-diagnostics/live.log",
+          "sha256": "10ffbbbedbee7b2e8afcd7ac53a38219575b73a35deb32b17c242d13b73129c7"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41382852122",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "test-summary.json",
+          "sha256": "8b1631e140f9ed6eb2ca9102700b54d1b134ac691912f1859c3a6c4096f35152"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41382852122",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "widget-diagnostics/critical.log",
+          "sha256": "4b28a377fd59a0237c8328369ec3672d0cb1b1e1361eb9cae3f6a58feb80f865"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41382852122",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "widget-diagnostics/live.log",
+          "sha256": "f1a76492cebfd6c9856c49ac42b61471b32c53599ce97a49451070da05d15c84"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41380433865",
+          "artifact_name": "screenshots-0",
+          "artifact_entry": "8B022E6E-A647-440A-AA7E-BC4DAE34533B.png",
+          "sha256": "37df380bc04ed6afb4e87be252d0b875bdab2196da5abee55118b008d84c51e0"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41382852122",
+          "artifact_name": "screenshots-0",
+          "artifact_entry": "65B0472E-2FEF-4164-8CCA-3C2949167DAD.png",
+          "sha256": "8c5b8e465f414aa95a0b6c78764fa604e8e778fc7e61561783f73d9e10310921"
+        }
+      ],
+      "next_scope": [
+        "NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "cefbe0cb31de9ea510aca3685d728ebe79f212a0c83e51f839d2f932384bec32",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "1bc35ad71dcd24f833091155ca72fc4c9eac0bc1013923a7d33418c255910fa5",
+        "ios/AnkiPadUITests/NotificationAuthorizationFlowTests.swift": "3986bedb780391425c8db241ccdce1fc92c6c427c55dc65334892edc03d0b582",
+        "ios/AnkiPadUITests/ReminderFlowTestSupport.swift": "569928dae20df0e861f150c476764e953af625699930b98802ce6552b63c5298",
+        "ios/AnkiPadUITests/ConditionalRefreshFlowTests.swift": "6629514791e0556db9f46872a2281f62f7504901d1ad14eaf2da3eac116e382e",
+        "ios/AnkiPad/ReviewReminderSettings.swift": "955da25a997ddafe769d9ecbfeed68c6c233e684ea856ebbbb71ad3ee5bbef2b",
+        "ios/AnkiPad/AccountView.swift": "1d81db6dee45d5545dabe97710b773844751c88535ab7fe977285c6db446f739",
+        "scripts/run-ui-with-diagnostics.py": "f65c93dc706ed52081941858a87fd8ad3b819912c7f6162e2f33f802ade00c70",
+        "scripts/run-ui-batch.py": "84ffd5f10f1360f7360b7f88dee46eed62ae074e85e95cd4876f6ea5ae562658",
+        "scripts/ui-products.py": "0f9b0c344b6c88cbc1cd8c4770c329a59f3290cb10c938ebfc4ac6d9aee63c63",
+        "scripts/plan-ui-batches.py": "6f655f53f37a4041433e285efb074253bd12a5525c27d96aca22f0a269f921f4",
+        "scripts/select-ui-tests.py": "ad317bf942b4abb57944a3b9cfa07cd8ec3fabe1feff25a8827ffa9ce7919009",
+        ".github/workflows/ipa.yml": "4098f639973503a889462ec8720245e6891e7dcd2cfacb1dc83638d7bac76cff",
+        "ios/AnkiPad/AnkiPadApp.swift": "d78f841ec6ae9d6ae1c48559dc818b855545277613cc71ebb3c88581c91eff3a",
+        "scripts/notification-preflight.py": "2796300a793d0f38dbe1e9bde8f0307f4981e00b5e54a28fd822140a2c7f8775",
+        "tests/notification_preflight_smoke.py": "82131a056e95a2ba9e87698a101dd48768fed3bab2b8b10a1eb3c51e44c95a3d"
+      },
+      "checks": [
+        {
+          "name": "Swift syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "8604ca91fc328f2dae09c0c9db11fd2db08fc73cbb5f36cae074c6f4cc340a7c"
+        },
+        {
+          "name": "Swift DEBUGparse",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-frontend",
+            "-parse",
+            "-swift-version",
+            "5",
+            "-D",
+            "DEBUG",
+            "ios/AnkiPadUITests/StudyFlowTestSupport.swift",
+            "ios/AnkiPadUITests/NotificationAuthorizationFlowTests.swift",
+            "ios/AnkiPadUITests/ReminderFlowTestSupport.swift",
+            "ios/AnkiPadUITests/ConditionalRefreshFlowTests.swift",
+            "ios/AnkiPad/ReviewReminderSettings.swift",
+            "ios/AnkiPad/AccountView.swift",
+            "ios/AnkiPad/AnkiPadApp.swift"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "tests/ui_case_groups_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b9377cf28949c5c590b41ecffc841472c1df275ba193d20fa8d2746eaa521987"
+        },
+        {
+          "name": "tests/ci_scope_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2c498dfa49b0ad8164190f3cc935a46a2254cfda0b28c83cbe05f5eee5d58256"
+        },
+        {
+          "name": "scripts/check-ui-query-predicates.py",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5e04a26ff9799fff9634c77c94ce5a00b862d061156719918ccbcd21a3821200"
+        },
+        {
+          "name": "tests/localization_resources_smoke.py",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "aaf188bc97dc8eeba2c167d0746e40000f6d5a77b9ff864ea1a5683391fbb3a9"
+        },
+        {
+          "name": "tests/native_consumer_scope_smoke.py",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "1773f95facfc9de83cd13704169196ad40e9ef4c378f45bba1acf1847e9b6f90"
+        },
+        {
+          "name": "tests/ui_batch_transfer_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        },
+        {
+          "name": "tests/ui_batch_runner_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "tests/widget_diagnostics_smoke.py",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "tests/ui_workflow_diagnostics_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "tests/ui_failure_review_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "Actual read-only native preflight and consumer fail-closed transaction",
+          "argv": [
+            "python3",
+            "tests/notification_preflight_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "920bd40c32ad8819951515389e7c469c5ff6c6dd340ca23cf74d0ddaf4993475"
+        },
+        {
+          "name": "Existing external prerequisites",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        }
+      ],
+      "checked_at": "2026-11-02T03:51:27.364119+00:00"
     }
   ]
 }

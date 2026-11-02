@@ -176,6 +176,7 @@ jobs:
         run: |
           python3 tests/ui_batch_transfer_smoke.py
           python3 tests/ui_batch_runner_smoke.py
+          python3 tests/notification_preflight_smoke.py
       - name: Test interrupted sync marker persistence
         run: |
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/SyncActivityStore.swift tests/sync_activity_smoke.swift -o build/sync-activity-smoke
@@ -774,6 +775,8 @@ jobs:
             build/UITests.xcresult/database.sqlite3
             build/batch-ui-selections.txt
             build/batch-launch.json
+            build/notification-preflight.json
+            build/notification-preflight-diagnostics
             build/ui-batches.json
             build/project-settings.json
             build/input-events.json
