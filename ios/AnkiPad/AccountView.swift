@@ -66,11 +66,8 @@ struct AccountView: View {
             .overlay(alignment: .bottom) {
                 #if DEBUG
                 if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-presentation-trace") {
-                    TimelineView(.periodic(from: .now, by: 0.2)) { _ in
-                        Text("Native account input state").font(.caption2)
-                            .accessibilityIdentifier("account-native-input-state")
-                            .accessibilityValue(accountNativeInputState)
-                    }.allowsHitTesting(false)
+                    AccountInputDiagnosticsView(readValue: { accountNativeInputState })
+                        .fixedSize().allowsHitTesting(false)
                 }
                 #endif
             }
@@ -102,3 +99,37 @@ struct AccountView: View {
         #endif
     }
 }
+
+#if DEBUG
+/// Evaluate native responder state only when accessibility reads it. A
+/// diagnostic must not schedule periodic SwiftUI updates during an input tap.
+private struct AccountInputDiagnosticsView: UIViewRepresentable {
+    let readValue: () -> String
+    func makeUIView(context: Context) -> AccountInputDiagnosticsLabel {
+        let label = AccountInputDiagnosticsLabel()
+        label.text = "Native account input state"
+        label.font = .preferredFont(forTextStyle: .caption2)
+        label.textAlignment = .center
+        label.isUserInteractionEnabled = false
+        label.isAccessibilityElement = true
+        label.accessibilityTraits = .staticText
+        label.accessibilityIdentifier = "account-native-input-state"
+        label.readValue = readValue
+        return label
+    }
+    func updateUIView(_ label: AccountInputDiagnosticsLabel, context: Context) {
+        label.readValue = readValue
+    }
+    static func dismantleUIView(_ label: AccountInputDiagnosticsLabel, coordinator: ()) {
+        label.readValue = nil
+    }
+}
+
+private final class AccountInputDiagnosticsLabel: UILabel {
+    var readValue: (() -> String)?
+    override var accessibilityValue: String? {
+        get { readValue?() }
+        set { /* Read-only synthetic diagnostic. */ }
+    }
+}
+#endif

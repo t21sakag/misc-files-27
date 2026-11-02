@@ -15,6 +15,8 @@ expected = {
     'native-notification': {'NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement'},
 }
 expected['native-consumers'] = expected['native-widget'] | expected['native-notification']
+expected['native-sync'] = {'StudyFlowTests/testFullSyncWithLocalDataRequiresTypedUploadConfirmation'}
+expected['native-failures'] = expected['native-notification'] | expected['native-sync']
 expected['native-widgets'] = {'WidgetGalleryFlowTests/testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount', 'WidgetGalleryFlowTests/testDeckListWidgetSelectsDeckAndOpensItsReview', 'WidgetGalleryFlowTests/testAddNoteWidgetOpensEmptyDraftAndCancelKeepsDueCount', 'WidgetGalleryFlowTests/testAnalysisWidgetShowsStoredDeckCountsAndOpensReview', 'WidgetGalleryFlowTests/testFixedSummarySurvivesActiveProfileSwitchAndOpensItsOwnProfile'}
 
 

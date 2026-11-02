@@ -29,6 +29,7 @@ print('launch', flush=True)
 print('*** Assertion failure earliest-focus-fixture', flush=True)
 print('usernotificationsd: Source is not authorized, UNErrorDomain Code=1', flush=True)
 print('reminder.save.trace OS add failed; domain=UNErrorDomain; code=2003', flush=True)
+print('ui.publication.trace account=server.binding proposed=Optional(true) state=server=false;busy=false;responder=none;secure=false', flush=True)
 if os.environ.get('LARGE_LOG'):
     sys.stdout.buffer.write(b'x' * (9 * 1024 * 1024)); sys.stdout.buffer.flush()
     print('', flush=True)
@@ -39,6 +40,8 @@ assert any('audio.playback.trace' in value and 'AVAudioSession_iOS.mm' in value 
 assert any('reminder.save.trace' in value and 'typing.focus.trace' in value and 'usernotificationsd' in value for value in sys.argv)
 assert any('browser.selection.trace' in value for value in sys.argv)
 assert any('ui.publication.trace' in value for value in sys.argv)
+assert any('process == "SpringBoard"' in value and 'CONTAINS[c] "notification"' in value and 'CONTAINS[c] "source"' in value for value in sys.argv)
+assert any('eventMessage CONTAINS "com.localtools.studyclient"' in value for value in sys.argv)
 assert any('process == "AnkiPad"' in value and '_UIFocusContainerGuide' in value and 'Terminating app due to uncaught exception' in value for value in sys.argv)
 print('*** Terminating app due to uncaught exception NSInvalidArgumentException, reason: fixture focus reason', flush=True)
 print('browser.options.trace phase=load.end loaded=1', flush=True)
@@ -78,6 +81,7 @@ while True: time.sleep(1)
         assert b'earliest-focus-fixture' in critical and b'fixture focus reason' in critical
         assert b'Source is not authorized' in critical
         assert b'domain=UNErrorDomain; code=2003' in critical
+        assert b'account=server.binding' in critical
         assert not report['critical_truncated'] and report['critical_bytes_saved'] == len(critical)
         assert report['line_buffer_bytes_dropped'] > 0
         os.environ.pop('LARGE_LOG')

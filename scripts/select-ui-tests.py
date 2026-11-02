@@ -72,6 +72,8 @@ suites = {
     'theme-panels': ['testDarkAndBlackThemesReachAccountProfilesEditorAndMaintenance'],
     'theme-repair': ['testImageOcclusionMaskCopyPersistsAndDiscardPreservesSavedMasks', 'testReminderNativeSchedulePersistsReplacesAndCancels', 'testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],
     'native-widgets': ['testDeckListWidgetSelectsDeckAndOpensItsReview', 'testAnalysisWidgetShowsStoredDeckCountsAndOpensReview', 'testFixedSummarySurvivesActiveProfileSwitchAndOpensItsOwnProfile', 'testAddNoteWidgetOpensEmptyDraftAndCancelKeepsDueCount', 'testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount'],
+    'native-sync': ['testFullSyncWithLocalDataRequiresTypedUploadConfirmation'],
+    'native-failures': ['testActualNotificationAuthorizationAndScheduleReplacement', 'testFullSyncWithLocalDataRequiresTypedUploadConfirmation'],
     'native-consumers': ['testActualNotificationAuthorizationAndScheduleReplacement', 'testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp'],
     'native-notification': ['testActualNotificationAuthorizationAndScheduleReplacement'],
     'native-widget': ['testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp'],

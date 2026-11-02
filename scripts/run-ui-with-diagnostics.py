@@ -20,7 +20,7 @@ LIMIT = 8 * 1024 * 1024
 CRITICAL_LIMIT = 64 * 1024
 LINE_LIMIT = 16 * 1024
 CRITICAL_MARKERS = (b'*** Assertion failure', b'*** Terminating app due to uncaught exception',
-                    b'not authorized', b'UNErrorDomain Code=1', b'reminder.save.trace OS add failed')
+                    b'not authorized', b'UNErrorDomain Code=1', b'reminder.save.trace OS add failed', b'ui.publication.trace account=server.binding')
 
 
 def run(simulator, bundle, output, command):
@@ -81,7 +81,7 @@ def run(simulator, bundle, output, command):
             raise KeyboardInterrupt
 
     try:
-        predicate = 'process == "StudyWidgets" OR eventMessage CONTAINS ' + json.dumps(bundle) + ' OR eventMessage BEGINSWITH "browser.options.trace " OR eventMessage BEGINSWITH "browser.selection.trace " OR eventMessage BEGINSWITH "ui.publication.trace " OR eventMessage BEGINSWITH "audio.playback.trace " OR eventMessage CONTAINS "AVAudioSession_iOS.mm" OR eventMessage CONTAINS "SessionCore.mm" OR eventMessage BEGINSWITH "typing.focus.trace " OR eventMessage BEGINSWITH "reminder.save.trace " OR process == "usernotificationsd" OR process == "AnkiPad" OR eventMessage CONTAINS "_UIFocusContainerGuide" OR eventMessage CONTAINS "Terminating app due to uncaught exception"'
+        predicate = 'process == "StudyWidgets" OR eventMessage CONTAINS ' + json.dumps(bundle.removesuffix('.widgets')) + ' OR (process == "SpringBoard" AND (eventMessage CONTAINS[c] "notification" OR eventMessage CONTAINS[c] "source")) OR eventMessage BEGINSWITH "browser.options.trace " OR eventMessage BEGINSWITH "browser.selection.trace " OR eventMessage BEGINSWITH "ui.publication.trace " OR eventMessage BEGINSWITH "audio.playback.trace " OR eventMessage CONTAINS "AVAudioSession_iOS.mm" OR eventMessage CONTAINS "SessionCore.mm" OR eventMessage BEGINSWITH "typing.focus.trace " OR eventMessage BEGINSWITH "reminder.save.trace " OR process == "usernotificationsd" OR process == "AnkiPad" OR eventMessage CONTAINS "_UIFocusContainerGuide" OR eventMessage CONTAINS "Terminating app due to uncaught exception"'
         try:
             observer = subprocess.Popen(['xcrun', 'simctl', 'spawn', simulator, 'log', 'stream',
                 '--style', 'compact', '--level', 'info', '--predicate', predicate],

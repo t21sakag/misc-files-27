@@ -188,7 +188,8 @@ class StudyFlowTestSupport: XCTestCase {
     /// SwiftUI can export a labelled full-row Switch wrapping the native
     /// thumb. Activate its unique direct Switch child, not the row's centre.
     @discardableResult
-    func setTestSwitch(_ query: XCUIElementQuery, enabled: Bool, in app: XCUIApplication) -> Bool {
+    func setTestSwitch(_ query: XCUIElementQuery, enabled: Bool, in app: XCUIApplication,
+                       failureContext: (() -> String)? = nil) -> Bool {
         guard waitForTestControl(query, in: app, purpose: .observation) != nil else { return false }
         let children = query.children(matching: .switch)
         let native = children.count > 0 ? children : query
@@ -203,7 +204,7 @@ class StudyFlowTestSupport: XCTestCase {
         let changed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in control.value as? String == desired }, object: nil)
         let result = XCTWaiter.wait(for: [changed], timeout: 10)
         guard result == .completed || control.value as? String == desired else {
-            controlFailure(native, in: app, reason: "Native switch did not reach the requested state"); return false
+            controlFailure(native, in: app, reason: "Native switch did not reach the requested state\n" + (failureContext?() ?? "")); return false
         }
         return true
     }
@@ -428,15 +429,36 @@ class StudyFlowTestSupport: XCTestCase {
         let toggle = app.switches.matching(identifier: "custom-server-toggle")
         guard waitForTestControl(toggle, in: app, form: form, purpose: .observation) != nil else { return }
         if app.launchArguments.contains("--uitest-presentation-trace") {
+            guard let state = waitForTestControl(app.staticTexts.matching(identifier: "account-native-input-state"),
+                                                  in: app, keyboard: .keep, purpose: .observation) else { return }
+            XCTAssertTrue((state.value as? String)?.hasPrefix("server=") == true, "Native input diagnostic must expose its full live value")
             XCTContext.runActivity(named: "Before custom server native switch") { activity in
-                let hierarchy = XCTAttachment(string: app.debugDescription)
+                let hierarchy = XCTAttachment(string: accountInputDiagnostic(in: app) + "\n" + app.debugDescription)
                 hierarchy.name = "Native input state before switch"; hierarchy.lifetime = .keepAlways
                 let screen = XCTAttachment(screenshot: app.screenshot()); screen.lifetime = .keepAlways
                 activity.add(hierarchy); activity.add(screen)
             }
         }
-        guard setTestSwitch(toggle, enabled: true, in: app) else { return }
+        guard setTestSwitch(toggle, enabled: true, in: app,
+                            failureContext: { self.accountInputDiagnostic(in: app) }) else { return }
+        if app.launchArguments.contains("--uitest-presentation-trace") {
+            XCTContext.runActivity(named: "After custom server native switch") { activity in
+                let value = accountInputDiagnostic(in: app)
+                let state = XCTAttachment(string: value)
+                state.name = "Native responder and binding after switch"; state.lifetime = .keepAlways
+                activity.add(state)
+                XCTAssertTrue(value.contains("server=true;"), "Native switch and its actual model binding must agree")
+            }
+        }
         typeInEmptyTestField(app.textFields.matching(identifier: "custom-server-endpoint"), text: server, in: app, form: form)
+    }
+
+    private func accountInputDiagnostic(in app: XCUIApplication) -> String {
+        guard app.launchArguments.contains("--uitest-presentation-trace") else { return "Native input trace disabled" }
+        guard app.state == .runningForeground else { return "Native input application state=\(app.state)" }
+        let values = app.staticTexts.matching(identifier: "account-native-input-state")
+        guard values.count == 1 else { return "Native input diagnostic count=\(values.count)" }
+        return "Native input diagnostic: " + (values.element.value as? String ?? "missing value")
     }
 
     func loginToSyncFixture(_ app: XCUIApplication, username value: String, server: String? = nil) {
