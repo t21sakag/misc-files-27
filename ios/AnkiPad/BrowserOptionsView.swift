@@ -54,17 +54,17 @@ struct BrowserOptionsView: View {
                 Section { NavigationLink(AppText.localized("フラグ名を変更")) { FlagNamesView(model: model) }.accessibilityIdentifier("flag-names-open") }
                 if busy { ProgressView() }
             }
+            .accessibilityIdentifier("browser-options-form")
             #if DEBUG
             .overlay(alignment: .bottomLeading) {
                 if UITestIsolation.namespace() != nil,
                    ProcessInfo.processInfo.arguments.contains("--uitest-browser-input-trace") {
                     BrowserInputDiagnosticsView(readValue: {
                         BrowserInputDiagnostics.read(loaded: loaded, busy: busy, notes: options.notesMode)
-                    }).frame(width: 1, height: 1).allowsHitTesting(false)
+                    }).fixedSize().accessibilityIdentifier("browser-native-input-state").allowsHitTesting(false)
                 }
             }
             #endif
-            .accessibilityIdentifier("browser-options-form")
             .disabled(!loaded || busy)
             .studyThemeSurface().navigationTitle(AppText.localized("ブラウザーの設定"))
             .toolbar {

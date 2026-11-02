@@ -6112,6 +6112,176 @@
         }
       ],
       "checked_at": "2026-11-02T04:36:21.877510+00:00"
+    },
+    {
+      "id": "20261102-browser-native-input-diagnostic-identity",
+      "covers": [
+        [
+          41421327838,
+          1
+        ],
+        [
+          41425114220,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41421327838,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "First attempt loaded=1 busy=0 notes=0, then no setter callback despite native event in the child frame; cause unresolved. Second attempt never reaches the switch: a diagnostic preparation defect, not evidence about settings persistence. Actual switch and native hit-test/focus state must be read directly before acting."
+        },
+        {
+          "attempt": [
+            41425114220,
+            1
+          ],
+          "kind": "harness",
+          "finding": "The unique native switch child and actual touch center already agree. Do not select another switch or change tap coordinates. The diagnostic UILabel inherited the outer Form accessibility identifier; apply the Form identifier before the overlay and explicitly identify the representable."
+        }
+      ],
+      "root_cause": "Original correct-center native switch event has no binding setter; precise platform/hit-test/focus cause remains unresolved. Observational retry failed earlier because an outer Form accessibilityIdentifier replaced the native diagnostic identifier.",
+      "common_resolution": "Correct only diagnostic identity placement, using the established account diagnostic pattern and explicit representable identifier. Keep on-demand read-only values, no timer/state/input injection and original switch action/assertions. Shared uniqueness guard needs no weakened resolution. The next attempt is an observational one-case run, not a claimed app fix.",
+      "rule_review": {
+        "semantic_labels": "AX contains Native browser input state but its identifier is browser-options-form, not the requested browser-native-input-state. Fix explicit overlay identifier/modifier order; keep the original Japanese option labels and switch identifiers.",
+        "foreground_scope": "The unique native switch child and actual touch center already agree. Do not select another switch or change tap coordinates. The diagnostic UILabel inherited the outer Form accessibility identifier; apply the Form identifier before the overlay and explicitly identify the representable.",
+        "unique_reads_and_actions": "Shared waitForTestControl correctly failed on zero diagnostic matches before switch input in the second attempt. Retain unique typed query, direct full accessibility value, strict native switch resolution and postcondition. No firstMatch fallback or weakened success.",
+        "live_state": "First attempt loaded=1 busy=0 notes=0, then no setter callback despite native event in the child frame; cause unresolved. Second attempt never reaches the switch: a diagnostic preparation defect, not evidence about settings persistence. Actual switch and native hit-test/focus state must be read directly before acting.",
+        "keyboard_and_scroll": "Terminal frames show the switch visible inside the settings sheet, no software keyboard or scrolling needed. Correct coordinate delivery alone does not prove native hit-testing/focus. Add no extra tap, focus dismissal or artificial wait. Read non-sensitive responder class from the key window.",
+        "environment": "Actual fixture is one newly created café note; original search returns zero before ignore-accents. Both installed apps remain alive. No server/photo prerequisite applies. Independent typed-last-request compile succeeded but does not reset this UI failure pair. Retain one simulator/XCTest worker and the minimum one case.",
+        "first_failure_evidence": "Reviewed first attempt AX child607,438.5,63,28, actual event638.5,452.5, terminal PNG and recorded frames. Second AX explicitly assigns browser-options-form to the diagnostic StaticText; terminal PNG shows the label clipped below Form. Before switch action fails at unique diagnostic lookup. Preserve both manifests/input records/logs and hashes.",
+        "failure_classification": "41421327838/1 is undetermined native-input failure, not a proven persistence defect or the old row-center harness error. 41425114220/1 is harness/inspection preparation error from identifier propagation; input was not retried. These are both failed attempts and trigger the exact-pair rule; no reset from compile.",
+        "runtime_warnings": "Both completed summaries report runtimeWarnings=[] and zero skips. Preserve warnings checks; they do not establish that the switch received a native callback.",
+        "device_evidence": "No physical device result for these new search changes, voice/audio, notifications or re-signing. Simulator compilation and four successful search flows are restricted evidence, not full AnkiDroid parity."
+      },
+      "next_scope": [
+        "BrowserToolsFlowTests/testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch"
+      ],
+      "evidence": [
+        {
+          "reference": "GitHub run 41421327838, ui-diagnostics-3/screenshots/2FAAB9D9-72D9-49DC-8DEC-731959E8297C.txt",
+          "sha256": "b51b9527cba23ee5144488f8dfa9df4059ea48e0d67056ef8059546d1a6ac957"
+        },
+        {
+          "reference": "GitHub run 41421327838, ui-diagnostics-3/input-events.json",
+          "sha256": "647e567092410cd4b7cb3fa163420a4917bddf598a61a47ed31b331086c9d9be"
+        },
+        {
+          "reference": "GitHub run 41421327838, screenshots-3/4DBE293F-5240-4389-9E8F-63308EAFE40D.png",
+          "sha256": "d621dab19cf6d1a5c04aafe544741383888c5219a8b916db45ef877d4cf8b7a8"
+        },
+        {
+          "reference": "GitHub run 41421327838, screenshots-3/3F2818C3-A7D9-46EA-ADF2-E67DD69BB685.mp4",
+          "sha256": "47e4e3ca5c4a6b02268e1ea4cce96b5dc052c391223ceb1ae2ce3a8f8947d513"
+        },
+        {
+          "reference": "GitHub run 41425114220, ui-diagnostics/screenshots/0ABB8F58-BCCB-4F25-88F3-2952748BAA7F.txt",
+          "sha256": "377b448e583d4d2a4b8405e42c6bd67b84d4ecdaf97d4cba6ffa844e5150643c"
+        },
+        {
+          "reference": "GitHub run 41425114220, ui-diagnostics/input-events.json",
+          "sha256": "567483e8d64b1284be7e7074594f3704016ca9a3d849c631e4e9897520392de2"
+        },
+        {
+          "reference": "GitHub run 41425114220, screenshots/FB40758E-1D7E-46F1-AA61-6BD444BE9F9C.png",
+          "sha256": "9ff2b4accb9b0e76dc0d0e78adbd495d60ec5aa1995d9e0f509c6bf1722d1bda"
+        },
+        {
+          "reference": "GitHub run 41425114220, screenshots/D5A889C2-4FE2-4F71-A8A8-EDBD0EBCC8E0.mp4",
+          "sha256": "29fe27339f425c588edef876ab0c138cadf5a08cc3c3a5e00ba9d43c26bc1207"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "d74c802fc7b4a38b2b2154ccf4fa1f6b9efd54b6ab4a8d8a6964a60390f50829",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "1bc35ad71dcd24f833091155ca72fc4c9eac0bc1013923a7d33418c255910fa5",
+        "ios/AnkiPadUITests/BrowserToolsFlowTests.swift": "2056725be59354235ff2ee88927a4481c1da8b8129be299a9311f9d7c1551190",
+        "ios/AnkiPad/BrowserInputDiagnostics.swift": "2644857639ca6ba1c520051b4a7cfe58b573375108e079adc8a1a77ed78ee705",
+        "ios/AnkiPad/BrowserOptionsView.swift": "b64275480b18347e367062e2abb8d6e877f218be7fc5ffbeee35536039e64114",
+        "ios/AnkiPad/BrowserView.swift": "c240105820842dcf964400c6ef7cca3214d3d6aeddd797181fe62eb496af2832",
+        "ios/AnkiPad/BrowserSearchPosition.swift": "343b0d1505a61deacd45100196bdd3d9c8848a15526a5a50b10f97c3be02e211",
+        "scripts/select-ui-tests.py": "8c40b188dab8eb5052e441883daf999fa1e31faba1e00ed8cb6991a6fa4e100d",
+        ".github/workflows/ipa.yml": "723c23aef437cb8163cfa6345d5e562affb7bf3eb2e1933f3d092cff2567be23"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e86d022b76047f18862495f3e3f9ec1c747033c9c4e023c3f8dcba3ef3cfc520"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d3e8592fc14a6217c2e6404c6c667dc64cc4eec16ad5b1583bba1b43756b1052"
+        },
+        {
+          "name": "dispatch and compile prerequisites",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "f4d8199d70377f9dfd3507410c40f0fbaf77c09ab8699704f7d83b727d93302e"
+        },
+        {
+          "name": "native consumer scopes",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "1773f95facfc9de83cd13704169196ad40e9ef4c378f45bba1acf1847e9b6f90"
+        },
+        {
+          "name": "query lint",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "fbf2edcdc839d76f5c0ba064067d1ee061455b9b757c3091817c8ae3f1444a28"
+        },
+        {
+          "name": "query guard regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "resources",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b6f3feb535246b4d3928c7c0b25b6d7044112f9433844069f4e878e8c38b6e21"
+        },
+        {
+          "name": "failure review guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        }
+      ],
+      "checked_at": "2026-11-02T10:20:11.141663+00:00"
     }
   ]
 }
