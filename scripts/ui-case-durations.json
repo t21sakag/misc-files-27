@@ -91,5 +91,7 @@
   "WidgetGalleryFlowTests/testDeckListWidgetSelectsDeckAndOpensItsReview": 321.831,
   "WidgetGalleryFlowTests/testFixedSummarySurvivesActiveProfileSwitchAndOpensItsOwnProfile": 382.644,
   "WidgetGalleryFlowTests/testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp": 244.827,
-  "WidgetGalleryFlowTests/testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount": 162.555
+  "WidgetGalleryFlowTests/testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount": 162.555,
+  "BrowserFieldSearchFlowTests/testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection": 580.638,
+  "BrowserFieldSearchFlowTests/testNamedFieldTextSearchCancelExactAndLiteralStar": 542.595
 }

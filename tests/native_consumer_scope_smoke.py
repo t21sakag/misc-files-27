@@ -21,6 +21,8 @@ expected['native-widgets'] = {'WidgetGalleryFlowTests/testSummaryConfigurationSe
 
 expected['native-fields'] = {'BrowserFieldSearchFlowTests/testNamedFieldTextSearchCancelExactAndLiteralStar', 'BrowserFieldSearchFlowTests/testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection'}
 
+expected['native-history'] = {'BrowserSearchHistoryFlowTests/testCommittedSearchHistoryReuseCancelAndRelaunch'}
+
 
 def condition(expression, mode, suite):
     values = {'env.CI_MODE': mode, 'env.UI_SUITE': suite, 'inputs.mode': mode, 'inputs.ui_suite': suite}
