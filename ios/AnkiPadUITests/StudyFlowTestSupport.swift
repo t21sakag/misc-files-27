@@ -31,9 +31,9 @@ class StudyFlowTestSupport: XCTestCase {
     /// WebKit exports multiple nested WebView AX wrappers for one card. Resolve
     /// the unique native host's direct WebView, rather than selecting a wrapper
     /// by index or treating all descendants as independent card surfaces.
-    func waitForTestCardWebView(in app: XCUIApplication) -> XCUIElement? {
+    func waitForTestCardWebView(in app: XCUIApplication, purpose: TestControlPurpose = .action) -> XCUIElement? {
         let roots = app.descendants(matching: .other).children(matching: .webView)
-        return waitForTestControl(roots, in: app)
+        return waitForTestControl(roots, in: app, purpose: purpose)
     }
 
     func tapScreenFrame(_ element: XCUIElement, in app: XCUIApplication,
@@ -251,8 +251,10 @@ class StudyFlowTestSupport: XCTestCase {
         if alreadySatisfied?() == true { return nil }
         if case .dismiss = keyboard, !dismissTestKeyboard(in: app) { return nil }
         if let form { revealFormControl(query.firstMatch, in: form, topInset: 40, bottomInset: 20, maximumAttempts: 12) }
-        let exists = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in alreadySatisfied?() == true || query.count == 1 }, object: nil)
-        guard XCTWaiter.wait(for: [exists], timeout: timeout) == .completed else {
+        let unique: () -> Bool = { alreadySatisfied?() == true || query.count == 1 }
+        let exists = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in unique() }, object: nil)
+        let existenceResult = XCTWaiter.wait(for: [exists], timeout: timeout)
+        guard existenceResult == .completed || unique() else {
             controlFailure(query, in: app, reason: "Control did not settle to one match; scope its foreground container and semantic state"); return nil
         }
         if alreadySatisfied?() == true { return nil }
@@ -260,7 +262,7 @@ class StudyFlowTestSupport: XCTestCase {
             controlFailure(query, in: app, reason: "Control query is ambiguous; scope its container/type explicitly"); return nil
         }
         let element = query.element(boundBy: 0)
-        let predicate = NSPredicate { _, _ in
+        let actionable: () -> Bool = {
             if alreadySatisfied?() == true { return true }
             guard query.count == 1 && element.exists else { return false }
             switch purpose {
@@ -270,8 +272,9 @@ class StudyFlowTestSupport: XCTestCase {
                 return !visible.isNull && visible.width > 0 && visible.height > 0
             }
         }
-        let ready = XCTNSPredicateExpectation(predicate: predicate, object: nil)
-        guard XCTWaiter.wait(for: [ready], timeout: timeout) == .completed else {
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in actionable() }, object: nil)
+        let readinessResult = XCTWaiter.wait(for: [ready], timeout: timeout)
+        guard readinessResult == .completed || actionable() else {
             controlFailure(query, in: app, reason: "Control did not become actionable"); return nil
         }
         if alreadySatisfied?() == true { return nil }

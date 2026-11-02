@@ -4979,6 +4979,231 @@
         }
       ],
       "checked_at": "2026-11-02T00:58:48.041138+00:00"
+    },
+    {
+      "id": "20261102-control-wait-terminal-state-review",
+      "covers": [
+        [
+          41367820658,
+          1
+        ],
+        [
+          41370177163,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41367820658,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "WidgetHome consumer passes after metadata repair; native notification acceptedauthorization/entitlement but firstOSadd fails2003."
+        },
+        {
+          "attempt": [
+            41370177163,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "Projectlaunch on same transferredproducerproducts also failsfirstOSadd2003; launcher-only explanation unsupported, comparison removed."
+        }
+      ],
+      "root_cause": "Notification OS-source registration remains undetermined after entitlement/authsuccess and identical failure with both consumerlaunchers; prior focused success500bfbf has unchanged notification implementation. Independently, originalfull BrowserPreview failure shows correctscreen at155/200s and exactlyone terminalAXtarget. The shared query helper incorrectly treated waiter observation timeout as terminalmissing/ambiguous state; earlier duplicate-node classification is corrected.",
+      "common_resolution": "Keep repairedWidgetexports/nativeconsumer evidence and strictnotification assertions. Retire ineffectiveprojectlauncher. Fix commonwaitForTestControl to re-evaluate exactlythe same unique and actionable/visible-frame predicates on timeout, preserving strictzero/duplicate/disabled failures. Scope preview DOM reads through shareduniquenativeWebView host, retaining bothcard positions/navigation and20stimeouts. Resume onlyoriginalbrowser-preview1 while continuing source/product/OS investigation independently fornotifications; do not generate newIPA/full or mutate native permission/taps.",
+      "rule_review": {
+        "semantic_labels": "Actualbrowser terminalAXtext is exactlyPreviewScopeB, and video shows2of2 from155s. No labelalias or expectedtext is changed. Native save/Allow labels were correct inbothfailedattempts.",
+        "foreground_scope": "Browser realpreview host contains one physicalWKWebView exportedthroughnestedwrappers. Use existing shared nativeOther/directWebView resolver forreadonlyscope, then exactDOMtext. Native notificationforegrounderror is real; no selectorvariant can turn it into success.",
+        "unique_reads_and_actions": "The recordedbrowser query enumerates one exactterminalStaticText336,361,148,24. Do not call it duplicated merelybecause3WebViewwrappers exist. Both commonwait phases now use the samepredicate for waiter and currentterminalcheck, keepingcount1/readableframe/actualenabledhittable. Zero/duplicates/disabledstillfail withAX/PNG.",
+        "live_state": "Browser screenshot/video155and200s alreadyshowcorrectB/2of2 afteractualnexttap151.38; retainprevious/nextenabledstates and contextstartthenbacktoA. Notificationpermission2/grantedtrue remainsinsufficient; actualOSregistration2003isunchanged and unresolved.",
+        "keyboard_and_scroll": "Browserpreview journey has noundismissedkeyboard atfailure, native nextpointer677.75,883.75 matches observedframe. No extratap, dragvariation or timeoutincrease; use commonkeyboard/reveal exactlyasbefore. Native consumerpermissioninteractions likewisehitcorrectcontrols.",
+        "environment": "Producerwidgetexport/prerequisite issue isfixedandactualconsumerWidgetHomepassed. Project-vs-xctestrun notificationcomparison isnegative andremoved. Native savecodebyteunchangedbetweenfocused500success/current, sofurtherenvironment/source-registrationevidenceisneeded. Browsercaseisindependentanduseexistingfixture/profileisolation; validatefinalSwift/catalog/query/dispatchagain.",
+        "first_failure_evidence": "Fullbrowser terminalAXandPNGpluscompletevideo155/200 andactualnextcoordinatesproveexpectedcontentbeforewaitfailure. Correctpreviousunprovennestedduplicateclassification. Native2attempts haveformalfailedsummary/runtimeWarnings[], acceptedentitlement/grantedauthorization andfirstcriticalOSadd2003; keepactualreasonhashes.",
+        "failure_classification": "Currentpair413678/413701isnative-registrationundeterminedapplication/environment. Originalbrowserfailurehasprovedsharedwaiterterminal-contractgapandbroadquerycost, notprovenappcardnavigationdefect. Resumea separateknownharnessrepairaftercommonreview, withoutusingfuturebrowsersuccessasproofnotificationsfixed.",
+        "runtime_warnings": "Bothnativefailedattempts explicitlycontainruntimeWarnings=[], but remainfailed. Browserresumemustalsohavecompletedsummary/exactcaseidentity/skip0/warnings[]. No warningsareignored.",
+        "device_evidence": "BrowserUIandWidgetHome on simulator do notprovephysicaliPadnotifications/voice/SideStore. Originalparityscope persists; latestpromotedIPA176unchanged."
+      },
+      "evidence": [
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41367820658",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "test-summary.json",
+          "sha256": "ffea14c1f775f92714dc291c7c5ac56f267b04cd4b307bb7dfe7b0f86bc1472a"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41367820658",
+          "artifact_name": "ui-diagnostics-1",
+          "artifact_entry": "test-summary.json",
+          "sha256": "c646eb9fddc6539c2bce8aad26667551254bd5ec17d22990519e54029e875121"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41370177163",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "test-summary.json",
+          "sha256": "743404642f396c8960bc0563b0a85e75038c0cbf2f76e209d113e057f92d02f2"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41370177163",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "widget-diagnostics/critical.log",
+          "sha256": "7fd39baddb6ef5e492e784fd85ad84635a80d63815028aa001620613972b3678"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41359249446",
+          "artifact_name": "ui-diagnostics-1",
+          "artifact_entry": "test-summary.json",
+          "sha256": "5c1b81db0f624efe9e69dfdd345909eb7340259e64ec2af7b77446d6b1a49033"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41359249446",
+          "artifact_name": "screenshots-1",
+          "artifact_entry": "AE5705C4-6583-4B38-B6F6-F7B4A6BB55E4.png",
+          "sha256": "e1e628bd2ca32cfba6cf81c9e4ef14cc1fc9851665f1f3e6a2762098a30e7f76"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41359249446",
+          "artifact_name": "screenshots-1",
+          "artifact_entry": "678ADA5E-1C18-4F3E-857C-24EBD1E8DB23.mp4",
+          "sha256": "ee43ab95baa2e5dc7649f8f2a28aa52d3115f78362ec57bb0f178c7495215fb2"
+        }
+      ],
+      "next_scope": [
+        "BrowserToolsFlowTests/testBrowserPreviewAllResultsAndContextStartKeepBothCards"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "4b1185796760dd8ce8e5d890d41aea136cf9bd814bce32c7bfa6d95153fe9194",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "8e83bbb45378f461fecb6b8aab4b6cc7670f7ad76fc1dc90fac8fe0a3c4556b8",
+        "ios/AnkiPadUITests/BrowserToolsFlowTests.swift": "027c96b453207c8d0628eb65af1185194f4a9bdc66a9e712f09e741658b566ce",
+        "ios/AnkiPadUITests/NotificationAuthorizationFlowTests.swift": "e364ce0770e2cd05bfff25e5cc907cf3aef3ecafe37844114d9d518080b76ab6",
+        "ios/AnkiPad/ReviewReminderSettings.swift": "cd013f7b23e7bc505d222e667c36b3821715560714fffa855dcb77f04560922a",
+        "scripts/run-ui-with-diagnostics.py": "ad3f01bd8067e806e07a253eba05540a3a398e9e5707615b42eb075eea7ac715",
+        "scripts/run-ui-batch.py": "d8574110664bdcf4a7b57ba8788bafd9e7cf44b077354efe3fa49f2bbed5f6a6",
+        "scripts/ui-products.py": "0f9b0c344b6c88cbc1cd8c4770c329a59f3290cb10c938ebfc4ac6d9aee63c63",
+        "scripts/plan-ui-batches.py": "6f655f53f37a4041433e285efb074253bd12a5525c27d96aca22f0a269f921f4",
+        "scripts/select-ui-tests.py": "4e39b7ffe7fccdaaf842a5dc27367041fcd307b1bd6ac5813a58f8f524e0dedb",
+        ".github/workflows/ipa.yml": "2f88647498e88e3f365faedc19d3c3a4c883d19d8f81de92c298c650748335ac"
+      },
+      "checks": [
+        {
+          "name": "Swift syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "8604ca91fc328f2dae09c0c9db11fd2db08fc73cbb5f36cae074c6f4cc340a7c"
+        },
+        {
+          "name": "Swift DEBUGparse",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-frontend",
+            "-parse",
+            "-swift-version",
+            "5",
+            "-D",
+            "DEBUG",
+            "ios/AnkiPadUITests/StudyFlowTestSupport.swift",
+            "ios/AnkiPadUITests/BrowserToolsFlowTests.swift"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "tests/ui_case_groups_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b9377cf28949c5c590b41ecffc841472c1df275ba193d20fa8d2746eaa521987"
+        },
+        {
+          "name": "tests/ci_scope_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "371e11ac07a271e197a2df2ea438defecbf72c88c8bc241303075ec3bae92acd"
+        },
+        {
+          "name": "scripts/check-ui-query-predicates.py",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5e04a26ff9799fff9634c77c94ce5a00b862d061156719918ccbcd21a3821200"
+        },
+        {
+          "name": "tests/localization_resources_smoke.py",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "aaf188bc97dc8eeba2c167d0746e40000f6d5a77b9ff864ea1a5683391fbb3a9"
+        },
+        {
+          "name": "tests/native_consumer_scope_smoke.py",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "1773f95facfc9de83cd13704169196ad40e9ef4c378f45bba1acf1847e9b6f90"
+        },
+        {
+          "name": "tests/ui_batch_transfer_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        },
+        {
+          "name": "tests/ui_batch_runner_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "tests/widget_diagnostics_smoke.py",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "tests/ui_workflow_diagnostics_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "tests/ui_failure_review_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        }
+      ],
+      "checked_at": "2026-11-02T01:23:00.616243+00:00"
     }
   ]
 }

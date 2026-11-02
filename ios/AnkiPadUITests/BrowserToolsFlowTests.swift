@@ -77,7 +77,8 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
     }
     private func expectPreviewCard(_ text: String, position: Int, total: Int, in app: XCUIApplication) {
         _ = waitForTestControl(app.navigationBars.matching(identifier: "プレビュー \(position) / \(total)"), in: app, purpose: .observation)
-        _ = waitForTestControl(app.webViews.staticTexts.matching(NSPredicate(format: "label == %@", text)), in: app, purpose: .observation)
+        guard let web = waitForTestCardWebView(in: app, purpose: .observation) else { return }
+        _ = waitForTestControl(web.staticTexts.matching(NSPredicate(format: "label == %@", text)), in: app, purpose: .observation)
         guard let previous = waitForTestControl(app.buttons.matching(identifier: "preview-previous"), in: app, purpose: .observation),
               let next = waitForTestControl(app.buttons.matching(identifier: "preview-next"), in: app, purpose: .observation) else { return }
         XCTAssertEqual(previous.isEnabled, position > 1, app.debugDescription)
@@ -131,7 +132,8 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
         addNote("PreviewScope B", in: app)
         browser("PreviewScope", count: 2, in: app)
         func expectCard(_ text: String, previous: Bool, next: Bool) {
-            _ = waitForTestControl(app.webViews.staticTexts.matching(NSPredicate(format: "label == %@", text)), in: app, purpose: .observation)
+            guard let web = waitForTestCardWebView(in: app, purpose: .observation) else { return }
+            _ = waitForTestControl(web.staticTexts.matching(NSPredicate(format: "label == %@", text)), in: app, purpose: .observation)
             guard let backward = waitForTestControl(app.buttons.matching(identifier: "preview-previous"), in: app, purpose: .observation),
                   let forward = waitForTestControl(app.buttons.matching(identifier: "preview-next"), in: app, purpose: .observation) else { return }
             XCTAssertEqual(backward.isEnabled, previous, app.debugDescription)
