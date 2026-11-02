@@ -351,6 +351,11 @@ jobs:
           swiftc -swift-version 5 ios/AnkiPad/BrowserOptions.swift tests/browser_options_smoke.swift -o build/browser-options-smoke
           build/browser-options-smoke
           python3 tests/browser_options_engine_smoke.py build/native/host/libankipad_bridge.dylib
+      - name: Test local query history isolation and MRU
+        if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && env.UI_SUITE == 'browser-tools')
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BrowserSearchHistory.swift tests/browser_search_history_smoke.swift -o build/browser-search-history-smoke
+          build/browser-search-history-smoke
       - name: Compile named-field query driver
         if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'browser-tools' || startsWith(env.UI_SUITE, 'field-') || env.UI_SUITE == 'native-fields'))
         run: swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BrowserFieldSearchRequest.swift tests/browser_field_search_driver.swift -o build/browser-field-search-driver
