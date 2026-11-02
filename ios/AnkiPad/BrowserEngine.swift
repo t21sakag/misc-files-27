@@ -110,3 +110,17 @@ extension Engine {
         _ = try call("SchedulerService.SortCards", ["cardIds": ids, "startingFrom": start, "stepSize": step, "randomize": random, "shiftExisting": shift])
     }
 }
+
+extension Engine {
+    /// Resolve stable filter IDs in this collection immediately before reuse.
+    /// Missing/deleted references propagate an error; no filter is dropped.
+    func browserSearchQuery(_ request: BrowserSearchRequest) throws -> String {
+        try request.build(deckName: { id in
+            try call("DecksService.GetDeck", ["did": id])["name"] as? String
+        }, noteTypeName: { id in
+            try call("NotetypesService.GetNotetype", ["ntid": id])["name"] as? String
+        }, backend: { node in
+            try call("SearchService.BuildSearchString", node)
+        })
+    }
+}
