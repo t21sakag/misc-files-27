@@ -15,6 +15,7 @@ expected = {
     'native-notification': {'NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement'},
 }
 expected['native-consumers'] = expected['native-widget'] | expected['native-notification']
+expected['native-widgets'] = {'WidgetGalleryFlowTests/testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount', 'WidgetGalleryFlowTests/testDeckListWidgetSelectsDeckAndOpensItsReview', 'WidgetGalleryFlowTests/testAddNoteWidgetOpensEmptyDraftAndCancelKeepsDueCount', 'WidgetGalleryFlowTests/testAnalysisWidgetShowsStoredDeckCountsAndOpensReview', 'WidgetGalleryFlowTests/testFixedSummarySurvivesActiveProfileSwitchAndOpensItsOwnProfile'}
 
 
 def condition(expression, mode, suite):
