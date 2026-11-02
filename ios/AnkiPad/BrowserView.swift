@@ -12,6 +12,8 @@ struct BrowserView: View {
     private var fontScale: CGFloat { CGFloat(max(10, min(200, fontPercent))) / 100 }
     @State private var query: String
     private let hasExplicitInitialSearch: Bool
+    @State private var openingProfileID: String
+    @State private var positionPreferenceKey: String
     @State private var config = BrowserConfiguration(notesMode: false, columns: ["noteFld", "template", "cardDue", "deck"], sortColumn: "noteFld", backwards: false, savedSearches: [:])
     @State private var columns: [BrowserColumn] = []
     @State private var tags: [String] = []
@@ -57,6 +59,8 @@ struct BrowserView: View {
     init(model: StudyModel, initialSearch: String? = nil) {
         self.model = model
         hasExplicitInitialSearch = initialSearch != nil
+        _openingProfileID = State(initialValue: model.currentProfile.id)
+        _positionPreferenceKey = State(initialValue: model.profilePreferenceKey("lastBrowserSearch"))
         _query = State(initialValue: initialSearch ?? model.browserSearch)
     }
     var body: some View {
@@ -68,7 +72,7 @@ struct BrowserView: View {
             }
             .onAppear { traceSelection("appear") }
             .onChange(of: editMode.isEditing) { _, _ in traceSelection("editing.changed") }
-            .onDisappear { UserDefaults.standard.set(query, forKey: model.profilePreferenceKey("lastBrowserSearch")) }
+            .onDisappear { savePosition() }
             .task(id: "\(loaded)-\(query)-\(revision)-\(config.notesMode)-\(showMediaFilenames)") { await search() }
     }
     private var list: some View {
@@ -307,12 +311,26 @@ struct BrowserView: View {
             if query.isEmpty && !hasExplicitInitialSearch {
                 let defaultQuery = try await model.engine.call("ConfigService.GetConfigString", ["key": "DEFAULT_SEARCH_TEXT"])["val"] as? String ?? ""
                 let restore = try await model.engine.call("ConfigService.GetConfigBool", ["key": "RESTORE_POSITION_BROWSER"])["val"] as? Bool ?? false
-                query = !defaultQuery.isEmpty ? defaultQuery : restore ? UserDefaults.standard.string(forKey: model.profilePreferenceKey("lastBrowserSearch")) ?? "" : ""
+                let request = try BrowserSearchPosition.initialRequest(query: query, explicit: hasExplicitInitialSearch,
+                    defaultQuery: defaultQuery, restore: restore, key: positionPreferenceKey)
+                let resolved = request.hasFilters ? try await model.engine.browserSearchQuery(request) : request.query
+                guard model.currentProfile.id == openingProfileID else {
+                    throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
+                }
+                activeSearchRequest = request; renderedSearch = resolved; query = resolved
+            }
+            guard model.currentProfile.id == openingProfileID else {
+                throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
             }
             loaded = true
             do { searchHistory = try BrowserSearchHistory.entries(key: model.profilePreferenceKey("browserSearchHistory")) }
             catch { self.error = AppText.localized("検索履歴を読み込めませんでした。") }
         } catch { self.error = error.localizedDescription }
+    }
+    private func savePosition() {
+        guard loaded, model.currentProfile.id == openingProfileID else { return }
+        do { try BrowserSearchPosition.save(effectiveSearchRequest, key: positionPreferenceKey) }
+        catch { NSLog("browser.search.position.save.failed") }
     }
     private var effectiveSearchRequest: BrowserSearchRequest {
         query == renderedSearch ? activeSearchRequest ?? BrowserSearchRequest(query: query) : BrowserSearchRequest(query: query)
@@ -340,7 +358,7 @@ struct BrowserView: View {
         }
     }
     private func search() async {
-        guard loaded else { return }
+        guard loaded, model.currentProfile.id == openingProfileID else { return }
         do {
             try await Task.sleep(nanoseconds: 250_000_000)
             busy = true
