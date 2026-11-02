@@ -13,10 +13,12 @@ import AVFoundation
     private var pending: [AVSpeechUtterance] = []
     var isSpeaking: Bool { preparation != nil || !pending.isEmpty || synthesizer.isSpeaking }
     func setLanguage(_ language: String) -> Int {
-        let code = language.replacingOccurrences(of: "_", with: "-")
+        let code = CardScriptSpeechLanguage.identifier(language)
         guard let selected = AVSpeechSynthesisVoice(language: code) else { return -2 }
+        let support = CardScriptSpeechLanguage.support(requested: code, selected: selected.language)
+        guard support >= 0 else { return support }
         voice = selected
-        return selected.language.caseInsensitiveCompare(code) == .orderedSame ? 2 : 0
+        return support
     }
     func setPitch(_ value: Float) -> Int {
         guard value.isFinite, value > 0 else { return -1 }

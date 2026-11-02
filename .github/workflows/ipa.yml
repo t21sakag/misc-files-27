@@ -143,6 +143,8 @@ jobs:
           python3 tests/speech_html_smoke.py build/libspeechhtml.dylib
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library -import-objc-header ios/AnkiPad/SpeechHTML.h ios/AnkiPad/LegacySpeechText.swift ios/AnkiPad/ReviewSpeechPreferences.swift ios/AnkiPad/ReviewSpeechPlan.swift tests/review_speech_smoke.swift build/SpeechHTML.o -lxml2 -o build/review-speech-smoke
           build/review-speech-smoke
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/CardScriptSpeechLanguage.swift tests/card_script_language_smoke.swift -o build/card-script-language-smoke
+          build/card-script-language-smoke
       - name: Test reminder configuration validity and persistence
         run: |
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/ReviewReminderConfiguration.swift tests/reminder_configuration_smoke.swift -o build/reminder-configuration-smoke
