@@ -6,6 +6,7 @@ import plistlib
 import subprocess
 import struct
 from simulator_identity import validate as validate_identity
+from app_intents_metadata import validate_widget_intents
 
 parser = argparse.ArgumentParser()
 parser.add_argument('app', type=Path)
@@ -53,6 +54,7 @@ extension = next(extension for extension in extensions if extension.name == 'Sha
 share = info(extension)
 widget = next(extension for extension in extensions if extension.name == 'StudyWidgets.appex')
 widget_info = info(widget)
+validate_widget_intents(widget)
 assert widget_info['CFBundleIdentifier'] == app['CFBundleIdentifier']+'.widgets'
 assert widget_info['NSExtension']['NSExtensionPointIdentifier'] == 'com.apple.widgetkit-extension'
 assert 'NSExtensionPrincipalClass' not in widget_info['NSExtension']

@@ -134,6 +134,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.localtools.studyclient.widgets
         TARGETED_DEVICE_FAMILY: '2'
         APPLICATION_EXTENSION_API_ONLY: YES
+        # Export AppIntents from the real extension executable, not a debug stub.
+        ENABLE_DEBUG_DYLIB: NO
         SKIP_INSTALL: YES
         SWIFT_OBJC_BRIDGING_HEADER: ''
         OTHER_LDFLAGS: []

@@ -42,6 +42,7 @@ jobs:
           python3 tests/ci_scope_smoke.py
           python3 tests/ui_failure_review_smoke.py
           python3 tests/simulator_identity_smoke.py
+          python3 tests/app_intents_metadata_smoke.py
           python3 tests/ui_events_smoke.py
           python3 tests/query_predicate_smoke.py
           python3 tests/ui_workflow_diagnostics_smoke.py
