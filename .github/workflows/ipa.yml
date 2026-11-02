@@ -751,8 +751,12 @@ jobs:
       - name: Execute assigned cases without compiling
         env:
           BATCH_INDEX: ${{ matrix.batch }}
+          UI_SUITE: ${{ inputs.ui_suite || 'all' }}
           SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
-        run: python3 scripts/run-ui-batch.py "$BATCH_INDEX" "$SIMULATOR_ID"
+        run: |
+          launch_args=()
+          if [ "$UI_SUITE" = native-notification ]; then launch_args+=(--project-launch); fi
+          python3 scripts/run-ui-batch.py "$BATCH_INDEX" "$SIMULATOR_ID" "${launch_args[@]}"
       - name: Collect batch display diagnostics
         if: always()
         run: python3 scripts/collect-widget-diagnostics.py --simulator "${{ steps.simulator.outputs.id }}"
@@ -773,6 +777,7 @@ jobs:
             build/ui-prerequisites.json
             build/UITests.xcresult/database.sqlite3
             build/batch-ui-selections.txt
+            build/batch-launch.json
             build/ui-batches.json
             build/project-settings.json
             build/input-events.json

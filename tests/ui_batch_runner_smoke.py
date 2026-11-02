@@ -47,20 +47,37 @@ import os,sys
 from pathlib import Path
 assert Path('build/observer-started').is_file(),'Observer must start before UI'
 assert '-only-testing:AnkiPadUITests/'+os.environ['BATCH_EXPECTED_CASE'] in sys.argv
+assert 'test-without-building' in sys.argv and 'build' not in sys.argv
+if os.environ['BATCH_EXPECTED_LAUNCH']=='project':
+    assert '-xctestrun' not in sys.argv and '-project' in sys.argv
+    assert Path(sys.argv[sys.argv.index('-project')+1]+'/project.pbxproj').is_file()
+    assert sys.argv[sys.argv.index('-derivedDataPath')+1]=='build/simulator'
+    assert 'ANKIPAD_SOURCE_COMMIT='+os.environ['GITHUB_SHA'] in sys.argv
+else:
+    assert '-xctestrun' in sys.argv and '-project' not in sys.argv
 Path('build/ui-started').write_text('started')
 raise SystemExit(65 if os.environ['BATCH_FAKE_MODE']=='failed' else 0)
 ''')
     for tool in tools.iterdir(): tool.chmod(0o755)
-    environment = dict(os.environ, PATH=str(tools)+os.pathsep+os.environ['PATH'], BATCH_EXPECTED_CASE=CASE)
+    environment = dict(os.environ, PATH=str(tools)+os.pathsep+os.environ['PATH'], BATCH_EXPECTED_CASE=CASE,
+                       GITHUB_SHA='a'*40, GITHUB_RUN_NUMBER='1')
     command = [sys.executable, str(ROOT/'scripts/run-ui-batch.py'), '0', '11111111-1111-4111-8111-111111111111']
     def run(mode, success, ui_started=True):
         for name in ['ui-started','observer-started']:
             (base/'build'/name).unlink(missing_ok=True)
-        result = subprocess.run(command, cwd=base, env=dict(environment,BATCH_FAKE_MODE=mode), capture_output=True,text=True,timeout=20)
+        result = subprocess.run(command, cwd=base, env=dict(environment,BATCH_FAKE_MODE=mode,
+                                BATCH_EXPECTED_LAUNCH='project' if '--project-launch' in command else 'xctestrun'), capture_output=True,text=True,timeout=20)
         assert (result.returncode==0)==success,(mode,result.stdout,result.stderr)
         assert (base/'build/ui-started').exists()==ui_started
         return result
     run('passed', True)
+    assert json.loads((base/'build/batch-launch.json').read_text())['launcher']=='xctestrun'
+    project=base/'ios/AnkiPad.xcodeproj';project.mkdir(parents=True)
+    (project/'project.pbxproj').write_text('Transferred project')
+    command.append('--project-launch')
+    run('passed', True)
+    assert json.loads((base/'build/batch-launch.json').read_text())['launcher']=='project'
+    command.pop()
     prerequisite=json.loads((base/'build/ui-prerequisites.json').read_text())
     assert prerequisite['preview_package_required'] and prerequisite['preview_package_valid']
     observer=json.loads((base/'build/widget-diagnostics/live-collection.json').read_text())

@@ -4734,6 +4734,251 @@
         }
       ],
       "checked_at": "2026-11-01T16:20:23.540365+00:00"
+    },
+    {
+      "id": "20261102-native-consumer-registration-review",
+      "covers": [
+        [
+          41359249446,
+          1
+        ],
+        [
+          41367820658,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            41359249446,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "95/107pass; widgetDebugexportdefect6, nativeOSregistration4, previewquery1, customserverswitch1. Root causes are not interchangeable."
+        },
+        {
+          "attempt": [
+            41367820658,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "Widget export/build/runtimeconsumer fixed and1/1pass; notification actualauthorizationgranted/entitlementaccepted but firstOSadd failsUNErrorDomain2003. UIselector failure is not supported."
+        }
+      ],
+      "root_cause": "Widget Debug metadata extraction read a stub withoutAppIntents dependency and skipped all3configurationexports; per-target conventional executable restores metadata and actualconsumerWidgetHome success. Notification failure site is proven at nativeOSrequest registration after granted authorization and successful entitlement checks, while its underlying application/environment cause remains unproven.",
+      "common_resolution": "Keep strict native UI/data assertions. Validate widget exports before UI, retain the actual firstOSadd error in critical evidence, and transfer the generated producer project with verified compiledproducts. Compare only native-notification via project test-without-building on its consumer; full, native-widget and native-consumers retain xctestrun entry until the comparison is assessed. No recompilation, authorization bypass, delay retry or alternate taps.",
+      "rule_review": {
+        "semantic_labels": "Actual native settings/menu/Allow labels matched uniquely. Widget blank body and absent EditWidget match missing exported intent metadata, not an alternate label. No notification label or tap is changed.",
+        "foreground_scope": "Terminal notification AX and PNG show foreground reminder with native save-error alert; daemon accepts the main app bundle connection. Next scope keeps the same real presenter; project-vs-xctestrun launch is isolated at consumer setup.",
+        "unique_reads_and_actions": "Shared unique native switch child/save/optionalAllow helpers were used. Actual pointer centers410,874 and484,644.5 are within native save/Allow frames. Keep strict unique/actionable controls and actual7request/replacement/cancel assertions; no first-match or extra taps.",
+        "live_state": "Usernotificationsd entitlement checks succeed, requestAuthorization returns granted=true, first addRequest failsUNErrorDomain2003. Thus authorization2 is not successful registration. Keep actual pending IDs==savedIDs, sevenrequests, disjointreplacement and cancellation0.",
+        "keyboard_and_scroll": "Save and Allow were reached via shared reveal/keyboard handling. Video171/176 and terminal state confirm the correct OS prompt/error sequence; this is not an offscreen switch or keyboard dismissal failure. No keyboard/scroll changes needed for this scope.",
+        "environment": "DebugWidget metadata is now generated and validated before consumer execution; actual transferred widgetHome1 passes244.827s. Notification fails only in the observed xctestrun consumer compared with prior focused project success. Transfer the exact generated producer project as well and compare project test-without-building on one consumer, without compiling or replacing products.",
+        "first_failure_evidence": "Reviewed complete summaries, terminalAX/PNG, recordedvideo and numeric input events from413678 plus priorfull. Native error trace proves firstOSadd fails2003 after entitlement success and granted auth. Add that actual trace prefix to bounded firstcritical preservation; repeated AX strings alone are not OS-origin diagnostics.",
+        "failure_classification": "413592 has mixed widget-build/native-environment/harness/sync failures, not one asserted cause.413678 fixes widget product defect and passes its native journey; notification source-registration failure persists. Root notification defect remains undetermined application/environment. Launcher comparison is a controlled environment experiment, not a claimed fix.",
+        "runtime_warnings": "Both native consumer summaries explicitly contain runtimeWarnings=[]; prior full allfive summaries also contain[]. A failed notification assertion still fails the run, and a successful widget case does not reset the two failed-attempt streak.",
+        "device_evidence": "Simulator metadata/WidgetHome success does not prove allwidgetconfigurations, real iPad notification delivery, audio or SideStore signing. Keep latest promoted IPA176; do not promote this experiment or mark parity complete."
+      },
+      "evidence": [
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41367820658",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "test-summary.json",
+          "sha256": "ffea14c1f775f92714dc291c7c5ac56f267b04cd4b307bb7dfe7b0f86bc1472a"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41367820658",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "input-events.json",
+          "sha256": "5c95be02c9c44b9a707b76b2e76225048b4dad176f286087c8782db387559884"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41367820658",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "widget-diagnostics/live.log",
+          "sha256": "c665adb85ce6a4e43c2a0574a7938ba67e73c3f2113eff153228206183b492a2"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41367820658",
+          "artifact_name": "ui-diagnostics-1",
+          "artifact_entry": "test-summary.json",
+          "sha256": "c646eb9fddc6539c2bce8aad26667551254bd5ec17d22990519e54029e875121"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41367820658",
+          "artifact_name": "screenshots-0",
+          "artifact_entry": "0750C794-C6D1-402D-BD03-DDE88A8B1106.png",
+          "sha256": "4f61a9c368af6f2ddbc41cb2bb2cbb201235fae7f9c886e83041fd1061a3b0a5"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41367820658",
+          "artifact_name": "screenshots-0",
+          "artifact_entry": "F63AEEF7-DEE5-4DEB-A3F6-1E3A1A5FAD6E.mp4",
+          "sha256": "f301bd2feb0c85a6eca796ebe8be5339dd71ab6231926f975aa3950883287065"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41359249446",
+          "artifact_name": "ui-diagnostics-0",
+          "artifact_entry": "test-summary.json",
+          "sha256": "9f261fd7a621c2fe2a5880f832b12835ac47c87d2bd73d3cf2ca9f0c152e0959"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41359249446",
+          "artifact_name": "ui-diagnostics-1",
+          "artifact_entry": "test-summary.json",
+          "sha256": "5c1b81db0f624efe9e69dfdd345909eb7340259e64ec2af7b77446d6b1a49033"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41359249446",
+          "artifact_name": "ui-diagnostics-2",
+          "artifact_entry": "test-summary.json",
+          "sha256": "d45915fb9ecf96c6309ab1ba146ca78556415ccc72bc82e44f472b226e293906"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41359249446",
+          "artifact_name": "ui-diagnostics-3",
+          "artifact_entry": "test-summary.json",
+          "sha256": "66752a4b9a53de3f7212cf99308d599fbd8b0c40815d9bb1648868f2eb8000de"
+        },
+        {
+          "reference": "https://github.com/t21sakag/misc-files-27/actions/runs/41359249446",
+          "artifact_name": "ui-diagnostics-4",
+          "artifact_entry": "test-summary.json",
+          "sha256": "c47df1bdbd0d8285177a46a46072ec1d8afabef180805f292cafd6edb302ea30"
+        }
+      ],
+      "next_scope": [
+        "NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement"
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "63c563ec7ae743d4790bbaa7b4e25fd788a68a3cfcfded2c2d84cb94c333a789",
+        "ios/project.yml": "c83afd0b99f2e04b34c9419b66d997bc482f3b40a7275164dc76fb818d76c50a",
+        ".github/workflows/ipa.yml": "baffef4868693dcf2583ec7bd0f3b1706497bc19362bfeedcaf3bca4a96a30dc",
+        "scripts/run-ui-with-diagnostics.py": "ad3f01bd8067e806e07a253eba05540a3a398e9e5707615b42eb075eea7ac715",
+        "scripts/run-ui-batch.py": "40a17c65d25f1a4e6cf8219e0d5df54bbbac03c75189d1fc8e4f870850c4646d",
+        "scripts/ui-products.py": "026762d987e34eaa56f4c5a812447d8c6dc6298ed480f5cea354eeb5c18110f9",
+        "scripts/plan-ui-batches.py": "6f655f53f37a4041433e285efb074253bd12a5525c27d96aca22f0a269f921f4",
+        "scripts/select-ui-tests.py": "4e39b7ffe7fccdaaf842a5dc27367041fcd307b1bd6ac5813a58f8f524e0dedb",
+        "scripts/app_intents_metadata.py": "c8bb05f16297dfc3de5816655da9f4c9b73823a77c576d7d4551aebbcce4810f",
+        "scripts/verify-shared-products.py": "a94a137656d9e4d63119ff4716ff806a4ebf56414c669b12079d029fe3a0e757",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "565a64058a35fca31be65ef094e47ccf275ee270fe70e5d9bd8ed2a5249a3242",
+        "ios/AnkiPadUITests/NotificationAuthorizationFlowTests.swift": "e364ce0770e2cd05bfff25e5cc907cf3aef3ecafe37844114d9d518080b76ab6",
+        "tests/native_consumer_scope_smoke.py": "af217a236f56797b403d1389c8e935f5b6fc6a95ef71eb5948a944ec2564f1f6",
+        "tests/ui_batch_transfer_smoke.py": "69f484137d30aad5883ba9fcd774cfc84171cf02f495798a9b85735efe7eb127",
+        "tests/ui_batch_runner_smoke.py": "75d42ba0cf5fc75f5f83695b5d9c4ee705dc1a5c56a0ff2f50ae9df7c0025860",
+        "tests/widget_diagnostics_smoke.py": "1cd2d84e3636d33673c2b849db64a9fc8618ba24143f521eea4bfda7102be9ba"
+      },
+      "checks": [
+        {
+          "name": "tests/native_consumer_scope_smoke.py",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "1773f95facfc9de83cd13704169196ad40e9ef4c378f45bba1acf1847e9b6f90"
+        },
+        {
+          "name": "tests/ui_case_groups_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b9377cf28949c5c590b41ecffc841472c1df275ba193d20fa8d2746eaa521987"
+        },
+        {
+          "name": "tests/ci_scope_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "371e11ac07a271e197a2df2ea438defecbf72c88c8bc241303075ec3bae92acd"
+        },
+        {
+          "name": "scripts/check-ui-query-predicates.py",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5e04a26ff9799fff9634c77c94ce5a00b862d061156719918ccbcd21a3821200"
+        },
+        {
+          "name": "tests/ui_workflow_diagnostics_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "tests/ui_batch_transfer_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        },
+        {
+          "name": "tests/ui_batch_runner_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "tests/widget_diagnostics_smoke.py",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "tests/app_intents_metadata_smoke.py",
+          "argv": [
+            "python3",
+            "tests/app_intents_metadata_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "a9cdefae97417785914d4e57a55ec6afa1346fc2bc9bf86a789b00ae8d350d3f"
+        },
+        {
+          "name": "tests/simulator_identity_smoke.py",
+          "argv": [
+            "python3",
+            "tests/simulator_identity_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec4dcf530af5a45941f312753ffde3ef60300e306e01d38acb91bbb4bbca02fb"
+        },
+        {
+          "name": "tests/ui_failure_review_smoke.py",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "tests/localization_resources_smoke.py",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "aaf188bc97dc8eeba2c167d0746e40000f6d5a77b9ff864ea1a5683391fbb3a9"
+        }
+      ],
+      "checked_at": "2026-11-02T00:58:48.041138+00:00"
     }
   ]
 }

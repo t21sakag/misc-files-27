@@ -20,7 +20,7 @@ LIMIT = 8 * 1024 * 1024
 CRITICAL_LIMIT = 64 * 1024
 LINE_LIMIT = 16 * 1024
 CRITICAL_MARKERS = (b'*** Assertion failure', b'*** Terminating app due to uncaught exception',
-                    b'not authorized', b'UNErrorDomain Code=1')
+                    b'not authorized', b'UNErrorDomain Code=1', b'reminder.save.trace OS add failed')
 
 
 def run(simulator, bundle, output, command):
