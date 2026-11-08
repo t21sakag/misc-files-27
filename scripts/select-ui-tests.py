@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-typography-reading': ['testReadableNativeBrowserAndEditorInBothOrientations', 'testCardTextGrowsWithoutChangingImageWidth'],
     'native-typography-repair': ['testReadableNativeBrowserAndEditorInBothOrientations', 'testCardTextGrowsWithoutChangingImageWidth', 'testBrowserFontAndSoundNamesPersistAfterRelaunch'],
     'native-typography': ['testReadableNativeBrowserAndEditorInBothOrientations', 'testCardTextGrowsWithoutChangingImageWidth', 'testVisualEditorLargerTextPreservesOriginalHTML', 'testBrowserFontAndSoundNamesPersistAfterRelaunch', 'testImageOnlyZoomAndVerticalCenterSurviveRelaunch', 'testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],
     'typography-native': ['testReadableNativeBrowserAndEditorInBothOrientations'],

@@ -49,7 +49,7 @@ struct NoteEditorView: View {
     init(model: StudyModel, request: EditorRequest) {
         self.model = model; self.request = request; engine = model.engine
     }
-    var body: some View { NavigationStack { loadedContent } }
+    var body: some View { NavigationStack { loadedContent }.dynamicTypeSize(.xLarge...) }
     private func fieldFontSize(_ current: NoteDocument, index: Int) -> CGFloat {
         let authored = current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontSize"] as? Int ?? 20 : 20
         return CGFloat(StudyTypography.editorFontSize(authored: authored, override: editorFontSize,

@@ -3,15 +3,18 @@ import Foundation
 /// Display-only sizes. Stored note HTML, template CSS and user percentages are
 /// separate from the reading baseline applied by the iPad interface.
 enum StudyTypography {
+    static func readingScale(dynamicScale: Double) -> Double {
+        let scale = dynamicScale.isFinite && dynamicScale > 0 ? dynamicScale : 1
+        return max(19.0 / 17.0, scale)
+    }
+
     static func editorFontSize(authored: Int, override: Int, dynamicScale: Double) -> Double {
         let base = override > 0 ? override : max(24, authored)
-        let scale = dynamicScale.isFinite && dynamicScale > 0 ? dynamicScale : 1
-        return Double(base) * scale
+        return Double(base) * readingScale(dynamicScale: dynamicScale)
     }
 
     static func cardTextScale(dynamicScale: Double) -> Double {
-        let scale = dynamicScale.isFinite && dynamicScale > 0 ? dynamicScale : 1
-        return 1.25 * scale
+        return 1.25 * readingScale(dynamicScale: dynamicScale)
     }
 
     static func cardReadingCSS(dynamicScale: Double) -> String {

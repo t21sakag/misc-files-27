@@ -63,7 +63,6 @@ private struct StudyThemeSurface: ViewModifier {
     @AppStorage("dayTheme") private var day = "1"
     @AppStorage("nightTheme") private var night = "3"
     @Environment(\.colorScheme) private var scheme
-    @Environment(\.dynamicTypeSize) private var systemTypeSize
     func body(content: Content) -> some View {
         let theme = StudyTheme.resolve(dark: scheme == .dark, day: day, night: night)
         content.scrollContentBackground(.hidden).background(Color(uiColor: theme.nativeBackground))

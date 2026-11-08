@@ -50,11 +50,11 @@ final class TypographyFlowTests: TypographyTestSupport {
         <img id="read-image" alt="Typography image" style="width:100px;height:50px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jwZkAAAAASUVORK5CYII="><br>
         <button onclick="const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');ctx.font='20px Arial';const metrics=['read-en','read-ja'].map(id=>{const e=document.getElementById(id),r=document.createRange();r.selectNodeContents(e);const box=r.getBoundingClientRect();return {ratio:box.width/ctx.measureText(e.textContent).width,height:box.height,top:box.top,bottom:box.bottom};});const image=document.getElementById('read-image').getBoundingClientRect();const ok=metrics.every(m=>m.ratio>1.30 &amp;&amp; m.ratio<1.65 &amp;&amp; m.height>=26) &amp;&amp; metrics[1].top>=metrics[0].bottom+2 &amp;&amp; Math.abs(image.width-100)<1 &amp;&amp; document.documentElement.scrollWidth<=innerWidth+1;document.getElementById('read-result').textContent=ok?'Typography verified '+(innerWidth>innerHeight?'landscape':'portrait'):'Typography failed '+JSON.stringify({metrics,imageWidth:image.width,adjust:getComputedStyle(document.documentElement).webkitTextSizeAdjust});">Measure readable text</button>
         <div id="read-result" aria-live="polite"></div>
+        <script>function measureReading(){const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');ctx.font='20px Arial';const metrics=['read-en','read-ja'].map(id=>{const e=document.getElementById(id),r=document.createRange();r.selectNodeContents(e);const box=r.getBoundingClientRect();return {ratio:box.width/ctx.measureText(e.textContent).width,height:box.height,top:box.top,bottom:box.bottom};});const image=document.getElementById('read-image').getBoundingClientRect();const ok=metrics.every(m=>m.ratio>1.30 && m.ratio<1.65 && m.height>=26) && metrics[1].top>=metrics[0].bottom+2 && Math.abs(image.width-100)<1 && document.documentElement.scrollWidth<=innerWidth+1;document.getElementById('read-result').textContent=ok?'Typography verified '+(innerWidth>innerHeight?'landscape':'portrait'):'Typography failed '+JSON.stringify({metrics,imageWidth:image.width,adjust:getComputedStyle(document.documentElement).webkitTextSizeAdjust});}window.addEventListener('load',measureReading);window.addEventListener('resize',measureReading);</script>
         """
         try addNote(front: html, back: "English answer 日本語の答え", in: app)
         tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
         let web = try XCTUnwrap(waitForTestCardWebView(in: app))
-        tapTestControl(web.buttons.matching(NSPredicate(format: "label == %@", "Measure readable text")), in: app)
         requireTestCondition("Real WebKit renders enlarged English and Japanese glyphs", in: app) {
             web.staticTexts.matching(NSPredicate(format: "label == %@", "Typography verified portrait")).count == 1
         }
@@ -63,7 +63,6 @@ final class TypographyFlowTests: TypographyTestSupport {
         capture("Readable card English Japanese and fixed image", in: app)
         XCUIDevice.shared.orientation = .landscapeLeft
         requireTestCondition("Reviewer rotates to landscape", in: app) { app.frame.width > app.frame.height }
-        tapTestControl(web.buttons.matching(NSPredicate(format: "label == %@", "Measure readable text")), in: app)
         requireTestCondition("Landscape retains the same text scaling and image size", in: app) {
             web.staticTexts.matching(NSPredicate(format: "label == %@", "Typography verified landscape")).count == 1
         }

@@ -276,7 +276,7 @@ struct SettingsView: View {
                 Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
             .task { do { values = try await model.engine.preferences(); automaticSync = model.automaticSyncEnabled; automaticTTS = ReviewSpeechPreferences.enabled(profileID: model.currentProfileID); allowCollectionAPI = UserDefaults.standard.bool(forKey: model.profilePreferenceKey("allowCollectionCardAPI")); loaded = true } catch { self.error = error.localizedDescription } }
-        }
+        }.dynamicTypeSize(.xLarge...)
     }
     private var timeboxMinutes: Binding<Int> {
         Binding(get: { ((values["reviewing"] as? [String: Any])?["timeLimitSecs"] as? Int ?? 0) / 60 }, set: { minutes in

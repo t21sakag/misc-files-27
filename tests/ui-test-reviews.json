@@ -6282,6 +6282,211 @@
         }
       ],
       "checked_at": "2026-11-02T10:20:11.141663+00:00"
+    },
+    {
+      "id": "20261108-reading-baseline-consumers",
+      "covers": [
+        [
+          42487319664,
+          1
+        ],
+        [
+          42489465984,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42487319664,
+            1
+          ],
+          "kind": "application",
+          "finding": "Native reading minimum remains unapplied. First card actual ratio1.25. Second additionally fails passive probe prerequisite. See rule assessment and preserved terminal evidence."
+        },
+        {
+          "attempt": [
+            42489465984,
+            1
+          ],
+          "kind": "application",
+          "finding": "Native reading minimum remains unapplied. First card actual ratio1.25. Second additionally fails passive probe prerequisite. See rule assessment and preserved terminal evidence."
+        }
+      ],
+      "root_cause": "Root Dynamic Type bounds and explicit root environment do not establish the expected custom-size baseline at native browser/editor/reviewer consumers. Passive font measurement was coupled to WK button input.",
+      "common_resolution": "Floor custom sizes at the consumer through shared reading policy, preserve larger system settings and existing percentages. Apply native sheet bounds locally. Passive real DOM probe observes load/resize, retaining font/line/image/overflow assertions. Existing shared action rules remain strict.",
+      "rule_review": {
+        "semantic_labels": "Both attempts find the exact English/Japanese front and native browser metadata. First card exports complete failure JSON with ratio1.25; second has no result text. Keep exact expected semantics and thresholds.",
+        "foreground_scope": "Browser resolves browser-front native StaticText in its presented browser. Card resolves the unique native Other/direct WKWebView root. Neither failure is duplicate element selection. Sheets do not deliver the expected ScaledMetric baseline; establish explicit minimum at consumers.",
+        "unique_reads_and_actions": "Retain shared unique waits, native switch and stepper handling. The browser appearance stepper snapshot timeout from the first attempt passed unchanged in the second. Do not change its tap method or weaken checks. Card native event center410,364.18 versus terminal button299.2..324.2 demonstrates that a button click is an extra prerequisite for a passive font measurement.",
+        "live_state": "Both native fronts remain20.5pt high, matching17pt default. First actual DOM ratio1.25/height29/adjust125%/image100 proves insufficient intended scale. Use minimum19/17 explicitly, retain OS larger scale and existing user percentages. Observe real fixture load/resize to measure actual layout, keeping ratio1.30..1.65, line separation, image100 and no-overflow assertions.",
+        "keyboard_and_scroll": "Creation uses shared empty-field and keyboard/reveal handling. Font probe does not need keyboard or native click. Native browser controls are visible. Existing preferences persistence passed the second attempt using unchanged shared stepper/switch actions.",
+        "environment": "Apple compile and shared products transfers passed in both runs. Six initial cases and three retries use independent simulator workers. No external photos/server fixture. Final syntax/catalog/query/dispatch/localization checks must run after last edit, including final minimum policy Foundation test.",
+        "first_failure_evidence": "First card terminal AX records exact DOM metrics. Second browser AX records front234x20.5 at152,441.5. Second card action logged frame325,351.169,170,25.025 with delivered event410,364.182; terminal AX button325,299.2,170,25.0 and absent result. Preserve completed logs, terminal hierarchy, input events and first failure recording.",
+        "failure_classification": "The native minimum scale is an application bug in both attempts. First card scale is an application bug, while second card absent probe result additionally exposes harness coupling to native WK button delivery; do not claim a measured ratio for that attempt. First browser snapshot hang is inspection failure, succeeded second attempt unchanged. Correct app baseline and isolate passive measurement.",
+        "runtime_warnings": "Both completed diagnostic summaries report runtimeWarnings=[] and zero skips. Retain warning validation. Snapshot timeout is distinct from application runtime warning.",
+        "device_evidence": "No new physical iPad measurement or IPA yet. Simulator glyph/DOM/frame assertions establish layout evidence only. User must judge comfortable size on their iPad after delivery."
+      },
+      "next_scope": [
+        "TypographyFlowTests/testReadableNativeBrowserAndEditorInBothOrientations",
+        "TypographyFlowTests/testCardTextGrowsWithoutChangingImageWidth"
+      ],
+      "evidence": [
+        {
+          "reference": "run 42487319664 diag0/screenshots/AD5BCEDF-5781-46A6-9C1C-5579BE696E21.txt",
+          "sha256": "44ac132bf931330ca7ec6f8640f18a760acdb1225a86b055e50c0902f4d7a733"
+        },
+        {
+          "reference": "run 42487319664 diag1/screenshots/AB1F179A-641C-40D6-A6EB-B29DAF202625.txt",
+          "sha256": "19911d8278d395ca24249ae5c1b6bc05f1fc492ebf555caa5f4dcc6714e854a6"
+        },
+        {
+          "reference": "run 42487319664 diag1/screenshots/D71DAB25-C055-45B0-AB60-EFBFFF609227.txt",
+          "sha256": "558580b0ad1d005d63e71cec3c1080e1a8e223a45eefff91b0f24ddbbf3ad2b4"
+        },
+        {
+          "reference": "run 42487319664 diag4/screenshots/585B1FED-36AE-4953-8F11-E28950AFB3E5.txt",
+          "sha256": "4ed95c87ca4c6f45858e66e0d48277e329ec45068cff1793a87f3b614db2eb49"
+        },
+        {
+          "reference": "run 42487319664 diag0/input-events.json",
+          "sha256": "30cc54c721f14bbbe9f445f22dd6e883f4991849491097389bc005a06b3543ab"
+        },
+        {
+          "reference": "run 42487319664 diag1/input-events.json",
+          "sha256": "744e76dab5a67b91e44292f9608a62da8f61cf4da2a89bd1aec3c771fdd2d1ae"
+        },
+        {
+          "reference": "run 42487319664 diag4/input-events.json",
+          "sha256": "7723d4ebaca11df69e9e3525f388db08a8f12ffabe2951bde2bc81b6473a9e3d"
+        },
+        {
+          "reference": "run 42489465984 diag0/screenshots/1ED7641E-A565-47BE-A311-9F8EEF3EACC2.txt",
+          "sha256": "501eaf10e5641192de20bf857c861e461e27555267ec47d22c031a059dc16aef"
+        },
+        {
+          "reference": "run 42489465984 diag1/screenshots/30F46050-4B3E-4B95-9513-C78A7B395F8F.txt",
+          "sha256": "1dd4a0ae1257b164abb686031a1b725d21ef0d3c4d4fec524d555fc71c0941bc"
+        },
+        {
+          "reference": "run 42489465984 diag1/screenshots/61B2F68A-A6B5-4A0E-8853-9A466FB77E11.txt",
+          "sha256": "e78dd24786f0f243a12cbab76b113e326e1a1a155d33c0c45874b13c0b9bc224"
+        },
+        {
+          "reference": "run 42489465984 diag1/screenshots/C01C66B2-5505-48DD-A2C4-11A816047D60.txt",
+          "sha256": "cfdcb601984ab7049d06a9827235afd906b0a2d635be32790886cc1f4097de7e"
+        },
+        {
+          "reference": "run 42489465984 diag0/input-events.json",
+          "sha256": "a0cf718bcd7eb29f4a14aba6539142420c56eb7e836d06deffba51ef3105271a"
+        },
+        {
+          "reference": "run 42489465984 diag1/input-events.json",
+          "sha256": "569bd7409c2cf7d63a3eb4559542f1f00fb4a8a9cf8943265227132ef393685b"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "01512063021042474c7b664cac85c92935880981c20a2c3a9a57358ad9ff3f03",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "1bc35ad71dcd24f833091155ca72fc4c9eac0bc1013923a7d33418c255910fa5",
+        "ios/AnkiPadUITests/TypographyFlowTests.swift": "29485b954ad853109872d2fb48eb1dfb831010329598e915e8da7d9652160c5d",
+        "ios/AnkiPadUITests/TypographyTestSupport.swift": "f2751956e08f141fe2bdaaa8bc2cbf70884047c57c4d4afb587c860994e8ce4b",
+        "ios/AnkiPadUITests/BrowserAppearanceFlowTests.swift": "70bfc4b73ad6c27e45dd67a706efb362eff9b903ad0262388a95c2812e2c974a",
+        "ios/AnkiPad/StudyTypography.swift": "6376d3d664cdd05d9d0c067a4abf4d3dcf90dd0b9743b6873a452466ec8a9405",
+        "ios/AnkiPad/StudyThemeStyling.swift": "03f838a1bc90879caf9c75867cd1644905e38c76d974aff1e16c767a368d68fb",
+        "ios/AnkiPad/BrowserView.swift": "82437596b95d16cd64ac6ee16bf77f99f2fba581af0dccc0bcca0cb513ab3d90",
+        "ios/AnkiPad/NoteEditorView.swift": "2d39d3a0d475ab95958229192e52171bccb0257e5cd0c74dcac8374eacf627e6",
+        "ios/AnkiPad/SettingsView.swift": "58c909ac8680c257079b76f24fa50b7bf33c60c46111bffa4c78b238ad715e1b",
+        "ios/AnkiPad/ReviewerWebView.swift": "eb22262599a378a901d81629e336c4f2b6c26845103269ef51f75455a2074a74",
+        "scripts/select-ui-tests.py": "9bd04c5221c802f2af844aeff7510f00684e93f5169e542aa3342427717b72f8",
+        ".github/workflows/ipa.yml": "86c02157d600e755591babb0e8bf661ff8f744f80b5fa3a3004d258909ebfad1"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b5c802a7377c058787a0de7c2ce96dbbd5c9f02560db0b3ab9eb786805b55e00"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "76bbc510a3ccfb47e9ed1cf70740027caca8f2e105c387bc2b8ae5cf00cd8066"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d529324280d6618214bc8395de186bfffb22a1f164d144f633d5f75ad592793c"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2d83830c86a0faef7accefe7fe82fccca8133e69b66a7eebf118c5c05e3b43a0"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6506011d69f680a53262e95b832e76f25f9ddaa64a6054f69808e16f488f1d2d"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "font policy",
+          "argv": [
+            "bash",
+            "-c",
+            "\"$ANKIPAD_SWIFTC\" ios/AnkiPad/StudyTypography.swift tests/study_typography_smoke.swift -o /tmp/study-typography-final && /tmp/study-typography-final"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "059a3b9d194a6b2336f786dcba13e5ce57c1baec1f87bdbc209bd7f53bb975ab"
+        }
+      ],
+      "checked_at": "2026-11-08T14:44:59.910765+00:00"
     }
   ]
 }

@@ -80,6 +80,7 @@ struct BrowserView: View {
     }
     var body: some View {
         NavigationStack { dialogs }
+            .dynamicTypeSize(.xLarge...)
             .task {
                 traceSelection("initialize.start")
                 await initialize()
@@ -168,10 +169,10 @@ struct BrowserView: View {
             HStack(alignment: .firstTextBaseline) {
                 if row.suspended { Image(systemName: "pause.circle").foregroundStyle(.orange) }
                 if row.flag > 0 { Image(systemName: "flag.fill").foregroundStyle(flagColor(row.flag)) }
-                Text(row.front.isEmpty ? AppText.localized("（空のフィールド）") : row.front).font(.system(size: primarySize * fontScale)).lineLimit(truncateRows ? 3 : nil).lineSpacing(3).fixedSize(horizontal: false, vertical: true).foregroundStyle(.primary)
+                Text(row.front.isEmpty ? AppText.localized("（空のフィールド）") : row.front).font(.system(size: max(19, primarySize) * fontScale)).lineLimit(truncateRows ? 3 : nil).lineSpacing(3).fixedSize(horizontal: false, vertical: true).foregroundStyle(.primary)
                     .accessibilityIdentifier("browser-front-\(row.id)")
             }
-            Text(row.back).font(.system(size: secondarySize * fontScale)).foregroundStyle(.secondary).lineLimit(truncateRows ? 3 : nil)
+            Text(row.back).font(.system(size: max(16 * 19 / 17, secondarySize) * fontScale)).foregroundStyle(.secondary).lineLimit(truncateRows ? 3 : nil)
                 .lineSpacing(3).fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("browser-back-\(row.id)")
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), alignment: .leading)], alignment: .leading, spacing: 10) {
@@ -180,7 +181,7 @@ struct BrowserView: View {
                         Text(columnLabel(key)).foregroundStyle(.secondary)
                         Text(row.metadata[key] ?? "—").foregroundStyle(.secondary)
                             .accessibilityIdentifier("browser-metadata-\(row.id)-\(key)")
-                    }.font(.system(size: metadataSize * fontScale)).lineLimit(truncateRows ? 3 : nil)
+                    }.font(.system(size: max(14 * 19 / 17, metadataSize) * fontScale)).lineLimit(truncateRows ? 3 : nil)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
