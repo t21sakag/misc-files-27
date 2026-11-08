@@ -7,8 +7,8 @@ struct BrowserView: View {
     @AppStorage("relativeCardBrowserFontSize") private var fontPercent = 100
     @AppStorage("card_browser_show_media_filenames") private var showMediaFilenames = false
     @ScaledMetric(relativeTo: .body) private var primarySize: CGFloat = 17
-    @ScaledMetric(relativeTo: .caption) private var secondarySize: CGFloat = 12
-    @ScaledMetric(relativeTo: .caption2) private var metadataSize: CGFloat = 11
+    @ScaledMetric(relativeTo: .body) private var secondarySize: CGFloat = 16
+    @ScaledMetric(relativeTo: .body) private var metadataSize: CGFloat = 14
     private var fontScale: CGFloat { CGFloat(max(10, min(200, fontPercent))) / 100 }
     @State private var query: String
     private let hasExplicitInitialSearch: Bool
@@ -164,24 +164,27 @@ struct BrowserView: View {
         }.accessibilityIdentifier("browser-active-filters")
     }
     @ViewBuilder private func rowView(_ row: BrowserCard) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline) {
                 if row.suspended { Image(systemName: "pause.circle").foregroundStyle(.orange) }
                 if row.flag > 0 { Image(systemName: "flag.fill").foregroundStyle(flagColor(row.flag)) }
-                Text(row.front.isEmpty ? AppText.localized("（空のフィールド）") : row.front).font(.system(size: primarySize * fontScale)).lineLimit(truncateRows ? 3 : nil).foregroundStyle(.primary)
+                Text(row.front.isEmpty ? AppText.localized("（空のフィールド）") : row.front).font(.system(size: primarySize * fontScale)).lineLimit(truncateRows ? 3 : nil).lineSpacing(3).fixedSize(horizontal: false, vertical: true).foregroundStyle(.primary)
                     .accessibilityIdentifier("browser-front-\(row.id)")
             }
             Text(row.back).font(.system(size: secondarySize * fontScale)).foregroundStyle(.secondary).lineLimit(truncateRows ? 3 : nil)
+                .lineSpacing(3).fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("browser-back-\(row.id)")
-            HStack(alignment: .top, spacing: 14) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), alignment: .leading)], alignment: .leading, spacing: 10) {
                 ForEach(config.columns.filter { $0 != "noteFld" }, id: \.self) { key in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(columnLabel(key)).foregroundStyle(.tertiary)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(columnLabel(key)).foregroundStyle(.secondary)
                         Text(row.metadata[key] ?? "—").foregroundStyle(.secondary)
+                            .accessibilityIdentifier("browser-metadata-\(row.id)-\(key)")
                     }.font(.system(size: metadataSize * fontScale)).lineLimit(truncateRows ? 3 : nil)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
-        }.padding(.vertical, 4)
+        }.padding(.vertical, 8)
     }
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("閉じる")) { dismiss() } }

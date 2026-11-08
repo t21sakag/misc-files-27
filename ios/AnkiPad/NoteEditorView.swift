@@ -44,11 +44,17 @@ struct NoteEditorView: View {
     @AppStorage("visualNoteEditor") private var visualEditor = false
     @AppStorage("capitalizeNoteEditor") private var capitalizeEditor = true
     @AppStorage("noteEditorFontSize") private var editorFontSize = 0
+    @ScaledMetric(relativeTo: .body) private var editorReferenceSize: CGFloat = 17
     @AppStorage("closeAfterAdd") private var closeAfterAdd = false
     init(model: StudyModel, request: EditorRequest) {
         self.model = model; self.request = request; engine = model.engine
     }
     var body: some View { NavigationStack { loadedContent } }
+    private func fieldFontSize(_ current: NoteDocument, index: Int) -> CGFloat {
+        let authored = current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontSize"] as? Int ?? 20 : 20
+        return CGFloat(StudyTypography.editorFontSize(authored: authored, override: editorFontSize,
+                                                      dynamicScale: Double(editorReferenceSize / 17)))
+    }
     private var editorForm: some View {
             Form {
                 if let current = document {
@@ -103,12 +109,13 @@ struct NoteEditorView: View {
                         Section {
                             DisclosureGroup(isExpanded: Binding(get: { expanded.contains(index) }, set: { value in if value { expanded.insert(index) } else { expanded.remove(index) } })) {
                             if visualEditor {
-                                RichFieldEditor(text: Binding(get: { document?.fields[index] ?? "" }, set: { document?.fields[index] = $0; dirty = true }), media: engine.media, label: "note-field-\(index)", fontName: current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", fontSize: editorFontSize > 0 ? editorFontSize : (current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontSize"] as? Int ?? 20 : 20), rtl: current.fieldConfigs.indices.contains(index) && current.fieldConfigs[index]["rtl"] as? Bool == true, capitalize: capitalizeEditor)
+                                RichFieldEditor(text: Binding(get: { document?.fields[index] ?? "" }, set: { document?.fields[index] = $0; dirty = true }), media: engine.media, label: "note-field-\(index)", fontName: current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", fontSize: Int(fieldFontSize(current, index: index).rounded()), rtl: current.fieldConfigs.indices.contains(index) && current.fieldConfigs[index]["rtl"] as? Bool == true, capitalize: capitalizeEditor)
                             } else {
                             TextEditor(text: Binding(get: { document?.fields[index] ?? "" }, set: { document?.fields[index] = $0; dirty = true }))
-                                .frame(minHeight: 110).accessibilityIdentifier("note-field-\(index)")
+                                .frame(minHeight: max(140, fieldFontSize(current, index: index) * 4.5)).accessibilityIdentifier("note-field-\(index)")
                                 .autocorrectionDisabled().textInputAutocapitalization(capitalizeEditor ? .sentences : .never)
-                                .font(.custom(current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", size: CGFloat(editorFontSize > 0 ? editorFontSize : (current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontSize"] as? Int ?? 20 : 20))))
+                                .font(.custom(current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", fixedSize: fieldFontSize(current, index: index)))
+                                .lineSpacing(4)
                                 .environment(\.layoutDirection, current.fieldConfigs.indices.contains(index) && current.fieldConfigs[index]["rtl"] as? Bool == true ? .rightToLeft : .leftToRight)
                             }
                             Menu {

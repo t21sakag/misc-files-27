@@ -43,6 +43,14 @@ expected['native-search-repair'] = {
     'BrowserSearchFiltersFlowTests/testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch',
     'BrowserSearchFiltersFlowTests/testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable',
 }
+expected['native-typography'] = {
+    'TypographyFlowTests/testReadableNativeBrowserAndEditorInBothOrientations',
+    'TypographyFlowTests/testCardTextGrowsWithoutChangingImageWidth',
+    'TypographyFlowTests/testVisualEditorLargerTextPreservesOriginalHTML',
+    'BrowserAppearanceFlowTests/testBrowserFontAndSoundNamesPersistAfterRelaunch',
+    'CardAppearanceFlowTests/testImageOnlyZoomAndVerticalCenterSurviveRelaunch',
+    'TypingFocusFlowTests/testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks',
+}
 
 def condition(expression, mode, suite):
     values = {'env.CI_MODE': mode, 'env.UI_SUITE': suite, 'inputs.mode': mode, 'inputs.ui_suite': suite}
@@ -71,7 +79,10 @@ with tempfile.TemporaryDirectory() as directory:
                        check=True, stdout=subprocess.DEVNULL)
         plan = json.loads(output.read_text())
         assert {case for batch in plan['batches'] for case in batch} == cases
-        assert len(plan['batches']) == len(cases) and all(len(batch) == 1 for batch in plan['batches'])
+        assert len(plan['batches']) == min(5, len(cases))
+        assert all(batch for batch in plan['batches'])
+        if len(cases) <= 5:
+            assert all(len(batch) == 1 for batch in plan['batches'])
         assert condition(step_condition('Plan independent UI batches'), 'ui', suite)
         assert condition(step_condition('Package compiled test products'), 'ui', suite)
         assert condition(consumer, 'ui', suite)

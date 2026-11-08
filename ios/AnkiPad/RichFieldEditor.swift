@@ -37,7 +37,8 @@ struct RichFieldEditor: View {
                     formatButton(AppText.localized("やり直す"), icon: "arrow.uturn.forward", command: "redo")
                 }.buttonStyle(.borderless)
             }
-            RichFieldWebView(text: $text, media: media, label: label, fontName: fontName, fontSize: fontSize, rtl: rtl, capitalize: capitalize, commands: commands).frame(minHeight: 160)
+            RichFieldWebView(text: $text, media: media, label: label, fontName: fontName, fontSize: fontSize, rtl: rtl, capitalize: capitalize, commands: commands)
+                .frame(minHeight: 160).accessibilityIdentifier(label + "-web")
         }
         .alert(AppText.localized("リンクを挿入"), isPresented: $linking) {
             TextField("https://…", text: $link).textInputAutocapitalization(.never).autocorrectionDisabled()
@@ -65,6 +66,7 @@ private struct RichFieldWebView: UIViewRepresentable {
         configuration.userContentController.add(context.coordinator, name: "fieldChanged")
         configuration.userContentController.addUserScript(WKUserScript(source: "window.reportField=()=>window.webkit.messageHandlers.fieldChanged.postMessage(document.getElementById('field').innerHTML);document.addEventListener('input',window.reportField);", injectionTime: .atDocumentEnd, forMainFrameOnly: true))
         let view = WKWebView(frame: .zero, configuration: configuration)
+        view.accessibilityIdentifier = label + "-web"
         view.navigationDelegate = context.coordinator
         view.isOpaque = false
         view.backgroundColor = .clear
@@ -78,11 +80,12 @@ private struct RichFieldWebView: UIViewRepresentable {
         commands.webView = view
         // Note HTML is data: CSP prevents its script/event handlers from running.
         view.loadHTMLString("""
-        <!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ankimedia: data: https:; media-src ankimedia: data:; style-src 'unsafe-inline'"><style>:root{color-scheme:light dark}body{margin:8px;font:20px -apple-system;overflow-wrap:anywhere}#field{min-height:140px;outline:none}img{max-width:100%;height:auto}</style></head><body><div id="field" contenteditable="true" role="textbox" aria-multiline="true"></div></body></html>
+        <!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ankimedia: data: https:; media-src ankimedia: data:; style-src 'unsafe-inline'"><style>:root{color-scheme:light dark}body{margin:8px;font:20px -apple-system;overflow-wrap:anywhere}#field{min-height:140px;outline:none;line-height:1.5}img{max-width:100%;height:auto}</style></head><body><div id="field" contenteditable="true" role="textbox" aria-multiline="true"></div></body></html>
         """, baseURL: URL(string: "ankimedia://collection/"))
         return view
     }
     func updateUIView(_ view: WKWebView, context: Context) {
+        view.accessibilityIdentifier = label + "-web"
         context.coordinator.text = $text
         let needsUpdate = text != context.coordinator.value || label != context.coordinator.label || fontName != context.coordinator.fontName || fontSize != context.coordinator.fontSize || rtl != context.coordinator.rtl || capitalize != context.coordinator.capitalize
         context.coordinator.value = text

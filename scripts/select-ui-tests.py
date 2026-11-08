@@ -5,6 +5,10 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-typography': ['testReadableNativeBrowserAndEditorInBothOrientations', 'testCardTextGrowsWithoutChangingImageWidth', 'testVisualEditorLargerTextPreservesOriginalHTML', 'testBrowserFontAndSoundNamesPersistAfterRelaunch', 'testImageOnlyZoomAndVerticalCenterSurviveRelaunch', 'testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],
+    'typography-native': ['testReadableNativeBrowserAndEditorInBothOrientations'],
+    'typography-card': ['testCardTextGrowsWithoutChangingImageWidth'],
+    'typography-editor': ['testVisualEditorLargerTextPreservesOriginalHTML'],
     'native-search-repair': ['testStructuredFilterORCancelFieldIntersectionAndClear', 'testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch', 'testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable'],
     'native-browser-opening': ['testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable', 'testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch'],
     'browser-fresh-open': ['testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable'],

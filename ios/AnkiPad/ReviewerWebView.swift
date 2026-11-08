@@ -44,6 +44,7 @@ struct ReviewerWebView: UIViewRepresentable {
     @AppStorage("imageZoom") private var imageZoom = 100
     @AppStorage("centerVertically") private var centerVertically = false
     @AppStorage("reviewZoom") private var reviewZoom = 1.0
+    @ScaledMetric(relativeTo: .body) private var readingScale: CGFloat = 1
     @AppStorage("autoFocusTypeInAnswer") private var autoFocusTypeInAnswer = true
     @AppStorage("dayTheme") private var dayTheme = "1"
     @AppStorage("nightTheme") private var nightTheme = "3"
@@ -66,6 +67,7 @@ struct ReviewerWebView: UIViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
+        configuration.defaultWebpagePreferences.preferredContentMode = .mobile
         configuration.setURLSchemeHandler(MediaHandler(root: media), forURLScheme: "ankimedia")
         configuration.setURLSchemeHandler(MediaHandler(root: Bundle.main.resourceURL!.appendingPathComponent("backend"), host: "backend"), forURLScheme: "ankibundle")
         configuration.userContentController.add(context.coordinator, name: "reviewTap")
@@ -123,7 +125,7 @@ struct ReviewerWebView: UIViewRepresentable {
         let theme = StudyTheme.resolve(dark: dark, day: dayTheme, night: nightTheme)
         view.backgroundColor = theme.nativeBackground
         view.scrollView.backgroundColor = theme.nativeBackground
-        let key = "\(cardID)-\(answer)-\(html)-\(css)-\(dark)-\(hideAudioButtons)-\(imageZoom)-\(centerVertically)-\(autoFocusTypeInAnswer)-\(theme.rawValue)"
+        let key = "\(cardID)-\(answer)-\(html)-\(css)-\(dark)-\(hideAudioButtons)-\(imageZoom)-\(centerVertically)-\(autoFocusTypeInAnswer)-\(theme.rawValue)-\(readingScale)-\(typing?.size ?? 0)-\(typing?.font ?? "")"
         guard context.coordinator.loaded != key else { context.coordinator.deliverScriptEvent(view); return }
         context.coordinator.dialogs.audioCapture.documentChanged()
         context.coordinator.loaded = key
@@ -133,7 +135,8 @@ struct ReviewerWebView: UIViewRepresentable {
         if hideAudioButtons { content = content.replacingOccurrences(of: #"<a href="ankiplay://[^"]+"[^>]*>.*?</a>"#, with: "", options: .regularExpression) }
         if !answer, let typing {
             let answerLabel = TypedAnswerMarkup.escape(AppText.localized("解答を入力"))
-            let field = "<input id=\"typeans\" type=\"text\" aria-label=\"\(answerLabel)\" autocomplete=\"off\" autocorrect=\"\(typing.noSuggest ? "off" : "on")\" spellcheck=\"false\" value=\"\(TypedAnswerMarkup.escape(typedAnswer))\" style=\"font-size:\(typing.size)px;font-family:'\(TypedAnswerMarkup.escape(typing.font))';max-width:95%\" oninput=\"window.webkit.messageHandlers.typedAnswer.postMessage({cardID:'\(cardID)',value:this.value})\" onkeydown=\"if(event.key==='Enter'){event.preventDefault();window.webkit.messageHandlers.reveal.postMessage('\(cardID)')}\">"
+            let inputFontSize = Double(typing.size) * StudyTypography.cardTextScale(dynamicScale: Double(readingScale))
+            let field = "<input id=\"typeans\" type=\"text\" aria-label=\"\(answerLabel)\" autocomplete=\"off\" autocorrect=\"\(typing.noSuggest ? "off" : "on")\" spellcheck=\"false\" value=\"\(TypedAnswerMarkup.escape(typedAnswer))\" style=\"font-size:\(inputFontSize)px;-webkit-text-size-adjust:100%;text-size-adjust:100%;line-height:1.5;font-family:'\(TypedAnswerMarkup.escape(typing.font))';max-width:95%\" oninput=\"window.webkit.messageHandlers.typedAnswer.postMessage({cardID:'\(cardID)',value:this.value})\" onkeydown=\"if(event.key==='Enter'){event.preventDefault();window.webkit.messageHandlers.reveal.postMessage('\(cardID)')}\">"
             content = TypedAnswerMarkup.replace(in: content, with: field)
         }
         let needsMath = html.contains("\\(") || html.contains("\\[") || html.contains("$$")
@@ -147,7 +150,8 @@ struct ReviewerWebView: UIViewRepresentable {
         <base href="ankimedia://collection/">
         <link rel="stylesheet" href="ankibundle://backend/css/root-vars.css">
         <link rel="stylesheet" href="ankibundle://backend/css/reviewer_extras.css">
-        <style>:root{color-scheme:light dark}body{margin:24px;font-family:-apple-system;font-size:24px;overflow-wrap:anywhere}img{max-width:100%;height:auto}audio,video{max-width:100%}.cloze{font-weight:bold;color:#3478f6}.typeGood{background:#aaffaa;color:#000}.typeBad{background:#ffaaaa;color:#000}.typeMissed{background:#ccc;color:#000}\(StudyTheme.cardCSS)\(css)
+        <style>:root{color-scheme:light dark}body{margin:24px;font-family:-apple-system;font-size:22px;line-height:1.5;overflow-wrap:anywhere}img{max-width:100%;height:auto}audio,video{max-width:100%}.cloze{font-weight:bold;color:#3478f6}.typeGood{background:#aaffaa;color:#000}.typeBad{background:#ffaaaa;color:#000}.typeMissed{background:#ccc;color:#000}\(StudyTheme.cardCSS)\(css)
+        \(StudyTypography.cardReadingCSS(dynamicScale: Double(readingScale)))
         img{zoom:\(Double(min(300, max(50, imageZoom))) / 100)}
         body.vertically_centered{min-height:calc(100vh - 48px);display:flex;flex-direction:column;justify-content:center}
         body.vertically_centered>#qa{width:100%;flex-shrink:0}

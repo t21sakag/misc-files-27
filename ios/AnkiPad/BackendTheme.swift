@@ -13,6 +13,7 @@ extension StudyTheme {
             root.classList.toggle('night-mode', \(backendIsDark));
             root.dataset.bsTheme = '\(backendIsDark ? "dark" : "light")';
             root.dataset.studyBackendTheme = '\(rawValue)';
+            root.style.fontSize = '18px';
             root.style.colorScheme = '\(backendIsDark ? "dark" : "light")';
             root.style.setProperty('--canvas', '\(canvas)');
             root.style.setProperty('--canvas-inset', '\(canvas)');

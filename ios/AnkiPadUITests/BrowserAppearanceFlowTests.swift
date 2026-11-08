@@ -1,51 +1,45 @@
 import XCTest
 
-final class BrowserAppearanceFlowTests: StudyFlowTestSupport {
-    func testBrowserFontAndSoundNamesPersistAfterRelaunch() {
-        let app = makeApplication()
-        app.launchArguments = []
-        app.launch()
-        XCTAssertTrue(app.buttons["add-note"].waitForExistence(timeout: 30)); app.buttons["add-note"].tap()
-        let field = app.textViews["note-field-0"]
-        XCTAssertTrue(field.waitForExistence(timeout: 20)); field.tap()
-        field.typeText("Browser display literal.mp3 [sound:clip.mp3] <img src=\"photo.png\">")
-        app.buttons["note-save"].tap()
-        XCTAssertTrue(app.staticTexts["note-added"].waitForExistence(timeout: 30)); app.buttons["note-close"].tap()
-        func browser() {
-            XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
-            app.buttons["collection-menu"].tap(); app.buttons["browser-open"].tap()
-        }
-        let front = app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH 'browser-front-'")).firstMatch
-        browser()
-        XCTAssertTrue(front.waitForExistence(timeout: 30), app.debugDescription)
+final class BrowserAppearanceFlowTests: TypographyTestSupport {
+    func testBrowserFontAndSoundNamesPersistAfterRelaunch() throws {
+        let app = application()
+        try addNote(front: "Browser display literal.mp3 [sound:clip.mp3] <img src=\"photo.png\">", in: app)
+        openBrowser(app)
+        let fronts = app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browser-front-"))
+        let front = try XCTUnwrap(waitForTestControl(fronts, in: app, purpose: .observation))
         XCTAssertTrue(front.label.contains("literal.mp3"))
         XCTAssertTrue(front.label.contains("photo.png"))
         XCTAssertFalse(front.label.contains("clip.mp3"))
         let originalHeight = front.frame.height
-        app.navigationBars.buttons["閉じる"].firstMatch.tap()
-        app.buttons["collection-menu"].tap(); app.buttons["設定"].tap()
-        let size = app.steppers["browser-font-size"]
-        revealSettingsControl(size, in: app)
+        capture("Browser default reading size", in: app)
+        tapTestControl(app.navigationBars.buttons.matching(NSPredicate(format: "label == %@", "閉じる")), in: app)
+        tapTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
+        tapTestMenuAction(titles: ["設定"], in: app)
+        _ = try XCTUnwrap(waitForTestControl(app.scrollViews.matching(identifier: "settings-form"), in: app, purpose: .observation))
+        let sizes = app.steppers.matching(identifier: "browser-font-size")
+        revealSettingsControl(sizes.element, in: app)
+        let size = try XCTUnwrap(waitForTestControl(sizes, in: app, purpose: .observation))
         XCTAssertTrue(size.label.contains("100%"))
-        let increment = size.buttons.matching(NSPredicate(format: "identifier ENDSWITH '-Increment'")).firstMatch
-        XCTAssertTrue(increment.exists, app.debugDescription)
-        increment.tap(); increment.tap()
-        XCTAssertTrue(size.label.contains("120%"))
-        let outer = app.switches["browser-media-filenames"]
-        revealSettingsControl(outer, in: app)
-        let toggle = outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
-        XCTAssertEqual(toggle.value as? String, "0")
-        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
-        XCTAssertEqual(toggle.value as? String, "1")
-        app.buttons["settings-save"].tap()
-        XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30))
-        app.terminate(); app.launch()
-        browser()
-        XCTAssertTrue(front.waitForExistence(timeout: 30), app.debugDescription)
-        XCTAssertTrue(front.label.contains("clip.mp3"))
-        XCTAssertTrue(front.label.contains("literal.mp3"))
-        XCTAssertTrue(front.label.contains("photo.png"))
-        XCTAssertGreaterThan(front.frame.height, originalHeight + 2, "The short one-line field must actually render with a larger font")
-        XCTAssertFalse(app.alerts.firstMatch.exists)
+        let increment = sizes.buttons.matching(NSPredicate(format: "identifier ENDSWITH %@", "-Increment"))
+        tapTestControl(increment, in: app)
+        tapTestControl(increment, in: app)
+        requireTestCondition("Browser font preference reaches120percent", in: app) { size.label.contains("120%") }
+        let filenameSwitch = app.switches.matching(identifier: "browser-media-filenames")
+        revealSettingsControl(filenameSwitch.element, in: app)
+        _ = waitForTestControl(filenameSwitch, in: app, purpose: .observation)
+        capture("Before browser display preference switch", in: app)
+        setTestSwitch(filenameSwitch, enabled: true, in: app)
+        tapTestControl(app.buttons.matching(identifier: "settings-save"), in: app)
+        requireTestCondition("Display settings saved and closed", in: app) { app.buttons.matching(identifier: "settings-save").count == 0 }
+        app.terminate()
+        app.launch()
+        openBrowser(app)
+        let restored = try XCTUnwrap(waitForTestControl(fronts, in: app, purpose: .observation))
+        XCTAssertTrue(restored.label.contains("clip.mp3"))
+        XCTAssertTrue(restored.label.contains("literal.mp3"))
+        XCTAssertTrue(restored.label.contains("photo.png"))
+        XCTAssertGreaterThan(restored.frame.height, originalHeight + 2)
+        capture("User browser percentage retained after relaunch", in: app)
+        XCTAssertEqual(app.alerts.count, 0)
     }
 }

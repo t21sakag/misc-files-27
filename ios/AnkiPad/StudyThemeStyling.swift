@@ -39,6 +39,8 @@ struct StudyThemeContainer<Content: View>: View {
         let theme = StudyTheme.resolve(dark: scheme == .dark, day: day, night: night)
         let motionDisabled = StudyMotionPolicy.disablesAnimations(appSetting: removeAnimations, systemReduceMotion: systemReduceMotion, theme: theme)
         content().tint(theme.accent)
+            .dynamicTypeSize(.xLarge...)
+            .lineSpacing(3)
             .background(Color(uiColor: theme.nativeBackground).ignoresSafeArea())
             .background(alignment: .bottomLeading) {
                 #if DEBUG

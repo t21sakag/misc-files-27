@@ -201,5 +201,10 @@
     "testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch",
     "testSavedSearchAndFilteredDeckUseCompleteResolvedRequest",
     "testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable"
+  ],
+  "TypographyFlowTests": [
+    "testReadableNativeBrowserAndEditorInBothOrientations",
+    "testCardTextGrowsWithoutChangingImageWidth",
+    "testVisualEditorLargerTextPreservesOriginalHTML"
   ]
 }

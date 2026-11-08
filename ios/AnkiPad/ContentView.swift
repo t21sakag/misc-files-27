@@ -653,8 +653,9 @@ struct ContentView: View {
                             .disabled(model.busy || !model.profilesReady)
                         } else { Color.clear.frame(width: 36, height: 1).accessibilityHidden(true) }
                         Button { model.select(deck) } label: {
-                            HStack {
+                            HStack(alignment: .firstTextBaseline) {
                                 Text(deck.name).foregroundStyle(.primary)
+                                    .lineLimit(nil).fixedSize(horizontal: false, vertical: true)
                                 Spacer()
                                 Text("\(deck.newCount)").foregroundStyle(activeTheme == .eink ? Color.primary : .blue).monospacedDigit()
                                 Text("\(deck.learnCount)").foregroundStyle(activeTheme == .eink ? Color.primary : .orange).monospacedDigit()
