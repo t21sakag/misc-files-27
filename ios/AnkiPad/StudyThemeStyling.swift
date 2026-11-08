@@ -33,13 +33,14 @@ struct StudyThemeContainer<Content: View>: View {
     @AppStorage("nightTheme") private var night = "3"
     @AppStorage("safeDisplay") private var removeAnimations = false
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var systemTypeSize
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @ViewBuilder var content: () -> Content
     var body: some View {
         let theme = StudyTheme.resolve(dark: scheme == .dark, day: day, night: night)
         let motionDisabled = StudyMotionPolicy.disablesAnimations(appSetting: removeAnimations, systemReduceMotion: systemReduceMotion, theme: theme)
         content().tint(theme.accent)
-            .dynamicTypeSize(.xLarge...)
+            .environment(\.dynamicTypeSize, max(systemTypeSize, .xLarge))
             .lineSpacing(3)
             .background(Color(uiColor: theme.nativeBackground).ignoresSafeArea())
             .background(alignment: .bottomLeading) {
@@ -62,6 +63,7 @@ private struct StudyThemeSurface: ViewModifier {
     @AppStorage("dayTheme") private var day = "1"
     @AppStorage("nightTheme") private var night = "3"
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var systemTypeSize
     func body(content: Content) -> some View {
         let theme = StudyTheme.resolve(dark: scheme == .dark, day: day, night: night)
         content.scrollContentBackground(.hidden).background(Color(uiColor: theme.nativeBackground))

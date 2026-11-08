@@ -21,6 +21,7 @@ final class TypographyFlowTests: TypographyTestSupport {
         let front = try XCTUnwrap(waitForTestControl(app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@", "browser-front-", frontText)), in: app, purpose: .observation))
         let back = try XCTUnwrap(waitForTestControl(app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@", "browser-back-", backText)), in: app, purpose: .observation))
         let metadata = try XCTUnwrap(waitForTestControl(app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@", "browser-metadata-", "-template")), in: app, purpose: .observation))
+        capture("Browser font measurements before assertions", in: app)
         XCTAssertGreaterThanOrEqual(front.frame.height, 22)
         XCTAssertGreaterThanOrEqual(back.frame.height, 20)
         XCTAssertGreaterThanOrEqual(metadata.frame.height, 16)

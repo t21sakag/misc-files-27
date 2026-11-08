@@ -20,6 +20,7 @@ final class BrowserAppearanceFlowTests: TypographyTestSupport {
         revealSettingsControl(sizes.element, in: app)
         let size = try XCTUnwrap(waitForTestControl(sizes, in: app, purpose: .observation))
         XCTAssertTrue(size.label.contains("100%"))
+        capture("Browser font stepper before increment", in: app)
         let increment = sizes.buttons.matching(NSPredicate(format: "identifier ENDSWITH %@", "-Increment"))
         tapTestControl(increment, in: app)
         tapTestControl(increment, in: app)
