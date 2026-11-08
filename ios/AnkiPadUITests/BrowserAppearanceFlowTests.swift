@@ -3,6 +3,9 @@ import XCTest
 final class BrowserAppearanceFlowTests: TypographyTestSupport {
     func testBrowserFontAndSoundNamesPersistAfterRelaunch() throws {
         let app = application()
+        app.terminate()
+        app.launchArguments = ["--uitest-settings-input"]
+        app.launch()
         try addNote(front: "Browser display literal.mp3 [sound:clip.mp3] <img src=\"photo.png\">", in: app)
         openBrowser(app)
         let fronts = app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browser-front-"))
@@ -29,7 +32,10 @@ final class BrowserAppearanceFlowTests: TypographyTestSupport {
         revealSettingsControl(filenameSwitch.element, in: app)
         _ = waitForTestControl(filenameSwitch, in: app, purpose: .observation)
         capture("Before browser display preference switch", in: app)
-        setTestSwitch(filenameSwitch, enabled: true, in: app)
+        let diagnostics = app.staticTexts.matching(identifier: "browser-native-input-state")
+        let state = try XCTUnwrap(waitForTestControl(diagnostics, in: app, purpose: .observation))
+        print("Before media switch native state: " + (state.value as? String ?? "missing"))
+        setTestSwitch(filenameSwitch, enabled: true, in: app, failureContext: { state.value as? String ?? "missing native state" })
         tapTestControl(app.buttons.matching(identifier: "settings-save"), in: app)
         requireTestCondition("Display settings saved and closed", in: app) { app.buttons.matching(identifier: "settings-save").count == 0 }
         app.terminate()

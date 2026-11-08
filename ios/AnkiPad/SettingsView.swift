@@ -204,6 +204,21 @@ struct SettingsView: View {
                 } else { ProgressView() }
             }
             .accessibilityIdentifier("settings-form")
+            #if DEBUG
+            .overlay(alignment: .bottomLeading) {
+                if UITestIsolation.namespace() != nil,
+                   ProcessInfo.processInfo.arguments.contains("--uitest-settings-input") {
+                    BrowserInputDiagnosticsView(readValue: {
+                        BrowserInputDiagnostics.read(loaded: loaded, busy: busy, notes: browserMediaFilenames)
+                    }).fixedSize().accessibilityIdentifier("browser-native-input-state").allowsHitTesting(false)
+                }
+            }
+            .onChange(of: browserMediaFilenames) { _, value in
+                if UITestIsolation.namespace() != nil {
+                    NSLog("settings.media.changed enabled=%d", value ? 1 : 0)
+                }
+            }
+            #endif
             .studyThemeSurface()
             .disabled(busy)
             .navigationTitle(AppText.localized("設定"))

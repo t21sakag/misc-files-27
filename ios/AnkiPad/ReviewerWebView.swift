@@ -356,6 +356,11 @@ struct ReviewerWebView: UIViewRepresentable {
                   phase, view.window != nil ? 1 : 0, view.window?.isKeyWindow == true ? 1 : 0,
                   view.isUserInteractionEnabled ? 1 : 0, nativeType, nativeInWeb ? 1 : 0,
                   domFocused.map(String.init) ?? "unobserved", errorIdentity)
+            NSLog("typing.geometry.native phase=%@ offset=%@ content=%@ bounds=%@", phase,
+                  String(describing: view.scrollView.contentOffset), String(describing: view.scrollView.contentSize), String(describing: view.bounds))
+            view.evaluateJavaScript("(()=>{const f=document.getElementById('typeans'),r=f?.getBoundingClientRect();return JSON.stringify({scrollY,innerWidth,innerHeight,documentHeight:document.documentElement.scrollHeight,field:r?{x:r.x,y:r.y,width:r.width,height:r.height}:null,viewport:visualViewport?{top:visualViewport.offsetTop,height:visualViewport.height,scale:visualViewport.scale}:null});})()") { result, _ in
+                NSLog("typing.geometry.dom phase=%@ metrics=%@", phase, result as? String ?? "unavailable")
+            }
         }
         #endif
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
