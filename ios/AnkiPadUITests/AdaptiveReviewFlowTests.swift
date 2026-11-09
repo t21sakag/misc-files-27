@@ -28,6 +28,11 @@ final class AdaptiveReviewFlowTests: TypographyTestSupport {
         try addNote(front: html, back: "English answer 日本語の答え", in: app)
         tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
         let web = try XCTUnwrap(waitForTestCardWebView(in: app))
+        // This fixture starts the native audio/video processes on first use.
+        // Recorded WebKit layer-tree startup took 38.93s before any content
+        // existed. Establish real document readiness before timing layout.
+        _ = try XCTUnwrap(waitForTestControl(web.staticTexts.matching(NSPredicate(format: "label == %@", "English and 日本語の問題")),
+                                             in: app, timeout: 60, purpose: .observation))
         requireTestCondition("Real media completes adaptive portrait layout", in: app) {
             web.staticTexts.matching(NSPredicate(format: "label == %@", "Adaptive media verified portrait")).count == 1
         }
