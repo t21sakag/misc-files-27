@@ -209,7 +209,44 @@ class StudyFlowTestSupport: XCTestCase {
 
     @discardableResult
     func tapTestMenuAction(titles: [String], in app: XCUIApplication) -> XCUIElement? {
-        tapTestControl(menuActions(titles: titles, in: app), in: app, keyboard: .keep)
+        let actions = menuActions(titles: titles, in: app)
+        guard requireTestCondition("One native menu action for \(titles)", in: app, condition: { actions.count == 1 }) else { return nil }
+        if !actions.element.isHittable {
+            let containers = app.collectionViews.allElementsBoundByIndex.filter {
+                $0.children(matching: .cell).children(matching: .button)
+                    .matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(titles))).count == 1
+            }
+            guard containers.count == 1 else {
+                controlFailure(actions, in: app, reason: "Cannot uniquely resolve the menu's scrolling collection")
+                return nil
+            }
+            let menu = containers[0]
+            for _ in 0..<8 {
+                guard actions.count == 1 else {
+                    controlFailure(actions, in: app, reason: "Menu action changed during scrolling")
+                    return nil
+                }
+                if actions.element.isHittable { break }
+                // Menu CollectionView frames can extend below the clipped
+                // popover. Derive the gesture from actual visible rows.
+                let visible = menu.children(matching: .cell).children(matching: .button)
+                    .allElementsBoundByIndex.filter { $0.isHittable }.map(\.frame)
+                    .filter { app.frame.contains(CGPoint(x: $0.midX, y: $0.midY)) }
+                guard let top = visible.min(by: { $0.midY < $1.midY }),
+                      let bottom = visible.max(by: { $0.midY < $1.midY }), bottom.midY - top.midY > 44 else {
+                    controlFailure(actions, in: app, reason: "Menu has no unambiguous visible scrolling area")
+                    return nil
+                }
+                let scrollDown = actions.element.frame.midY > bottom.midY
+                let start = scrollDown ? bottom : top
+                let end = scrollDown ? top : bottom
+                let origin = app.coordinate(withNormalizedOffset: .zero)
+                origin.withOffset(CGVector(dx: start.midX - app.frame.minX, dy: start.midY - app.frame.minY))
+                    .press(forDuration: 0.1, thenDragTo: origin.withOffset(CGVector(dx: end.midX - app.frame.minX, dy: end.midY - app.frame.minY)),
+                           withVelocity: .slow, thenHoldForDuration: 0.2)
+            }
+        }
+        return tapTestControl(actions, in: app, keyboard: .keep)
     }
 
     /// SwiftUI can export a labelled full-row Switch wrapping the native

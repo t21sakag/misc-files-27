@@ -6699,6 +6699,212 @@
         }
       ],
       "checked_at": "2026-11-08T15:20:03.786391+00:00"
+    },
+    {
+      "id": "20261109-browser-reset-bundle-and-menu-scroll",
+      "covers": [
+        [
+          42572809094,
+          1
+        ],
+        [
+          42571266254,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42571266254,
+            1
+          ],
+          "kind": "environment",
+          "finding": "First attempt failed before XCTest because the consumer used a checkout APKG path. The transferred archive contains both reset APKG and JSON in the xctest bundle. The batch runner now resolves that one compiled resource and the actual runner mock proves readiness with no checkout fixture and refuses a missing bundle."
+        },
+        {
+          "attempt": [
+            42572809094,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Shared menu activation lacked reveal handling. Both recordings/screens show the initial menu viewport ending around tags while reset is below it. AX target y865 is below the actual y790 clip. Add bounded drags using actual hit-tested visible row frames, not the oversized collection frame or a new tap variant."
+        }
+      ],
+      "rule_review": {
+        "semantic_labels": "Both reset actions match the exact AX button label 新規カードに戻す. Source menu IDs are not assumed. The failure was readiness after unique resolution, not label mismatch.",
+        "foreground_scope": "Terminal AX exposes a foreground menu CollectionView at x455.5,y270,w236 with an inaccurate height1180, inside a popover clipped near y790. Background browser collections are separate. The helper resolves the one collection with the direct terminal Cell/Button.",
+        "unique_reads_and_actions": "Both failed case targets resolved exactly once. Preserve one-target checks before and after bounded menu scrolling and reject multiple owning containers. Switch reads use the unique direct native child. No first-match tap fallback.",
+        "live_state": "At failure the app was running, the browser had 1 selected card or note and the actions menu remained open. No reset dialog or scheduling mutation was reached. The recording tail contains normal test cleanup Home after the failure, not evidence of an app crash.",
+        "keyboard_and_scroll": "Shared menu activation lacked reveal handling. Both recordings/screens show the initial menu viewport ending around tags while reset is below it. AX target y865 is below the actual y790 clip. Add bounded drags using actual hit-tested visible row frames, not the oversized collection frame or a new tap variant.",
+        "environment": "First attempt failed before XCTest because the consumer used a checkout APKG path. The transferred archive contains both reset APKG and JSON in the xctest bundle. The batch runner now resolves that one compiled resource and the actual runner mock proves readiness with no checkout fixture and refuses a missing bundle.",
+        "first_failure_evidence": "Collected both failed logs, compiled archive resource paths, terminal AX/PNG, input-events and recordings. The first attempt has no AX/video because preflight aborted before UI. Second attempt has no reset target tap event because readiness correctly refused it. Both terminal menus show off-viewport reset.",
+        "failure_classification": "42571266254 is environment wiring in the validation runner. 42572809094 is harness scrolling omission in shared menu activation. No evidence yet proves or contradicts native reset dialog behavior. Run history ordered by actual step starts covers the exact two attempts.",
+        "runtime_warnings": "Both second-attempt summaries report runtimeWarnings=[] with 1 failed/0 passed/0 skipped each. These failed cases do not provide app reset success evidence. Retain warning and exact identity gates unchanged.",
+        "device_evidence": "Synthetic real-engine export/reimport and production Swift+CABI options4/backup/Undo pass locally. Simulator UI has not yet entered reset. No claim about physical iPad reset, audio, notifications, or signing."
+      },
+      "root_cause": "Generated reset resources were not resolved inside consumer products, then native menu readiness lacked scrolling to the clipped terminal action. Both are validation omissions.",
+      "common_resolution": "Extend actual consumer fixture resolution and its regression mock. Extend shared terminal menu activation to unique owning menu plus bounded visible-row drags. Update environment/scroll rules and preserve original app actions and postconditions.",
+      "next_scope": [
+        "BrowserForgetFlowTests/testCardResetCancelOptionsPersistAndUndoLeavesSiblingReviewed",
+        "BrowserForgetFlowTests/testNoteResetExpandsOnlySelectedNoteAndUndoRestoresBothCards"
+      ],
+      "evidence": [
+        {
+          "reference": "run 42571266254 failed.log",
+          "sha256": "286b5fce182d0be335879fda8cb6193d399a959ff81b43f0c15b435fa740a5ff"
+        },
+        {
+          "reference": "run 42572809094 failed.log",
+          "sha256": "013876e1b072f1b9dfed9614a1e65a613379e47e0313ec912234cac0c982aac2"
+        },
+        {
+          "reference": "run 42572809094 diag0/screenshots/0A2B4AEC-D473-4FA6-9F4D-BCBF9BB6B7A3.txt",
+          "sha256": "2f4e32b166be368e6ff3805996f58a1eebf2562498584cceeb70d37c4c9c6984"
+        },
+        {
+          "reference": "run 42572809094 diag0/screenshots/4F876B27-C3EA-41F1-96F1-E51855BC586A.txt",
+          "sha256": "7526fe1f41b55b32a73c045f6621f3012aac9ddf9e5e8b490922c8e32e7ca955"
+        },
+        {
+          "reference": "run 42572809094 diag0/input-events.json",
+          "sha256": "3d7a953ebbcb84d5e0b6383a2b538c4ac4076e78c6b427630b103d5a0cb82fbf"
+        },
+        {
+          "reference": "run 42572809094 diag0/test-summary.json",
+          "sha256": "8fc99dc7b1130c2f6d046a7a3a1011a415159a568e492f46884af273805097b0"
+        },
+        {
+          "reference": "run 42572809094 diag1/screenshots/70FCAF13-1D97-4791-8C6E-12D57087DED0.txt",
+          "sha256": "873c343dc2d0c9564f0e8811571acdf367ddb4e4932962941f7156a47dcc6c15"
+        },
+        {
+          "reference": "run 42572809094 diag1/screenshots/2B764944-E7E7-4B0A-AC17-10A11A93E716.txt",
+          "sha256": "73a8427026700b2e7b19e9896867263d2d7f3a4943d076fb0f0d107ace3afd58"
+        },
+        {
+          "reference": "run 42572809094 diag1/input-events.json",
+          "sha256": "5dc3878db5e0e19c61b6ea58c08ff23f5b4ef979ee39e7b1fb3876aba164f3d7"
+        },
+        {
+          "reference": "run 42572809094 diag1/test-summary.json",
+          "sha256": "63534c9ec634278937a6706f00edda20d7ac1c8cfc43f5a5b1c8140fba7fb975"
+        },
+        {
+          "reference": "run 42572809094 screens0/8FD7F64A-4BD4-4AD5-823A-D7BF30882474.mp4",
+          "sha256": "a0c28c69ecd6a9998947c780e3c6c9b789af875f2f8f291470b233c9bef6da69"
+        },
+        {
+          "reference": "run 42572809094 screens1/783DF074-D4B2-403B-9B8A-A868D31EC30B.mp4",
+          "sha256": "69c1cbf642d92405547cf3dd776235b5220bf886e21eb84adfc216fe26fd74fe"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "f406a5edcca9b5cf2bd059191309304e8603ee75e927097fb21c6654f5dd5c29",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "77e42696aae37decdabde25080b1b0e1570683251392b8b6717e75b90003ae8c",
+        "scripts/run-ui-batch.py": "24e60a80b1aab2e9e64eb7de0892122152437996d6083484618a73b532f7a4de",
+        "scripts/ui-prerequisites.py": "461e7ad30e98d7897cc7a5a203b5d5fdad7d8a8cdca6b0badfb0c0ffa24233de",
+        "tests/ui_batch_runner_smoke.py": "6f1f5af7ac3ef1ad76630ba7f4841b9ec257f0be2a8fa9eddf890190fd522d5e",
+        "tests/ui_prerequisites_smoke.py": "522ffe40a5a52052732ec17d9151ff92fd367e297b0aaf43be648baea1e136eb",
+        "ios/AnkiPadUITests/BrowserForgetFlowTests.swift": "04b9cc1026c5ee6681552305b45dfefdc932f68eedd0d54d53a5e9c79ba477e1",
+        "tests/browser_forget_fixture.py": "7a0bc60a537282f3f3f61f294269aa41516eff914f03ec93a53b29bf13c315a4",
+        "scripts/select-ui-tests.py": "2bbe2862978532e49c273863a5b7f8e6f3eaebd869eee00ebd64ec392ba5e675",
+        ".github/workflows/ipa.yml": "01d187278e7504fd95310b5e0126e7e09a70affce09d37252cf6c642f03d3b20"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "bc50b1ce061d81f267f96b04aac5777f6a5dcf4dbfae900bbea5aa60b66d4e51"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "a8bb26866ec7ff429cdc43ac06242dd161350b994b2dc7f2fcfd5b831204363a"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "71819b79c5bc7111db6cffbf3e41560a91d1f13147ffcb29e80212206978056d"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "fa047c76b5c32aec3c829a97aab05158741feba9a54e3a1fca36eb240febf873"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6506011d69f680a53262e95b832e76f25f9ddaa64a6054f69808e16f488f1d2d"
+        },
+        {
+          "name": "prerequisite rejection",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "actual consumer runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        }
+      ],
+      "checked_at": "2026-11-09T06:45:12.840051+00:00"
     }
   ]
 }
