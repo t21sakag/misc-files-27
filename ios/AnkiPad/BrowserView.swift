@@ -19,6 +19,7 @@ struct BrowserView: View {
     @State private var tags: [String] = []
     @State private var types: [NamedID] = []
     @State private var loaded = false
+    @State private var undoStatus = BrowserUndoStatus()
     @State private var completedQuery = ""
     @State private var ids: [String] = []
     @State private var rows: [BrowserCard] = []
@@ -244,9 +245,14 @@ struct BrowserView: View {
             }.accessibilityIdentifier("browser-create-filtered")
             Button(AppText.localized("検索と置換")) { findReplace = FindReplaceRequest(noteIDs: []) }
                 .accessibilityIdentifier("browser-find-replace")
-            Button(AppText.localized("取り消す")) { mutate { try await model.engine.undo() } }
-            Button(AppText.localized("やり直す")) { mutate { _ = try await model.engine.call("CollectionService.Redo") } }
-        } label: { Image(systemName: "line.3.horizontal.decrease.circle") }.disabled(interactionBlocked).accessibilityIdentifier("browser-filter-menu")
+            if !undoStatus.undo.isEmpty {
+                Button(AppText.localized("「\(String(undoStatus.undo))」を元に戻す")) { mutate { try await model.engine.undo() } }
+            }
+            if !undoStatus.redo.isEmpty {
+                Button(AppText.localized("「\(String(undoStatus.redo))」をやり直す")) { mutate { _ = try await model.engine.call("CollectionService.Redo") } }
+            }
+        } label: { Image(systemName: "line.3.horizontal.decrease.circle") }
+            .disabled(interactionBlocked || model.currentProfile.id != openingProfileID).accessibilityIdentifier("browser-filter-menu")
     }
     private var actionsMenu: some View {
         Menu {
@@ -445,6 +451,7 @@ struct BrowserView: View {
         }
     }
     private func search() async {
+        undoStatus = BrowserUndoStatus()
         guard loaded, model.currentProfile.id == openingProfileID else { return }
         let identity = searchTaskIdentity
         let request = identity.request, snapshot = config, filenames = showMediaFilenames
@@ -460,9 +467,11 @@ struct BrowserView: View {
             let result = try await engine.searchBrowserIDs(resolved, config: snapshot)
             try Task.checkCancellation()
             let cards = try await engine.browserRows(Array(result.prefix(100)), config: snapshot, showMediaFilenames: filenames)
+            let undo = try await engine.browserUndoStatus()
             try Task.checkCancellation()
             guard model.currentProfile.id == profileID, searchTaskIdentity == identity else { return }
             ids = result; rows = cards; updateSelection(selected.intersection(Set(ids))); completedQuery = resolved
+            undoStatus = undo
         } catch is CancellationError {} catch { self.error = error.localizedDescription }
     }
     private func edit(_ row: BrowserCard) { editor = config.notesMode ? EditorRequest(noteID: row.noteID, deckID: row.deckID) : EditorRequest(cardID: row.id, deckID: row.deckID) }

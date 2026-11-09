@@ -358,10 +358,14 @@ jobs:
           build/browser-forget-options-smoke
       - name: Compile browser reset driver
         if: env.CI_MODE == 'compile' || env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'browser-tools' || env.UI_SUITE == 'native-browser-reset' || startsWith(env.UI_SUITE, 'browser-reset-')))
-        run: swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BrowserForgetOptions.swift ios/AnkiPad/BrowserForgetEngine.swift tests/browser_forget_driver.swift -o build/browser-forget-driver
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BrowserForgetOptions.swift ios/AnkiPad/BrowserForgetEngine.swift tests/browser_forget_driver.swift -o build/browser-forget-driver
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BrowserUndoStatus.swift tests/browser_undo_status_driver.swift -o build/browser-undo-status-driver
       - name: Verify selected reset backup and undo semantics
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'browser-tools' || env.UI_SUITE == 'native-browser-reset' || startsWith(env.UI_SUITE, 'browser-reset-')))
-        run: python3 tests/browser_forget_engine_smoke.py build/native/host/libankipad_bridge.dylib build/browser-forget-driver
+        run: |
+          python3 tests/browser_forget_engine_smoke.py build/native/host/libankipad_bridge.dylib build/browser-forget-driver
+          python3 tests/browser_undo_status_smoke.py build/native/host/libankipad_bridge.dylib build/browser-undo-status-driver
       - name: Prepare reviewed reset fixture
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'native-browser-reset' || startsWith(env.UI_SUITE, 'browser-reset-')))
         run: python3 tests/browser_forget_fixture.py build/native/host/libankipad_bridge.dylib ios/AnkiPadUITests/ReceivedFixtures

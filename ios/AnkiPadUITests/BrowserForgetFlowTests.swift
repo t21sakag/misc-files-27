@@ -81,7 +81,7 @@ final class BrowserForgetFlowTests: StudyFlowTestSupport {
     }
     private func undo(in app: XCUIApplication) {
         tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
-        tapTestMenuAction(titles: ["取り消す"], in: app)
+        tapTestMenuAction(titles: ["「カードをリセット」を元に戻す"], in: app)
     }
     func testCardResetCancelOptionsPersistAndUndoLeavesSiblingReviewed() throws {
         let app = try fixture()
@@ -103,6 +103,12 @@ final class BrowserForgetFlowTests: StudyFlowTestSupport {
             let status = app.staticTexts.matching(identifier: "browser-results")
             return app.buttons.matching(identifier: "browser-forget-apply").count == 0 && status.count == 1 && status.element.label.contains("0件選択中")
         }
+        search("row0 is:new", count: 1, in: app)
+        search("row0 is:review", count: 1, in: app)
+        undo(in: app)
+        search("row0 is:review", count: 2, in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["「カードをリセット」をやり直す"], in: app)
         search("row0 is:new", count: 1, in: app)
         search("row0 is:review", count: 1, in: app)
         undo(in: app)
