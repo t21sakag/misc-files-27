@@ -58,6 +58,19 @@ final class BrowserForgetFlowTests: StudyFlowTestSupport {
             return label.count == 1 && label.element.label == "\(count)枚"
         }
     }
+    private func nativeState(_ app: XCUIApplication) -> String {
+        let query = app.staticTexts.matching(identifier: "browser-forget-native-state")
+        guard let state = waitForTestControl(query, in: app, keyboard: .keep, purpose: .observation) else { return "Native reset diagnostic missing" }
+        return state.value as? String ?? "Native reset diagnostic value missing"
+    }
+    private func setOption(_ identifier: String, enabled: Bool, in app: XCUIApplication) {
+        let evidence = XCTAttachment(string: nativeState(app))
+        evidence.name = "Before " + identifier
+        evidence.lifetime = .keepAlways
+        add(evidence)
+        setTestSwitch(app.switches.matching(identifier: identifier), enabled: enabled, in: app,
+                      failureContext: { self.nativeState(app) })
+    }
     private func expectOption(_ identifier: String, enabled: Bool, in app: XCUIApplication) {
         let row = app.switches.matching(identifier: identifier)
         guard waitForTestControl(row, in: app, purpose: .observation) != nil else { return }
@@ -75,16 +88,16 @@ final class BrowserForgetFlowTests: StudyFlowTestSupport {
         let target = "row0 card:\"Reset Forward\""
         search(target, count: 1, in: app)
         openReset(count: 1, in: app)
-        setTestSwitch(app.switches.matching(identifier: "browser-forget-restore"), enabled: false, in: app)
-        setTestSwitch(app.switches.matching(identifier: "browser-forget-counts"), enabled: true, in: app)
+        setOption("browser-forget-restore", enabled: false, in: app)
+        setOption("browser-forget-counts", enabled: true, in: app)
         tapTestControl(app.buttons.matching(identifier: "browser-forget-cancel"), in: app)
         search("row0 is:review", count: 2, in: app)
         search(target, count: 1, in: app)
         openReset(count: 1, in: app)
         expectOption("browser-forget-restore", enabled: true, in: app)
         expectOption("browser-forget-counts", enabled: false, in: app)
-        setTestSwitch(app.switches.matching(identifier: "browser-forget-restore"), enabled: false, in: app)
-        setTestSwitch(app.switches.matching(identifier: "browser-forget-counts"), enabled: true, in: app)
+        setOption("browser-forget-restore", enabled: false, in: app)
+        setOption("browser-forget-counts", enabled: true, in: app)
         tapTestControl(app.buttons.matching(identifier: "browser-forget-apply"), in: app)
         requireTestCondition("Successful reset clears selection", in: app) {
             let status = app.staticTexts.matching(identifier: "browser-results")

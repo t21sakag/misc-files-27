@@ -27,12 +27,23 @@ struct BrowserForgetRequest: Identifiable {
         NavigationStack {
             Form {
                 Text(AppText.localized("\(request.cardIDs.count)枚")).accessibilityIdentifier("browser-forget-count")
-                Toggle(AppText.localized("元の新規カードの位置に戻す"), isOn: $options.restorePosition)
+                Toggle(AppText.localized("元の新規カードの位置に戻す"), isOn: optionBinding(\.restorePosition, name: "restore"))
                     .accessibilityIdentifier("browser-forget-restore")
-                Toggle(AppText.localized("解答回数と忘却回数をリセット"), isOn: $options.resetCounts)
+                Toggle(AppText.localized("解答回数と忘却回数をリセット"), isOn: optionBinding(\.resetCounts, name: "counts"))
                     .accessibilityIdentifier("browser-forget-counts")
                 if busy { ProgressView() }
             }
+            .accessibilityIdentifier("browser-forget-form")
+            #if DEBUG
+            .overlay(alignment: .bottomLeading) {
+                if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-browser-undo-trace") {
+                    BrowserInputDiagnosticsView(readValue: {
+                        BrowserInputDiagnostics.read(loaded: loaded, busy: busy, notes: false)
+                            + "\nrestore=\(options.restorePosition);counts=\(options.resetCounts)"
+                    }).fixedSize().accessibilityIdentifier("browser-forget-native-state").allowsHitTesting(false)
+                }
+            }
+            #endif
             .disabled(!loaded || busy).studyThemeSurface().navigationTitle(AppText.localized("新規カードに戻す"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -48,6 +59,11 @@ struct BrowserForgetRequest: Identifiable {
             .task {
                 do {
                     try requireProfile()
+                    #if DEBUG
+                    if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-browser-undo-trace") {
+                        NSLog("browser.undo.trace phase=options.load loaded=%d busy=%d", loaded, busy)
+                    }
+                    #endif
                     options = try BrowserForgetOptions.load(key: preferenceKey)
                     _ = try options.arguments(cardIDs: request.cardIDs)
                     loaded = true
@@ -57,6 +73,16 @@ struct BrowserForgetRequest: Identifiable {
                 Button(AppText.localized("閉じる"), role: .cancel) {}
             } message: { Text(error ?? "") }
         }
+    }
+    private func optionBinding(_ key: WritableKeyPath<BrowserForgetOptions, Bool>, name: String) -> Binding<Bool> {
+        Binding(get: { options[keyPath: key] }, set: { value in
+            #if DEBUG
+            if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-browser-undo-trace") {
+                NSLog("browser.undo.trace phase=option.%@.set value=%d loaded=%d busy=%d", name, value, loaded, busy)
+            }
+            #endif
+            options[keyPath: key] = value
+        })
     }
     private func requireProfile() throws {
         guard model.currentProfile.id == request.profileID else {
