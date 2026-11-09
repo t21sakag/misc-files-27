@@ -17,12 +17,27 @@ final class BrowserForgetFlowTests: StudyFlowTestSupport {
         requireTestCondition("Reviewed fixture import finishes", in: app) {
             app.buttons.matching(identifier: "incoming-import-confirm").count == 0 && app.buttons.matching(identifier: "collection-menu").count == 1
         }
+        tapTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-open"), in: app)
+        _ = waitForTestControl(app.staticTexts.matching(identifier: "browser-results"), in: app, purpose: .observation)
         return app
     }
     private func search(_ query: String, count: Int, notes: Bool = false, in app: XCUIApplication) {
-        var url = URLComponents(string: "studyclient://x-callback-url/browser")!
-        url.queryItems = [URLQueryItem(name: "search", value: query)]
-        app.open(url.url!)
+        // XCUIApplication.open launches a new process on this runner. Undo
+        // belongs to the current engine session, so search through the actual
+        // native field while preserving the browser and collection lifetime.
+        let status = app.staticTexts.matching(identifier: "browser-results")
+        guard let current = waitForTestControl(status, in: app, purpose: .observation),
+              let previous = current.value as? String else { return }
+        if previous != query {
+            let fields = app.navigationBars.matching(identifier: notes ? "ノートブラウザー" : "カードブラウザー").searchFields
+                .matching(NSPredicate(format: "label == %@", "検索（deck:、tag:、is:due など）"))
+            let field = previous.isEmpty
+                ? typeInEmptyTestField(fields, text: query, in: app)
+                : replaceTestField(fields, expected: previous, with: query, in: app)
+            guard let field else { return }
+            field.typeText("\n")
+        }
         requireTestCondition("Reset result count \(count) for \(query)", in: app) {
             let status = app.staticTexts.matching(identifier: "browser-results")
             return status.count == 1 && status.element.value as? String == query && status.element.label.hasPrefix("\(count)" + (notes ? "ノート" : "枚"))
