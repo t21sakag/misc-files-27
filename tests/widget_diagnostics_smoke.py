@@ -5,9 +5,11 @@ import json
 import os
 from pathlib import Path
 import plistlib
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,7 +26,7 @@ from pathlib import Path
 if 'stream' not in sys.argv:
     print('Device is not booted', flush=True)
     raise SystemExit(149)
-Path(os.environ['PROBE_STARTED']).write_text('started')
+Path(os.environ['PROBE_STARTED']).write_text(str(os.getpid()))
 print('launch', flush=True)
 print('*** Assertion failure earliest-focus-fixture', flush=True)
 print('usernotificationsd: Source is not authorized, UNErrorDomain Code=1', flush=True)
@@ -95,6 +97,40 @@ while True: time.sleep(1)
         assert many['critical_truncated'] and len(critical) <= module.CRITICAL_LIMIT
         assert b'earliest-focus-fixture' in critical and b'event-1999 ' not in critical
         os.environ.pop('MANY_CRITICAL')
+        # SIGKILL skips the wrapper's finally block. First evidence must
+        # already be on disk, with metadata explicitly marked incomplete.
+        settings = base/'settings.json'
+        settings.write_text(json.dumps({'targets': [
+            {'target': 'StudyWidgets', 'PRODUCT_BUNDLE_IDENTIFIER': bundle}]}))
+        interrupted = base/'interrupted'
+        child_pid = base/'child.pid'
+        (base/'started').unlink()
+        wrapper = subprocess.Popen([sys.executable, str(ROOT/'scripts/run-ui-with-diagnostics.py'),
+            '--simulator', simulator, '--settings', str(settings), '--output', str(interrupted), '--',
+            sys.executable, '-c', 'import os,time;from pathlib import Path;'
+            f'Path({str(child_pid)!r}).write_text(str(os.getpid()));time.sleep(60)'])
+        try:
+            deadline = time.monotonic() + 20
+            evidence = interrupted/'critical.log'
+            while not (child_pid.exists() and evidence.exists()
+                       and b'fixture focus reason' in evidence.read_bytes()):
+                assert time.monotonic() < deadline, 'Live critical evidence was not persisted'
+                assert wrapper.poll() is None, 'Wrapper exited before interruption test'
+                time.sleep(.01)
+            wrapper.kill()
+            wrapper.wait(timeout=5)
+            assert b'earliest-focus-fixture' in evidence.read_bytes()
+            assert len(evidence.read_bytes()) <= module.CRITICAL_LIMIT
+            assert json.loads((interrupted/'live-collection.json').read_text())['complete'] is False
+        finally:
+            if wrapper.poll() is None:
+                wrapper.kill(); wrapper.wait(timeout=5)
+            for pid_file in (base/'started', child_pid):
+                if pid_file.exists():
+                    try:
+                        os.killpg(int(pid_file.read_text()), signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
         # An observer failure must not replace a successful UI command's result.
         executable.write_text('#!/usr/bin/env python3\nraise SystemExit(149)\n')
         assert module.run(simulator, bundle, base/'unavailable', [sys.executable, '-c', 'pass']) == 0

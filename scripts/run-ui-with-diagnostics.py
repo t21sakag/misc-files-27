@@ -29,7 +29,11 @@ def run(simulator, bundle, output, command):
         raise ValueError('Invalid widget bundle identifier')
     output.mkdir(parents=True, exist_ok=True)
     report = {'simulator': simulator, 'log_exit': None, 'bytes_seen': 0, 'bytes_saved': 0,
-              'truncated': False, 'test_exit': None}
+              'truncated': False, 'test_exit': None, 'complete': False}
+    # Runner cancellation can kill this wrapper before finally executes.
+    # Persist the bounded first evidence as it arrives, not only at exit.
+    (output/'critical.log').write_bytes(b'')
+    (output/'live-collection.json').write_text(json.dumps(report, indent=2)+'\n')
     chunks = deque()
     critical_lines = []
     critical_size = 0
@@ -50,6 +54,8 @@ def run(simulator, bundle, output, command):
         if critical_size + len(line) <= CRITICAL_LIMIT:
             critical_lines.append(line)
             critical_size += len(line)
+            with (output/'critical.log').open('ab') as destination:
+                destination.write(line)
 
     def drain():
         nonlocal size
@@ -120,6 +126,7 @@ def run(simulator, bundle, output, command):
         report['critical_bytes_saved'] = critical_size
         report['critical_truncated'] = report.get('critical_bytes_seen', 0) > critical_size
         (output/'critical.log').write_bytes(b''.join(critical_lines))
+        report['complete'] = True
         (output/'live-collection.json').write_text(json.dumps(report, indent=2)+'\n')
 
 
