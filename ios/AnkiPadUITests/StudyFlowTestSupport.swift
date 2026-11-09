@@ -199,6 +199,41 @@ class StudyFlowTestSupport: XCTestCase {
             .matching(NSPredicate(format: "label MATCHES %@", ControlLabelMatch.pattern(titles)))
     }
 
+    /// iPad confirmation popovers can omit their Cancel row. Their frontmost
+    /// native dismissal region consumes an outside touch without choosing an action.
+    @discardableResult
+    func dismissTestPopover(in app: XCUIApplication) -> Bool {
+        guard let popover = waitForTestControl(app.popovers, in: app, keyboard: .keep,
+                                               purpose: .observation) else { return false }
+        let screen = app.frame
+        let regions = app.otherElements.matching(identifier: "PopoverDismissRegion")
+        let visibleRegions = {
+            regions.allElementsBoundByIndex.filter { $0.isHittable && $0.frame == screen }
+        }
+        guard requireTestCondition("One frontmost native popover dismissal region", in: app,
+                                   condition: { visibleRegions().count == 1 }) else { return false }
+        guard visibleRegions().count == 1 else {
+            controlFailure(regions, in: app, reason: "Popover dismissal region changed before input")
+            return false
+        }
+        let excluded = popover.frame.insetBy(dx: -16, dy: -16)
+        let points = [CGPoint(x: screen.midX, y: screen.maxY - 44),
+                      CGPoint(x: screen.minX + 44, y: screen.midY),
+                      CGPoint(x: screen.maxX - 44, y: screen.midY),
+                      CGPoint(x: screen.midX, y: screen.minY + 44)]
+        guard let point = points.first(where: { screen.contains($0) && !excluded.contains($0) }) else {
+            controlFailure(regions, in: app, reason: "No safe dismissal point outside the actual popover")
+            return false
+        }
+        XCTContext.runActivity(named: "Dismiss native popover outside \(excluded) at \(point)") { _ in
+            app.coordinate(withNormalizedOffset: .zero)
+                .withOffset(CGVector(dx: point.x - screen.minX, dy: point.y - screen.minY)).tap()
+        }
+        return requireTestCondition("Native popover dismissed without selecting an action", in: app) {
+            app.popovers.count == 0
+        }
+    }
+
     /// Native submenu cells can omit the source accessibility identifier.
     /// Match the full observed title within actual menu cell buttons, retaining
     /// the shared one-match/actionable checks instead of choosing the first.

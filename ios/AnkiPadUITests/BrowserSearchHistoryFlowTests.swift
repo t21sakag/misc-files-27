@@ -78,7 +78,7 @@ final class BrowserSearchHistoryFlowTests: BrowserSearchTestSupport {
         expectRows([1], in: app)
         openHistory(app); expectHistory(["row1", "row0"], in: app)
         tapTestControl(app.buttons.matching(identifier: "browser-history-clear"), in: app)
-        tapTestAlertAction(titles: ["キャンセル"], in: app.popovers.sheets, application: app)
+        dismissTestPopover(in: app)
         expectHistory(["row1", "row0"], in: app)
         tapTestControl(app.buttons.matching(identifier: "browser-history-clear"), in: app)
         tapTestAlertAction("browser-history-clear-confirm", in: app.popovers.sheets, application: app)
