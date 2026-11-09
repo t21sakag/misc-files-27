@@ -25,15 +25,21 @@ with tempfile.TemporaryDirectory() as temporary:
     base = Path(temporary)
     for directory in ('scripts', 'ios', 'build', 'bin'):
         (base / directory).mkdir()
-    for name in ('select-ui-workers.py', 'run-ui-with-diagnostics.py'):
+    for name in ('select-ui-workers.py', 'run-ui-with-diagnostics.py', 'record-ui-screen.py'):
         shutil.copy2(ROOT / 'scripts' / name, base / 'scripts' / name)
     (base / 'build/project-settings.json').write_text(json.dumps({'targets': [
         {'target': 'StudyWidgets', 'PRODUCT_BUNDLE_IDENTIFIER': 'org.example.study.widgets'}]}))
     xcrun = base / 'bin/xcrun'
     xcrun.write_text('''#!/usr/bin/env python3
-import os, sys, time
+import os, sys, time, signal
 from pathlib import Path
-if 'stream' in sys.argv:
+if 'recordVideo' in sys.argv:
+    assert sys.argv[3] == os.environ['SIMULATOR_ID']
+    Path(sys.argv[-1]).write_bytes(b'Native display fixture')
+    Path(os.environ['NATIVE_STARTED']).write_text('ready')
+    signal.signal(signal.SIGINT, lambda *_: sys.exit(0))
+    while True: time.sleep(1)
+elif 'stream' in sys.argv:
     Path(os.environ['LIVE_STARTED']).write_text('yes')
     print('observer ready', flush=True)
     while True: time.sleep(1)
@@ -45,6 +51,7 @@ else:
 import json, os, sys
 from pathlib import Path
 assert Path(os.environ['LIVE_STARTED']).is_file(), 'UI began without the live observer'
+assert Path(os.environ['NATIVE_STARTED']).is_file(), 'UI began without simulator display recording'
 Path(os.environ['XCODE_ARGS']).write_text(json.dumps(sys.argv[1:]))
 raise SystemExit(23)
 ''')
@@ -57,13 +64,15 @@ raise SystemExit(23)
         arguments = base / ('arguments-' + suite)
         env = dict(os.environ, PATH=str(base / 'bin') + os.pathsep + os.environ['PATH'],
                    UI_SUITE=suite, SIMULATOR_ID=str(uuid.uuid4()).upper(),
-                   LIVE_STARTED=str(started), XCODE_ARGS=str(arguments),
+                   LIVE_STARTED=str(started), NATIVE_STARTED=str(base / ('video-' + suite)), XCODE_ARGS=str(arguments),
                    GITHUB_SHA='a' * 40, GITHUB_RUN_NUMBER='1')
         result = subprocess.run(['bash', '-e', '-c', shell], cwd=base, env=env,
                                 capture_output=True, text=True, timeout=30)
         assert result.returncode == 23, (suite, result.stdout, result.stderr)
         report = json.loads((base / 'build/widget-diagnostics/live-collection.json').read_text())
         assert report['stream_running_before_test'] and report['test_exit'] == 23, (suite, report)
+        video = json.loads((base / 'build/widget-diagnostics/screen-recording.json').read_text())
+        assert video['closed'] and video['native_exit'] == 0 and video['ready'] and video['bytes_saved'] > 0, video
         args = json.loads(arguments.read_text())
         assert all(line in args for line in selection.splitlines()), (suite, args)
         assert args[args.index('-parallel-testing-enabled') + 1] == 'NO'

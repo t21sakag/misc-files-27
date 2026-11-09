@@ -21,13 +21,18 @@ with tempfile.TemporaryDirectory() as temporary:
     (base/'build/project-settings.json').write_text(json.dumps({'targets': [
         {'target': 'StudyWidgets', 'PRODUCT_BUNDLE_IDENTIFIER': 'com.fixture.widgets'}]}))
     (tools/'xcrun').write_text('''#!/usr/bin/env python3
-import json,os,sys,time
+import json,os,sys,time,signal
 from pathlib import Path
 args=sys.argv[1:]
 if args[:2]==['simctl','spawn']:
     Path('build/observer-started').write_text('ready')
     print('browser.selection.trace phase=all.enter rows=3 selected=0',flush=True)
     time.sleep(60)
+elif args[:2]==['simctl','io'] and args[3]=='recordVideo':
+    assert args[2]=='11111111-1111-4111-8111-111111111111'
+    Path(args[-1]).write_bytes(b'Native display fixture')
+    signal.signal(signal.SIGINT, lambda *_: sys.exit(0))
+    while True: time.sleep(1)
 elif args[:4]==['xcresulttool','get','test-results','summary']:
     mode=os.environ['BATCH_FAKE_MODE']
     summary={'totalTestCount':1,'passedTests':1,'failedTests':0,'skippedTests':0,'runtimeWarnings':[]}
@@ -46,6 +51,7 @@ else:raise SystemExit('Unexpected xcrun command '+str(args))
 import os,sys
 from pathlib import Path
 assert Path('build/observer-started').is_file(),'Observer must start before UI'
+assert Path('build/widget-diagnostics/native-screen.mp4').is_file(),'Display recorder must start before UI'
 assert '-only-testing:AnkiPadUITests/'+os.environ['BATCH_EXPECTED_CASE'] in sys.argv
 assert 'test-without-building' in sys.argv and 'build' not in sys.argv
 assert '-xctestrun' in sys.argv and '-project' not in sys.argv
@@ -69,6 +75,8 @@ raise SystemExit(65 if os.environ['BATCH_FAKE_MODE']=='failed' else 0)
     assert prerequisite['preview_package_required'] and prerequisite['preview_package_valid']
     observer=json.loads((base/'build/widget-diagnostics/live-collection.json').read_text())
     assert observer['stream_running_before_test'] and observer['test_exit']==0
+    video=json.loads((base/'build/widget-diagnostics/screen-recording.json').read_text())
+    assert video['ready'] and video['closed'] and video['native_exit']==0
     for mode in ['warning','missing-warning-field','wrong-identity','skipped','failed']:
         run(mode,False)
     assert json.loads((base/'build/widget-diagnostics/live-collection.json').read_text())['test_exit']==65

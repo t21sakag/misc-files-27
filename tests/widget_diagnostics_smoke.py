@@ -21,8 +21,12 @@ with tempfile.TemporaryDirectory() as temporary:
     base = Path(temporary)
     executable = base/'xcrun'
     executable.write_text('''#!/usr/bin/env python3
-import os, sys, time
+import os, sys, time, signal
 from pathlib import Path
+if 'recordVideo' in sys.argv:
+    Path(sys.argv[-1]).write_bytes(b'Native display fixture')
+    signal.signal(signal.SIGINT, lambda *_: sys.exit(0))
+    while True: time.sleep(1)
 if 'stream' not in sys.argv:
     print('Device is not booted', flush=True)
     raise SystemExit(149)
@@ -74,6 +78,13 @@ while True: time.sleep(1)
         assert module.run(simulator, bundle, output, command) == 7
         report = json.loads((output/'live-collection.json').read_text())
         assert report['test_exit'] == 7 and report['stream_running_before_test']
+        video = json.loads((output/'screen-recording.json').read_text())
+        assert video['simulator'] == simulator and video['closed'] and video['ready']
+        assert video['native_exit'] == 0 and video['bytes_saved'] > 0
+        limited_command = [sys.executable, '-c', 'import time;time.sleep(.8);raise SystemExit(7)']
+        assert module.run(simulator, bundle, base/'limited', limited_command, screen_seconds=.3) == 7
+        limited = json.loads((base/'limited/screen-recording.json').read_text())
+        assert limited['duration_limited'] and limited['closed'] and limited['native_exit'] == 0
         assert report['truncated'] and report['bytes_saved'] <= module.LIMIT
         assert b'WidgetProbe timeline.request' in (output/'live.log').read_bytes()
         assert b'browser.options.trace phase=load.end' in (output/'live.log').read_bytes()
@@ -99,16 +110,18 @@ while True: time.sleep(1)
         os.environ.pop('MANY_CRITICAL')
         # SIGKILL skips the wrapper's finally block. First evidence must
         # already be on disk, with metadata explicitly marked incomplete.
-        settings = base/'settings.json'
-        settings.write_text(json.dumps({'targets': [
-            {'target': 'StudyWidgets', 'PRODUCT_BUNDLE_IDENTIFIER': bundle}]}))
         interrupted = base/'interrupted'
         child_pid = base/'child.pid'
         (base/'started').unlink()
-        wrapper = subprocess.Popen([sys.executable, str(ROOT/'scripts/run-ui-with-diagnostics.py'),
-            '--simulator', simulator, '--settings', str(settings), '--output', str(interrupted), '--',
-            sys.executable, '-c', 'import os,time;from pathlib import Path;'
-            f'Path({str(child_pid)!r}).write_text(str(os.getpid()));time.sleep(60)'])
+        child_command = [sys.executable, '-c', 'import os,time;from pathlib import Path;'
+                         f'Path({str(child_pid)!r}).write_text(str(os.getpid()));time.sleep(60)']
+        wrapper_source = (
+            'import importlib.util;from pathlib import Path;'
+            f'spec=importlib.util.spec_from_file_location("observer",{str(ROOT/"scripts/run-ui-with-diagnostics.py")!r});'
+            'module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module);'
+            f'raise SystemExit(module.run({simulator!r},{bundle!r},Path({str(interrupted)!r}),'
+            f'{child_command!r},screen_seconds=.5))')
+        wrapper = subprocess.Popen([sys.executable, '-c', wrapper_source])
         try:
             deadline = time.monotonic() + 20
             evidence = interrupted/'critical.log'
@@ -122,9 +135,23 @@ while True: time.sleep(1)
             assert b'earliest-focus-fixture' in evidence.read_bytes()
             assert len(evidence.read_bytes()) <= module.CRITICAL_LIMIT
             assert json.loads((interrupted/'live-collection.json').read_text())['complete'] is False
+            video_state = interrupted/'screen-recording.json'
+            deadline = time.monotonic() + 5
+            while not json.loads(video_state.read_text())['closed']:
+                assert time.monotonic() < deadline, 'Recorder lost its independent wall-clock limit'
+                time.sleep(.01)
+            video = json.loads(video_state.read_text())
+            assert video['duration_limited'] and video['native_exit'] == 0
         finally:
             if wrapper.poll() is None:
                 wrapper.kill(); wrapper.wait(timeout=5)
+            video_state = interrupted/'screen-recording.json'
+            if video_state.exists():
+                video = json.loads(video_state.read_text())
+                try:
+                    os.killpg(video['supervisor_pid'], signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
             for pid_file in (base/'started', child_pid):
                 if pid_file.exists():
                     try:
@@ -135,6 +162,8 @@ while True: time.sleep(1)
         executable.write_text('#!/usr/bin/env python3\nraise SystemExit(149)\n')
         assert module.run(simulator, bundle, base/'unavailable', [sys.executable, '-c', 'pass']) == 0
         assert json.loads((base/'unavailable/live-collection.json').read_text())['log_exit'] == 149
+        unavailable_video = json.loads((base/'unavailable/screen-recording.json').read_text())
+        assert unavailable_video['native_exit'] == 149 and not unavailable_video['ready']
         # Post-test probe collection does not depend on a booted simulator.
         home = base/'home'
         data = home/'Library/Developer/CoreSimulator/Devices'/simulator/'data'

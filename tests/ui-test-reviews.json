@@ -8103,6 +8103,249 @@
         }
       ],
       "checked_at": "2026-11-09T17:13:09.305278+00:00"
+    },
+    {
+      "id": "20261110-history-virtualization-and-popover-cancel",
+      "covers": [
+        [
+          42676073031,
+          1
+        ],
+        [
+          42672817482,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42672817482,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Fixture stopped before history interaction. Browser AX/header reports five cards, while only row0 through row3 are instantiated in the sheet. The helper incorrectly required all five lazy rows in one AX snapshot. Native input contains import confirmation only, no scroll."
+        },
+        {
+          "attempt": [
+            42676073031,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Shared per-row reveal and identity checks passed, including row4 and restoration of row0. The test reached a real clear confirmation with two history entries. The iPad popover exports the destructive action and outside dismissal regions, with no Cancel row. The test queried an absent Cancel action and did not issue a cancel touch."
+        }
+      ],
+      "rule_review": {
+        "semantic_labels": "History row labels/MRU and clear confirmation remain exact. The native AX contains no Cancel label. Do not treat the destructive clear action as cancellation or weaken the original two-entry preservation assertion.",
+        "foreground_scope": "Actual latest AX has one Popover266,110.5,288,159.5, with a Sheet and clear-confirm outer/inner Button. Several stale dismissal regions have oversized negative frames. The new shared dismissal resolver requires a hittable region matching the app frame and exactly one foreground popover before input.",
+        "unique_reads_and_actions": "Use shared control lookup for rows/actions, distinct card IDs after scrolling, and the existing alert outer-button resolver for destructive confirmation. New outside dismissal requires strict live uniqueness and measured safe coordinates rather than firstMatch or arbitrary screen taps.",
+        "live_state": "Latest case proves all five original cards, row1 results, and two history entries before the clear dialog. No actual clear or cancel occurs in the failed attempt. Outside cancellation must leave row1,row0 entries, current query and cards unchanged. Deferred identity cases are not counted as verified.",
+        "keyboard_and_scroll": "First attempt AX exposes only four of five lazy rows. The next completed attempt logs all five distinct shared UI reveals, row3/4 each after one drag, row0 restored after three drags. Common rules now require scroll-aware full identity proof, not only a count or simultaneous AX availability.",
+        "environment": "Synthetic field fixture validates in producer and consumer. New identity cases explicitly share the transferred field APKG/manifest contract, and actual batch runner mock rejects missing bundled fixtures before UI. First run plan has two batches but terminal GitHub jobs expose only clear batch0; delete remains unexecuted, not passed. Display recording uses only the owned simulator UUID. The recorder has a 30-minute bound, including startup, and uses SIGINT to finalize. Metadata distinguishes an unsuccessful/limited recording from case success; no app launch or permission is issued by the recorder.",
+        "first_failure_evidence": "Compared terminal AX, screen, numeric input, failed logs and recordings for both attempts. Current screen positively shows a no-Cancel confirmation. Recordings show white/Home after external launch while terminal AX is running and interactive; do not claim that video proves a crash or current frontmost state. Repair simulator-wide recording before another attempt. Process-independent recording is now implemented. Actual observer/project entrypoint/batch entrypoint mocks verify recorder startup, correct simulator UUID, finalization, unavailable capture, and a supervisor deadline that survives wrapper SIGKILL. Real Apple media content is the next check, not established by mocks.",
+        "failure_classification": "Both are harness failures, with an inspection gap in video. First case82.896s, second249.713s, each one failed case/zero skips. Separate these from app persistence bugs. Exact pair is42672817482/1 and42676073031/1; formal record will use freshly downloaded actual-step chronology.",
+        "runtime_warnings": "Both inspected summaries contain runtimeWarnings=[]. Keep exact case identities, nonzero failures, skip and warning gates. Native outside-dismiss helper is only locally parsed and not Apple-verified yet.",
+        "device_evidence": "Host UserDefaults tests cover migration/MRU/deletion/profile isolation, not actual native confirmation behavior. Physical iPad, notification/audio/signing and broad same-source regression remain separate. No new IPA generated."
+      },
+      "root_cause": "Two distinct harness assumptions. Virtualized native rows were required simultaneously; a platform-suppressed Cancel row was assumed to exist. App clear/delete behavior remains unproven. XCTest video follows the initial app launch and fails to document the current process after external launch, an additional inspection gap.",
+      "common_resolution": "Keep exact total count plus every expected label and distinct card identity through common reveal, restoring the first row. For the observed iPad cancellation route, resolve one actual popover and one hittable screen-sized native dismissal region, choose a point outside the measured popover plus margin, and require disappearance and unchanged history. Added an independent owned-simulator display recorder with a 1800-second supervisor bound, atomic metadata and separate native exit/ready/limited states. Its own supervisor survives wrapper SIGKILL, finalizes at the deadline, and never replaces the UI exit. Complete this review against final hashes before clear1case only.",
+      "next_scope": [
+        "BrowserSearchHistoryFlowTests/testClearingRecentSearchesCanCancelAndPersistsWithoutChangingCards"
+      ],
+      "evidence": [
+        {
+          "reference": "completed-run/42672817482/failed.log",
+          "sha256": "ca96c8ce8b298615c854e7ff7464ba60138e6ce7ae3fb9b11d0442c33b31811f"
+        },
+        {
+          "reference": "completed-run/42672817482/run.json",
+          "sha256": "44b62ac9438a394b4ad7fc135c7ec6d7b3c263b0bee23dcbfe8eda567ff0ac34"
+        },
+        {
+          "reference": "completed-run/42672817482/diag/test-summary.json",
+          "sha256": "fc0012f1cbf916e2ea826dd733ad57f33e57f49acd8a3b4be992edc520ad02ae"
+        },
+        {
+          "reference": "completed-run/42672817482/diag/input-events.json",
+          "sha256": "517a88bd41e8897fb43b37a0e02dcf9bd366b17e26fb9cfdc34d18034a658519"
+        },
+        {
+          "reference": "completed-run/42672817482/diag/screenshots/DB65E0D8-24C1-4BE4-8765-41A8163EE200.txt",
+          "sha256": "0731fa3ac974249f109ef9cb1edc87af975bd6b726059f8e957f6c7fb159b48f"
+        },
+        {
+          "reference": "completed-run/42672817482/screens/798B9E98-6A36-4CA0-BAE2-D97D6DA1D326.mp4",
+          "sha256": "30208d94c58fd33fd34577dddac0b481ca2206406c18d431873e7543743981fa"
+        },
+        {
+          "reference": "completed-run/42672817482/screens/1EBFDBE0-1016-4E8B-A9A9-D38D51785D6A.png",
+          "sha256": "e9068a0a965283fc87cc3d0e6713fd584589cb333bd21c85921e86f188a2532b"
+        },
+        {
+          "reference": "completed-run/42676073031/failed.log",
+          "sha256": "a3c7eb0e0dd910e0f601c33a3e2a5db358846fc9a52e741a99b7b716d10f78e1"
+        },
+        {
+          "reference": "completed-run/42676073031/run.json",
+          "sha256": "809e41530ef8e487e17849cdd8ccb857b601ebe199bdf0d8d93b260c845cbe52"
+        },
+        {
+          "reference": "completed-run/42676073031/diag/test-summary.json",
+          "sha256": "bcb04dc8e5b1112a3983945de7bffff5d00bf3399f10706e71432f4a0a6c2fec"
+        },
+        {
+          "reference": "completed-run/42676073031/diag/input-events.json",
+          "sha256": "b70069e0ee718253f9bd9aa23f46e42ee4261d53d012a5c30248777f4f3804e8"
+        },
+        {
+          "reference": "completed-run/42676073031/diag/screenshots/565056B6-4DA6-449C-93B3-4D82D24A1161.txt",
+          "sha256": "0cdad19225f1b1478d774664eed727968012c68c8184cc852e45f323640d43c3"
+        },
+        {
+          "reference": "completed-run/42676073031/diag/screenshots/6BA2C2E4-B2A5-428E-859E-AC5299BA6716.txt",
+          "sha256": "b706728fe84dc3a7ae93b3b705e242624d882bc2c830c68b24d1c7fe16c2914e"
+        },
+        {
+          "reference": "completed-run/42676073031/screens/B62F51A8-C950-4C16-8AA7-08FB831A417B.mp4",
+          "sha256": "6e104a32ef80ec6a2c52df610a4ac255446ad722ea3c3cfdeb465a1b97f982ba"
+        },
+        {
+          "reference": "completed-run/42676073031/screens/962C268B-B5D7-4E74-9482-E2640E82E524.png",
+          "sha256": "1d60974cf8538da87660483a8d59f58b544da7f8de7e73eb56db90d1090f1644"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "cbfbc1ba3d20df273eca03ff905677a694945e7f1eaed4f42cabf8032163954b",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "f22a19c50dec9089a0964435012ff1b769d1c1a50c0af609a2be5418e9b1c8d5",
+        "ios/AnkiPadUITests/BrowserSearchTestSupport.swift": "5689bf1b94a1cd03a75f58f8ae431faf882f43b298bfc375fa0e079c12228412",
+        "ios/AnkiPadUITests/BrowserSearchHistoryFlowTests.swift": "3bd639ee3e7be7f697858e036070b837c048de5be0a3843ff73d1b6b249f3f3e",
+        "ios/AnkiPadUITests/BrowserSearchIdentityFlowTests.swift": "358649262c8209466fba8ab4f5e6f86fb7d1186abcd97e4fded4b94a17e62378",
+        "ios/AnkiPad/BrowserView.swift": "e257319409e378f263d2f1f609f05688c04599f38b66ef219c154e44d867000a",
+        "ios/AnkiPad/BrowserSearchHistoryView.swift": "5de5c6e4dd8834783531f17384271b6ab6b7c89f4d9c6c82229cb21013cd8278",
+        "ios/AnkiPad/BrowserSearchFiltersView.swift": "3da97913031355d1be4dbf559e8196694c7295c4758c0756e69da7546d4e4e86",
+        "scripts/run-ui-with-diagnostics.py": "ab11461760b71094716caf5b6f25cdd55b4432ff4e04074d3fd860059db52bda",
+        "scripts/run-ui-batch.py": "7bcb6bb6a2f317ceac078690fe61db1e5879d2f19758d5af64f160647bd60924",
+        "scripts/ui-prerequisites.py": "cd370a98e2510fbe3c8f810026dfa415cd82c66727169eed5fb8efe8815101c3",
+        "scripts/select-ui-tests.py": "4a99e487048d4a0855871eba9f80dd3f8ebcbb3f08d732a8fb2d08255a5d6536",
+        "scripts/ui-case-groups.json": "098c14bb24f466a297a2d438304c8b241f1248a06a920fd88fef6167eab18256",
+        ".github/workflows/ipa.yml": "1e6221b49413357934372661757ac98d16c957c15b9055fcd3a335e432385444",
+        "scripts/record-ui-screen.py": "59bf4a977ffb2263205ed2261596019d1412d01e79c3e54f453023188533b883",
+        "tests/widget_diagnostics_smoke.py": "e00653d5d5edb8211436f092b5c0afaa57cc6bcd4dfda2513b790026ea25fa32",
+        "tests/ui_workflow_diagnostics_smoke.py": "a823353cabd9e642c7ec86e6358539dbee560c8288ed5e31162d392edbca0c54",
+        "tests/ui_batch_runner_smoke.py": "d272d09e50dd030232dd3fa7ecf36611c9e69c0ba76849fba8f8820301df0f2c"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "f339cb5cbf02a191dc93cd7cf24393509772647d0c44f54718e31044a3dc0bb1"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "823cc9760f649b5e6369a39c541f978ca00b591246f27e0abaf281fc48320170"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e1225df03e6cf82b88dae953e1c7de2f7f94c400f1c57643fde44ffe0f4fccb8"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "c47fc506dbac0462ce8150c6fe620e2d032bfeb6ec8409a58a13b314cc97a542"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "57fdd05e9dbb46cbe19e336e05873bb92294ef8af740e253aaadda8475584e9e"
+        },
+        {
+          "name": "prerequisite rejection",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "actual consumer runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "actual workflow diagnostics",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "observer interruption and recording",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        }
+      ],
+      "checked_at": "2026-11-09T19:12:09.885181+00:00"
     }
   ]
 }

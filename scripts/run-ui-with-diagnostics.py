@@ -3,7 +3,8 @@
 
 Xcode may shut down the simulator before a post-test log-show command can run.
 The observer never boots a device, retries a test, or changes its exit status.
-Only its own log subprocess is terminated; output is bounded to the last 8 MiB.
+Owned log and screen subprocesses are stopped at exit. The log retains 8 MiB;
+the independent display recorder has a 30-minute wall-clock limit.
 """
 import argparse
 from collections import deque
@@ -13,7 +14,9 @@ from pathlib import Path
 import re
 import signal
 import subprocess
+import sys
 import threading
+import time
 import uuid
 
 LIMIT = 8 * 1024 * 1024
@@ -23,7 +26,7 @@ CRITICAL_MARKERS = (b'*** Assertion failure', b'*** Terminating app due to uncau
                     b'not authorized', b'UNErrorDomain Code=1', b'reminder.save.trace ', b'browser.undo.trace ', b'ui.publication.trace account=server.binding')
 
 
-def run(simulator, bundle, output, command):
+def run(simulator, bundle, output, command, screen_seconds=1800):
     simulator = str(uuid.UUID(simulator)).upper()
     if not re.fullmatch(r'[A-Za-z0-9.-]+', bundle) or not bundle.endswith('.widgets'):
         raise ValueError('Invalid widget bundle identifier')
@@ -42,6 +45,7 @@ def run(simulator, bundle, output, command):
     observer = None
     reader = None
     child = None
+    screen_recorder = None
     old_handlers = {}
 
     def keep_critical(line):
@@ -98,6 +102,28 @@ def run(simulator, bundle, output, command):
             report['stream_running_before_test'] = observer.poll() is None
         except OSError as error:
             report['observer_error'] = str(error)
+        try:
+            # A separate supervisor retains its wall-clock bound even if this
+            # wrapper is killed before finally. It records the simulator, so
+            # external URL launches do not leave video tied to an old app PID.
+            screen_metadata = output/'screen-recording.json'
+            screen_metadata.unlink(missing_ok=True)
+            screen_recorder = subprocess.Popen([sys.executable,
+                str(Path(__file__).with_name('record-ui-screen.py')),
+                '--simulator', simulator, '--output', str(output), '--seconds', str(screen_seconds)],
+                start_new_session=True)
+            report['screen_recorder_pid'] = screen_recorder.pid
+            deadline = time.monotonic() + 3
+            while time.monotonic() < deadline and screen_recorder.poll() is None:
+                if screen_metadata.exists():
+                    state = json.loads(screen_metadata.read_text())
+                    if state['native_pid'] is not None or state['closed']:
+                        break
+                time.sleep(0.05)
+            report['screen_recorder_metadata_ready'] = screen_metadata.exists()
+            (output/'live-collection.json').write_text(json.dumps(report, indent=2)+'\n')
+        except OSError as error:
+            report['screen_recorder_error'] = str(error)
         for signum in (signal.SIGINT, signal.SIGTERM):
             old_handlers[signum] = signal.signal(signum, forward)
         child = subprocess.Popen(command, start_new_session=True)
@@ -106,6 +132,15 @@ def run(simulator, bundle, output, command):
     finally:
         for signum, handler in old_handlers.items():
             signal.signal(signum, handler)
+        if screen_recorder is not None:
+            if screen_recorder.poll() is None:
+                screen_recorder.terminate()
+            try:
+                screen_recorder.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                os.killpg(screen_recorder.pid, signal.SIGKILL)
+                screen_recorder.wait(timeout=5)
+            report['screen_recorder_exit'] = screen_recorder.returncode
         if observer is not None:
             if observer.poll() is None:
                 try:
