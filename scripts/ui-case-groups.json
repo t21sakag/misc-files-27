@@ -211,6 +211,7 @@
   "AdaptiveReviewFlowTests": [
     "testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation",
     "testAdaptiveLongContentKeepsReadableMinimumAndNativeButtons",
-    "testAuthoredTextAndReplayControlsBalanceAfterReveal"
+    "testAuthoredTextAndReplayControlsBalanceAfterReveal",
+    "testVocabularyExamplesRemainSecondaryWithMalformedImportedHTML"
   ]
 }

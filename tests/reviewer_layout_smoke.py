@@ -21,11 +21,13 @@ script = re.search(r'static let script = #"""\n(.*?)"""#', layout_source, re.S)[
 image = 'data:image/svg+xml,' + '%3Csvg xmlns="http://www.w3.org/2000/svg" width="1200" height="900"%3E%3Crect width="1200" height="900" fill="orange"/%3E%3C/svg%3E'
 cases = {
     'authored': '<div><font id="question" style="font-size:160px!important">calculation</font></div><div><a id="sound" href="ankiplay://q/0" style="font-size:180px!important;text-decoration:underline">▶︎</a></div><p style="font-size:16px">(check the calculation again)</p><hr id="answer"><div><font id="response" size="2">計算</font></div><p style="font-size:16px">（計算をもう一度確認する）</p>',
+    'malformed': '<div id="question" style="font-size:20px">calculation</div\n<div style="font-size:20px"><a href="ankiplay://q/0">▶︎</a></div><br><div id="example" style="font-size:20px">Check the calculation again before sending the final document.</div><hr id="answer"><div id="response" style="font-size:20px">計算</div><br><div id="translation" style="font-size:20px">最終書類を送る前に計算をもう一度確認してください。</div><input id="typeans" value="keep this answer"><script>window.cardHookRuns=(window.cardHookRuns||0)+1;</script>',
     'short': '<div id="question" style="font-size:18px">I should have told you earlier.</div><hr id="answer"><div id="response" style="font-size:40px">もっと早く伝えるべきだった。</div>',
     'long': '<div id="question">' + 'English sentences and 日本語の長い説明。 ' * 150 + '</div><hr><div id="response">答え</div>',
     'media': '<div id="question">English 日本語の問題</div><img id="picture"><audio controls></audio><video controls width="240" height="100"></video><hr><div id="response">画像と音声のある答え</div><input id="typeans" value="keep this answer">',
     'annotation': '<div id="question">Mask alignment</div><div id="annotation" style="position:relative;width:600px"><img id="picture" style="width:600px;height:450px"><div id="mask" style="position:absolute;left:60px;top:45px;width:120px;height:90px;background:gray"></div></div><hr><div id="response">マスクと画像</div>',
 }
+cases['examples'] = cases['malformed'].replace('</div\n<div', '</div>\n<div')
 with tempfile.TemporaryDirectory(prefix='review-layout-') as temporary:
     base = Path(temporary)
     with socket.socket() as reservation:
@@ -73,7 +75,7 @@ with tempfile.TemporaryDirectory(prefix='review-layout-') as temporary:
                 const picture=document.getElementById('picture'),mask=document.getElementById('mask');
                 const result={state:qa.dataset.studyLayout,font:Number(qa.dataset.studyFont),height:qa.getBoundingClientRect().height,
                   available:Number(qa.dataset.studyAvailableHeight),question:getComputedStyle(q).fontSize,answer:getComputedStyle(a).fontSize,
-                  width:document.documentElement.scrollWidth,viewport:innerWidth,events,sound:document.getElementById('sound')?.getBoundingClientRect().height,
+                  width:document.documentElement.scrollWidth,viewport:innerWidth,events,allInside:qa.contains(q)&&qa.contains(a)&&(!document.getElementById('example')||qa.contains(document.getElementById('example'))),hookRuns:window.cardHookRuns,example:document.getElementById('example')?getComputedStyle(document.getElementById('example')).fontSize:null,translation:document.getElementById('translation')?getComputedStyle(document.getElementById('translation')).fontSize:null,sound:document.getElementById('sound')?.getBoundingClientRect().height,
                   input:document.getElementById('typeans')?.value,
                   imageHeight:picture?.getBoundingClientRect().height,
                   maskRatio:mask?mask.getBoundingClientRect().width/picture.getBoundingClientRect().width:null};
@@ -82,8 +84,8 @@ with tempfile.TemporaryDirectory(prefix='review-layout-') as temporary:
             """.replace('IMAGE_URL', json.dumps(image))
             page.write_text('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">'
                             '<style>body{margin:24px;font-family:sans-serif;text-align:center}img{max-width:100%;height:auto}#result{display:none}</style>'
-                            '<body data-reading-scale="1.117647"><div id="qa">' + content + '</div><pre id="result"></pre>'
-                            '<script>' + script + '</script><script>' + observer + '</script>')
+                            '<body data-reading-scale="1.117647"><div id="qa">' + content + '</div>'
+                            '<script>' + script + '</script><pre id="result"></pre><script>' + observer + '</script>')
             command('POST', '/url', {'url': page.as_uri()})
             deadline = time.monotonic() + 8
             result = None
@@ -101,6 +103,10 @@ with tempfile.TemporaryDirectory(prefix='review-layout-') as temporary:
             else:
                 assert result['state'] == 'fit' and result['height'] <= result['available'] + 1, (name, result)
                 assert result['width'] <= result['viewport'] + 1, result
+            if name in ('malformed', 'examples'):
+                assert result['allInside'] and result['hookRuns'] == 1 and result['input'] == 'keep this answer', result
+                example = float(result['example'].removesuffix('px'))
+                assert result['example'] == result['translation'] and .60 <= example / result['font'] <= .65, result
             if name == 'authored':
                 assert 44 <= result['sound'] <= 48 and result['font'] <= 1180 / 12 + 1, result
             if name == 'short':

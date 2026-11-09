@@ -16,7 +16,7 @@ final class AdaptiveReviewFlowTests: TypographyTestSupport {
             if(!out){out=document.createElement('div');out.id='balance-result';out.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(out);}
             const question=document.getElementById('balance-question'),answer=document.getElementById('balance-answer'),example=document.getElementById('balance-example'),play=document.getElementById('balance-replay');
             const font=getComputedStyle(question).fontSize,icon=play.getBoundingClientRect().height;
-            const ok=qa.dataset.studyLayout==='fit' && parseFloat(font)>=30 && parseFloat(font)<=100 && icon>=44 && icon<=48 && font===getComputedStyle(example).fontSize && (!answer || font===getComputedStyle(answer).fontSize);
+            const ok=qa.dataset.studyLayout==='fit' && parseFloat(font)>=30 && parseFloat(font)<=100 && icon>=44 && icon<=48 && parseFloat(getComputedStyle(example).fontSize)<parseFloat(font)*.7 && parseFloat(getComputedStyle(example).fontSize)>=20 && (!answer || font===getComputedStyle(answer).fontSize);
             out.textContent=ok?'Balanced text verified '+(answer?'answer':'question'):'Balanced text failed '+JSON.stringify({font,icon,state:qa.dataset.studyLayout,answer:answer?getComputedStyle(answer).fontSize:null});
           }
           qa.addEventListener('study-layout',report);
@@ -42,6 +42,52 @@ final class AdaptiveReviewFlowTests: TypographyTestSupport {
         capture("Balanced authored word meaning examples and rating controls", in: app)
     }
 
+
+    func testVocabularyExamplesRemainSecondaryWithMalformedImportedHTML() throws {
+        let app = application()
+        defer { XCUIDevice.shared.orientation = .portrait }
+        let front = """
+        <div id="vocabulary-word" style="font-size:20px">dispatch</div
+        <div style="font-size:20px"><a id="vocabulary-replay" href="ankiplay://q/0">▶︎</a></div>
+        <br><div id="vocabulary-example" style="font-size:20px">The package is ready for dispatch this morning.</div>
+        <div style="font-size:20px"><a href="ankiplay://q/1">▶︎</a></div>
+        <script>
+        (()=>{
+          window.vocabularyHooks=(window.vocabularyHooks||0)+1;
+          const qa=document.getElementById('qa');
+          qa.addEventListener('study-layout',()=>{
+            let out=document.getElementById('vocabulary-result');
+            if(!out){out=document.createElement('div');out.id='vocabulary-result';out.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(out);}
+            const word=document.getElementById('vocabulary-word'),example=document.getElementById('vocabulary-example'),meaning=document.getElementById('vocabulary-meaning'),translation=document.getElementById('vocabulary-translation');
+            const font=parseFloat(getComputedStyle(word).fontSize),secondary=parseFloat(getComputedStyle(example).fontSize),icon=document.getElementById('vocabulary-replay').getBoundingClientRect().height;
+            const nodes=[word,example,meaning,translation].filter(Boolean);
+            const ok=nodes.every(node=>qa.contains(node)) && window.vocabularyHooks===1 && qa.dataset.studyLayout==='fit' && qa.getBoundingClientRect().height<=Number(qa.dataset.studyAvailableHeight)+1 && font>=30 && secondary/font>=.60 && secondary/font<=.65 && icon>=44 && icon<=48 && (!meaning || getComputedStyle(word).fontSize===getComputedStyle(meaning).fontSize) && (!translation || getComputedStyle(example).fontSize===getComputedStyle(translation).fontSize);
+            out.textContent=ok?'Vocabulary verified '+(meaning?'answer':'question'):'Vocabulary failed '+JSON.stringify({font,secondary,icon,state:qa.dataset.studyLayout,hooks:window.vocabularyHooks});
+          });
+        })();
+        </script>
+        """
+        let back = """
+        <div id="vocabulary-meaning" style="font-size:20px">発送する</div>
+        <br><div id="vocabulary-translation" style="font-size:20px">荷物は今朝発送する準備ができています。</div>
+        """
+        try addNote(front: front, back: back, in: app)
+        XCUIDevice.shared.orientation = .landscapeLeft
+        requireTestCondition("Vocabulary review starts in landscape", in: app) { app.frame.width > app.frame.height }
+        tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
+        let web = try XCTUnwrap(waitForTestCardWebView(in: app))
+        _ = try XCTUnwrap(waitForTestControl(web.staticTexts.matching(NSPredicate(format: "label == %@", "dispatch")), in: app, timeout: 60, purpose: .observation))
+        requireTestCondition("Imported question keeps the example secondary and inside the measured card", in: app) {
+            web.staticTexts.matching(NSPredicate(format: "label == %@", "Vocabulary verified question")).count == 1
+        }
+        capture("Vocabulary word and smaller example", in: app)
+        tapTestControl(app.buttons.matching(identifier: "reveal"), in: app)
+        requireTestCondition("Both examples share a smaller size while word and meaning remain equal", in: app) {
+            web.staticTexts.matching(NSPredicate(format: "label == %@", "Vocabulary verified answer")).count == 1
+        }
+        _ = waitForTestControl(app.buttons.matching(identifier: "answer-2"), in: app)
+        capture("Vocabulary meaning and two smaller examples", in: app)
+    }
 
     func testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation() throws {
         let app = application()

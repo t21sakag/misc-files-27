@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-review-examples': ['testVocabularyExamplesRemainSecondaryWithMalformedImportedHTML', 'testAuthoredTextAndReplayControlsBalanceAfterReveal', 'testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation', 'testAdaptiveLongContentKeepsReadableMinimumAndNativeButtons', 'testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],
+    'review-examples': ['testVocabularyExamplesRemainSecondaryWithMalformedImportedHTML'],
     'native-review-balance': ['testAuthoredTextAndReplayControlsBalanceAfterReveal', 'testAutomaticSyncDefersUntilRevealedReviewIsClosed', 'testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation', 'testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks', 'testAdaptiveLongContentKeepsReadableMinimumAndNativeButtons'],
     'review-balance': ['testAuthoredTextAndReplayControlsBalanceAfterReveal'],
     'review-resume': ['testAutomaticSyncDefersUntilRevealedReviewIsClosed'],

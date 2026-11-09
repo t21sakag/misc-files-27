@@ -5,6 +5,18 @@ enum AdaptiveReviewLayout {
 (() => {
     const content = document.getElementById('qa');
     if (!content) return;
+    // The HTML parser may close #qa early when an imported card contains a
+    // malformed closing tag. Recover only nodes belonging to this card,
+    // before this renderer script, keeping their identities and listeners.
+    const renderer = document.currentScript;
+    if (renderer && renderer.parentNode === content.parentNode) {
+        let sibling = content.nextSibling;
+        while (sibling && sibling !== renderer) {
+            const next = sibling.nextSibling;
+            content.appendChild(sibling);
+            sibling = next;
+        }
+    }
     const root = document.documentElement;
     const readingScale = Number(document.body.dataset.readingScale) || 1;
     const minimumFont = 24 * readingScale;
@@ -19,11 +31,16 @@ enum AdaptiveReviewLayout {
     const rules = document.createElement('style');
     rules.textContent = `
         html, body, #qa { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+        html { scrollbar-gutter:stable; }
         #qa { display:flow-root; font-size:var(--study-font); line-height:1.28; overflow-wrap:anywhere; }
         #qa .study-reading-text {
             font-size:var(--study-font) !important;
             line-height:1.28 !important;
             overflow-wrap:anywhere;
+        }
+        #qa > br.study-section-gap { display:none; }
+        #qa > br.study-section-gap + * {
+            margin-top:clamp(8px,1.6vh,18px) !important;
         }
         #qa input, #qa textarea, #qa button, #qa select {
             max-width:100%; box-sizing:border-box;
@@ -41,32 +58,65 @@ enum AdaptiveReviewLayout {
     document.head.append(rules);
 
     function identifyText() {
-        const textContainers = new Set([content]);
-        const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
-        while (walker.nextNode()) {
-            const node = walker.currentNode;
-            const parent = node.parentElement;
-            if (node.textContent.trim() && !parent.closest(preserved)) {
-                for (let element = parent; element; element = element.parentElement) {
-                    textContainers.add(element);
-                    if (element === content) break;
-                }
+        const primary = new Set([content]);
+        const supporting = new Set();
+        const controls = new Set();
+        let hasPrimary = false, afterBreak = false;
+        function includeParents(element, targets) {
+            for (; element; element = element.parentElement) {
+                targets.add(element);
+                if (element === content) break;
             }
+        }
+        for (const block of content.childNodes) {
+            if (block.nodeType === Node.ELEMENT_NODE && block.matches('hr#answer')) {
+                hasPrimary = false;
+                afterBreak = false;
+                continue;
+            }
+            if (block.nodeType === Node.ELEMENT_NODE && block.matches('br')) {
+                if (hasPrimary) {
+                    afterBreak = true;
+                    block.classList.toggle('study-section-gap',
+                        !!block.nextElementSibling?.matches('div,p,section,article,blockquote'));
+                }
+                continue;
+            }
+            const nodes = [];
+            if (block.nodeType === Node.TEXT_NODE) nodes.push(block);
+            else {
+                const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+            }
+            const text = nodes.filter(node => node.textContent.trim() && !node.parentElement.closest(preserved));
+            if (!text.length) continue;
+            const label = text.map(node => node.textContent).join('').trim();
+            const explicit = block.nodeType === Node.ELEMENT_NODE && block.matches('small,.example,[data-study-role="example"]');
+            const parenthetical = /^[（(][\s\S]*[）)]$/.test(label);
+            const targets = hasPrimary && (afterBreak || explicit || parenthetical) ? supporting : primary;
+            for (const node of text) includeParents(node.parentElement, targets);
+            hasPrimary = true;
         }
         for (const control of content.querySelectorAll('a[href^="ankiplay:"]')) {
             control.style.setProperty('font-size', 'clamp(28px,4vmin,44px)', 'important');
             control.style.setProperty('line-height', '1', 'important');
             control.style.setProperty('text-decoration', 'none', 'important');
-            for (let element = control.parentElement; element; element = element.parentElement) {
-                if (element.closest(preserved)) break;
-                textContainers.add(element);
-                if (element === content) break;
-            }
+            if (!control.parentElement.closest(preserved)) includeParents(control.parentElement, controls);
         }
-        for (const element of textContainers) {
+        const containers = new Set([...primary, ...supporting, ...controls]);
+        for (const element of containers) {
             element.classList.add('study-reading-text');
-            element.style.setProperty('font-size', 'var(--study-font)', 'important');
-            element.style.setProperty('line-height', '1.28', 'important');
+            element.classList.remove('study-supporting-text');
+            let size = 'var(--study-font)', lineHeight = '1.28';
+            if (!primary.has(element) && supporting.has(element)) {
+                size = 'max(' + (18 * readingScale) + 'px,calc(var(--study-font) * 0.62))';
+                element.classList.add('study-supporting-text');
+            } else if (!primary.has(element) && !supporting.has(element)) {
+                size = 'clamp(28px,4vmin,44px)';
+                lineHeight = '1';
+            }
+            element.style.setProperty('font-size', size, 'important');
+            element.style.setProperty('line-height', lineHeight, 'important');
         }
     }
 
