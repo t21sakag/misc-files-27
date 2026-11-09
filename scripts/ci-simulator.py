@@ -26,6 +26,14 @@ def create():
     uuid.UUID(device)
     manifest.parent.mkdir(parents=True, exist_ok=True)
     manifest.write_text(json.dumps({'id': device, 'name': name, 'runtime': runtime}) + '\n')
+    # The CI runner's attached Mac keyboard can leave UITextView visibly
+    # focused while XCTest cannot deliver text. Configure before first boot.
+    subprocess.check_output(['defaults', 'write', 'com.apple.iphonesimulator',
+                             'ConnectHardwareKeyboard', '-bool', 'false'], text=True)
+    keyboard = subprocess.check_output(['defaults', 'read', 'com.apple.iphonesimulator',
+                                       'ConnectHardwareKeyboard'], text=True).strip()
+    if keyboard not in ('0', 'false'):
+        raise SystemExit('Simulator hardware keyboard must be disabled before UI testing')
     print(device)
 
 def delete():

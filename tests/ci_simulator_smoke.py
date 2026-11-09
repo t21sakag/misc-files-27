@@ -21,6 +21,14 @@ inventory = {'devices': {runtime: [template]}}
 original = subprocess.check_output
 commands = []
 def execute(args, **kwargs):
+    if args[0] == 'defaults':
+        commands.append(args)
+        assert args[2:4] == ['com.apple.iphonesimulator', 'ConnectHardwareKeyboard'], args
+        if args[1] == 'write':
+            assert args[4:] == ['-bool', 'false']
+            return ''
+        assert args[1] == 'read' and len(args) == 4
+        return '0'
     if args[0] != 'xcrun':
         return original(args, **kwargs)
     commands.append(args)
@@ -47,6 +55,8 @@ with tempfile.TemporaryDirectory() as temp, patch('subprocess.check_output', sid
         assert run('create') == owned_id
         lease = Path('build/ci-simulator.json')
         assert lease.exists()
+        assert any(c[:2] == ['defaults', 'write'] for c in commands)
+        assert any(c[:2] == ['defaults', 'read'] for c in commands)
         before = len(commands)
         try: run('create'); raise AssertionError('Duplicate was created')
         except SystemExit: pass
@@ -54,7 +64,7 @@ with tempfile.TemporaryDirectory() as temp, patch('subprocess.check_output', sid
         inventory['devices'][runtime][-1]['name'] = 'Someone else'
         try: run('delete'); raise AssertionError('Foreign device was removed')
         except SystemExit: pass
-        assert all(c[2] != 'delete' and (c[2] != 'shutdown' or c[3] == template_id) for c in commands)
+        assert all(c[2] != 'delete' and (c[2] != 'shutdown' or c[3] == template_id) for c in commands if c[0] == 'xcrun')
         inventory['devices'][runtime][-1]['name'] = json.loads(lease.read_text())['name']
         run('delete')
         assert not lease.exists() and inventory['devices'][runtime] == [template]
