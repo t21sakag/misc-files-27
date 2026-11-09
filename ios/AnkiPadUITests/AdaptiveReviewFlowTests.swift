@@ -118,7 +118,7 @@ final class AdaptiveReviewFlowTests: TypographyTestSupport {
         defer { XCUIDevice.shared.orientation = .portrait }
         let html = """
         <div id="adaptive-question" style="font-size:18px">English and 日本語の問題</div>
-        <hr><div id="adaptive-answer" style="font-size:40px">画像と音声を含む答え</div>
+        <hr id="answer"><div id="adaptive-answer" style="font-size:40px">画像と音声を含む答え</div>
         <audio controls></audio><video controls style="width:180px;height:90px"></video>
         <input id="adaptive-input" value="Keep this answer"><div id="adaptive-media"></div>
         <script>

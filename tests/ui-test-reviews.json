@@ -7159,6 +7159,266 @@
         }
       ],
       "checked_at": "2026-11-09T07:10:40.468293+00:00"
+    },
+    {
+      "id": "20261109-template-reading-independent-scope",
+      "covers": [
+        [
+          42577697183,
+          1
+        ],
+        [
+          42575080856,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42575080856,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Undo menu scrolling started on a partially clipped edge row. Recording and input coordinates show popover dismissal and background browser movement. Shared helper now uses interior rows."
+        },
+        {
+          "attempt": [
+            42577697183,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "Both native reset operations and subsequent selected/unselected searches pass. Undo menu action is now uniquely actionable and receives a recorded native tap. Following external search does not recover expected review counts. Native callback/UndoStatus and external-navigation timing are not established. Do not claim application or harness root cause resolved."
+        }
+      ],
+      "rule_review": {
+        "semantic_labels": "Older Undo label is exact and native tap is recorded. New template test uses explicit role=button and complete unique English labels inside its one review WebView, plus original native reveal/rating identifiers. Source role does not replace actual AX readiness checks.",
+        "foreground_scope": "Older failure scope is the browser filter menu and reset dialog. New test operates in the frontmost reviewer WebView and standard add-note form, using existing shared typed queries. It has no reset/menu-Undo dependency.",
+        "unique_reads_and_actions": "Keep one-target checks in shared helpers and one semantic status label. New mode selectors use unique semantic roles/labels scoped to the review WebView. Repeated native cases retain strict text/input and actual button assertions.",
+        "live_state": "Latest app remains running with browser-results review1 instead of2 for card mode, review0 instead of1 for note mode. No app crash or absence is inferred. New layout status checks DOM role/ratio/touch geometry and actual mode/rotation/answer state, not model state alone.",
+        "keyboard_and_scroll": "Current shared menu helper retains interior row endpoints for partially clipped menus. New field entry uses shared empty-field helper with full-content validation and keyboard handling. Long card content retains readable minimum and scrolling. New modes are native WebView pointer interactions with explicit state waits.",
+        "environment": "Existing relocated reset fixture regression remains in place. New renderer cases create synthetic notes through the app and require no external deck, host, camera or photo. Shared compiled products/independent simulators and software-keyboard preference remain unchanged. User APKG is inspected only locally and is excluded from repository and CI.",
+        "first_failure_evidence": "Compared both attempts terminal AX, recordings, input-events and complete logs. Latest native Undo tap is x~572,y725 inside the scrolled menu. Following URL search starts immediately, and terminal results still reflect reset cards. There is no recorded callback/UndoStatus proof, so actual cause remains open. Do not change taps or retry that old case without further evidence.",
+        "failure_classification": "42575080856 is a common menu-scrolling harness defect. 42577697183 is an undetermined reset/Undo completion mismatch. Do not classify either as a renderer failure. Current independent scope is explicitly substituted because the user cleared the previous goal and requested APKG-readable layout implementation.",
+        "runtime_warnings": "Both latest reset summaries have runtimeWarnings=[] and failed case statuses. They are not success evidence. Keep exact case identity, skip and warning gates on the new scope. Compilation/IPA do not reset the UI failure history.",
+        "device_evidence": "Linux actual Swift+CABI reset read-sequence/Undo probe passes, but does not prove native UI Undo. New renderer has real browser synthetic controls/resize/script/long-text/media coverage and private actual-deck render evidence. Apple native rendering and physical iPad appearance remain distinct validation stages."
+      },
+      "root_cause": "The earlier menu clip is understood and corrected. The latest reset/Undo result mismatch remains undetermined, after actual menu activation. That scheduling/navigation investigation belongs to the user-cleared parity goal. The newly requested renderer work has a separately reproduced CSS-normalization defect and does not require reset, native Undo, notes-mode switching or repeated browser deep links.",
+      "common_resolution": "Retain the interior-row menu fix, all existing data assertions and failed reset evidence. Permit only the independent renderer/typing regression scope requested by the user. Inspect native Undo callback/engine status before resuming reset tests in a later authorized task. Do not weaken or relabel them as passed.",
+      "next_scope": [
+        "TemplateReadingFlowTests/testNestedTemplateHierarchyAndModeControlsSurviveRevealAndRotation",
+        "AdaptiveReviewFlowTests/testPlainAnswerRevealKeepsQuestionDocumentPositionAndFont",
+        "AdaptiveReviewFlowTests/testAuthoredTextAndReplayControlsBalanceAfterReveal",
+        "AdaptiveReviewFlowTests/testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation",
+        "TypingFocusFlowTests/testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks"
+      ],
+      "evidence": [
+        {
+          "reference": "run 42575080856 failed.log",
+          "sha256": "dff3ad6d3b01e86d128ecd03e4edaa0a17ef50d932df316e4952c73578878389"
+        },
+        {
+          "reference": "run 42575080856 diag0/screenshots/CB825BC8-66C0-4C86-AD5C-518A70CBF0D3.txt",
+          "sha256": "bceaeb1958cc883b6fbbe29e25033822357e08a36ed9a5c1233a5b37f7d53577"
+        },
+        {
+          "reference": "run 42575080856 diag0/screenshots/4FE0E6F8-2B80-4CC0-AEFC-1D4D1E9076CB.txt",
+          "sha256": "b876ec24b6fe1e398e1fdc112751854b4ff59431fdce5fe7e6cb67cd6648e261"
+        },
+        {
+          "reference": "run 42575080856 diag0/input-events.json",
+          "sha256": "bb79ab1478d6347a158e0bc647e4e55aa8f9b083558f8e8fecc517262235bb47"
+        },
+        {
+          "reference": "run 42575080856 diag0/test-summary.json",
+          "sha256": "1077e8ab9601f9602eb8d550bcb2eab6e250bddba65775a172942cbd48087bf7"
+        },
+        {
+          "reference": "run 42575080856 diag1/screenshots/CFBC4B97-8893-49E5-9790-1B85E2020CBE.txt",
+          "sha256": "2dc0f14ed882f3712ed9578dfd4a749db7c3238cddde5f5434514302b9f2ec89"
+        },
+        {
+          "reference": "run 42575080856 diag1/screenshots/6672F9DF-DE7B-4F4E-B342-C3BF3A984EF3.txt",
+          "sha256": "f8ca776103bb9e9b62bc0750d0d9d89b20ac4772b263958cbe88fa1da44aa262"
+        },
+        {
+          "reference": "run 42575080856 diag1/input-events.json",
+          "sha256": "2ff58f94ba2339baf78df321cb92a9f2df8257b6aa868d2d0b96dc7ac2091a63"
+        },
+        {
+          "reference": "run 42575080856 diag1/test-summary.json",
+          "sha256": "1ef7cb863621f0d6b72dd4dbcfe76ce7221e3144d68de9714e18f8c4f94d9311"
+        },
+        {
+          "reference": "run 42575080856 screens0/66E75293-EFED-4CEB-9EDA-44BB327A8B3F.mp4",
+          "sha256": "009d2a6c2bee37ca9f900b59c770aa43d2cb39d07b908bbbd1764305eb52f8d7"
+        },
+        {
+          "reference": "run 42577697183 completed.log",
+          "sha256": "28737e50fc392cbb87ef8bd1f02c8f7ad88c5e0486289b89abc80a83f08f1899"
+        },
+        {
+          "reference": "run 42577697183 diag0/screenshots/48A51573-AFE4-49A4-A50C-DAFB2B28883A.txt",
+          "sha256": "7d1586b42b4f2002d11f45a039fca3949060aaa6e5b139e0eb42911316550de5"
+        },
+        {
+          "reference": "run 42577697183 diag0/screenshots/E61BFABC-5F2A-4E1E-B3C3-E1A3A13BFB63.txt",
+          "sha256": "84c12a1ad876e208b774ec49042047c2a61ec73e3227fc118a6bad6a63e7f5cf"
+        },
+        {
+          "reference": "run 42577697183 diag0/input-events.json",
+          "sha256": "6c2eb93ac88441522b2b47b9725168a634483e2e9ff46374222b5d76d5f337b4"
+        },
+        {
+          "reference": "run 42577697183 diag0/test-summary.json",
+          "sha256": "bb6507e10a6952684eeb3c0b4dc4d73c66f7c4bdd0adbdf2c4ffb1e4bd841392"
+        },
+        {
+          "reference": "run 42577697183 diag1/screenshots/DA8AF981-100F-408C-82F2-5C50BBB9B5E5.txt",
+          "sha256": "48402556cbf392cc444b536968579f15afb4b03363cf1ffaad764f9a1d669a18"
+        },
+        {
+          "reference": "run 42577697183 diag1/input-events.json",
+          "sha256": "e2c5dc71f60f9d08dc2c92948a36d75dec9e6631612e43758fcf54e3fde9e90e"
+        },
+        {
+          "reference": "run 42577697183 diag1/test-summary.json",
+          "sha256": "492288a034009699c1d9d9a8df059be67e4989740f724acc397576137c989e30"
+        },
+        {
+          "reference": "run 42577697183 screens0/71A6BA19-DE56-40DB-9066-FA31E6CE24E2.mp4",
+          "sha256": "060767b2e74369a0c8cf865dfcb8db27a77d30e5f7a1d4835f0435b54610e167"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "8a36000d35b338964f370a1a4a98ae3af312d27a37da4a0ef3a96d0bc346f179",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "e1d57b168a803c86e6791b047cdb43a5fa848c1bb46729ea28b588884ba06987",
+        "scripts/run-ui-batch.py": "24e60a80b1aab2e9e64eb7de0892122152437996d6083484618a73b532f7a4de",
+        "scripts/ui-prerequisites.py": "461e7ad30e98d7897cc7a5a203b5d5fdad7d8a8cdca6b0badfb0c0ffa24233de",
+        "ios/AnkiPad/AdaptiveReviewLayout.swift": "bb9c45f444e05460612283ce4acf8a4b20b89cb511f5c90bb02105fa3b13d8e0",
+        "ios/AnkiPadUITests/TemplateReadingFlowTests.swift": "cbdff395896a648fb20ad291abbcd867fe2b96ba8c69f22c35b9f061d45f6d80",
+        "ios/AnkiPadUITests/AdaptiveReviewFlowTests.swift": "5d5d39f2df95fab2d4fcfe2cab601ebd611ae183683052ead53b6345e37e1658",
+        "ios/AnkiPadUITests/TypographyTestSupport.swift": "f2751956e08f141fe2bdaaa8bc2cbf70884047c57c4d4afb587c860994e8ce4b",
+        "tests/reviewer_layout_smoke.py": "c744a197321c0600b5435a06c782dbcee7cb206feae44edb770d00cb4cb91ac4",
+        "tests/reviewer_template_layout_smoke.py": "fb10fe833c44f4cda628e8eef12809917d9867bb5605d2b1a1554f6f3bbc8ab1",
+        "scripts/select-ui-tests.py": "643a12b2ca574eaf88ec0df5f4599931de28675914fde648436229e718bec785",
+        "scripts/ui-case-groups.json": "9b3183a5c0b630a0828b7667b64a92c4d8fe52b6d49978a35cc01cc3dc91fefd",
+        ".github/workflows/ipa.yml": "2a200c27eed894ed564f9b91cdbaab96f9ccb69f145854d3f447157ee063801d"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "34f0a715292dd2740e97cced00302a651c61cf9520ba31438277b57be5426938"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "41da967dce1583ee19fddcacf4ffc5bfb41c1b5d76ea3cb00f6d6aa3ca0163df"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "88a95283dc8d8ff54c89565271218eca296618b4cfb5f1b7401fb7b70c4ced3c"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "bc1de3633d81dfda899b0ded08539dea43184256efe29c7999fc0beae71c2a39"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6506011d69f680a53262e95b832e76f25f9ddaa64a6054f69808e16f488f1d2d"
+        },
+        {
+          "name": "prerequisite rejection",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "actual consumer runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "real browser regression",
+          "argv": [
+            "python3",
+            "tests/reviewer_layout_smoke.py",
+            "--browser",
+            "/usr/bin/chromium"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "9183647e4fc8c90ba7a61a12529a4f5c8b3cc90d4e5f1909fa3a6ec5bee88bc2"
+        },
+        {
+          "name": "synthetic authored templates",
+          "argv": [
+            "python3",
+            "tests/reviewer_template_layout_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5734ab7234529f86085dd5b2e4c7c06b6f3046cc09809309aa032a3dc917d0a9"
+        }
+      ],
+      "checked_at": "2026-11-09T08:12:28.512878+00:00"
     }
   ]
 }
