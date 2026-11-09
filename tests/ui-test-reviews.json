@@ -7634,6 +7634,229 @@
         }
       ],
       "checked_at": "2026-11-09T16:02:10.209306+00:00"
+    },
+    {
+      "id": "20261110-browser-reset-native-touch-delivery",
+      "covers": [
+        [
+          42650771411,
+          1
+        ],
+        [
+          42645116348,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42645116348,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "The corrected search preserves PID16034 and imported UndoStatus. First restore Switch receives a native centre event638.5,464 matching frame607,450,63,28 but remains on. No setter/native state snapshot existed yet. Do not infer an app scheduling defect or try another tap coordinate."
+        },
+        {
+          "attempt": [
+            42650771411,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "Native restore switch remains on, loaded=true, busy=false, no first responder. Window hitTest reaches its LiquidLens child. Synthesized638.5,464 matches native607,450,63,28. Only one options.load and no binding setter event. Native delivery and gesture consumption remain unproven."
+        }
+      ],
+      "rule_review": {
+        "semantic_labels": "Existing exact reset menu label resolves and opens the form. Restore/count switches retain their specific source identifiers and semantic labels. No label or alternate tap target is changed. The new diagnostic has a distinct ID applied after fixedSize.",
+        "foreground_scope": "Latest terminal AX places the reset sheet above the browser, with the native thumb child at607,450,63,28. Form identifier is applied before the overlay, matching the previously verified diagnostic composition. Diagnostic reads are scoped to one native static text.",
+        "unique_reads_and_actions": "Shared setTestSwitch first resolves one labelled row and then one direct native child. Latest failure has one enabled/hittable native thumb. Keep this resolver and value-arrival check. On-demand diagnostic value is read directly rather than relying on truncated debugDescription.",
+        "live_state": "Latest native/model snapshots before and after show loaded=true,busy=false,restore=true,counts=false. No first responder. Only one options.load event and zero option setter events, so state overwrite after setter is unsupported. Reset/Undo not reached.",
+        "keyboard_and_scroll": "In-app query entry reuses shared empty/replacement helpers and normal submit. Existing menu scrolling and strict centre/thumb activation remain unchanged. The first failed switch event matches the actual thumb centre. Diagnostic reads use keyboard.keep and do not dismiss or focus controls.",
+        "environment": "Synthetic fixture/import and same-session native query work. Diagnostic observer requires DEBUG, isolated namespace and explicit undo trace flag. It records only count,coordinates,type,class, without user text or credentials. Observer is removed from old window on movement, fails immediately, cannot prevent or be prevented, and has no touch cancellation/delay. Source changes need Apple typecheck beyond local parse.",
+        "first_failure_evidence": "Both attempts actual input centre638.5,464 matches native frame607,450,63,28. Latest native hitTest reaches UISwitch LiquidLens descendant, enabled and interactive. Downloaded latest recording and inspected frame266s showing frontmost reset sheet with on switch. Terminal capture agrees. Next observation records actual app-process touch receipt without changing input.",
+        "failure_classification": "42645116348 and42650771411 are undetermined input no-transition, not backend reset defects. Both executed exactly one case and failed at first restore Switch. Latest terminal native diagnostics rule out absent responder, disabled state and repeated load as supported causes. Formal ordering uses executed steps.",
+        "runtime_warnings": "Both summaries retain runtimeWarnings=[]; no skips or disabled assertions are accepted. Diagnostic logs do not establish functional success.",
+        "device_evidence": "Production Swift+CABI options/backup/Undo contracts have local success evidence. Native reset UI is not yet proven under the corrected same-session journey. Physical iPad interaction, audio and signing remain separate. Build316 remains the distributed artifact."
+      },
+      "root_cause": "Both attempts stop at native restore input before reset or Undo. Reload/disabled/responder mismatch is contradicted by on-demand native and model evidence. No setter callback occurs. A correctly synthesized coordinate does not prove UIKit touch delivery.",
+      "common_resolution": "Retain all common control queries, tap method, timeout and assertions. Add an isolated DEBUG window touch observer that records delivered coordinate/type/target, immediately fails recognition, never prevents or is prevented by other recognizers, and disables cancellation and delays. No SwiftUI state writes, timers or synthetic input. Compare actual delivery with native switch geometry and setter events before behavior changes.",
+      "next_scope": [
+        "BrowserForgetFlowTests/testCardResetCancelOptionsPersistAndUndoLeavesSiblingReviewed"
+      ],
+      "evidence": [
+        {
+          "reference": "completed-run/42645116348/failed.log",
+          "sha256": "ad325f5c8eb51c26032b896035f9c6ece22a5668f6ebade7d77d5a189922df32"
+        },
+        {
+          "reference": "completed-run/42645116348/diag/input-events.json",
+          "sha256": "62979c6b52724a095371419d895a313f9c60c30b3356dceb3ca0457a717bddf2"
+        },
+        {
+          "reference": "completed-run/42645116348/diag/test-summary.json",
+          "sha256": "f73afb93ffcfe392f0f3b93edb3a55b33a8c141e751d5ede7428cd62d1148aa1"
+        },
+        {
+          "reference": "completed-run/42645116348/diag/widget-diagnostics/critical.log",
+          "sha256": "e2b7c8f61d923468eb36496c6d07280e9b1234d6d887c1750bdc7af69df2497a"
+        },
+        {
+          "reference": "completed-run/42645116348/diag/screenshots/448EB116-FCAD-4F06-A665-78E8B690DEBD.txt",
+          "sha256": "0e46bb5abdb5e8724f90be54c5a86e634eeb9563a20c27282a79ee0c109bc71e"
+        },
+        {
+          "reference": "completed-run/42645116348/diag/screenshots/D03CF9A5-6579-45E0-9DC6-61651D5408AF.txt",
+          "sha256": "b3d8593495972111e4eeca5065ebd54906127862a676b552632aa2272f8eb298"
+        },
+        {
+          "reference": "completed-run/42645116348/diag/screenshots/DA387272-2D0F-4D4C-8804-8E100D9F3E98.txt",
+          "sha256": "ffc0b6c9aab98ebb0c4824135f4c9163cfa2c51fa22f3115957d225b3f0e07a0"
+        },
+        {
+          "reference": "completed-run/42650771411/failed.log",
+          "sha256": "e0a3d92e813f8b1fec70c6fd00d9a3660e482b2e119510624b7b9681b8fa2134"
+        },
+        {
+          "reference": "completed-run/42650771411/diag/input-events.json",
+          "sha256": "28286d6af5f77a4f79c12b32e56f6d066dee63ff8df8f102ae3b8619478c4bfa"
+        },
+        {
+          "reference": "completed-run/42650771411/diag/test-summary.json",
+          "sha256": "04797af6ad6c6ce6cd29cfd7aabfdff8ef74c244551eb44a472a62b97950cc06"
+        },
+        {
+          "reference": "completed-run/42650771411/diag/widget-diagnostics/critical.log",
+          "sha256": "14407e6b24f9146140bb12b4740b9e943ed8d8c3756de0666caede57b044db07"
+        },
+        {
+          "reference": "completed-run/42650771411/diag/screenshots/3094C4DF-A4B2-47DA-8AAC-94F7E969343B.txt",
+          "sha256": "b5e418fb33f5654aaa9ed41fef172678629a3feee017855b871ca316e6f473f4"
+        },
+        {
+          "reference": "completed-run/42650771411/diag/screenshots/75225DCC-54C9-44FF-8EA4-867A35B34D40.txt",
+          "sha256": "bd60532937c763d96bb9d10d64d587550544971d21ecf7acae09ce8237152b31"
+        },
+        {
+          "reference": "completed-run/42650771411/diag/screenshots/A3E6642E-4D40-41C4-B1CC-B9281EF8CB1E.txt",
+          "sha256": "ffc0b6c9aab98ebb0c4824135f4c9163cfa2c51fa22f3115957d225b3f0e07a0"
+        },
+        {
+          "reference": "completed-run/42650771411/diag/screenshots/DF1F2FAA-61C9-4490-BB57-4D6F7E74C1FE.txt",
+          "sha256": "5176478ed5f0530ccc2424a325c1db8bb5d2226fd1392e3af9649d5434bc0cc4"
+        },
+        {
+          "reference": "completed-run/42650771411/screens/08DF1E12-80EE-4DA2-B9FA-A8E0759E5203.mp4",
+          "sha256": "65e7fc40763190d5d197099b887514e5111b7aef312f12da5ecce82d92ce5400"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "41eb9fac822c5e762849ddb2280f042b42c867b62eb3e811988c7796e89c9e91",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "e1d57b168a803c86e6791b047cdb43a5fa848c1bb46729ea28b588884ba06987",
+        "ios/AnkiPadUITests/BrowserForgetFlowTests.swift": "d029bfeaacf0ff78d24a0fb632cc6b6772b43c901ddabf038ea431ab63294d3d",
+        "ios/AnkiPad/BrowserForgetCardsView.swift": "037537f41080df711aa43be53d1e90fe4d39bcbfc7b474984428b155729cc5a3",
+        "ios/AnkiPad/BrowserInputDiagnostics.swift": "ae41bf0cb695e81d8569f02691866dd8d73bc2f83f4a74b8fe072342f57cfe7d",
+        "ios/AnkiPad/Engine.swift": "dc72188dcb5ccdf89d224d80890eb76256dca3d8ce44e7f8f0454b671756e47d",
+        "ios/AnkiPad/BrowserEngine.swift": "b494cbd0d3be4908582fcd586fafc1283b37893ce52a80af3afdef016fd534b6",
+        "ios/AnkiPad/BrowserForgetEngine.swift": "4dccc0202cd67bfebffb3d1419b88893d0768e61ee13fbb443bdacd2ccb894d1",
+        "scripts/run-ui-with-diagnostics.py": "09c1753f394adc3d0c45e576979b15f9515681f54df73f4c6a88b8717bcb016e",
+        "scripts/select-ui-tests.py": "643a12b2ca574eaf88ec0df5f4599931de28675914fde648436229e718bec785",
+        "scripts/ui-case-groups.json": "9b3183a5c0b630a0828b7667b64a92c4d8fe52b6d49978a35cc01cc3dc91fefd",
+        ".github/workflows/ipa.yml": "2a200c27eed894ed564f9b91cdbaab96f9ccb69f145854d3f447157ee063801d"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "34f0a715292dd2740e97cced00302a651c61cf9520ba31438277b57be5426938"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "41da967dce1583ee19fddcacf4ffc5bfb41c1b5d76ea3cb00f6d6aa3ca0163df"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "88a95283dc8d8ff54c89565271218eca296618b4cfb5f1b7401fb7b70c4ced3c"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "bc1de3633d81dfda899b0ded08539dea43184256efe29c7999fc0beae71c2a39"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6506011d69f680a53262e95b832e76f25f9ddaa64a6054f69808e16f488f1d2d"
+        },
+        {
+          "name": "prerequisite rejection",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "actual consumer runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        }
+      ],
+      "checked_at": "2026-11-09T16:27:40.012620+00:00"
     }
   ]
 }

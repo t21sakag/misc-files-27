@@ -52,9 +52,46 @@ import SwiftUI
 
 @MainActor final class BrowserInputDiagnosticsLabel: UILabel {
     var readValue: (() -> String)?
+    private var touchObserver: BrowserInputTouchObserver?
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if let observer = touchObserver { observer.view?.removeGestureRecognizer(observer) }
+        touchObserver = nil
+        guard let window, UITestIsolation.namespace() != nil,
+              ProcessInfo.processInfo.arguments.contains("--uitest-browser-undo-trace") else { return }
+        let observer = BrowserInputTouchObserver(target: nil, action: nil)
+        observer.cancelsTouchesInView = false
+        observer.delaysTouchesBegan = false
+        observer.delaysTouchesEnded = false
+        window.addGestureRecognizer(observer)
+        touchObserver = observer
+    }
+
     override var accessibilityValue: String? {
-        get { readValue?() }
+        get { readValue.map { $0() + "\nnativeTouches=" + (touchObserver?.summary ?? "unavailable") } }
         set { /* Read-only diagnostic. */ }
+    }
+}
+
+/// Records delivery without recognizing, delaying or cancelling an input.
+/// A failed observer leaves the native control's gesture arbitration intact.
+@MainActor private final class BrowserInputTouchObserver: UIGestureRecognizer {
+    private(set) var summary = "none"
+    private var receivedCount = 0
+
+    override func canPrevent(_ preventedGestureRecognizer: UIGestureRecognizer) -> Bool { false }
+    override func canBePrevented(by preventingGestureRecognizer: UIGestureRecognizer) -> Bool { false }
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+        receivedCount += touches.count
+        if let touch = touches.first {
+            let point = touch.location(in: view)
+            let target = touch.view.map { String(describing: type(of: $0)) } ?? "none"
+            summary = "count=\(receivedCount);point=\(point);target=\(target);type=\(touch.type.rawValue)"
+            NSLog("browser.undo.trace phase=native.touch %@", summary)
+        }
+        state = .failed
     }
 }
 #endif
