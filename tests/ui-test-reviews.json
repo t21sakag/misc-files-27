@@ -6905,6 +6905,260 @@
         }
       ],
       "checked_at": "2026-11-09T06:45:12.840051+00:00"
+    },
+    {
+      "id": "20261109-browser-reset-menu-interior-scroll",
+      "covers": [
+        [
+          42575080856,
+          1
+        ],
+        [
+          42572809094,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42572809094,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Off-viewport reset action has no shared menu reveal path. Both cases stop before reset."
+        },
+        {
+          "attempt": [
+            42575080856,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Reset actions and their search postconditions now pass. At Undo, helper starts drag at x572.5,y791 on a partially clipped bottom row outside the y790 popover. Recording shows menu disappears and background browser scrolls, then strict target identity rejects further action."
+        }
+      ],
+      "rule_review": {
+        "semantic_labels": "Both reset actions match the exact AX button label 新規カードに戻す. Source menu IDs are not assumed. The failure was readiness after unique resolution, not label mismatch.",
+        "foreground_scope": "Undo target is in the filter menu, separate from the selected-actions menu. The same shared resolver owns both. Recording frame423 shows filter menu and clipped final row, frame431 shows background browser after the drag.",
+        "unique_reads_and_actions": "Both failed case targets resolved exactly once. Preserve one-target checks before and after bounded menu scrolling and reject multiple owning containers. Switch reads use the unique direct native child. No first-match tap fallback.",
+        "live_state": "Both cases now reach reset and exact new/review search checks. Final failure is before Undo activation, with app running and sheet open. Menu disappears during helper drag. Subsequent settings persistence and actual native Undo remain unproven.",
+        "keyboard_and_scroll": "Old helper used outermost isHittable row centres. Actual input x572.5,y791 is just beyond clipped menu near y790. Original reset menu reveal succeeds, filter menu needs inset endpoints. New helper chooses second/penultimate visible row centres and refuses fewer than4 visible rows.",
+        "environment": "Compiled APKG/manifest consumer resolution now passes. Both runners execute XCTest. No new fixture/server/keyboard dependency is needed. Keep actual bundle-only preflight regression.",
+        "first_failure_evidence": "Compared prior terminal AX/PNG/recordings and new terminal AX/input-events/recording. Original reset target received no tap. New failure uses Undo title, actual press/drag start791→297 followed by menu disappearance and background list displacement. Do not classify this as reset business-logic failure.",
+        "failure_classification": "Both exact attempts are harness failures in common native menu handling. First stops before reset, second advances through reset and fails at Undo. The prior bundle environment failure remains historical evidence, not part of this exact pair.",
+        "runtime_warnings": "Both newest summaries have1 failed/0passed/0skipped and runtimeWarnings=[]. Earlier successful intermediate assertions do not make these overall cases successful.",
+        "device_evidence": "Synthetic real-engine export/reimport and production Swift+CABI options4/backup/Undo pass locally. Simulator UI has not yet entered reset. No claim about physical iPad reset, audio, notifications, or signing."
+      },
+      "root_cause": "Shared menu scrolling initially omitted clipping, then trusted centres of partially hittable edge rows. Native isHittable does not guarantee that the whole row or its centre lies inside the popover.",
+      "common_resolution": "Keep unique foreground menu and exact terminal title. Exclude both edge rows from scrolling endpoints, require distinct interior rows, preserve readiness/identity/postcondition gates, and retain bundle path regression from the prior review.",
+      "next_scope": [
+        "BrowserForgetFlowTests/testCardResetCancelOptionsPersistAndUndoLeavesSiblingReviewed",
+        "BrowserForgetFlowTests/testNoteResetExpandsOnlySelectedNoteAndUndoRestoresBothCards"
+      ],
+      "evidence": [
+        {
+          "reference": "run 42572809094 failed.log",
+          "sha256": "013876e1b072f1b9dfed9614a1e65a613379e47e0313ec912234cac0c982aac2"
+        },
+        {
+          "reference": "run 42572809094 diag0/screenshots/0A2B4AEC-D473-4FA6-9F4D-BCBF9BB6B7A3.txt",
+          "sha256": "2f4e32b166be368e6ff3805996f58a1eebf2562498584cceeb70d37c4c9c6984"
+        },
+        {
+          "reference": "run 42572809094 diag0/screenshots/4F876B27-C3EA-41F1-96F1-E51855BC586A.txt",
+          "sha256": "7526fe1f41b55b32a73c045f6621f3012aac9ddf9e5e8b490922c8e32e7ca955"
+        },
+        {
+          "reference": "run 42572809094 diag0/input-events.json",
+          "sha256": "3d7a953ebbcb84d5e0b6383a2b538c4ac4076e78c6b427630b103d5a0cb82fbf"
+        },
+        {
+          "reference": "run 42572809094 diag0/test-summary.json",
+          "sha256": "8fc99dc7b1130c2f6d046a7a3a1011a415159a568e492f46884af273805097b0"
+        },
+        {
+          "reference": "run 42572809094 screens0/8FD7F64A-4BD4-4AD5-823A-D7BF30882474.mp4",
+          "sha256": "a0c28c69ecd6a9998947c780e3c6c9b789af875f2f8f291470b233c9bef6da69"
+        },
+        {
+          "reference": "run 42572809094 diag1/screenshots/70FCAF13-1D97-4791-8C6E-12D57087DED0.txt",
+          "sha256": "873c343dc2d0c9564f0e8811571acdf367ddb4e4932962941f7156a47dcc6c15"
+        },
+        {
+          "reference": "run 42572809094 diag1/screenshots/2B764944-E7E7-4B0A-AC17-10A11A93E716.txt",
+          "sha256": "73a8427026700b2e7b19e9896867263d2d7f3a4943d076fb0f0d107ace3afd58"
+        },
+        {
+          "reference": "run 42572809094 diag1/input-events.json",
+          "sha256": "5dc3878db5e0e19c61b6ea58c08ff23f5b4ef979ee39e7b1fb3876aba164f3d7"
+        },
+        {
+          "reference": "run 42572809094 diag1/test-summary.json",
+          "sha256": "63534c9ec634278937a6706f00edda20d7ac1c8cfc43f5a5b1c8140fba7fb975"
+        },
+        {
+          "reference": "run 42572809094 screens1/783DF074-D4B2-403B-9B8A-A868D31EC30B.mp4",
+          "sha256": "69c1cbf642d92405547cf3dd776235b5220bf886e21eb84adfc216fe26fd74fe"
+        },
+        {
+          "reference": "run 42575080856 failed.log",
+          "sha256": "dff3ad6d3b01e86d128ecd03e4edaa0a17ef50d932df316e4952c73578878389"
+        },
+        {
+          "reference": "run 42575080856 diag0/screenshots/CB825BC8-66C0-4C86-AD5C-518A70CBF0D3.txt",
+          "sha256": "bceaeb1958cc883b6fbbe29e25033822357e08a36ed9a5c1233a5b37f7d53577"
+        },
+        {
+          "reference": "run 42575080856 diag0/screenshots/4FE0E6F8-2B80-4CC0-AEFC-1D4D1E9076CB.txt",
+          "sha256": "b876ec24b6fe1e398e1fdc112751854b4ff59431fdce5fe7e6cb67cd6648e261"
+        },
+        {
+          "reference": "run 42575080856 diag0/input-events.json",
+          "sha256": "bb79ab1478d6347a158e0bc647e4e55aa8f9b083558f8e8fecc517262235bb47"
+        },
+        {
+          "reference": "run 42575080856 diag0/test-summary.json",
+          "sha256": "1077e8ab9601f9602eb8d550bcb2eab6e250bddba65775a172942cbd48087bf7"
+        },
+        {
+          "reference": "run 42575080856 screens0/66E75293-EFED-4CEB-9EDA-44BB327A8B3F.mp4",
+          "sha256": "009d2a6c2bee37ca9f900b59c770aa43d2cb39d07b908bbbd1764305eb52f8d7"
+        },
+        {
+          "reference": "run 42575080856 diag1/screenshots/CFBC4B97-8893-49E5-9790-1B85E2020CBE.txt",
+          "sha256": "2dc0f14ed882f3712ed9578dfd4a749db7c3238cddde5f5434514302b9f2ec89"
+        },
+        {
+          "reference": "run 42575080856 diag1/screenshots/6672F9DF-DE7B-4F4E-B342-C3BF3A984EF3.txt",
+          "sha256": "f8ca776103bb9e9b62bc0750d0d9d89b20ac4772b263958cbe88fa1da44aa262"
+        },
+        {
+          "reference": "run 42575080856 diag1/input-events.json",
+          "sha256": "2ff58f94ba2339baf78df321cb92a9f2df8257b6aa868d2d0b96dc7ac2091a63"
+        },
+        {
+          "reference": "run 42575080856 diag1/test-summary.json",
+          "sha256": "1ef7cb863621f0d6b72dd4dbcfe76ce7221e3144d68de9714e18f8c4f94d9311"
+        },
+        {
+          "reference": "run 42575080856 screens1/F59E3629-C2A2-4FF4-8BC6-CF4179F52339.mp4",
+          "sha256": "f36ee73d62b52e1c506d3c2dcbefd8d470c1483ccba5d9a2fd9e50e762851b33"
+        },
+        {
+          "reference": "run 42575080856 undo-menu.png",
+          "sha256": "46d937aa56ee89a645e0d0cb05caf33b2a148878751af6ede1bd1f03e08eaede"
+        },
+        {
+          "reference": "run 42575080856 undo-after.png",
+          "sha256": "0fdd7a888d26971904b065db2a738f55f594e0e020a39d89860bdf141742fc0c"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "8a36000d35b338964f370a1a4a98ae3af312d27a37da4a0ef3a96d0bc346f179",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "e1d57b168a803c86e6791b047cdb43a5fa848c1bb46729ea28b588884ba06987",
+        "scripts/run-ui-batch.py": "24e60a80b1aab2e9e64eb7de0892122152437996d6083484618a73b532f7a4de",
+        "scripts/ui-prerequisites.py": "461e7ad30e98d7897cc7a5a203b5d5fdad7d8a8cdca6b0badfb0c0ffa24233de",
+        "tests/ui_batch_runner_smoke.py": "6f1f5af7ac3ef1ad76630ba7f4841b9ec257f0be2a8fa9eddf890190fd522d5e",
+        "tests/ui_prerequisites_smoke.py": "522ffe40a5a52052732ec17d9151ff92fd367e297b0aaf43be648baea1e136eb",
+        "ios/AnkiPadUITests/BrowserForgetFlowTests.swift": "04b9cc1026c5ee6681552305b45dfefdc932f68eedd0d54d53a5e9c79ba477e1",
+        "tests/browser_forget_fixture.py": "7a0bc60a537282f3f3f61f294269aa41516eff914f03ec93a53b29bf13c315a4",
+        "scripts/select-ui-tests.py": "2bbe2862978532e49c273863a5b7f8e6f3eaebd869eee00ebd64ec392ba5e675",
+        ".github/workflows/ipa.yml": "01d187278e7504fd95310b5e0126e7e09a70affce09d37252cf6c642f03d3b20"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "bc50b1ce061d81f267f96b04aac5777f6a5dcf4dbfae900bbea5aa60b66d4e51"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "a8bb26866ec7ff429cdc43ac06242dd161350b994b2dc7f2fcfd5b831204363a"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "71819b79c5bc7111db6cffbf3e41560a91d1f13147ffcb29e80212206978056d"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "fa047c76b5c32aec3c829a97aab05158741feba9a54e3a1fca36eb240febf873"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6506011d69f680a53262e95b832e76f25f9ddaa64a6054f69808e16f488f1d2d"
+        },
+        {
+          "name": "prerequisite rejection",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "actual consumer runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        }
+      ],
+      "checked_at": "2026-11-09T07:10:40.468293+00:00"
     }
   ]
 }

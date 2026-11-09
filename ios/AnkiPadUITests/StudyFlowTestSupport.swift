@@ -232,11 +232,15 @@ class StudyFlowTestSupport: XCTestCase {
                 let visible = menu.children(matching: .cell).children(matching: .button)
                     .allElementsBoundByIndex.filter { $0.isHittable }.map(\.frame)
                     .filter { app.frame.contains(CGPoint(x: $0.midX, y: $0.midY)) }
-                guard let top = visible.min(by: { $0.midY < $1.midY }),
-                      let bottom = visible.max(by: { $0.midY < $1.midY }), bottom.midY - top.midY > 44 else {
+                    .sorted { $0.midY < $1.midY }
+                guard visible.count >= 4 else {
                     controlFailure(actions, in: app, reason: "Menu has no unambiguous visible scrolling area")
                     return nil
                 }
+                // AX can call a partially clipped edge row hittable even
+                // when its centre falls outside the popover. Stay one row
+                // inside both edges for the entire scrolling gesture.
+                let top = visible[1], bottom = visible[visible.count - 2]
                 let scrollDown = actions.element.frame.midY > bottom.midY
                 let start = scrollDown ? bottom : top
                 let end = scrollDown ? top : bottom
