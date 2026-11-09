@@ -289,7 +289,7 @@ struct ReviewerWebView: UIViewRepresentable {
       document.addEventListener('click',event=>{
         clearTimeout(pending);
         if(!event.isTrusted||event.defaultPrevented||event.detail!==1||event.button!==0)return;
-        if(event.composedPath().some(node=>node instanceof Element&&node.matches('a,button,input,select,textarea,label,summary,[contenteditable],[role="button"],audio,video,iframe,canvas')))return;
+        if(event.composedPath().some(node=>node instanceof Element&&node.matches('a,button,input,select,textarea,label,summary,[contenteditable],[role="button"],[role="tab"],[role="switch"],[data-study-layout-control],audio,video,iframe,canvas')))return;
         if(!getSelection()?.isCollapsed)return;
         const x=event.clientX/innerWidth,y=event.clientY/innerHeight,token=window.__ankiPadTapToken;
         pending=setTimeout(()=>{

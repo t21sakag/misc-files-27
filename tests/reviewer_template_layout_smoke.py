@@ -9,11 +9,13 @@ from chromium_fixture import chromium
 root = Path(__file__).resolve().parents[1]
 source = (root / 'ios/AnkiPad/AdaptiveReviewLayout.swift').read_text()
 layout = re.search(r'static let script = #"""\n(.*?)"""#', source, re.S)[1]
+reviewer = (root / 'ios/AnkiPad/ReviewerWebView.swift').read_text()
+tap_script = re.search(r'static let reviewTapScript = #"""\n(.*?)"""#', reviewer, re.S)[1]
 
 
 def page(prefix, semantic=False):
     control = 'button' if semantic else 'span'
-    return '''<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">
+    return '''<!doctype html><script>window.reviewTaps=[];window.__ankiPadTapToken='fixture';window.webkit={messageHandlers:{reviewTap:{postMessage:value=>window.reviewTaps.push(value)}}};TAP_SCRIPT</script><meta name="viewport" content="width=device-width,initial-scale=1">
     <style>
     body { margin:24px; font:20px sans-serif; text-align:center }
     .PREFIX-panel { max-width:520px; margin:auto }
@@ -47,7 +49,7 @@ def page(prefix, semantic=False):
     });
     window.fixtureClicks=0;
     panel.querySelector('.PREFIX-play').addEventListener('click',()=>window.fixtureClicks++);
-    })();</script><script>LAYOUT</script>'''.replace('PREFIX', prefix).replace('CONTROL', control).replace('LAYOUT', layout)
+    })();</script><script>LAYOUT</script>'''.replace('PREFIX', prefix).replace('CONTROL', control).replace('LAYOUT', layout).replace('TAP_SCRIPT', tap_script)
 
 
 def metrics(browser, prefix):
@@ -81,12 +83,18 @@ with chromium() as browser:
         point = browser.evaluate("(()=>{const b=document.querySelector('[data-mode=example]." + prefix + "-choice').getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2}})()")
         for event in ['mousePressed', 'mouseReleased']:
             browser.call('Input.dispatchMouseEvent', {'type':event,'button':'left','clickCount':1,**point})
-        time.sleep(.3)
+        time.sleep(.55)
+        assert browser.evaluate('window.reviewTaps.length') == 0, 'Mode control must not trigger reviewer touch actions'
         switched = metrics(browser, prefix)
         assert switched['mode'] == 'example' and not switched['headingVisible'], switched
         browser.evaluate("document.querySelector('." + prefix + "-choice[data-mode=both]').click()")
         time.sleep(.3)
         repeated = metrics(browser, prefix)
+        point = browser.evaluate("(()=>{const b=document.querySelector('." + prefix + "-heading').getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2}})()")
+        for event in ['mousePressed', 'mouseReleased']:
+            browser.call('Input.dispatchMouseEvent', {'type':event,'button':'left','clickCount':1,**point})
+        time.sleep(.55)
+        assert browser.evaluate('window.reviewTaps.length') == 1, 'Normal card text must retain reviewer touch actions'
         assert abs(repeated['heading'] - initial['heading']) < .1, (initial, repeated)
         assert repeated['controls'] == initial['controls'], (initial, repeated)
         # Template-owned style changes must survive later normalization.
