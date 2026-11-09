@@ -194,7 +194,9 @@
     "testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection"
   ],
   "BrowserSearchHistoryFlowTests": [
-    "testCommittedSearchHistoryReuseCancelAndRelaunch"
+    "testCommittedSearchHistoryReuseCancelAndRelaunch",
+    "testDeletingOneRecentSearchPreservesQueryCardsAndOtherEntryAfterRelaunch",
+    "testClearingRecentSearchesCanCancelAndPersistsWithoutChangingCards"
   ],
   "BrowserSearchFiltersFlowTests": [
     "testStructuredFilterORCancelFieldIntersectionAndClear",

@@ -22,6 +22,7 @@ expected['native-widgets'] = {'WidgetGalleryFlowTests/testSummaryConfigurationSe
 expected['native-fields'] = {'BrowserFieldSearchFlowTests/testNamedFieldTextSearchCancelExactAndLiteralStar', 'BrowserFieldSearchFlowTests/testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection'}
 
 expected['native-history'] = {'BrowserSearchHistoryFlowTests/testCommittedSearchHistoryReuseCancelAndRelaunch'}
+expected['native-history-editing'] = {'BrowserSearchHistoryFlowTests/testDeletingOneRecentSearchPreservesQueryCardsAndOtherEntryAfterRelaunch', 'BrowserSearchHistoryFlowTests/testClearingRecentSearchesCanCancelAndPersistsWithoutChangingCards'}
 
 expected['native-searches'] = expected['native-history'] | expected['native-fields'] | {
     'BrowserToolsFlowTests/testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch',
