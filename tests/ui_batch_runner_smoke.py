@@ -76,4 +76,16 @@ raise SystemExit(65 if os.environ['BATCH_FAKE_MODE']=='failed' else 0)
     run('passed',False,ui_started=False)
     fixture.unlink()
     run('passed',False,ui_started=False)
+    reset_case = 'BrowserForgetFlowTests/testCardResetCancelOptionsPersistAndUndoLeavesSiblingReviewed'
+    environment['BATCH_EXPECTED_CASE'] = reset_case
+    (base/'build/ui-batches.json').write_text(json.dumps({'batches': [[reset_case]]}))
+    reset_fixture = fixture.with_name('browser-forget.apkg')
+    with zipfile.ZipFile(reset_fixture, 'w') as archive:
+        archive.writestr('collection.anki21b', b'Container only')
+    reset_fixture.with_suffix('.json').write_text(json.dumps({'notes':3,'cards':6,'reviewed':6,'reps':8,'lapses':3,'singleQuery':'row0 card:"Reset Forward"'}))
+    run('passed',True)
+    prerequisite=json.loads((base/'build/ui-prerequisites.json').read_text())
+    assert prerequisite['reset_package_valid'] and prerequisite['reset_manifest_valid']
+    reset_fixture.unlink()
+    run('passed',False,ui_started=False)
 print('PASS: real batch runner validates bundled fixture before UI, starts live observer, preserves failures and rejects warnings/missing warning evidence/wrong identities/skips')

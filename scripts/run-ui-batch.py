@@ -32,6 +32,11 @@ if any(case.startswith(('BrowserFieldSearchFlowTests/', 'BrowserSearchHistoryFlo
                 if path.parent.name == 'ReceivedFixtures']
     assert len(packages) == 1, ('Expected one compiled field-search fixture', packages)
     prerequisites += ['--field-package', str(packages[0])]
+if any(case.startswith('BrowserForgetFlowTests/') for case in cases):
+    packages = [path for path in Path('build/simulator/Build/Products').rglob('browser-forget.apkg')
+                if path.parent.name == 'ReceivedFixtures']
+    assert len(packages) == 1, ('Expected one compiled reset fixture', packages)
+    prerequisites += ['--reset-package', str(packages[0])]
 subprocess.run(prerequisites, check=True)
 notification_cases = {
     'NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement',
