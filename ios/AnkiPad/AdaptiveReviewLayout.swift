@@ -1,10 +1,14 @@
+/// Display-only card layout. Embedded with the renderer so it also works when
+/// the app runs inside a host whose main resource bundle differs from its own.
+enum AdaptiveReviewLayout {
+    static let script = #"""
 (() => {
     const content = document.getElementById('qa');
     if (!content) return;
     const root = document.documentElement;
     const readingScale = Number(document.body.dataset.readingScale) || 1;
     const minimumFont = 24 * readingScale;
-    const preserved = 'script,style,svg,math,mjx-container,.MathJax,canvas,[data-study-layout-preserve],[data-study-media-group]';
+    const preserved = 'script,style,svg,math,mjx-container,.MathJax,canvas,button,select,option,a[href^="ankiplay:"],[data-study-layout-preserve],[data-study-media-group]';
     const mediaLimits = new WeakMap();
     const groupSizes = new WeakMap();
     let pending = false;
@@ -15,7 +19,7 @@
     const rules = document.createElement('style');
     rules.textContent = `
         html, body, #qa { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
-        #qa { font-size:var(--study-font); line-height:1.28; overflow-wrap:anywhere; }
+        #qa { display:flow-root; font-size:var(--study-font); line-height:1.28; overflow-wrap:anywhere; }
         #qa .study-reading-text {
             font-size:var(--study-font) !important;
             line-height:1.28 !important;
@@ -26,19 +30,43 @@
         }
         #qa input, #qa textarea { font-size:var(--study-font) !important; }
         #qa audio, #qa video { max-width:100%; }
+        #qa a[href^="ankiplay:"] {
+            display:inline-flex; align-items:center; justify-content:center;
+            font-size:clamp(28px,4vmin,44px) !important; line-height:1 !important;
+            min-width:44px; min-height:44px; text-decoration:none !important;
+            vertical-align:middle;
+        }
         #qa hr { margin-block:clamp(.5em,3vh,1em); }
     `;
     document.head.append(rules);
 
     function identifyText() {
+        const textContainers = new Set([content]);
         const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
         while (walker.nextNode()) {
             const node = walker.currentNode;
             const parent = node.parentElement;
             if (node.textContent.trim() && !parent.closest(preserved)) {
-                parent.classList.add('study-reading-text');
-                parent.style.setProperty('font-size', 'var(--study-font)', 'important');
+                for (let element = parent; element; element = element.parentElement) {
+                    textContainers.add(element);
+                    if (element === content) break;
+                }
             }
+        }
+        for (const control of content.querySelectorAll('a[href^="ankiplay:"]')) {
+            control.style.setProperty('font-size', 'clamp(28px,4vmin,44px)', 'important');
+            control.style.setProperty('line-height', '1', 'important');
+            control.style.setProperty('text-decoration', 'none', 'important');
+            for (let element = control.parentElement; element; element = element.parentElement) {
+                if (element.closest(preserved)) break;
+                textContainers.add(element);
+                if (element === content) break;
+            }
+        }
+        for (const element of textContainers) {
+            element.classList.add('study-reading-text');
+            element.style.setProperty('font-size', 'var(--study-font)', 'important');
+            element.style.setProperty('line-height', '1.28', 'important');
         }
     }
 
@@ -121,7 +149,7 @@
             const availableHeight = Math.max(1, height - parseFloat(bodyStyle.marginTop) - parseFloat(bodyStyle.marginBottom));
             constrainMedia(availableHeight);
             identifyText();
-            const maximumFont = Math.max(minimumFont, Math.min(availableWidth / 9, availableHeight / 4));
+            const maximumFont = Math.max(minimumFont, Math.min(availableWidth / 12, availableHeight / 6));
             const applyFont = font => content.style.setProperty('--study-font', font + 'px');
             const fits = () => {
                 const size = dimensions();
@@ -191,3 +219,5 @@
     });
     schedule();
 })();
+"""#
+}

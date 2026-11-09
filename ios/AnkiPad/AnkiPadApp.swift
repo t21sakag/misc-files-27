@@ -241,7 +241,7 @@ struct AnkiPadApp: App {
             || speechPreparing || speechRequest != nil || timeboxReport != nil || widgetNavigationActive
         guard automaticSyncPolicy.take(profileID: currentProfileID, enabled: automaticSyncEnabled,
             hasAccount: account != nil, canStart: !busy && !modal,
-            uptime: ProcessInfo.processInfo.systemUptime) != nil else { return }
+            reviewActive: selected != nil || card != nil, uptime: ProcessInfo.processInfo.systemUptime) != nil else { return }
         runSync(automatic: true) { try await self.performSync(automatic: true) }
     }
     private func runSync(automatic: Bool = false, _ operation: @escaping () async throws -> Void) {

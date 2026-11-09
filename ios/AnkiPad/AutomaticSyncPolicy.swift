@@ -10,9 +10,9 @@ struct AutomaticSyncPolicy {
         if pending != .background { pending = event }
     }
     mutating func recordAttempt(profileID: String, uptime: TimeInterval) { lastAttempt[profileID] = uptime }
-    mutating func take(profileID: String, enabled: Bool, hasAccount: Bool, canStart: Bool, uptime: TimeInterval) -> Event? {
+    mutating func take(profileID: String, enabled: Bool, hasAccount: Bool, canStart: Bool, reviewActive: Bool = false, uptime: TimeInterval) -> Event? {
         guard enabled && hasAccount else { pending = nil; return nil }
-        guard let event = pending, canStart else { return nil }
+        guard let event = pending, canStart, !reviewActive else { return nil }
         pending = nil
         if event == .foreground, let previous = lastAttempt[profileID], uptime - previous < 15 { return nil }
         return event

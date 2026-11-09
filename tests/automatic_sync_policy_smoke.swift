@@ -25,6 +25,19 @@ import Foundation
         precondition(policy.take(profileID: "a", enabled: false, hasAccount: true, canStart: true, uptime: 200) == nil && policy.pending == nil)
         policy.request(.foreground, syncing: false)
         precondition(policy.take(profileID: "a", enabled: true, hasAccount: false, canStart: true, uptime: 201) == nil && policy.pending == nil)
+        for event in [AutomaticSyncPolicy.Event.foreground, .background] {
+            var reviewing = AutomaticSyncPolicy()
+            reviewing.request(event, syncing: false)
+            precondition(reviewing.take(profileID: "review", enabled: true, hasAccount: true,
+                canStart: true, reviewActive: true, uptime: 100) == nil)
+            precondition(reviewing.pending == event)
+            precondition(reviewing.take(profileID: "review", enabled: true, hasAccount: true,
+                canStart: true, reviewActive: true, uptime: 200) == nil)
+            precondition(reviewing.pending == event)
+            precondition(reviewing.take(profileID: "review", enabled: true, hasAccount: true,
+                canStart: true, reviewActive: false, uptime: 201) == event)
+            precondition(reviewing.pending == nil)
+        }
         print("PASS: deferred events, foreground cooldown, background priority, profile isolation, disabled/no-account/ongoing-sync guards")
     }
 }

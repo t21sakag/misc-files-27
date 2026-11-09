@@ -1,6 +1,48 @@
 import XCTest
 
 final class AdaptiveReviewFlowTests: TypographyTestSupport {
+    func testAuthoredTextAndReplayControlsBalanceAfterReveal() throws {
+        let app = application()
+        defer { XCUIDevice.shared.orientation = .portrait }
+        let front = """
+        <div style="font-size:160px!important"><font id="balance-question" size="7">calculation</font></div>
+        <div style="font-size:180px!important"><a id="balance-replay" href="ankiplay://q/0" style="font-size:180px!important;text-decoration:underline">▶︎</a></div>
+        <p id="balance-example" style="font-size:16px!important">(check the calculation again)</p>
+        <script>
+        (()=>{
+          const qa=document.getElementById('qa');
+          function report(){
+            let out=document.getElementById('balance-result');
+            if(!out){out=document.createElement('div');out.id='balance-result';out.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(out);}
+            const question=document.getElementById('balance-question'),answer=document.getElementById('balance-answer'),example=document.getElementById('balance-example'),play=document.getElementById('balance-replay');
+            const font=getComputedStyle(question).fontSize,icon=play.getBoundingClientRect().height;
+            const ok=qa.dataset.studyLayout==='fit' && parseFloat(font)>=30 && parseFloat(font)<=100 && icon>=44 && icon<=48 && font===getComputedStyle(example).fontSize && (!answer || font===getComputedStyle(answer).fontSize);
+            out.textContent=ok?'Balanced text verified '+(answer?'answer':'question'):'Balanced text failed '+JSON.stringify({font,icon,state:qa.dataset.studyLayout,answer:answer?getComputedStyle(answer).fontSize:null});
+          }
+          qa.addEventListener('study-layout',report);
+        })();
+        </script>
+        """
+        let back = "<div style=\"font-size:12px!important\"><font id=\"balance-answer\" size=\"2\">計算</font></div><p style=\"font-size:16px!important\">（計算をもう一度確認する）</p>"
+        try addNote(front: front, back: back, in: app)
+        XCUIDevice.shared.orientation = .landscapeLeft
+        requireTestCondition("Balanced review starts in landscape", in: app) { app.frame.width > app.frame.height }
+        tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
+        let web = try XCTUnwrap(waitForTestCardWebView(in: app))
+        _ = try XCTUnwrap(waitForTestControl(web.staticTexts.matching(NSPredicate(format: "label == %@", "calculation")), in: app, timeout: 60, purpose: .observation))
+        requireTestCondition("Authored font sizes and oversized replay normalize on the question", in: app) {
+            web.staticTexts.matching(NSPredicate(format: "label == %@", "Balanced text verified question")).count == 1
+        }
+        capture("Balanced authored word example and replay", in: app)
+        tapTestControl(app.buttons.matching(identifier: "reveal"), in: app)
+        requireTestCondition("Question and actual answer retain equal sizes with a bounded replay control", in: app) {
+            web.staticTexts.matching(NSPredicate(format: "label == %@", "Balanced text verified answer")).count == 1
+        }
+        _ = waitForTestControl(app.buttons.matching(identifier: "answer-2"), in: app)
+        capture("Balanced authored word meaning examples and rating controls", in: app)
+    }
+
+
     func testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation() throws {
         let app = application()
         defer { XCUIDevice.shared.orientation = .portrait }

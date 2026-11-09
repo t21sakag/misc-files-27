@@ -3,6 +3,42 @@ import XCTest
 final class AutomaticSyncTests: StudyFlowTestSupport {
     override var syncFixturePort: Int { 18901 }
 
+    func testAutomaticSyncDefersUntilRevealedReviewIsClosed() throws {
+        let app = makeApplication(automaticSync: true)
+        _ = prepareSyncProfile(app, name: "Review lifecycle safety", withFixture: false,
+                               extraArguments: ["--uitest-sync-timing"])
+        loginToSyncFixture(app, username: "fixture@example.test")
+        _ = try XCTUnwrap(waitForTestControl(app.staticTexts.matching(NSPredicate(format: "identifier == %@", "sync-completed-at")),
+                                             in: app, timeout: 60, purpose: .observation))
+        waitForSyncIdle(app)
+        tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
+        let web = try XCTUnwrap(waitForTestCardWebView(in: app))
+        tapTestControl(app.buttons.matching(identifier: "reveal"), in: app)
+        _ = try XCTUnwrap(waitForTestControl(app.buttons.matching(identifier: "answer-2"), in: app))
+        let original = web.staticTexts.allElementsBoundByIndex.map(\.label)
+        XCTAssertFalse(original.isEmpty)
+        let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        screenshot.name = "Revealed review before lifecycle transition"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        XCUIDevice.shared.press(.home)
+        requireTestCondition("Review app really enters background", in: app) { app.state == .runningBackground }
+        app.activate()
+        requireTestCondition("Automatic sync keeps the revealed card and controls after returning", in: app) {
+            app.state == .runningForeground && app.buttons.matching(identifier: "answer-2").count == 1
+                && app.buttons.matching(identifier: "answer-2").element.isHittable
+                && web.staticTexts.allElementsBoundByIndex.map(\.label) == original
+        }
+        let exitTime = Date().timeIntervalSince1970
+        tapTestControl(app.navigationBars.buttons.matching(NSPredicate(format: "label == %@", "デッキ")), in: app)
+        let timestamps = app.staticTexts.matching(identifier: "sync-completed-at")
+        requireTestCondition("Deferred automatic sync completes after the review is explicitly closed", in: app, timeout: 60) {
+            guard timestamps.count == 1 else { return false }
+            return (Double(timestamps.element.label) ?? 0) >= exitTime
+        }
+        waitForSyncIdle(app)
+    }
+
     func testAutomaticSyncRunsAtStartupAndForeground() {
         let app = makeApplication(automaticSync: true)
         let profile = prepareSyncProfile(app, name: "Automatic startup check", withFixture: false,

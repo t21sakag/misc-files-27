@@ -43,6 +43,13 @@ expected['native-search-repair'] = {
     'BrowserSearchFiltersFlowTests/testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch',
     'BrowserSearchFiltersFlowTests/testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable',
 }
+expected['native-review-balance'] = {
+    'AdaptiveReviewFlowTests/testAuthoredTextAndReplayControlsBalanceAfterReveal',
+    'AutomaticSyncTests/testAutomaticSyncDefersUntilRevealedReviewIsClosed',
+    'AdaptiveReviewFlowTests/testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation',
+    'TypingFocusFlowTests/testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks',
+    'AdaptiveReviewFlowTests/testAdaptiveLongContentKeepsReadableMinimumAndNativeButtons',
+}
 expected['native-adaptive-review'] = {
     'AdaptiveReviewFlowTests/testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation',
     'AdaptiveReviewFlowTests/testAdaptiveLongContentKeepsReadableMinimumAndNativeButtons',

@@ -161,7 +161,7 @@ struct ReviewerWebView: UIViewRepresentable {
         <script src="ankibundle://backend/js/reviewer_extras_bundle.js"></script>
         \(math)
         </head><body data-study-theme="\(theme.rawValue)" data-reading-scale="\(StudyTypography.readingScale(dynamicScale: Double(readingScale)))" class="card card\(ordinal + 1) \(centerVertically ? "vertically_centered" : "") \(theme.cardClasses)"><div id="qa">\(content)</div>
-        <script>\(Self.adaptiveLayoutScript)</script>
+        <script>\(AdaptiveReviewLayout.script)</script>
         <script>if(window.MathJax?.startup?.promise){window.MathJax.startup.promise.then(()=>window.MathJax.typesetPromise()).catch(()=>{});}</script>
         </body></html>
         """, baseURL: URL(string: "ankimedia://collection/"))
@@ -232,14 +232,6 @@ struct ReviewerWebView: UIViewRepresentable {
       };
     })();
     """
-    }()
-    private static let adaptiveLayoutScript: String = {
-        guard let url = Bundle.main.url(forResource: "reviewer-layout", withExtension: "js"),
-              let script = try? String(contentsOf: url, encoding: .utf8) else {
-            assertionFailure("Missing reviewer layout resource")
-            return ""
-        }
-        return script
     }()
     static let reviewTapScript = #"""
     (()=>{
