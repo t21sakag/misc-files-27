@@ -54,6 +54,7 @@ struct BrowserView: View {
     @State private var searchName = ""
     @State private var savedSearchValue = ""
     @State private var manageSearches = false
+    @State private var removedSearchNames: Set<String> = []
     @State private var managingTags = false
     @State private var repositionPrompt = false
     @State private var position = 1
@@ -239,7 +240,15 @@ struct BrowserView: View {
                 Button(AppText.localized("この検索を保存")) {
                     withResolvedSearch { value in searchName = ""; savedSearchValue = value; saveSearchPrompt = true }
                 }.disabled(effectiveSearchRequest.isEmpty)
-                Button(AppText.localized("保存した検索を管理")) { manageSearches = true }
+                Button(AppText.localized("保存した検索を管理")) {
+                    let engine = model.engine
+                    mutateOpening {
+                        try requireOpeningProfile()
+                        let searches = try await engine.browserSavedSearches()
+                        try requireOpeningProfile()
+                        config.savedSearches = searches; removedSearchNames = []; manageSearches = true
+                    }
+                }
             }
             Button(AppText.localized("フィルターデッキを作成")) {
                 withResolvedSearch { filteredDeck = FilteredDeckRequest(initialSearch: $0) }
@@ -328,11 +337,27 @@ struct BrowserView: View {
                 }
             }) { BrowserOptionsView(model: model) }
             .sheet(isPresented: $columnPicker, onDismiss: saveConfig) { BrowserColumnPicker(columns: columns, config: $config) }
-            .sheet(isPresented: $manageSearches, onDismiss: saveConfig) {
+            .sheet(isPresented: $manageSearches, onDismiss: {
+                let names = Array(removedSearchNames), engine = model.engine
+                removedSearchNames = []
+                guard !names.isEmpty else { return }
+                mutateOpening {
+                    try requireOpeningProfile()
+                    let searches = try await engine.removeBrowserSearches(names)
+                    try requireOpeningProfile()
+                    config.savedSearches = searches; revision += 1
+                }
+            }) {
                 NavigationStack {
                     List { ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in
                         VStack(alignment: .leading) { Text(name); Text(config.savedSearches[name] ?? "").font(.caption).foregroundStyle(.secondary) }
-                    }.onDelete { offsets in let names = config.savedSearches.keys.sorted(); for index in offsets { config.savedSearches.removeValue(forKey: names[index]) } } }
+                    }.onDelete { offsets in
+                        let names = config.savedSearches.keys.sorted()
+                        for index in offsets {
+                            removedSearchNames.insert(names[index])
+                            config.savedSearches.removeValue(forKey: names[index])
+                        }
+                    } }
                     .studyThemeSurface().navigationTitle(AppText.localized("保存した検索")).toolbar { ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("閉じる")) { manageSearches = false } } }
                 }
             }
@@ -370,12 +395,25 @@ struct BrowserView: View {
             }
             .alert(AppText.localized("検索を保存"), isPresented: $saveSearchPrompt) {
                 TextField(AppText.localized("名前"), text: $searchName)
-                Button(AppText.localized("保存")) { config.savedSearches[searchName] = savedSearchValue; saveConfig() }.disabled(searchName.isEmpty)
+                Button(AppText.localized("保存")) {
+                    let name = searchName, query = savedSearchValue, engine = model.engine
+                    mutateOpening {
+                        try requireOpeningProfile()
+                        let searches = try await engine.saveBrowserSearch(name: name, query: query)
+                        try requireOpeningProfile()
+                        config.savedSearches = searches; revision += 1
+                    }
+                }.disabled(searchName.isEmpty)
                 Button(AppText.localized("キャンセル"), role: .cancel) {}
             }
             .alert(AppText.localized("処理できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
                 Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
+    }
+    private func requireOpeningProfile() throws {
+        guard model.currentProfile.id == openingProfileID else {
+            throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
+        }
     }
     private func initialize() async {
         do {

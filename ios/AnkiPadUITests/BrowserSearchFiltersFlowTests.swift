@@ -86,6 +86,15 @@ final class BrowserSearchFiltersFlowTests: BrowserSearchTestSupport {
         guard waitForTestControl(state, in: app, form: form, purpose: .observation) != nil else { return }
         setTestSwitch(state, enabled: enabled, in: app)
     }
+    private func saveSearchNamed(_ name: String, in app: XCUIApplication) {
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["保存した検索"], in: app)
+        tapTestMenuAction(titles: ["この検索を保存"], in: app)
+        let alert = app.alerts.matching(identifier: "検索を保存")
+        typeInEmptyTestField(alert.textFields, text: name, in: app)
+        tapTestAlertAction(titles: ["保存"], in: alert, application: app)
+        requireTestCondition("Saved search naming alert closes", in: app) { alert.count == 0 }
+    }
     func testStructuredFiltersSurviveRawTypingAndFilterOnlyFieldAND() throws {
         let (app, back) = try fixture()
         openFilters(app); setFlag(1, enabled: true, in: app); applyFilters(app)
@@ -147,13 +156,8 @@ final class BrowserSearchFiltersFlowTests: BrowserSearchTestSupport {
         XCTAssertEqual(inherited.value as? String, compiled, "Filtered deck must receive raw text AND graphical filters")
         tapTestControl(app.buttons.matching(identifier: "filtered-cancel"), in: app)
         expectRows([1], in: app)
-        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
-        tapTestMenuAction(titles: ["保存した検索"], in: app)
-        tapTestMenuAction(titles: ["この検索を保存"], in: app)
-        let alert = app.alerts.matching(identifier: "検索を保存")
-        typeInEmptyTestField(alert.textFields, text: "OwnedSearch", in: app)
-        tapTestAlertAction(titles: ["保存"], in: alert, application: app)
-        requireTestCondition("Saved search confirmation closes", in: app) { alert.count == 0 }
+        saveSearchNamed("OwnedSearch", in: app)
+        _ = waitForTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
         tapTestControl(app.buttons.matching(identifier: "browser-filter-chip-flags"), in: app)
         requireTestCondition("Graphical filter removed before bookmark reuse", in: app) {
             app.buttons.matching(identifier: "browser-filter-chip-flags").count == 0
@@ -169,6 +173,41 @@ final class BrowserSearchFiltersFlowTests: BrowserSearchTestSupport {
         tapTestControl(app.navigationBars.buttons.matching(NSPredicate(format: "label == %@", "閉じる")), in: app)
         app.terminate(); app.launchArguments = []; app.launch()
         openBrowser("", in: app); expectRows([0, 1, 2, 3, 4], in: app)
+    }
+
+    func testSavedSearchDuplicateNamePreservesOriginalQueryAfterRelaunch() throws {
+        let (app, _) = try fixture()
+        let first = try XCTUnwrap(typeInEmptyTestField(browserSearchFields(app), text: "row0", in: app))
+        first.typeText("\n")
+        let original = try compiledSearch(containing: ["row0"], in: app)
+        expectRows([0], in: app)
+        saveSearchNamed("Collision", in: app)
+        _ = waitForTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        let next = try XCTUnwrap(replaceTestField(browserSearchFields(app), expected: "row0", with: "row1", in: app))
+        next.typeText("\n")
+        _ = try compiledSearch(containing: ["row1"], in: app)
+        expectRows([1], in: app)
+        saveSearchNamed("Collision", in: app)
+        let error = app.alerts.matching(identifier: "処理できませんでした")
+        _ = waitForTestControl(error.staticTexts.matching(NSPredicate(format: "label == %@", "同じ名前の検索があります。")),
+                               in: app, keyboard: .keep, purpose: .observation)
+        tapTestAlertAction(titles: ["閉じる"], in: error, application: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["保存した検索"], in: app)
+        tapTestMenuAction(titles: ["Collision"], in: app)
+        requireTestCondition("Duplicate name preserves the original saved query", in: app) {
+            app.staticTexts["browser-results"].value as? String == original
+        }
+        expectRows([0], in: app)
+        app.terminate(); app.launchArguments = []; app.launch()
+        openBrowser("", in: app); expectRows([0, 1, 2, 3, 4], in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["保存した検索"], in: app)
+        tapTestMenuAction(titles: ["Collision"], in: app)
+        requireTestCondition("Original saved query survives relaunch after duplicate rejection", in: app) {
+            app.staticTexts["browser-results"].value as? String == original
+        }
+        expectRows([0], in: app)
     }
 
     func testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable() throws {

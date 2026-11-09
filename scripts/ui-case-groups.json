@@ -203,7 +203,8 @@
     "testStructuredFiltersSurviveRawTypingAndFilterOnlyFieldAND",
     "testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch",
     "testSavedSearchAndFilteredDeckUseCompleteResolvedRequest",
-    "testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable"
+    "testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable",
+    "testSavedSearchDuplicateNamePreservesOriginalQueryAfterRelaunch"
   ],
   "TypographyFlowTests": [
     "testReadableNativeBrowserAndEditorInBothOrientations",

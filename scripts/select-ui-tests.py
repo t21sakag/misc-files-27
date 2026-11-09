@@ -37,6 +37,8 @@ suites = {
     'structured-filters': ['testStructuredFilterORCancelFieldIntersectionAndClear'],
     'native-searches': ['testCommittedSearchHistoryReuseCancelAndRelaunch', 'testNamedFieldTextSearchCancelExactAndLiteralStar', 'testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection', 'testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch', 'testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch'],
     'native-history': ['testCommittedSearchHistoryReuseCancelAndRelaunch'],
+    'native-search-completion': ['testDeletingOneRecentSearchPreservesQueryCardsAndOtherEntryAfterRelaunch', 'testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch', 'testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch', 'testSavedSearchAndFilteredDeckUseCompleteResolvedRequest', 'testSavedSearchDuplicateNamePreservesOriginalQueryAfterRelaunch'],
+    'search-bookmark-duplicates': ['testSavedSearchDuplicateNamePreservesOriginalQueryAfterRelaunch'],
     'native-search-identities': ['testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch', 'testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch'],
     'search-identity-rename': ['testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch'],
     'search-identity-missing': ['testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch'],

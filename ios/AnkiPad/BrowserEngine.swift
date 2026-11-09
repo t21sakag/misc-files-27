@@ -15,12 +15,16 @@ struct BrowserConfiguration {
     var savedSearches: [String: String]
 }
 extension Engine {
-    func configValue(_ key: String) throws -> Any? {
+    func configData(_ key: String) throws -> Data? {
         do {
             let result = try call("ConfigService.GetConfigJson", ["val": key])
-            guard let raw = result["json"] as? String, let data = Data(base64Encoded: raw) else { return nil }
-            return try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])
+            guard let raw = result["json"] as? String else { return nil }
+            return Data(base64Encoded: raw)
         } catch let error as EngineError where error.kind == 11 { return nil }
+    }
+    func configValue(_ key: String) throws -> Any? {
+        guard let data = try configData(key) else { return nil }
+        return try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])
     }
     func setConfigValue(_ key: String, value: Any) throws {
         let data = try JSONSerialization.data(withJSONObject: value, options: [.fragmentsAllowed])
@@ -43,7 +47,6 @@ extension Engine {
         try setConfigValue(config.notesMode ? "activeNoteCols" : "activeCols", value: config.columns)
         try setConfigValue(config.notesMode ? "noteSortType" : "sortType", value: config.sortColumn)
         try setConfigValue(config.notesMode ? "browserNoteSortBackwards" : "sortBackwards", value: config.backwards)
-        try setConfigValue("savedFilters", value: config.savedSearches)
     }
     func browserColumns() throws -> [BrowserColumn] {
         let result = try call("SearchService.AllBrowserColumns")

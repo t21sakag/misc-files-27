@@ -1,4 +1,7 @@
 /* Native interface text. User collection content is displayed verbatim. */
+"名前を入力してください。" = "Enter a name.";
+"同じ名前の検索があります。" = "A saved search with this name already exists.";
+"保存した検索を読み込めませんでした。" = "Could not load saved searches.";
 "「%@」を元に戻す" = "Undo %@";
 "「%@」をやり直す" = "Redo %@";
 "\n一方のコレクション全体を使う必要があります。置き換える側だけの変更は失われます。" = "\nOne entire collection must be used. Changes that exist only in the collection being replaced will be lost.";
