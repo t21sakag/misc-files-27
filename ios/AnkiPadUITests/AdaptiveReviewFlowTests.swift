@@ -1,6 +1,30 @@
 import XCTest
 
 final class AdaptiveReviewFlowTests: TypographyTestSupport {
+    func testPlainAnswerRevealKeepsQuestionDocumentPositionAndFont() throws {
+        let app = makeApplication()
+        app.launchArguments = ["--uitest-stable-reveal"]
+        app.launch()
+        _ = waitForTestControl(app.buttons.matching(identifier: "add-note"), in: app)
+        defer { XCUIDevice.shared.orientation = .portrait }
+        try addNote(front: "<div id=\"stable-word\">dispatch</div><br><div>The package is ready for dispatch this morning.</div>",
+                    back: "<div>発送する</div><br><div>荷物は今朝発送する準備ができています。</div>", in: app)
+        XCUIDevice.shared.orientation = .landscapeLeft
+        requireTestCondition("Stable review starts in landscape", in: app) { app.frame.width > app.frame.height }
+        tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
+        let web = try XCTUnwrap(waitForTestCardWebView(in: app))
+        _ = try XCTUnwrap(waitForTestControl(web.staticTexts.matching(NSPredicate(format: "label == %@", "Stable document question")), in: app, timeout: 60, purpose: .observation))
+        XCTAssertEqual(web.staticTexts.matching(NSPredicate(format: "label == %@", "発送する")).count, 0)
+        capture("Stable question with concealed answer", in: app)
+        tapTestControl(app.buttons.matching(identifier: "reveal"), in: app)
+        requireTestCondition("Reveal retains document identity, question position and font", in: app) {
+            web.staticTexts.matching(NSPredicate(format: "label == %@", "Stable document answer")).count == 1
+        }
+        _ = waitForTestControl(web.staticTexts.matching(NSPredicate(format: "label == %@", "発送する")), in: app, purpose: .observation)
+        _ = waitForTestControl(app.buttons.matching(identifier: "answer-2"), in: app)
+        capture("Stable question with answer added below", in: app)
+    }
+
     func testAuthoredTextAndReplayControlsBalanceAfterReveal() throws {
         let app = application()
         defer { XCUIDevice.shared.orientation = .portrait }

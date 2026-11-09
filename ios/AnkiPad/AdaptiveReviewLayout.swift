@@ -17,6 +17,17 @@ enum AdaptiveReviewLayout {
             sibling = next;
         }
     }
+    const pendingAnswer = document.getElementById('study-pending-answer');
+    if (pendingAnswer) {
+        document.body.dataset.studyStableReveal = '';
+        window.ankiPadRevealAnswer = () => {
+            pendingAnswer.removeAttribute('inert');
+            pendingAnswer.removeAttribute('aria-hidden');
+            pendingAnswer.dataset.revealed = '';
+            return true;
+        };
+    }
+    let stableFont = null, stableWidth = null;
     const root = document.documentElement;
     const readingScale = Number(document.body.dataset.readingScale) || 1;
     const minimumFont = 24 * readingScale;
@@ -32,14 +43,17 @@ enum AdaptiveReviewLayout {
     rules.textContent = `
         html, body, #qa { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
         html { scrollbar-gutter:stable; }
+        body[data-study-stable-reveal] { justify-content:flex-start; }
+        #study-pending-answer { display:contents; }
+        #study-pending-answer:not([data-revealed]), #study-pending-answer:not([data-revealed]) * { visibility:hidden !important; pointer-events:none !important; }
         #qa { display:flow-root; font-size:var(--study-font); line-height:1.28; overflow-wrap:anywhere; }
         #qa .study-reading-text {
             font-size:var(--study-font) !important;
             line-height:1.28 !important;
             overflow-wrap:anywhere;
         }
-        #qa > br.study-section-gap { display:none; }
-        #qa > br.study-section-gap + * {
+        :is(#qa,#study-pending-answer) > br.study-section-gap { display:none; }
+        :is(#qa,#study-pending-answer) > br.study-section-gap + * {
             margin-top:clamp(8px,1.6vh,18px) !important;
         }
         #qa input, #qa textarea, #qa button, #qa select {
@@ -68,7 +82,8 @@ enum AdaptiveReviewLayout {
                 if (element === content) break;
             }
         }
-        for (const block of content.childNodes) {
+        const blocks = Array.from(content.childNodes).flatMap(block => block === pendingAnswer ? Array.from(block.childNodes) : [block]);
+        for (const block of blocks) {
             if (block.nodeType === Node.ELEMENT_NODE && block.matches('hr#answer')) {
                 hasPrimary = false;
                 afterBreak = false;
@@ -207,7 +222,8 @@ enum AdaptiveReviewLayout {
                     - parseFloat(bodyStyle.marginLeft) - parseFloat(bodyStyle.marginRight);
                 return size.width <= currentWidth && size.height <= availableHeight - 2;
             };
-            let low = minimumFont, high = maximumFont;
+            let low = pendingAnswer && stableWidth === availableWidth ? stableFont : minimumFont;
+            let high = pendingAnswer && stableWidth === availableWidth ? low : maximumFont;
             applyFont(low);
             const minimumFits = fits();
             if (minimumFits) {
@@ -221,6 +237,7 @@ enum AdaptiveReviewLayout {
                 }
             }
             applyFont(low);
+            if (pendingAnswer) { stableFont = low; stableWidth = availableWidth; }
             content.dataset.studyLayout = minimumFits ? 'fit' : 'scroll';
             content.dataset.studyFont = low.toFixed(2);
             content.dataset.studyAvailableHeight = availableHeight.toFixed(2);

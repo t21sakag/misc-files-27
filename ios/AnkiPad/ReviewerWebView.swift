@@ -37,6 +37,7 @@ final class MediaHandler: NSObject, WKURLSchemeHandler {
 struct ReviewerWebView: UIViewRepresentable {
     let html: String
     let css: String
+    var revealHTML: String? = nil
     let cardID: String
     let ordinal: Int
     let typing: TypedAnswerSpec?
@@ -85,6 +86,11 @@ struct ReviewerWebView: UIViewRepresentable {
         configuration.userContentController.addUserScript(WKUserScript(source: Self.schedulerBridge, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         configuration.allowsInlineMediaPlayback = true
         configuration.mediaTypesRequiringUserActionForPlayback = []
+        #if DEBUG
+        if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-stable-reveal") {
+            configuration.userContentController.addUserScript(WKUserScript(source: Self.stableRevealProbe, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
+        }
+        #endif
         let view = WKWebView(frame: .zero, configuration: configuration)
         view.navigationDelegate = context.coordinator
         view.uiDelegate = context.coordinator.dialogs
@@ -125,13 +131,18 @@ struct ReviewerWebView: UIViewRepresentable {
         let theme = StudyTheme.resolve(dark: dark, day: dayTheme, night: nightTheme)
         view.backgroundColor = theme.nativeBackground
         view.scrollView.backgroundColor = theme.nativeBackground
+        let presentationKey = "\(cardID)-\(css)-\(dark)-\(hideAudioButtons)-\(imageZoom)-\(centerVertically)-\(autoFocusTypeInAnswer)-\(theme.rawValue)-\(readingScale)-\(typing?.size ?? 0)-\(typing?.font ?? "")"
+        let stableReveal = typing == nil ? revealHTML.flatMap { ReviewAnswerTransition.pendingHTML(question: html, answer: $0) } : nil
         let key = "\(cardID)-\(answer)-\(html)-\(css)-\(dark)-\(hideAudioButtons)-\(imageZoom)-\(centerVertically)-\(autoFocusTypeInAnswer)-\(theme.rawValue)-\(readingScale)-\(typing?.size ?? 0)-\(typing?.font ?? "")"
         guard context.coordinator.loaded != key else { context.coordinator.deliverScriptEvent(view); return }
-        context.coordinator.dialogs.audioCapture.documentChanged()
+        let canReveal = answer && context.coordinator.pendingAnswer == html
+            && context.coordinator.presentationKey == presentationKey
+        context.coordinator.pendingAnswer = canReveal ? html : (stableReveal == nil ? nil : revealHTML)
+        context.coordinator.presentationKey = presentationKey
         context.coordinator.loaded = key
-        context.coordinator.tapToken = UUID().uuidString
+        if !canReveal { context.coordinator.tapToken = UUID().uuidString }
         let audioLabel = NSRegularExpression.escapedTemplate(for: TypedAnswerMarkup.escape(AppText.localized("音声を再生")))
-        var content = "<script>window.__ankiPadTapToken='" + context.coordinator.tapToken + "';</script>" + html.replacingOccurrences(of: #"\[anki:play:([qa]):([0-9]+)\]"#, with: #"<a href="ankiplay://$1/$2" aria-label="\#(audioLabel)">▶︎</a>"#, options: .regularExpression)
+        var content = "<script>window.__ankiPadTapToken='" + context.coordinator.tapToken + "';</script>" + (stableReveal ?? html).replacingOccurrences(of: #"\[anki:play:([qa]):([0-9]+)\]"#, with: #"<a href="ankiplay://$1/$2" aria-label="\#(audioLabel)">▶︎</a>"#, options: .regularExpression)
         if hideAudioButtons { content = content.replacingOccurrences(of: #"<a href="ankiplay://[^"]+"[^>]*>.*?</a>"#, with: "", options: .regularExpression) }
         if !answer, let typing {
             let answerLabel = TypedAnswerMarkup.escape(AppText.localized("解答を入力"))
@@ -145,7 +156,7 @@ struct ReviewerWebView: UIViewRepresentable {
         <script>window.MathJax.loader.paths.mathjax='ankibundle://backend/js/vendor/mathjax';</script>
         <script src="ankibundle://backend/js/vendor/mathjax/tex-chtml-full.js"></script>
         """ : ""
-        view.loadHTMLString("""
+        let document = """
         <!doctype html><html class="mobile ios \(dark ? "night-mode" : "")"><head><meta name="viewport" content="width=device-width,initial-scale=1">
         <base href="ankimedia://collection/">
         <link rel="stylesheet" href="ankibundle://backend/css/root-vars.css">
@@ -164,8 +175,44 @@ struct ReviewerWebView: UIViewRepresentable {
         <script>\(AdaptiveReviewLayout.script)</script>
         <script>if(window.MathJax?.startup?.promise){window.MathJax.startup.promise.then(()=>window.MathJax.typesetPromise()).catch(()=>{});}</script>
         </body></html>
-        """, baseURL: URL(string: "ankimedia://collection/"))
+        """
+        if canReveal {
+            view.evaluateJavaScript("window.ankiPadRevealAnswer?.() === true") { [weak view, weak coordinator = context.coordinator] result, _ in
+                guard let view, let coordinator, coordinator.loaded == key else { return }
+                if result as? Bool == true { coordinator.deliverScriptEvent(view) }
+                else {
+                    coordinator.pendingAnswer = nil
+                    coordinator.dialogs.audioCapture.documentChanged()
+                    view.loadHTMLString(document, baseURL: URL(string: "ankimedia://collection/"))
+                }
+            }
+        } else {
+            context.coordinator.dialogs.audioCapture.documentChanged()
+            view.loadHTMLString(document, baseURL: URL(string: "ankimedia://collection/"))
+        }
     }
+    #if DEBUG
+    private static let stableRevealProbe = #"""
+    (()=>{
+      const qa=document.getElementById('qa'),word=document.getElementById('stable-word'),pending=document.getElementById('study-pending-answer');
+      if(!qa||!word||!pending)return;
+      const out=document.createElement('div');out.style='position:fixed;bottom:0;left:0;font-size:12px';document.body.append(out);
+      let initial=null;
+      function report(){
+        if(!qa.dataset.studyFont)return;
+        const box=word.getBoundingClientRect(),font=getComputedStyle(word).fontSize;
+        if(!initial)initial={font,top:box.top,left:box.left,node:word};
+        const revealed=pending.hasAttribute('data-revealed');
+        const ok=initial.node===word&&initial.font===font&&Math.abs(initial.top-box.top)<1&&Math.abs(initial.left-box.left)<1;
+        out.textContent=ok?'Stable document '+(revealed?'answer':'question'):'Stable document changed';
+      }
+      qa.addEventListener('study-layout',report);
+      new MutationObserver(report).observe(pending,{attributes:true});
+      report();
+    })();
+    """#
+    #endif
+
     static func dismantleUIView(_ view: WKWebView, coordinator: Coordinator) {
         view.stopLoading()
         coordinator.tapHandler = nil
@@ -412,6 +459,8 @@ struct ReviewerWebView: UIViewRepresentable {
                let error = body["message"] as? String { schedulingError?(error) }
         }
         var loaded = ""
+        var pendingAnswer: String?
+        var presentationKey = ""
         private var externalLaunchDenials = 0
         var playTag: ((Bool, Int) -> Void)?
         func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {

@@ -212,6 +212,7 @@
     "testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation",
     "testAdaptiveLongContentKeepsReadableMinimumAndNativeButtons",
     "testAuthoredTextAndReplayControlsBalanceAfterReveal",
-    "testVocabularyExamplesRemainSecondaryWithMalformedImportedHTML"
+    "testVocabularyExamplesRemainSecondaryWithMalformedImportedHTML",
+    "testPlainAnswerRevealKeepsQuestionDocumentPositionAndFont"
   ]
 }

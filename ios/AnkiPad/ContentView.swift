@@ -787,6 +787,7 @@ struct ContentView: View {
             if effectiveAnswerPosition == .top { answerControls(card) }
             ZStack {
                 ReviewerWebView(html: model.revealed ? (model.answerOverride ?? card.answer) : card.question, css: card.css,
+                revealHTML: model.revealed ? nil : card.answer,
                 cardID: card.id, ordinal: card.ordinal, typing: card.typing, hideAudioButtons: card.options.hideAudioButtons, typedAnswer: $model.typedAnswer,
                 answer: model.revealed, media: model.engine.media,
                 playTag: { model.playTag(answer: $0, index: $1) }, reveal: model.reveal,
