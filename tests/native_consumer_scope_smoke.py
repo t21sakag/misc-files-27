@@ -43,6 +43,13 @@ expected['native-search-repair'] = {
     'BrowserSearchFiltersFlowTests/testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch',
     'BrowserSearchFiltersFlowTests/testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable',
 }
+expected['native-adaptive-review'] = {
+    'AdaptiveReviewFlowTests/testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation',
+    'AdaptiveReviewFlowTests/testAdaptiveLongContentKeepsReadableMinimumAndNativeButtons',
+    'TypographyFlowTests/testCardTextGrowsWithoutChangingImageWidth',
+    'CardAppearanceFlowTests/testImageOnlyZoomAndVerticalCenterSurviveRelaunch',
+    'TypingFocusFlowTests/testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks',
+}
 expected['native-typography'] = {
     'TypographyFlowTests/testReadableNativeBrowserAndEditorInBothOrientations',
     'TypographyFlowTests/testCardTextGrowsWithoutChangingImageWidth',

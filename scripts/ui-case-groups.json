@@ -206,5 +206,9 @@
     "testReadableNativeBrowserAndEditorInBothOrientations",
     "testCardTextGrowsWithoutChangingImageWidth",
     "testVisualEditorLargerTextPreservesOriginalHTML"
+  ],
+  "AdaptiveReviewFlowTests": [
+    "testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation",
+    "testAdaptiveLongContentKeepsReadableMinimumAndNativeButtons"
   ]
 }
