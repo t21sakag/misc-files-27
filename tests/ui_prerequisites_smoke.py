@@ -50,5 +50,15 @@ with tempfile.TemporaryDirectory() as directory:
     assert check(True)['field_manifest_valid']
     field_package.write_bytes(b'corrupt')
     assert not check(False)['field_package_valid']
+    selected.write_text('-only-testing:AnkiPadUITests/BrowserForgetFlowTests/testCardResetCancelOptionsPersistAndUndoLeavesSiblingReviewed\n')
+    assert not check(False)['reset_package_valid']
+    reset_package=base/'ios/AnkiPadUITests/ReceivedFixtures/browser-forget.apkg'
+    with zipfile.ZipFile(reset_package,'w') as archive:
+        archive.writestr('collection.anki21b',b'container readiness only')
+    reset_manifest=reset_package.with_suffix('.json')
+    reset_manifest.write_text(json.dumps({'notes':3,'cards':6,'reviewed':0,'reps':8,'lapses':3,'singleQuery':'row0 card:"Reset Forward"'}))
+    assert not check(False)['reset_manifest_valid']
+    reset_manifest.write_text(json.dumps({'notes':3,'cards':6,'reviewed':6,'reps':8,'lapses':3,'singleQuery':'row0 card:"Reset Forward"'}))
+    assert check(True)['reset_manifest_valid']
     selected.write_text('-only-testing:AnkiPadUITests/Missing/testUnknown\n');check(False)
 print('PASS: photo preflight rejects missing/corrupt pixels and unknown cases, records failures, checks preview packages before build/UI, and skips unrelated fixture dependencies')

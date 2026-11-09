@@ -22,6 +22,7 @@ parser.add_argument('--selections',type=Path,required=True)
 parser.add_argument('--output',type=Path,default=Path('build/ui-prerequisites.json'))
 parser.add_argument('--preview-package',type=Path,default=Path('ios/AnkiPadUITests/ReceivedFixtures/preview.apkg'))
 parser.add_argument('--field-package',type=Path,default=Path('ios/AnkiPadUITests/ReceivedFixtures/field-search.apkg'))
+parser.add_argument('--reset-package',type=Path,default=Path('ios/AnkiPadUITests/ReceivedFixtures/browser-forget.apkg'))
 args=parser.parse_args()
 selected=args.selections.read_text().splitlines()
 photo=not selected or any(line.endswith('/testPhotoShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia') for line in selected)
@@ -48,6 +49,16 @@ try:
         assert all(isinstance(metadata.get(key),str) and 0<len(metadata[key])<=1024 and '\0' not in metadata[key] for key in ['front','back']), 'Invalid field names'
         assert metadata['front'] != metadata['back'], 'Repeated field names'
         report['field_manifest_valid']=True
+    reset = not selected or any('/BrowserForgetFlowTests/' in line for line in selected)
+    if reset:
+        report.update(reset_package_required=True, reset_package_valid=False, reset_manifest_valid=False)
+        validate_package(args.reset_package)
+        report['reset_package_valid'] = True
+        metadata = json.loads(args.reset_package.with_suffix('.json').read_text())
+        assert metadata.get('notes') == 3 and metadata.get('cards') == metadata.get('reviewed') == 6, 'Wrong reviewed reset fixture'
+        assert metadata.get('reps') == 8 and metadata.get('lapses') == 3, 'Missing reviewed counters'
+        assert metadata.get('singleQuery') == 'row0 card:"Reset Forward"', 'Wrong single-card query'
+        report['reset_manifest_valid'] = True
     if photo:
         image=Path('build/occlusion-fixture.png').read_bytes()
         assert image[:8]==b'\x89PNG\r\n\x1a\n' and struct.unpack_from('>II',image,16)==(512,384),'Missing/wrong image fixture'

@@ -214,5 +214,9 @@
     "testAuthoredTextAndReplayControlsBalanceAfterReveal",
     "testVocabularyExamplesRemainSecondaryWithMalformedImportedHTML",
     "testPlainAnswerRevealKeepsQuestionDocumentPositionAndFont"
+  ],
+  "BrowserForgetFlowTests": [
+    "testCardResetCancelOptionsPersistAndUndoLeavesSiblingReviewed",
+    "testNoteResetExpandsOnlySelectedNoteAndUndoRestoresBothCards"
   ]
 }

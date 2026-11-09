@@ -1,0 +1,106 @@
+import XCTest
+
+final class BrowserForgetFlowTests: StudyFlowTestSupport {
+    private func fixture() throws -> XCUIApplication {
+        let source = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "browser-forget", withExtension: "apkg", subdirectory: "ReceivedFixtures"))
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(at: folder) }
+        let file = folder.appendingPathComponent("reset.apkg")
+        try Data(contentsOf: source).write(to: file)
+        let app = makeApplication()
+        app.launchArguments = []
+        app.launch()
+        _ = waitForTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
+        app.open(file)
+        tapTestControl(app.buttons.matching(identifier: "incoming-import-confirm"), in: app)
+        requireTestCondition("Reviewed fixture import finishes", in: app) {
+            app.buttons.matching(identifier: "incoming-import-confirm").count == 0 && app.buttons.matching(identifier: "collection-menu").count == 1
+        }
+        return app
+    }
+    private func search(_ query: String, count: Int, notes: Bool = false, in app: XCUIApplication) {
+        var url = URLComponents(string: "studyclient://x-callback-url/browser")!
+        url.queryItems = [URLQueryItem(name: "search", value: query)]
+        app.open(url.url!)
+        requireTestCondition("Reset result count \(count) for \(query)", in: app) {
+            let status = app.staticTexts.matching(identifier: "browser-results")
+            return status.count == 1 && status.element.value as? String == query && status.element.label.hasPrefix("\(count)" + (notes ? "ノート" : "枚"))
+        }
+    }
+    private func openReset(count: Int, in app: XCUIApplication) {
+        tapTestControl(app.buttons.matching(identifier: "browser-actions-menu"), in: app)
+        tapTestMenuAction(titles: ["すべて選択"], in: app)
+        requireTestCondition("Reset selection is committed", in: app) {
+            let status = app.staticTexts.matching(identifier: "browser-results")
+            return status.count == 1 && status.element.label.contains("1件選択中")
+        }
+        tapTestControl(app.buttons.matching(identifier: "browser-actions-menu"), in: app)
+        tapTestMenuAction(titles: ["新規カードに戻す"], in: app)
+        _ = waitForTestControl(app.buttons.matching(identifier: "browser-forget-apply"), in: app)
+        requireTestCondition("Reset confirms actual expanded card count", in: app) {
+            let label = app.staticTexts.matching(identifier: "browser-forget-count")
+            return label.count == 1 && label.element.label == "\(count)枚"
+        }
+    }
+    private func expectOption(_ identifier: String, enabled: Bool, in app: XCUIApplication) {
+        let row = app.switches.matching(identifier: identifier)
+        guard waitForTestControl(row, in: app, purpose: .observation) != nil else { return }
+        let children = row.children(matching: .switch)
+        let native = children.count > 0 ? children : row
+        guard let control = waitForTestControl(native, in: app, purpose: .observation) else { return }
+        requireTestCondition("Stored reset option \(identifier)", in: app) { control.value as? String == (enabled ? "1" : "0") }
+    }
+    private func undo(in app: XCUIApplication) {
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["取り消す"], in: app)
+    }
+    func testCardResetCancelOptionsPersistAndUndoLeavesSiblingReviewed() throws {
+        let app = try fixture()
+        let target = "row0 card:\"Reset Forward\""
+        search(target, count: 1, in: app)
+        openReset(count: 1, in: app)
+        setTestSwitch(app.switches.matching(identifier: "browser-forget-restore"), enabled: false, in: app)
+        setTestSwitch(app.switches.matching(identifier: "browser-forget-counts"), enabled: true, in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-forget-cancel"), in: app)
+        search("row0 is:review", count: 2, in: app)
+        search(target, count: 1, in: app)
+        openReset(count: 1, in: app)
+        expectOption("browser-forget-restore", enabled: true, in: app)
+        expectOption("browser-forget-counts", enabled: false, in: app)
+        setTestSwitch(app.switches.matching(identifier: "browser-forget-restore"), enabled: false, in: app)
+        setTestSwitch(app.switches.matching(identifier: "browser-forget-counts"), enabled: true, in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-forget-apply"), in: app)
+        requireTestCondition("Successful reset clears selection", in: app) {
+            let status = app.staticTexts.matching(identifier: "browser-results")
+            return app.buttons.matching(identifier: "browser-forget-apply").count == 0 && status.count == 1 && status.element.label.contains("0件選択中")
+        }
+        search("row0 is:new", count: 1, in: app)
+        search("row0 is:review", count: 1, in: app)
+        undo(in: app)
+        search("row0 is:review", count: 2, in: app)
+        search(target, count: 1, in: app)
+        openReset(count: 1, in: app)
+        expectOption("browser-forget-restore", enabled: false, in: app)
+        expectOption("browser-forget-counts", enabled: true, in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-forget-cancel"), in: app)
+    }
+    func testNoteResetExpandsOnlySelectedNoteAndUndoRestoresBothCards() throws {
+        let app = try fixture()
+        search("row0", count: 2, in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["ブラウザーの設定"], in: app)
+        _ = waitForTestControl(app.buttons.matching(identifier: "browser-options-save"), in: app)
+        setTestSwitch(app.switches.matching(identifier: "browser-options-notes"), enabled: true, in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-options-save"), in: app)
+        search("row0", count: 1, notes: true, in: app)
+        openReset(count: 2, in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-forget-apply"), in: app)
+        requireTestCondition("Note reset closes its sheet", in: app) { app.buttons.matching(identifier: "browser-forget-apply").count == 0 }
+        search("row0 is:new", count: 1, notes: true, in: app)
+        search("row1 is:review", count: 1, notes: true, in: app)
+        undo(in: app)
+        search("row0 is:review", count: 1, notes: true, in: app)
+        search("row0 is:new", count: 0, notes: true, in: app)
+    }
+}

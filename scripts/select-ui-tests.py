@@ -5,6 +5,9 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-browser-reset': ['testCardResetCancelOptionsPersistAndUndoLeavesSiblingReviewed', 'testNoteResetExpandsOnlySelectedNoteAndUndoRestoresBothCards'],
+    'browser-reset-card': ['testCardResetCancelOptionsPersistAndUndoLeavesSiblingReviewed'],
+    'browser-reset-note': ['testNoteResetExpandsOnlySelectedNoteAndUndoRestoresBothCards'],
     'native-review-reveal': ['testPlainAnswerRevealKeepsQuestionDocumentPositionAndFont', 'testVocabularyExamplesRemainSecondaryWithMalformedImportedHTML', 'testAuthoredTextAndReplayControlsBalanceAfterReveal', 'testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks', 'testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation'],
     'review-reveal': ['testPlainAnswerRevealKeepsQuestionDocumentPositionAndFont'],
     'native-review-examples': ['testVocabularyExamplesRemainSecondaryWithMalformedImportedHTML', 'testAuthoredTextAndReplayControlsBalanceAfterReveal', 'testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation', 'testAdaptiveLongContentKeepsReadableMinimumAndNativeButtons', 'testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],

@@ -43,6 +43,7 @@ expected['native-search-repair'] = {
     'BrowserSearchFiltersFlowTests/testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch',
     'BrowserSearchFiltersFlowTests/testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable',
 }
+expected['native-browser-reset'] = {'BrowserForgetFlowTests/testCardResetCancelOptionsPersistAndUndoLeavesSiblingReviewed', 'BrowserForgetFlowTests/testNoteResetExpandsOnlySelectedNoteAndUndoRestoresBothCards'}
 expected['native-review-reveal'] = {
     'AdaptiveReviewFlowTests/testPlainAnswerRevealKeepsQuestionDocumentPositionAndFont',
     'AdaptiveReviewFlowTests/testVocabularyExamplesRemainSecondaryWithMalformedImportedHTML',
