@@ -10,5 +10,8 @@ extension Engine {
         for id in cardIDs { _ = try call("CardsService.GetCard", ["cid": id]) }
         try backup()
         _ = try call("SchedulerService.ScheduleCardsAsNew", arguments)
+        #if DEBUG
+        traceBrowserUndo("reset.after")
+        #endif
     }
 }

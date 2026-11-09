@@ -57,6 +57,9 @@ actor Engine {
             "mediaDbPath": root.appendingPathComponent("collection.media.db2").path
         ])
         opened = true
+        #if DEBUG
+        traceBrowserUndo("collection.open")
+        #endif
     }
     private func raw(_ method: String, _ args: [String: Any] = [:]) throws -> [String: Any] {
         guard let transport else { throw EngineError(message: AppText.localized("学習エンジンが閉じられています。")) }
@@ -128,7 +131,24 @@ actor Engine {
             "newState": next, "rating": rating, "answeredAtMillis": String(Int64(Date().timeIntervalSince1970 * 1000)),
             "millisecondsTaken": min(card.options.capMilliseconds, max(0, Int(elapsed * 1000)))])
     }
-    func undo() throws { _ = try call("CollectionService.Undo") }
+    func undo() throws {
+        #if DEBUG
+        traceBrowserUndo("undo.before")
+        #endif
+        _ = try call("CollectionService.Undo")
+        #if DEBUG
+        traceBrowserUndo("undo.after")
+        #endif
+    }
+    #if DEBUG
+    func traceBrowserUndo(_ phase: String) {
+        guard UITestIsolation.namespace() != nil,
+              ProcessInfo.processInfo.arguments.contains("--uitest-browser-undo-trace") else { return }
+        let status = try? call("CollectionService.GetUndoStatus")
+        NSLog("browser.undo.trace pid=%d phase=%@ status=%@", ProcessInfo.processInfo.processIdentifier,
+              phase, String(describing: status))
+    }
+    #endif
     func importPackage(_ url: URL) throws {
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }

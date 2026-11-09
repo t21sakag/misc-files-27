@@ -56,6 +56,9 @@ extension Engine {
         }
     }
     func searchBrowserIDs(_ query: String, config: BrowserConfiguration) throws -> [String] {
+        #if DEBUG
+        traceBrowserUndo("browser.search")
+        #endif
         let current = try call("ConfigService.GetConfigBool", ["key": "BROWSER_TABLE_SHOW_NOTES_MODE"])["val"] as? Bool ?? false
         if current != config.notesMode { _ = try call("ConfigService.SetConfigBool", ["key": "BROWSER_TABLE_SHOW_NOTES_MODE", "value": config.notesMode]) }
         return try call(config.notesMode ? "SearchService.SearchNotes" : "SearchService.SearchCards", ["search": query,
