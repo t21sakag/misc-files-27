@@ -29,6 +29,7 @@ expected['native-search-completion'] = {
     'BrowserSearchFiltersFlowTests/testSavedSearchAndFilteredDeckUseCompleteResolvedRequest',
     'BrowserSearchFiltersFlowTests/testSavedSearchDuplicateNamePreservesOriginalQueryAfterRelaunch',
 }
+expected['native-search-completion-repair'] = {'BrowserSearchFiltersFlowTests/testSavedSearchAndFilteredDeckUseCompleteResolvedRequest', 'BrowserSearchIdentityFlowTests/testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch'}
 expected['native-search-identities'] = {
     'BrowserSearchIdentityFlowTests/testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch',
     'BrowserSearchIdentityFlowTests/testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch',

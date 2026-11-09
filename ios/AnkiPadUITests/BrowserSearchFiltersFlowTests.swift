@@ -144,7 +144,7 @@ final class BrowserSearchFiltersFlowTests: BrowserSearchTestSupport {
         _ = waitForTestControl(app.buttons.matching(identifier: "browser-filter-chip-states"), in: app)
     }
     func testSavedSearchAndFilteredDeckUseCompleteResolvedRequest() throws {
-        let (app, _) = try fixture()
+        let (app, _) = try fixture(extraArguments: ["--uitest-browser-input-trace"])
         openFilters(app)
         typeInEmptyTestField(app.textFields.matching(identifier: "search-filters-query"), text: "row1", in: app)
         setFlag(0, enabled: true, in: app); applyFilters(app)

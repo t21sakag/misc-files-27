@@ -59,6 +59,8 @@ assert any('process == "AnkiPad"' in value and '_UIFocusContainerGuide' in value
 print('*** Terminating app due to uncaught exception NSInvalidArgumentException, reason: fixture focus reason', flush=True)
 print('browser.options.trace phase=load.end loaded=1', flush=True)
 print('browser.selection.trace phase=all.enter rows=3 selected=0', flush=True)
+print('browser.input.trace phase=filter.binding selected=true', flush=True)
+print('incoming.file.trace phase=copy.end queued=1', flush=True)
 print('WidgetProbe timeline.request', flush=True)
 Path(os.environ['PROBE_EMITTED']).write_text('ready')
 while True: time.sleep(1)
@@ -90,7 +92,7 @@ while True: time.sleep(1)
         limited_command = [sys.executable, '-c', 'import time;time.sleep(.8);raise SystemExit(7)']
         assert module.run(simulator, bundle, base/'limited', limited_command, screen_seconds=.3) == 7
         limited = json.loads((base/'limited/screen-recording.json').read_text())
-        assert limited['duration_limited'] and limited['closed'] and limited['native_exit'] == 0
+        assert limited['duration_limited'] and limited['closed'] and limited['native_exit'] == 0, limited
         os.environ['DEFER_MOVIE'] = '1'
         assert module.run(simulator, bundle, base/'deferred-video', command) == 7
         deferred = json.loads((base/'deferred-video/screen-recording.json').read_text())
@@ -109,6 +111,8 @@ while True: time.sleep(1)
         assert b'await authorization settings' in critical
         assert b'domain=UNErrorDomain; code=2003' in critical
         assert b'account=server.binding' in critical
+        assert b'browser.input.trace phase=filter.binding' in critical
+        assert b'incoming.file.trace phase=copy.end' in critical
         assert not report['critical_truncated'] and report['critical_bytes_saved'] == len(critical)
         assert report['line_buffer_bytes_dropped'] > 0
         os.environ.pop('LARGE_LOG')

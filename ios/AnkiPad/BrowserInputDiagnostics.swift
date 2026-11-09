@@ -35,6 +35,7 @@ import SwiftUI
 }
 
 @MainActor struct BrowserInputDiagnosticsView: UIViewRepresentable {
+    var identifier = "browser-native-input-state"
     let readValue: () -> String
     func makeUIView(context: Context) -> BrowserInputDiagnosticsLabel {
         let label = BrowserInputDiagnosticsLabel()
@@ -42,7 +43,7 @@ import SwiftUI
         label.isUserInteractionEnabled = false
         label.isAccessibilityElement = true
         label.accessibilityTraits = .staticText
-        label.accessibilityIdentifier = "browser-native-input-state"
+        label.accessibilityIdentifier = identifier
         label.readValue = readValue
         return label
     }
@@ -59,7 +60,8 @@ import SwiftUI
         if let observer = touchObserver { observer.view?.removeGestureRecognizer(observer) }
         touchObserver = nil
         guard let window, UITestIsolation.namespace() != nil,
-              ProcessInfo.processInfo.arguments.contains("--uitest-browser-undo-trace") else { return }
+              (ProcessInfo.processInfo.arguments.contains("--uitest-browser-undo-trace")
+               || ProcessInfo.processInfo.arguments.contains("--uitest-browser-input-trace")) else { return }
         let observer = BrowserInputTouchObserver(target: nil, action: nil)
         observer.cancelsTouchesInView = false
         observer.delaysTouchesBegan = false
@@ -88,8 +90,10 @@ import SwiftUI
         if let touch = touches.first {
             let point = touch.location(in: view)
             let target = touch.view.map { String(describing: type(of: $0)) } ?? "none"
-            summary = "count=\(receivedCount);point=\(point);target=\(target);type=\(touch.type.rawValue)"
-            NSLog("browser.undo.trace phase=native.touch %@", summary)
+            summary = "observer=\(ObjectIdentifier(self));count=\(receivedCount);point=\(point);target=\(target);type=\(touch.type.rawValue)"
+            let prefix = ProcessInfo.processInfo.arguments.contains("--uitest-browser-undo-trace")
+                ? "browser.undo.trace" : "browser.input.trace"
+            NSLog("%@ phase=native.touch %@", prefix, summary)
         }
         state = .failed
     }

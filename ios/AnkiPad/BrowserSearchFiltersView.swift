@@ -31,6 +31,13 @@ import SwiftUI
             if selected { if !values.contains(value) { values.append(value) } }
             else { values.removeAll { $0 == value } }
             request[keyPath: key] = values
+            #if DEBUG
+            if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-browser-input-trace") {
+                NSLog("browser.input.trace phase=filter.binding selected=%@ flags=%@ states=%ld decks=%ld noteTypes=%ld",
+                      String(selected), request.flags.map { String($0.rawValue) }.joined(separator: ","),
+                      request.cardStates.count, request.deckIDs.count, request.noteTypeIDs.count)
+            }
+            #endif
         })
     }
     private func title(_ state: BrowserSearchCardState) -> String {

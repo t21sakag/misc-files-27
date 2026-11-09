@@ -121,6 +121,10 @@ struct ContentView: View {
             .background { reviewGamepadCommands }
             .overlay(alignment: .bottomTrailing) {
                 #if DEBUG
+                if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-browser-input-trace") {
+                    BrowserInputDiagnosticsView(identifier: "incoming-native-state", readValue: { incomingInspection })
+                        .frame(width: 1, height: 1)
+                }
                 if ProcessInfo.processInfo.arguments.contains("--uitest-reminders") {
                     Text(AppText.localized("通知予約の更新")).font(.caption2).allowsHitTesting(false)
                         .accessibilityIdentifier("reminder-refresh-completions")
@@ -505,7 +509,24 @@ struct ContentView: View {
             && !model.chooseFullSync && model.confirmDirection == nil && !model.meteredSyncPrompt
             && !openingReminder && !browserSessionActive && notificationRoute.profileID == nil
     }
+    #if DEBUG
+    private var incomingInspection: String {
+        let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows).first(where: \.isKeyWindow)
+        let controller = window?.rootViewController?.presentedViewController
+        let presented = controller.map { String(describing: type(of: $0)) } ?? "none"
+        return "model=\(ObjectIdentifier(model));profilesReady=\(model.profilesReady);busy=\(model.busy);syncing=\(model.isSyncing);phase=\(phase);canPresent=\(canPresentExternalRequest);reviewBlocked=\(model.reviewingInteractionBlocked);localPresentation=\(localCollectionPresentationActive);copies=\(incomingFileCopies);queued=\(incomingFiles.count);review=\(incomingFileReview != nil);presented=\(presented)"
+    }
+    #endif
+    private func traceIncoming(_ stage: String) {
+        #if DEBUG
+        guard UITestIsolation.namespace() != nil,
+              ProcessInfo.processInfo.arguments.contains("--uitest-browser-input-trace") else { return }
+        NSLog("incoming.file.trace phase=%@ %@", stage, incomingInspection)
+        #endif
+    }
     private func openPendingExternalRequest() {
+        traceIncoming("presentation.check")
         guard pendingWidgetRoute != nil || !incomingFiles.isEmpty || !pendingNoteActions.isEmpty || browserLinks.pending != nil || sharedInbox.nextAutomaticEntry != nil,
               canPresentExternalRequest else { return }
         let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
@@ -537,6 +558,7 @@ struct ContentView: View {
             let request = incomingFiles.removeFirst()
             activeIncomingReceipt = request.receipt
             incomingFileReview = request
+            traceIncoming("presentation.requested")
             return
         }
         guard incomingFileCopies == 0 else { return }
@@ -573,12 +595,18 @@ struct ContentView: View {
             pendingWidgetRoute = route
             openPendingExternalRequest()
         } else if url.isFileURL {
+            traceIncoming("receive.file")
             incomingFileCopies += 1
             Task {
+                traceIncoming("copy.begin")
                 do {
                     let file = try await IncomingImportStager.shared.copy(url)
                     incomingFiles.append(ReceivedRequest(file: file))
-                } catch { model.error = error.localizedDescription }
+                    traceIncoming("copy.end")
+                } catch {
+                    model.error = error.localizedDescription
+                    traceIncoming("copy.error")
+                }
                 incomingFileCopies -= 1
                 openPendingExternalRequest()
             }
@@ -589,7 +617,7 @@ struct ContentView: View {
     }
     private var observedContent: some View {
         errorContent
-        .task { model.bootstrap(); sharedInbox.refresh(); openPendingReminder(); openPendingExternalRequest(); model.requestAutomaticSync(.foreground) }
+        .task { traceIncoming("root.task"); model.bootstrap(); sharedInbox.refresh(); openPendingReminder(); openPendingExternalRequest(); model.requestAutomaticSync(.foreground) }
         .onChange(of: sharedInbox.entries.map(\.id)) { _, _ in openPendingExternalRequest() }
         .onOpenURL(perform: receiveExternalURL)
         .onChange(of: canPresentExternalRequest) { _, ready in if ready { openPendingExternalRequest() } }

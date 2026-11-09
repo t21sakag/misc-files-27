@@ -15,6 +15,15 @@ class BrowserSearchTestSupport: StudyFlowTestSupport {
         let app = makeApplication(); app.launchArguments = extraArguments; app.launch()
         _ = waitForTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
         app.open(copy)
+        if extraArguments.contains("--uitest-browser-input-trace") {
+            guard requireTestCondition("Field fixture incoming confirmation", in: app, timeout: 20,
+                                       failureContext: {
+                let diagnostic = app.staticTexts.matching(identifier: "incoming-native-state")
+                return diagnostic.count == 1 ? String(describing: diagnostic.element.value) : "Incoming diagnostic unavailable"
+            }, condition: {
+                app.buttons.matching(identifier: "incoming-import-confirm").count == 1
+            }) else { return (app, back) }
+        }
         tapTestControl(app.buttons.matching(identifier: "incoming-import-confirm"), in: app)
         requireTestCondition("Field fixture import closes confirmation", in: app) {
             app.buttons.matching(identifier: "incoming-import-confirm").count == 0

@@ -33,6 +33,7 @@ suites = {
     'native-search-state': ['testStructuredFiltersSurviveRawTypingAndFilterOnlyFieldAND', 'testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch', 'testSavedSearchAndFilteredDeckUseCompleteResolvedRequest', 'testStructuredFilterORCancelFieldIntersectionAndClear', 'testCommittedSearchHistoryReuseCancelAndRelaunch'],
     'search-state-input': ['testStructuredFiltersSurviveRawTypingAndFilterOnlyFieldAND'],
     'search-state-history': ['testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch'],
+    'native-search-completion-repair': ['testSavedSearchAndFilteredDeckUseCompleteResolvedRequest', 'testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch'],
     'search-state-snapshot': ['testSavedSearchAndFilteredDeckUseCompleteResolvedRequest'],
     'structured-filters': ['testStructuredFilterORCancelFieldIntersectionAndClear'],
     'native-searches': ['testCommittedSearchHistoryReuseCancelAndRelaunch', 'testNamedFieldTextSearchCancelExactAndLiteralStar', 'testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection', 'testFlagNameCancelEmptySaveAndRelaunchKeepNumericSearch', 'testBrowserSearchOptionsCancelSaveAndDefaultRespectExplicitSearch'],
