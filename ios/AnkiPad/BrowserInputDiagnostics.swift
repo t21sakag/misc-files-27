@@ -18,6 +18,10 @@ import SwiftUI
             let all = views(window)
             let responder = all.first(where: \.isFirstResponder).map(name) ?? "none"
             result.append("window\(index):key=\(window.isKeyWindow);level=\(window.windowLevel.rawValue);responder=\(responder)")
+            for field in all.compactMap({ $0 as? UITextField }) where field.isFirstResponder {
+                let selection = field.selectedTextRange.map { field.offset(from: $0.start, to: $0.end) } ?? -1
+                result.append("textInput:class=\(name(field));id=\(ObjectIdentifier(field));length=\(field.text?.utf16.count ?? 0);selection=\(selection)")
+            }
             for control in all.compactMap({ $0 as? UISwitch }) {
                 let frame = control.convert(control.bounds, to: window)
                 let center = CGPoint(x: frame.midX, y: frame.midY)

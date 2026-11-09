@@ -335,13 +335,34 @@ class StudyFlowTestSupport: XCTestCase {
     @discardableResult
     func replaceTestField(_ query: XCUIElementQuery, expected: String, with text: String, in app: XCUIApplication,
                           form: XCUIElement? = nil) -> XCUIElement? {
-        guard let field = tapTestControl(query, in: app, form: form, keyboard: app.alerts.count == 0 ? .dismiss : .keep) else { return nil }
+        let editingAlert = app.alerts.count == 1
+        guard var field = tapTestControl(query, in: app, form: form, keyboard: app.alerts.count == 0 ? .dismiss : .keep) else { return nil }
         guard field.value as? String == expected else {
             controlFailure(query, in: app, reason: "Field did not contain the expected replacement source"); return nil
         }
         // Tapping a populated field can move its caret into the source text.
         // Native Select All replaces the complete value regardless of caret.
+        func captureAlertInput(_ stage: String) {
+            guard editingAlert, app.launchArguments.contains("--uitest-browser-input-trace") else { return }
+            let native = app.staticTexts.matching(identifier: "incoming-native-state")
+            let state = native.count == 1 ? String(describing: native.element.value) : "Native input state unavailable"
+            let evidence = XCTAttachment(string: state + "\n" + app.debugDescription)
+            evidence.name = "Alert replacement " + stage; evidence.lifetime = .keepAlways; add(evidence)
+            let screen = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+            screen.name = "Alert replacement " + stage; screen.lifetime = .keepAlways; add(screen)
+        }
+        captureAlertInput("before selection")
         field.typeKey("a", modifierFlags: .command)
+        captureAlertInput("after selection")
+        if editingAlert {
+            // Selection can rebuild native alert descendants. Re-resolve the
+            // same scoped field without tapping away its selected range.
+            guard let selected = waitForTestControl(query, in: app, keyboard: .keep) else { return nil }
+            guard selected.value as? String == expected else {
+                controlFailure(query, in: app, reason: "Alert replacement source changed during selection"); return nil
+            }
+            field = selected
+        }
         field.typeText(text)
         guard field.value as? String == text else {
             controlFailure(query, in: app, reason: "Field did not contain exactly the replacement text"); return nil

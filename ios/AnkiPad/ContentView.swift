@@ -122,7 +122,9 @@ struct ContentView: View {
             .overlay(alignment: .bottomTrailing) {
                 #if DEBUG
                 if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-browser-input-trace") {
-                    BrowserInputDiagnosticsView(identifier: "incoming-native-state", readValue: { incomingInspection })
+                    BrowserInputDiagnosticsView(identifier: "incoming-native-state", readValue: {
+                        incomingInspection + "\n" + BrowserInputDiagnostics.read(loaded: model.profilesReady, busy: model.busy, notes: false)
+                    })
                         .frame(width: 1, height: 1)
                 }
                 if ProcessInfo.processInfo.arguments.contains("--uitest-reminders") {

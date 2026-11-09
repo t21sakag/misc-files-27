@@ -8583,6 +8583,279 @@
         }
       ],
       "checked_at": "2026-11-09T23:24:24.839204+00:00"
+    },
+    {
+      "id": "20261110-alert-replacement-native-snapshot",
+      "covers": [
+        [
+          42720244062,
+          1
+        ],
+        [
+          42714870977,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42714870977,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "The full bookmark case now passes. Rename fixture received/copied/presented the APKG and moved the synthetic card correctly, then failed at a native deck switch. Synthesized down/up638.5,666.5/50ms matches actual native touch delivery into _UILiquidLensView and terminal target thumb607,652.5,63,28. No filter.binding event is present in the complete untruncated critical capture. Current native isOn and model deckIDs remain false/empty. Input cancellation versus native recognition versus application binding cause remains unproven."
+        },
+        {
+          "attempt": [
+            42720244062,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Deck-scope native switch now changes, actual UIControl value events and filter.binding confirm selection. Case reaches the intended rename alert, checks old name, taps the correct native alert field410,425 and issues Command-A. At the following field.typeText, XCTest explicitly treats that same expected alert as an interruption and presses its Cancel button336,492.5 before failing to resolve the field. No intended rename Save occurs. Original shortcut-to-focus mechanism remains unresolved."
+        }
+      ],
+      "rule_review": {
+        "semantic_labels": "Latest alert and field are exactly デッキ名を変更 / デッキ名; the source Identity Scope A is checked before replacement. Save was never attempted. Keep source and final full-value assertions and the exact semantic alert queries.",
+        "foreground_scope": "The expected native rename alert is frontmost and receives its field tap. XCTest subsequently calls its default interruption handler on this same alert. Treating expected Cancel as a legitimate flow would invalidate the rename test. Keep keyboard in alert and capture before/after selection.",
+        "unique_reads_and_actions": "Existing helper scopes the field to the expected alert and validates one match. Retain its original single tap and Command-A. Re-resolve the same scoped field after selection without input, check its original source again, and use the fresh element for text input. Added before/after native input/AX/screen evidence establishes whether selection replaced the descendant or moved the responder. This is an observation and query lifecycle repair; full cause is still unproven.",
+        "live_state": "Native switch now logs isOn true and binding deck count1, then the filtered result/close/long press/name action reaches rename. The original name is verified in its alert. Default interruption handling cancels, leaving old deck name. Post-rename/relaunch stable-ID semantics remain unverified.",
+        "keyboard_and_scroll": "The shared helper already keeps the foreground alert keyboard. Command-A and subsequent field typing are separate native actions. The default interruption handler cancels before replacement can complete. Add on-demand actual UITextField first responder, native object identity, content length and selected range length with no raw content, plus before/after selection captures. Preserve keyboard, no extra taps or timeout increase. Ordinary form replacement behavior is maintained.",
+        "environment": "Apple compile and actual single UI entrypoint ran. Fixture imports and scope controls passed. Latest owned recorder metadata has ready=true/native-log at2.1s, closed/native_exit0/no duration limit and correct actual device UUID. Selected video585sec frames still show Home while AX describes the app, so neither recorder validity nor temporal mapping is assumed from ready alone. Actual XCTest log and critical native target events establish cancellation.",
+        "first_failure_evidence": "Latest failed log explicitly records expected Alert as interruption, default Cancel tap and later missing Alert. Native log confirms field tap410,425 then Cancel336,492.5. Terminal AX shows deck root after cancellation. Both original evidence sets and movie are retained; latest movie sampled around selection shows Home, so no claim is made about pre-input selection visuals. New synthetic before/after selection evidence addresses that gap before the original typeText. No application behavior or tap style is changed.",
+        "failure_classification": "Exact pair42714870977/1 and42720244062/1, no intervening run-level UI success. Earlier switch remains undetermined, despite later transition success. Latest case is a harness cancellation failure after Command-A,563.768seconds/1fail/0skip/runtimeWarnings empty. A passing later switch is not proof that the sporadic input issue was fixed.",
+        "runtime_warnings": "Latest native summary runtimeWarnings=[] and original nonzero failure is preserved. Type parsing does not establish actual Alert selection/focus behavior. Next Apple run must reach real rename Save and unchanged stable ID/result assertions.",
+        "device_evidence": "No new IPA. Physical device input, audio, notification and signing remain unverified. Private favorite feature and case remain unpublished and outside this frozen one-case investigation."
+      },
+      "root_cause": "Latest test failure is the XCTest default handler cancelling the expected native rename alert during text replacement. The exact Command-A-to-focus/interruption mechanism is not established. Earlier sporadic native-switch cause remains unresolved.",
+      "common_resolution": "Retain original semantic target, tap, select-all shortcut, keyboard policy and exact assertions. Re-resolve the expected alert descendant after selection before typing, verify its source remains unchanged, and capture on-demand native responder/selection plus AX/screens on both sides of selection. Do not silently continue after alert cancellation. Next scope stays renamed-deck1case only.",
+      "next_scope": [
+        "BrowserSearchIdentityFlowTests/testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch"
+      ],
+      "evidence": [
+        {
+          "reference": "completed-evidence/search-completion-42686954071/run.json",
+          "sha256": "70883e18a136b9c6a1239d44bd9acac8eaa8a2708311e0e8317910cb12b9f237"
+        },
+        {
+          "reference": "completed-evidence/search-completion-42686954071/failed.log",
+          "sha256": "92e9116f453bf1356e1e65bbd0d983d03a945e66ceb1d3ab2b4c3733d6eacfd1"
+        },
+        {
+          "reference": "completed-evidence/state/search-observation-run.json",
+          "sha256": "d21b06ccc7060d9f0251f37faf42f3dc61400f502c91ebcf698b184613e72e75"
+        },
+        {
+          "reference": "completed-evidence/state/search-observation-failed.log",
+          "sha256": "420b282d8d5405480cf03690ab6f04bbfa338f5c8be57f46f149c19eb96b51a7"
+        },
+        {
+          "reference": "completed-evidence/screenshots/8A232784-6809-44EB-8EB4-CC22F2DFD8DC.txt",
+          "sha256": "8b3300a699225443c08a4bf4b33e34df59dc609efba9892f0fcc27e71eb06fb4"
+        },
+        {
+          "reference": "completed-evidence/screenshots/C61D1463-71B5-496F-88B4-7C78C18D7FFB.txt",
+          "sha256": "06c90e2f1b7b559281f495bb755e0fb4524520b63b9dd599cdcfb835015cb8b3"
+        },
+        {
+          "reference": "completed-evidence/screenshots/6D434A3A-E29A-42B0-A708-833F607C34C2.txt",
+          "sha256": "c15f6dd86997f5f2382fed9e809ac90a12c1406d1353f14fb4f2f89c62450c7d"
+        },
+        {
+          "reference": "completed-evidence/screen-images/1B5D9656-81B1-4CE4-BC49-743C1D83F468.png",
+          "sha256": "57d0cf096c77914b32e4c1952a547e114b4515fb9283daeb1f57ac8104fb81a9"
+        },
+        {
+          "reference": "completed-evidence/batch-1/input-events.json",
+          "sha256": "ceabceebccfd9d4833f09e1b2aac947171ab0088b2c8f627131916b634ad7999"
+        },
+        {
+          "reference": "completed-evidence/widget-diagnostics/critical.log",
+          "sha256": "261452ba70922ac92f4bbafa8f105ef4eb9783515e35a4e6f9da28baf95944d2"
+        },
+        {
+          "reference": "completed-evidence/widget-diagnostics/live-collection.json",
+          "sha256": "bec78d0b0054815c5c67698c73746eea63770025e3aee6c59368cdd460b84999"
+        },
+        {
+          "reference": "completed-evidence/widget-diagnostics/screen-recording.json",
+          "sha256": "f487b5872c5a3360b3858d632cb04ba9dc5496dc4c4f7e11331e766b06555fb3"
+        },
+        {
+          "reference": "completed-evidence/widget-diagnostics/native-screen.mp4",
+          "sha256": "a54a5182074194ac84fb19f4d41d2aff93c4e6073158a053a4e3b45dd55e7e48"
+        },
+        {
+          "reference": "completed-evidence/batch-0/test-summary.json",
+          "sha256": "ef4ac5e96fe2b3155a193dfe7998ea951122cd88ddbeee631b3af45eb5c42da8"
+        },
+        {
+          "reference": "completed-evidence/batch-1/test-summary.json",
+          "sha256": "b0246d622a8c63112c188f7859a66a0f244217c7b97ad8fd43c7bb79ad5b154e"
+        },
+        {
+          "reference": "completed-run42720244062/state/search-switch-run.json",
+          "sha256": "dd243ed744087342ced5561b2bca9008d389fdeb50e3517bb9dadfdc1fa05c6b"
+        },
+        {
+          "reference": "completed-run42720244062/state/search-switch-failed.log",
+          "sha256": "769cd41c2426b471074860fa54f4aca62ff0ca32a32a5a96894ea23b5f7bbccf"
+        },
+        {
+          "reference": "completed-run42720244062/search-switch-42720244062/test-summary.json",
+          "sha256": "c9c77f3d5ee8e56b09e47fbbf98bd993837842a1d54724cce64e632ec08a8457"
+        },
+        {
+          "reference": "completed-run42720244062/search-switch-42720244062/input-events.json",
+          "sha256": "0302e7737d759103b90e7bb3a11dcbb093d57c637330c8e2200237bf85e5b6e3"
+        },
+        {
+          "reference": "completed-run42720244062/widget-diagnostics/critical.log",
+          "sha256": "f5985ebe0a931335f9eaf51371dca6d0d2fdcabfc95a1aae8cb8fe15c7da28c8"
+        },
+        {
+          "reference": "completed-run42720244062/widget-diagnostics/screen-recording.json",
+          "sha256": "a64b949a0d2938dc70499797cb54a8b4eda169f4dafc49f5f27c04c32cff78e8"
+        },
+        {
+          "reference": "completed-run42720244062/widget-diagnostics/native-screen.mp4",
+          "sha256": "dbaac09e3f5b6bae4e3fc9800fa47e96a28b0619fe6aa6e61056b37b00c40bfb"
+        },
+        {
+          "reference": "completed-run42720244062/screenshots/518B17E6-2F90-4D75-B6EC-978C43DE0B56.txt",
+          "sha256": "caf2849548a293c26ed01e267aeb476f734ac388961ab64c7ca86c3431feeef9"
+        },
+        {
+          "reference": "completed-run42720244062/screenshots/F9E185FB-711E-4399-8181-693971CAA3A8.txt",
+          "sha256": "3831372f7d89a26b0816fc3d93bd083ca617bbcd231303186fc07560ecc6df99"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "2a991053bd49aa529a398099492555ee67b9c95a3065d99e385114fc9a04316a",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "c9ad3a1ff06644a8343075426009b408d17a7efca5255153c430ebfe0288dc0b",
+        "ios/AnkiPad/BrowserInputDiagnostics.swift": "d3a71ed7607140306a73e17a6d836377dacc216ce40a1275c30410bdd549280c",
+        "ios/AnkiPad/BrowserSearchFiltersView.swift": "61ea9f97bc75ddac19522caabf784db9e31bdc8ef86010e2d2e3ff53b076efc8",
+        "ios/AnkiPad/ContentView.swift": "4d6d6aa3a0d26bddbe3cf58c02868506981da89ac59e21cafe0a8878f812dfe5",
+        "ios/AnkiPadUITests/BrowserSearchIdentityFlowTests.swift": "358649262c8209466fba8ab4f5e6f86fb7d1186abcd97e4fded4b94a17e62378",
+        "ios/AnkiPadUITests/BrowserSearchTestSupport.swift": "b6c253e7169548278b90c9b35a86c3fd1cf83e7420f5ccce1cc03036217f1491",
+        "scripts/record-ui-screen.py": "8741c46163687a28f881631e8d0d785baf62798ded9c2f8bab0e9638f85c2ad6",
+        "scripts/run-ui-with-diagnostics.py": "f6577089d8713a9f6b7395e3397b34d0a93bcf1776baf787a46b5e3a165d7556",
+        "scripts/select-ui-tests.py": "662d6d418e539a3d8d0d6da428b448d2fe7279f2fac7e7a05a5b951e34bb4f8d",
+        "tests/widget_diagnostics_smoke.py": "9b01db44218a3f301c597a0966ec19793f087ac1a9d1e1e535bd29bedb588549",
+        ".github/workflows/ipa.yml": "c37b3768ba27e2a2833a28d396f76892469001e868067322aa9b8e7af0665fea"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "7fd8f53a5e02dfed9debc53440ff09216b0cfa9bed1cd8f1d805976aa4ee16a4"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "f7dea8fac87dcd53f7dceefc00821044cc1b99dcd7f6c4d884afdb70a2b15d0c"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "43b02e40ace6af98456f92c3685f8dea954a117c5d6d8a8c183447572fa6123b"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "c47fc506dbac0462ce8150c6fe620e2d032bfeb6ec8409a58a13b314cc97a542"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5110d234b6e30e05fd9f425900a0075107854d271f43a2b20efdfd4796bc474b"
+        },
+        {
+          "name": "prerequisite rejection",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "actual consumer runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "actual workflow diagnostics",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "observer interruption and recording",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        }
+      ],
+      "checked_at": "2026-11-09T23:54:46.812665+00:00"
     }
   ]
 }
