@@ -203,7 +203,9 @@ struct ReviewerWebView: UIViewRepresentable {
         const box=word.getBoundingClientRect(),font=getComputedStyle(word).fontSize;
         if(!initial)initial={font,top:box.top,left:box.left,node:word};
         const revealed=pending.hasAttribute('data-revealed');
-        const ok=initial.node===word&&initial.font===font&&Math.abs(initial.top-box.top)<1&&Math.abs(initial.left-box.left)<1;
+        const badge=document.getElementById('stable-badge');
+        const badgeSize=badge?parseFloat(getComputedStyle(badge).fontSize):Infinity;
+        const ok=initial.node===word&&initial.font===font&&Math.abs(initial.top-box.top)<1&&Math.abs(initial.left-box.left)<1&&badgeSize>=12&&badgeSize<=23&&parseFloat(font)>badgeSize*2.5;
         out.textContent=ok?'Stable document '+(revealed?'answer':'question'):'Stable document changed';
       }
       qa.addEventListener('study-layout',report);

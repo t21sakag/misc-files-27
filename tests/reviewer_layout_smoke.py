@@ -27,7 +27,7 @@ cases = {
     'media': '<div id="question">English 日本語の問題</div><img id="picture"><audio controls></audio><video controls width="240" height="100"></video><hr><div id="response">画像と音声のある答え</div><input id="typeans" value="keep this answer">',
     'annotation': '<div id="question">Mask alignment</div><div id="annotation" style="position:relative;width:600px"><img id="picture" style="width:600px;height:450px"><div id="mask" style="position:absolute;left:60px;top:45px;width:120px;height:90px;background:gray"></div></div><hr><div id="response">マスクと画像</div>',
 }
-cases['stable'] = '<div id="question">dispatch</div><br><div>The package is ready for dispatch.</div><div id="study-pending-answer" inert aria-hidden="true"><hr id="answer"><div id="response">発送する</div><br><div>荷物を発送する準備ができています。</div></div>'
+cases['stable'] = '<div id="badge" style="display:inline-block;font-size:12px;line-height:14px;background:#333;color:white;padding:1px 3px;border-radius:3px">label</div><div id="question">dispatch</div><br><div>The package is ready for dispatch.</div><div id="study-pending-answer" inert aria-hidden="true"><hr id="answer"><div id="response">発送する</div><br><div>荷物を発送する準備ができています。</div></div>'
 cases['examples'] = cases['malformed'].replace('</div\n<div', '</div>\n<div')
 with tempfile.TemporaryDirectory(prefix='review-layout-') as temporary:
     base = Path(temporary)
@@ -83,6 +83,7 @@ with tempfile.TemporaryDirectory(prefix='review-layout-') as temporary:
                 const picture=document.getElementById('picture'),mask=document.getElementById('mask');
                 const result={state:qa.dataset.studyLayout,font:Number(qa.dataset.studyFont),height:qa.getBoundingClientRect().height,
                   available:Number(qa.dataset.studyAvailableHeight),question:getComputedStyle(q).fontSize,answer:getComputedStyle(a).fontSize,
+                  badge:document.getElementById('badge')?getComputedStyle(document.getElementById('badge')).fontSize:null,
                   stable:beforeReveal?beforeReveal.node===q&&beforeReveal.font===getComputedStyle(q).fontSize&&Math.abs(beforeReveal.top-q.getBoundingClientRect().top)<1&&Math.abs(beforeReveal.left-q.getBoundingClientRect().left)<1&&document.getElementById('study-pending-answer').hasAttribute('data-revealed'):null,
                   width:document.documentElement.scrollWidth,viewport:innerWidth,events,allInside:qa.contains(q)&&qa.contains(a)&&(!document.getElementById('example')||qa.contains(document.getElementById('example'))),hookRuns:window.cardHookRuns,example:document.getElementById('example')?getComputedStyle(document.getElementById('example')).fontSize:null,translation:document.getElementById('translation')?getComputedStyle(document.getElementById('translation')).fontSize:null,sound:document.getElementById('sound')?.getBoundingClientRect().height,
                   input:document.getElementById('typeans')?.value,
@@ -108,7 +109,7 @@ with tempfile.TemporaryDirectory(prefix='review-layout-') as temporary:
             assert result['question'] == result['answer'], (name, result)
             assert result['font'] >= 26.82 and result['events'] < 20, (name, result)
             if name == 'stable':
-                assert result['stable'], result
+                assert result['stable'] and 12 <= float(result['badge'].removesuffix('px')) <= 23 and result['font'] > float(result['badge'].removesuffix('px')) * 2.5, result
             if name == 'long':
                 assert result['state'] == 'scroll' and result['height'] > result['available'], result
             else:

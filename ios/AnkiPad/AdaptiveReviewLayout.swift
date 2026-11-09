@@ -31,7 +31,8 @@ enum AdaptiveReviewLayout {
     const root = document.documentElement;
     const readingScale = Number(document.body.dataset.readingScale) || 1;
     const minimumFont = 24 * readingScale;
-    const preserved = 'script,style,svg,math,mjx-container,.MathJax,canvas,button,select,option,a[href^="ankiplay:"],[data-study-layout-preserve],[data-study-media-group]';
+    const preserved = 'script,style,svg,math,mjx-container,.MathJax,canvas,button,select,option,a[href^="ankiplay:"],[data-study-layout-label],[data-study-layout-preserve],[data-study-media-group]';
+    const labelSizes = new WeakMap();
     const mediaLimits = new WeakMap();
     const groupSizes = new WeakMap();
     let pending = false;
@@ -72,6 +73,27 @@ enum AdaptiveReviewLayout {
     document.head.append(rules);
 
     function identifyText() {
+        // Preserve compact, styled badges by their presentation, irrespective
+        // of field names. Capture authored sizes before normalizing ancestors.
+        const labels = [];
+        for (const element of content.querySelectorAll('*')) {
+            if (element.closest(preserved) && !labelSizes.has(element)) continue;
+            const style = getComputedStyle(element);
+            const font = parseFloat(style.fontSize);
+            const compact = style.display === 'inline-block' || style.display === 'inline-flex';
+            const background = style.backgroundColor !== 'transparent' && style.backgroundColor !== 'rgba(0, 0, 0, 0)';
+            const outlined = parseFloat(style.borderTopWidth) > 0;
+            const shaped = parseFloat(style.borderRadius) > 0 || parseFloat(style.paddingLeft) > 0 || parseFloat(style.paddingRight) > 0;
+            if (labelSizes.has(element) || (compact && font <= 18 && shaped && (background || outlined) && element.textContent.trim())) {
+                if (!labelSizes.has(element)) labelSizes.set(element, Math.max(12, Math.min(20, font)) * readingScale);
+                labels.push(element);
+            }
+        }
+        for (const label of labels) {
+            label.dataset.studyLayoutLabel = '';
+            label.style.setProperty('font-size', labelSizes.get(label) + 'px', 'important');
+            label.style.setProperty('line-height', '1.3', 'important');
+        }
         const primary = new Set([content]);
         const supporting = new Set();
         const controls = new Set();

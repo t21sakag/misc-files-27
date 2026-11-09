@@ -7,7 +7,7 @@ final class AdaptiveReviewFlowTests: TypographyTestSupport {
         app.launch()
         _ = waitForTestControl(app.buttons.matching(identifier: "add-note"), in: app)
         defer { XCUIDevice.shared.orientation = .portrait }
-        try addNote(front: "<div id=\"stable-word\">dispatch</div><br><div>The package is ready for dispatch this morning.</div>",
+        try addNote(front: "<div id=\"stable-badge\" style=\"display:inline-block;font-size:12px;line-height:14px;background:#333;color:white;padding:1px 3px;border-radius:3px\">language</div><div id=\"stable-word\" style=\"font-size:35px\">dispatch</div><br><div>The package is ready for dispatch this morning.</div>",
                     back: "<div>発送する</div><br><div>荷物は今朝発送する準備ができています。</div>", in: app)
         XCUIDevice.shared.orientation = .landscapeLeft
         requireTestCondition("Stable review starts in landscape", in: app) { app.frame.width > app.frame.height }
