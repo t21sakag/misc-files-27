@@ -20,7 +20,7 @@ def record(simulator, output, seconds):
     report = {'simulator': simulator, 'supervisor_pid': os.getpid(), 'native_pid': None,
               'seconds_limit': seconds, 'duration_limited': False, 'closed': False,
               'native_exit': None, 'bytes_saved': 0, 'ready': False,
-              'started_at_epoch': time.time(), 'ready_at_epoch': None}
+              'started_at_epoch': time.time(), 'ready_at_epoch': None, 'ready_source': None}
     native = None
     stopping = False
 
@@ -41,16 +41,21 @@ def record(simulator, output, seconds):
     try:
         deadline = time.monotonic() + seconds
         movie.unlink(missing_ok=True)
-        with (output/'screen-recording.log').open('wb') as log:
+        log_path = output/'screen-recording.log'
+        with log_path.open('wb') as log:
             native = subprocess.Popen(['xcrun', 'simctl', 'io', simulator,
                 'recordVideo', '--force', str(movie)], stdout=log, stderr=subprocess.STDOUT)
             if stopping:
                 stop(None, None)
             startup_deadline = min(deadline, time.monotonic() + 3)
             while native.poll() is None and time.monotonic() < startup_deadline:
-                if movie.exists() and movie.stat().st_size > 0:
+                # simctl can defer the movie file until finalization. Its
+                # observed native acknowledgement still establishes startup.
+                acknowledged = b'Recording started' in log_path.read_bytes()
+                if acknowledged or (movie.exists() and movie.stat().st_size > 0):
                     report['ready'] = True
                     report['ready_at_epoch'] = time.time()
+                    report['ready_source'] = 'native-log' if acknowledged else 'movie-file'
                     break
                 time.sleep(0.05)
             report['native_pid'] = native.pid

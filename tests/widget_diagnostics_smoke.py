@@ -24,8 +24,14 @@ with tempfile.TemporaryDirectory() as temporary:
 import os, sys, time, signal
 from pathlib import Path
 if 'recordVideo' in sys.argv:
-    Path(sys.argv[-1]).write_bytes(b'Native display fixture')
-    signal.signal(signal.SIGINT, lambda *_: sys.exit(0))
+    def finalize(*_):
+        Path(sys.argv[-1]).write_bytes(b'Native display fixture')
+        raise SystemExit(0)
+    signal.signal(signal.SIGINT, finalize)
+    if os.environ.get('DEFER_MOVIE'):
+        print('Recording started', flush=True)
+    else:
+        Path(sys.argv[-1]).write_bytes(b'Native display fixture')
     while True: time.sleep(1)
 if 'stream' not in sys.argv:
     print('Device is not booted', flush=True)
@@ -85,6 +91,12 @@ while True: time.sleep(1)
         assert module.run(simulator, bundle, base/'limited', limited_command, screen_seconds=.3) == 7
         limited = json.loads((base/'limited/screen-recording.json').read_text())
         assert limited['duration_limited'] and limited['closed'] and limited['native_exit'] == 0
+        os.environ['DEFER_MOVIE'] = '1'
+        assert module.run(simulator, bundle, base/'deferred-video', command) == 7
+        deferred = json.loads((base/'deferred-video/screen-recording.json').read_text())
+        assert deferred['ready'] and deferred['ready_source'] == 'native-log'
+        assert deferred['closed'] and deferred['bytes_saved'] > 0
+        os.environ.pop('DEFER_MOVIE')
         assert report['truncated'] and report['bytes_saved'] <= module.LIMIT
         assert b'WidgetProbe timeline.request' in (output/'live.log').read_bytes()
         assert b'browser.options.trace phase=load.end' in (output/'live.log').read_bytes()
