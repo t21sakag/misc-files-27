@@ -35,6 +35,14 @@ enum AdaptiveReviewLayout {
     const mediaLimits = new WeakMap();
     const groupSizes = new WeakMap();
     let pending = false;
+    let pointerActive = false, deferredFit = false;
+    document.addEventListener('pointerdown', () => { pointerActive = true; }, true);
+    const finishPointer = () => {
+        pointerActive = false;
+        if (deferredFit) { deferredFit = false; requestAnimationFrame(schedule); }
+    };
+    document.addEventListener('pointerup', finishPointer, true);
+    document.addEventListener('pointercancel', finishPointer, true);
     let measuredWidth = -1, measuredHeight = -1;
     let measuredViewport = '';
     let mutations;
@@ -311,6 +319,7 @@ enum AdaptiveReviewLayout {
 
     function fit() {
         pending = false;
+        if (pointerActive) { deferredFit = true; return; }
         if (!content.isConnected || (window.visualViewport?.scale || 1) > 1.05) return;
         mutations.disconnect();
         try {

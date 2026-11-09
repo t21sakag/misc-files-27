@@ -81,8 +81,14 @@ with chromium() as browser:
         assert browser.evaluate('window.fixtureClicks') == 1
         # Use a trusted pointer event on the author-supplied mode control.
         point = browser.evaluate("(()=>{const b=document.querySelector('[data-mode=example]." + prefix + "-choice').getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2}})()")
-        for event in ['mousePressed', 'mouseReleased']:
-            browser.call('Input.dispatchMouseEvent', {'type':event,'button':'left','clickCount':1,**point})
+        before_pointer = metrics(browser, prefix)
+        browser.call('Input.dispatchMouseEvent', {'type':'mousePressed','button':'left','clickCount':1,**point})
+        browser.call('Emulation.setDeviceMetricsOverride', {'width':1180,'height':360,'deviceScaleFactor':1,'mobile':False})
+        time.sleep(.2)
+        during_pointer = metrics(browser, prefix)
+        assert during_pointer['heading'] == before_pointer['heading'], (before_pointer, during_pointer)
+        browser.call('Input.dispatchMouseEvent', {'type':'mouseReleased','button':'left','clickCount':1,**point})
+        browser.call('Emulation.setDeviceMetricsOverride', {'width':1180,'height':650,'deviceScaleFactor':1,'mobile':False})
         time.sleep(.55)
         assert browser.evaluate('window.reviewTaps.length') == 0, 'Mode control must not trigger reviewer touch actions'
         switched = metrics(browser, prefix)
