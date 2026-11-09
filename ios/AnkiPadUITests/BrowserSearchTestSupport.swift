@@ -34,13 +34,33 @@ class BrowserSearchTestSupport: StudyFlowTestSupport {
         }
     }
     func expectRows(_ indices: [Int], in app: XCUIApplication) {
-        let expected = Set(indices.map { "row" + String($0) })
-        let rows = app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browser-front-"))
-        requireTestCondition("Exact field-search result rows \(indices)", in: app) {
+        guard requireTestCondition("Field-search result count \(indices.count)", in: app, condition: {
             let status = app.staticTexts.matching(identifier: "browser-results")
             return app.buttons.matching(identifier: "field-search-apply").count == 0
                 && status.count == 1 && status.element.label.hasPrefix("\(indices.count)枚")
-                && rows.count == expected.count && Set(rows.allElementsBoundByIndex.map(\.label)) == expected
+        }) else { return }
+        let lists = app.collectionViews.matching(identifier: "browser-card-list")
+        guard let list = waitForTestControl(lists, in: app, purpose: .observation) else { return }
+        var identifiers = Set<String>()
+        // Native List virtualizes rows outside the sheet. Prove every expected
+        // value through the shared reveal/unique resolver and the total count.
+        for index in indices {
+            let row = lists.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@",
+                                                            "browser-front-", "row" + String(index)))
+            guard let value = waitForTestControl(row, in: app, form: list, purpose: .observation) else { return }
+            XCTAssertTrue(identifiers.insert(value.identifier).inserted, "Each expected row needs a distinct card identity")
+        }
+        XCTAssertEqual(identifiers.count, indices.count)
+        if let first = indices.first {
+            let row = lists.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@",
+                                                            "browser-front-", "row" + String(first)))
+            revealFormControl(row.firstMatch, in: list, topInset: 40, bottomInset: 20,
+                              maximumAttempts: 12, searchUpward: false)
+            _ = waitForTestControl(row, in: app, purpose: .observation)
+        } else {
+            requireTestCondition("Empty result has no card rows", in: app) {
+                lists.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browser-front-")).count == 0
+            }
         }
     }
     func openFields(back: String, mode: String, text: String? = nil, combine: Bool = false, in app: XCUIApplication) {

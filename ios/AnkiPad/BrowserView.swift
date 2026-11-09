@@ -121,6 +121,7 @@ struct BrowserView: View {
             }
             if interactionBlocked { ProgressView() }
         }
+        .accessibilityIdentifier("browser-card-list")
         .environment(\.editMode, $editMode)
         .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: AppText.localized("検索（deck:、tag:、is:due など）"))
         .onSubmit(of: .search) { rememberSearch() }

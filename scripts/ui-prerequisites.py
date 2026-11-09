@@ -27,7 +27,7 @@ args=parser.parse_args()
 selected=args.selections.read_text().splitlines()
 photo=not selected or any(line.endswith('/testPhotoShareSurvivesConfirmationCancelAndRelaunchBeforeSavingMedia') for line in selected)
 preview=not selected or any(line.endswith(('/testNotesPreviewUsesRepresentativesUntilMultipleRowsSelected', '/testBrowserSelectionOrderSurvivesDeselectionAndReselection')) for line in selected)
-fields=not selected or any('/BrowserFieldSearchFlowTests/' in line or '/BrowserSearchHistoryFlowTests/' in line or '/BrowserSearchFiltersFlowTests/' in line for line in selected)
+fields=not selected or any('/BrowserFieldSearchFlowTests/' in line or '/BrowserSearchHistoryFlowTests/' in line or '/BrowserSearchFiltersFlowTests/' in line or '/BrowserSearchIdentityFlowTests/' in line for line in selected)
 report={'photo_required':photo,'fixture_valid':False,'photo_host_installed':False,'preview_package_required':preview}
 args.output.parent.mkdir(parents=True,exist_ok=True)
 try:

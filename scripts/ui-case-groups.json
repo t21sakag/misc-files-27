@@ -223,5 +223,9 @@
   ],
   "TemplateReadingFlowTests": [
     "testNestedTemplateHierarchyAndModeControlsSurviveRevealAndRotation"
+  ],
+  "BrowserSearchIdentityFlowTests": [
+    "testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch",
+    "testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch"
   ]
 }

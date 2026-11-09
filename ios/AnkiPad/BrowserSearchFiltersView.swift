@@ -95,6 +95,7 @@ import SwiftUI
                     BrowserInputDiagnosticsView(readValue: {
                         BrowserInputDiagnostics.read(loaded: true, busy: busy, notes: false)
                             + "\nmodel_flags=\(request.flags.map(\.rawValue));model_states=\(request.cardStates.map(\.rawValue));query_empty=\(request.query.isEmpty)"
+                            + "\nmodel_decks=\(request.deckIDs);model_note_types=\(request.noteTypeIDs)"
                     }).fixedSize().accessibilityIdentifier("browser-native-input-state").allowsHitTesting(false)
                 }
             }

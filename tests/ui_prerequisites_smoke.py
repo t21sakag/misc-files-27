@@ -46,6 +46,8 @@ with tempfile.TemporaryDirectory() as directory:
     assert check(True)['field_manifest_valid']
     selected.write_text('-only-testing:AnkiPadUITests/BrowserSearchFiltersFlowTests/testStructuredFilterORCancelFieldIntersectionAndClear\n')
     assert check(True)['field_manifest_valid']
+    selected.write_text('-only-testing:AnkiPadUITests/BrowserSearchIdentityFlowTests/testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch\n')
+    assert check(True)['field_manifest_valid']
     selected.write_text('-only-testing:AnkiPadUITests/BrowserFieldSearchFlowTests/testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection\n')
     assert check(True)['field_manifest_valid']
     field_package.write_bytes(b'corrupt')

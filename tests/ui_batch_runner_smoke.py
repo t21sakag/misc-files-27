@@ -88,4 +88,20 @@ raise SystemExit(65 if os.environ['BATCH_FAKE_MODE']=='failed' else 0)
     assert prerequisite['reset_package_valid'] and prerequisite['reset_manifest_valid']
     reset_fixture.unlink()
     run('passed',False,ui_started=False)
+    field_fixture = fixture.with_name('field-search.apkg')
+    with zipfile.ZipFile(field_fixture, 'w') as archive:
+        archive.writestr('collection.anki21b', b'Container only')
+    field_fixture.with_suffix('.json').write_text(json.dumps({'front': 'Front', 'back': 'Back', 'rows': 5}))
+    for case in [
+        'BrowserFieldSearchFlowTests/testNamedFieldTextSearchCancelExactAndLiteralStar',
+        'BrowserSearchIdentityFlowTests/testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch',
+        'BrowserSearchIdentityFlowTests/testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch',
+    ]:
+        environment['BATCH_EXPECTED_CASE'] = case
+        (base/'build/ui-batches.json').write_text(json.dumps({'batches': [[case]]}))
+        run('passed', True)
+        prerequisite = json.loads((base/'build/ui-prerequisites.json').read_text())
+        assert prerequisite['field_package_valid'] and prerequisite['field_manifest_valid']
+    field_fixture.unlink()
+    run('passed', False, ui_started=False)
 print('PASS: real batch runner validates bundled fixture before UI, starts live observer, preserves failures and rejects warnings/missing warning evidence/wrong identities/skips')
