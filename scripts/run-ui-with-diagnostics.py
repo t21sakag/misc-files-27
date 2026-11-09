@@ -117,7 +117,7 @@ def run(simulator, bundle, output, command, screen_seconds=1800):
             while time.monotonic() < deadline and screen_recorder.poll() is None:
                 if screen_metadata.exists():
                     state = json.loads(screen_metadata.read_text())
-                    if state['native_pid'] is not None or state['closed']:
+                    if state['ready'] or state['closed']:
                         break
                 time.sleep(0.05)
             report['screen_recorder_metadata_ready'] = screen_metadata.exists()

@@ -28,6 +28,7 @@ if 'recordVideo' in sys.argv:
         Path(sys.argv[-1]).write_bytes(b'Native display fixture')
         raise SystemExit(0)
     signal.signal(signal.SIGINT, finalize)
+    time.sleep(float(os.environ.get('RECORD_START_DELAY', '0')))
     if os.environ.get('DEFER_MOVIE'):
         print('Recording started', flush=True)
     else:
@@ -98,6 +99,20 @@ while True: time.sleep(1)
         deferred = json.loads((base/'deferred-video/screen-recording.json').read_text())
         assert deferred['ready'] and deferred['ready_source'] == 'native-log'
         assert deferred['closed'] and deferred['bytes_saved'] > 0
+        os.environ['RECORD_START_DELAY'] = '3.2'
+        delayed_command = [sys.executable, '-c',
+                           'import json,time;from pathlib import Path\n'
+                           f'state=Path({str(base/"delayed-video/screen-recording.json")!r})\n'
+                           'deadline=time.monotonic()+10\n'
+                           'while not json.loads(state.read_text())["ready"]:\n'
+                           ' assert time.monotonic()<deadline,"Late recording acknowledgement was lost"\n'
+                           ' time.sleep(.02)']
+        assert module.run(simulator, bundle, base/'delayed-video', delayed_command) == 0
+        delayed = json.loads((base/'delayed-video/screen-recording.json').read_text())
+        assert delayed['ready'] and delayed['ready_source'] == 'native-log', delayed
+        assert delayed['ready_at_epoch'] - delayed['started_at_epoch'] >= 3
+        assert delayed['closed'] and delayed['native_exit'] == 0
+        os.environ.pop('RECORD_START_DELAY')
         os.environ.pop('DEFER_MOVIE')
         assert report['truncated'] and report['bytes_saved'] <= module.LIMIT
         assert b'WidgetProbe timeline.request' in (output/'live.log').read_bytes()

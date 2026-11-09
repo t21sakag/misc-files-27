@@ -94,8 +94,26 @@ import SwiftUI
             let prefix = ProcessInfo.processInfo.arguments.contains("--uitest-browser-undo-trace")
                 ? "browser.undo.trace" : "browser.input.trace"
             NSLog("%@ phase=native.touch %@", prefix, summary)
+            var ancestor = touch.view
+            while let current = ancestor, !(current is UISwitch) { ancestor = current.superview }
+            if let control = ancestor as? UISwitch {
+                // Observe the actual control reached by this input. Replacing
+                // our registration avoids duplicate callbacks on later taps.
+                control.removeTarget(self, action: #selector(controlEvent(_:event:)), for: .allEvents)
+                control.addTarget(self, action: #selector(controlEvent(_:event:)),
+                                  for: [.touchDown, .touchUpInside, .touchUpOutside, .touchCancel, .valueChanged])
+                NSLog("%@ phase=switch.delivery observer=%@ on=%@ frame=%@", prefix,
+                      String(describing: ObjectIdentifier(self)), String(control.isOn),
+                      String(describing: control.convert(control.bounds, to: view)))
+            }
         }
         state = .failed
+    }
+
+    @objc private func controlEvent(_ control: UISwitch, event: UIEvent?) {
+        let phases = event?.allTouches?.map { String($0.phase.rawValue) }.sorted().joined(separator: ",") ?? "none"
+        NSLog("browser.input.trace phase=switch.event observer=%@ on=%@ phases=%@ tracking=%@",
+              String(describing: ObjectIdentifier(self)), String(control.isOn), phases, String(control.isTracking))
     }
 }
 #endif

@@ -47,29 +47,32 @@ def record(simulator, output, seconds):
                 'recordVideo', '--force', str(movie)], stdout=log, stderr=subprocess.STDOUT)
             if stopping:
                 stop(None, None)
-            startup_deadline = min(deadline, time.monotonic() + 3)
-            while native.poll() is None and time.monotonic() < startup_deadline:
-                # simctl can defer the movie file until finalization. Its
-                # observed native acknowledgement still establishes startup.
-                acknowledged = b'Recording started' in log_path.read_bytes()
-                if acknowledged or (movie.exists() and movie.stat().st_size > 0):
-                    report['ready'] = True
-                    report['ready_at_epoch'] = time.time()
-                    report['ready_source'] = 'native-log' if acknowledged else 'movie-file'
-                    break
-                time.sleep(0.05)
             report['native_pid'] = native.pid
             persist()
-            try:
-                native.wait(timeout=max(0, deadline - time.monotonic()))
-            except subprocess.TimeoutExpired:
-                report['duration_limited'] = True
-                stop(None, None)
+            while native.poll() is None:
+                # Startup can outlast the wrapper's readiness budget. Keep
+                # observing its acknowledgement until this recorder exits.
+                if not report['ready']:
+                    acknowledged = b'Recording started' in log_path.read_bytes()
+                    if acknowledged or (movie.exists() and movie.stat().st_size > 0):
+                        report['ready'] = True
+                        report['ready_at_epoch'] = time.time()
+                        report['ready_source'] = 'native-log' if acknowledged else 'movie-file'
+                        persist()
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    report['duration_limited'] = True
+                    stop(None, None)
+                    try:
+                        native.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        native.kill()
+                        native.wait(timeout=5)
+                    break
                 try:
-                    native.wait(timeout=10)
+                    native.wait(timeout=min(0.05, remaining))
                 except subprocess.TimeoutExpired:
-                    native.kill()
-                    native.wait(timeout=5)
+                    pass
             report['native_exit'] = native.returncode
     except OSError as error:
         report['error'] = str(error)
