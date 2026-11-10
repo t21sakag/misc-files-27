@@ -9185,6 +9185,220 @@
         }
       ],
       "checked_at": "2026-11-10T00:28:02.258783+00:00"
+    },
+    {
+      "id": "20261110-keyboard-container-and-saved-row-query",
+      "covers": [
+        [
+          42754509183,
+          1
+        ],
+        [
+          42753168312,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42754509183,
+            1
+          ],
+          "kind": "environment",
+          "finding": "Read-only notification preflight stops during simctl install after31.268seconds, before app launch or notification service replies. installd reports developer installation successful04:20:51.834 but simctl times out04:20:56; CLI/OS completion acknowledgement remains unresolved. Previous attempt stopped at container lookup. No permission or request mutation occurred."
+        },
+        {
+          "attempt": [
+            42753168312,
+            1
+          ],
+          "kind": "harness",
+          "finding": "New saved-selection full replacement/pending removal case passes. Previous management regression stalls in Cell containing staticText Literal query; native XCTest movie at300seconds shows both correct names and queries. XCTest stackshot places app main thread inside matchingSnapshotsInSnapshotTree and descendant filtering. Bookmark regression fails on isHittable of Keyboard at inf,inf,0,0 after typing row1. Neither failure establishes an incorrect saved query mutation."
+        }
+      ],
+      "rule_review": {
+        "semantic_labels": "Case-sensitive Literal/literal names both pass exact label cardinality before the management query stalls. Use existing literal-byte-derived row Button identifiers rather than a Cell/descendant static-text join. No labels or data identities are relaxed.",
+        "foreground_scope": "Native movie at300seconds shows the correct saved-search sheet and two rows; query is scoped to browser-saved-search-list. Direct row Button keeps that foreground List scope. Bookmark fails in actual search filter form after row1 input.",
+        "unique_reads_and_actions": "Keep shared unique/actionable resolver and single native swipe. Query the actual full-width row Button by existing stable ID. No extra swipe/tap retry, state injection or fixed-coordinate workaround. Root cause of snapshot traversal delay is not fully proven.",
+        "live_state": "New selection/pending-removal/relaunch test passes, 1consumer success; two old regressions fail and remain unresolved. No whole-run success or full-parity conclusion. Original management verified both names before failing to query its cell.",
+        "keyboard_and_scroll": "Keyboard container isHittable raises an XCTest error on an infinite-origin zero-size retained node. Observe real key or native Hide keyboard button hittability instead; keep foreground-alert refusal, shared dismissal and terminal postcondition. No exists-to-frame race or container hit test. Native behavior of this repair requires Apple validation.",
+        "environment": "Notification install times out before launch; installed daemon acknowledgement and simctl completion disagree. Do not rerun notifications or claim ordering fixed it. Preserve service identity and actual OS replies, no grant/bypass, no timeout increase. Next scope only two failed saved-search regressions, common build once, independent consumers.",
+        "first_failure_evidence": "Preserve completed metadata, failed logs, native movie, extracted300second frame, XCTest system stackshot and input-event records. Snapshot failure lacks terminal AX because XCTest query itself aborts; video plus stackshot is the available direct evidence, not a fabricated hierarchy. Keyboard invalid frame appears explicitly in runtime failure.",
+        "failure_classification": "Actual executed-step ordering yields pair42754509183/1 and42753168312/1. Notification is environment preflight, management is harness snapshot traversal with underlying delay unresolved, bookmark is harness keyboard container query error. Count whole attempts, not failed consumers.",
+        "runtime_warnings": "Both failed saved-search summaries report warnings=[] and skip0. New passing case is separately recorded. Maintain warning/identity/exact-case/runtime assertions; do not use aggregate compile success to reset UI streak.",
+        "device_evidence": "No new IPA or physical confirmation. Last distribution remains build316. Simulator key/notification tests cannot prove real audio, notification delivery or re-signing. Broad goal remains active."
+      },
+      "root_cause": "Two distinct harness failures: XCTest hit-tests an invalid retained Keyboard container, and a Cell/descendant query stalls in XCTest snapshot traversal before native swipe. Actual saved-search rows are visible and labels/cardinality pass. Notification has a separate simctl install timeout before application service; its acknowledgement delay is unresolved.",
+      "common_resolution": "Observe real keyboard keys/dismiss button, preserving Alert keep policy and final disappearance assertion. Resolve saved-search row native Buttons by existing literal-byte stable identifier, preserving same unique/actionable resolver and one swipe. Revalidate only two failed saved-search regressions with one build; notification remains withheld pending environment investigation.",
+      "next_scope": [
+        "BrowserSearchFiltersFlowTests/testSavedSearchManagementDeletesOnlySelectedCaseSensitiveNameAfterRelaunch",
+        "BrowserSearchFiltersFlowTests/testSavedSearchAndFilteredDeckUseCompleteResolvedRequest"
+      ],
+      "evidence": [
+        {
+          "reference": "completed-evidence/completed-42753168312.json",
+          "sha256": "0d176b9d6195d18836a31424605ffbbb70d76797200ed34c3a91035f481a6539"
+        },
+        {
+          "reference": "completed-evidence/failed-42753168312.log",
+          "sha256": "372aea2be3565a1d82f5dd77857aa5835d0ed624f43e779f0f321d27c3ddeef8"
+        },
+        {
+          "reference": "completed-evidence/completed-42754509183.json",
+          "sha256": "be198da0304b6c16d84302c338fdf2ba474493161a12ab6bcc51cbce750503d3"
+        },
+        {
+          "reference": "completed-evidence/failed-42754509183.log",
+          "sha256": "bad2f6e951f28e5eb34ff7bb2460fa9932111464ebd9e4482fd2f55d898ad1d5"
+        },
+        {
+          "reference": "completed-evidence/management-failure-300.png",
+          "sha256": "53286bd8bef244b71b0f8076c761d24ebf884b02fc3dc4a20039e49e05edfe7c"
+        },
+        {
+          "reference": "completed-evidence/5E133FA7-CCD6-4CE6-89B3-8E6464EDB44B.txt",
+          "sha256": "90529f779a98dee1533943e8248562eeadf226ac5cf6f2cc9c85421ac73685f1"
+        },
+        {
+          "reference": "completed-evidence/notification-preflight.json",
+          "sha256": "89b99557c8fc6446e871adc4e0a57a04083e810a08d163e44f646ba9985c6a2a"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "2a991053bd49aa529a398099492555ee67b9c95a3065d99e385114fc9a04316a",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "df44050048d310b04a3c57e2ed5d14e1f6a1ebc5a6de55bb7bc1c74829259445",
+        "ios/AnkiPadUITests/BrowserSearchFiltersFlowTests.swift": "2856b3adfe94f2883cb03495dac1b9dd8bfeacb427869d8b2741d0394c70645c",
+        "ios/AnkiPadUITests/BrowserSearchTestSupport.swift": "b6c253e7169548278b90c9b35a86c3fd1cf83e7420f5ccce1cc03036217f1491",
+        "ios/AnkiPad/BrowserView.swift": "161824fada1639da69d12021f4efefcb330aa5980e033d43d2bebeb8d2ec90a8",
+        "scripts/select-ui-tests.py": "a4e168af6517b0374d7766a2dd2a1d191df7f40c0b099210ccc90c940269344e",
+        "scripts/run-ui-batch.py": "7bcb6bb6a2f317ceac078690fe61db1e5879d2f19758d5af64f160647bd60924",
+        "scripts/notification-preflight.py": "2c7d201eec1d2df8b413f7cf0375e87f00d7d632476f89b9004ee76a91c74d1f",
+        "tests/notification_preflight_smoke.py": "c8f877a2325bf372d8daaf830b871e735b4dd82f5a33ccffd22548204d9c7b88",
+        ".github/workflows/ipa.yml": "3ab1b65f3d422b4985a481f864dff2228adcc01b65bf4fe9d7a857b51f0af344",
+        "scripts/ui-case-groups.json": "907b5ea1b0a2f34904bb05ba62406a333307821c7135f90d76fefa4beaf636f8"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "20286a3c4a7cff7b41f072d56c33d4272cd655f7430bf1c5f62698841665d966"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "8b72f67dcb40de03150258f064ffb1f0939a9755d732fa463f4d5e0933ecf371"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2ea4fdb19c44aec4f9ede22adf3ca2f7e560b98044f1ffcde385d0d4db74dfcc"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e0c0aa84ab53fd92e1da8199e3672ad0a2e75cfb96d4fad7cd2c1edda928f867"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "0f6dc1cba01134cfbc07df4041824555becc16e105966de9f40095bd91ad697c"
+        },
+        {
+          "name": "prerequisite rejection",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "actual consumer runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "actual workflow diagnostics",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "observer interruption and recording",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "read-only notification failure lifecycle",
+          "argv": [
+            "python3",
+            "tests/notification_preflight_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "920bd40c32ad8819951515389e7c469c5ff6c6dd340ca23cf74d0ddaf4993475"
+        }
+      ],
+      "checked_at": "2026-11-10T04:44:32.782755+00:00"
     }
   ]
 }

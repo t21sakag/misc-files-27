@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-search-completion-controls': ['testSavedSearchManagementDeletesOnlySelectedCaseSensitiveNameAfterRelaunch', 'testSavedSearchAndFilteredDeckUseCompleteResolvedRequest'],
     'native-search-completion-selection': ['testSavedSearchSelectionReplacesGraphicalFiltersAndCommitsPendingRemoval', 'testSavedSearchManagementDeletesOnlySelectedCaseSensitiveNameAfterRelaunch', 'testSavedSearchAndFilteredDeckUseCompleteResolvedRequest'],
     'search-bookmark-selection': ['testSavedSearchSelectionReplacesGraphicalFiltersAndCommitsPendingRemoval'],
     'native-search-completion-literal': ['testSavedSearchAndFilteredDeckUseCompleteResolvedRequest', 'testSavingRecentSearchWithoutSelectingPreservesCurrentQueryAndPersists', 'testSavedSearchManagementDeletesOnlySelectedCaseSensitiveNameAfterRelaunch'],

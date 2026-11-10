@@ -122,14 +122,17 @@ class StudyFlowTestSupport: XCTestCase {
 
     @discardableResult
     func dismissTestKeyboard(in app: XCUIApplication) -> Bool {
+        let hide = app.buttons.matching(NSPredicate(format: "label IN %@", ["Hide keyboard", "キーボードを隠す"]))
         func visible() -> Bool {
-            // The OS may retain an offscreen, zero-height Keyboard node.
-            // isHittable returns false for both missing and offscreen elements;
-            // never read frame after a separate existence check.
-            app.keyboards.allElementsBoundByIndex.contains { $0.isHittable }
+            // iPadOS 27 can retain a Keyboard at (inf, inf, 0, 0).
+            // Asking that container for isHittable raises an XCTest failure
+            // instead of returning false (42753168312). Observe actual keys
+            // or its native dismiss button, without hit-testing the container
+            // or racing a separate exists/frame read against its dismissal.
+            hide.allElementsBoundByIndex.contains { $0.isHittable }
+                || app.keys.firstMatch.isHittable
         }
         guard visible() else { return true }
-        let hide = app.buttons.matching(NSPredicate(format: "label IN %@", ["Hide keyboard", "キーボードを隠す"]))
         guard app.alerts.count == 0 else {
             // A keyboard action is outside a native alert. XCTest can treat
             // that intended alert as an interruption and cancel its edits.

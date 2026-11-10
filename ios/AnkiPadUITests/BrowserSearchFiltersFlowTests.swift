@@ -203,7 +203,8 @@ final class BrowserSearchFiltersFlowTests: BrowserSearchTestSupport {
         tapTestMenuAction(titles: ["保存した検索を管理"], in: app)
         let lists = app.collectionViews.matching(identifier: "browser-saved-search-list")
         let list = try XCTUnwrap(waitForTestControl(lists, in: app, purpose: .observation))
-        let removed = lists.cells.containing(.staticText, identifier: "RemoveOne")
+        let removalID = "browser-saved-select-" + Data("RemoveOne".utf8).base64EncodedString()
+        let removed = lists.buttons.matching(identifier: removalID)
         let row = try XCTUnwrap(waitForTestControl(removed, in: app, form: list))
         row.swipeLeft(velocity: .slow)
         tapTestControl(lists.buttons.matching(NSPredicate(format: "label IN %@", ["Delete", "削除"])), in: app, keyboard: .keep)
@@ -248,7 +249,10 @@ final class BrowserSearchFiltersFlowTests: BrowserSearchTestSupport {
         requireTestCondition("Case-sensitive saved names are separate native rows", in: app) {
             original.count == 1 && retained.count == 1
         }
-        let rows = lists.cells.containing(.staticText, identifier: "Literal")
+        // Resolve the actual row button directly. The Cell/descendant join
+        // stalled inside XCTest snapshot traversal in 42753168312.
+        let removalID = "browser-saved-select-" + Data("Literal".utf8).base64EncodedString()
+        let rows = lists.buttons.matching(identifier: removalID)
         let row = try XCTUnwrap(waitForTestControl(rows, in: app, form: list))
         row.swipeLeft(velocity: .slow)
         tapTestControl(lists.buttons.matching(NSPredicate(format: "label IN %@", ["Delete", "削除"])), in: app, keyboard: .keep)
