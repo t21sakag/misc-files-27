@@ -1,9 +1,53 @@
 #if DEBUG
 import SwiftUI
+import ObjectiveC
 
 /// On-demand, read-only synthetic diagnostics: no timer, input, focus changes,
-/// state writes or user content. Native frames can be compared with AX/events.
+/// application state writes or user content. Native frames can be compared with AX/events.
 @MainActor enum BrowserInputDiagnostics {
+    private static var windowTraceInstalled = false
+    private static var switchTouches: [ObjectIdentifier: (control: ObjectIdentifier, window: ObjectIdentifier)] = [:]
+    private(set) static var lastSwitchEvent = "none"
+
+    static func installWindowTrace() {
+        guard !windowTraceInstalled, UITestIsolation.namespace() != nil,
+              ProcessInfo.processInfo.arguments.contains("--uitest-browser-input-trace"),
+              let original = class_getInstanceMethod(UIWindow.self, #selector(UIWindow.sendEvent(_:))),
+              let traced = class_getInstanceMethod(UIWindow.self, #selector(UIWindow.browserInputSendEvent(_:))) else { return }
+        method_exchangeImplementations(original, traced)
+        windowTraceInstalled = true
+    }
+
+    static func recordWindowEvent(_ event: UIEvent, window: UIWindow, stage: String) {
+        guard event.type == .touches else { return }
+        for touch in event.allTouches ?? [] {
+            let touchID = ObjectIdentifier(touch)
+            let windowID = ObjectIdentifier(window)
+            guard touch.window === window || switchTouches[touchID]?.window == windowID else { continue }
+            var ancestor = touch.view
+            var gestures: [String] = []
+            var control: UISwitch?
+            while let current = ancestor {
+                if let value = current as? UISwitch { control = value }
+                gestures += (current.gestureRecognizers ?? []).map { recognizer in
+                    "\(type(of: recognizer))=\(recognizer.state.rawValue)"
+                }
+                ancestor = current.superview
+            }
+            if touch.phase == .began, let control {
+                switchTouches[touchID] = (ObjectIdentifier(control), windowID)
+            }
+            guard let tracked = switchTouches[touchID] else { continue }
+            let current = control.map { String(describing: ObjectIdentifier($0)) } ?? "none"
+            let on = control.map { String($0.isOn) } ?? "none"
+            lastSwitchEvent = "stage=\(stage);touch=\(touchID);phase=\(touch.phase.rawValue);point=\(touch.location(in: window));initial=\(tracked.control);current=\(current);on=\(on);gestures=\(gestures.joined(separator: ","))"
+            NSLog("browser.input.trace phase=window.touch %@", lastSwitchEvent)
+            if stage == "after", touch.phase == .ended || touch.phase == .cancelled {
+                switchTouches.removeValue(forKey: touchID)
+            }
+        }
+    }
+
     static func read(loaded: Bool, busy: Bool, notes: Bool) -> String {
         func views(_ root: UIView) -> [UIView] { [root] + root.subviews.flatMap(views) }
         func name(_ view: UIView) -> String { String(describing: type(of: view)) }
@@ -31,7 +75,7 @@ import SwiftUI
                 let gestures = chain.flatMap { $0.gestureRecognizers ?? [] }.map {
                     "\(String(describing: type(of: $0))):state=\($0.state.rawValue),enabled=\($0.isEnabled),cancels=\($0.cancelsTouchesInView)"
                 }.joined(separator: ",")
-                result.append("switch:frame=\(frame);on=\(control.isOn);enabled=\(control.isEnabled);interactive=\(chain.allSatisfy(\.isUserInteractionEnabled));hit=\(hitChain);gestures=\(gestures)")
+                result.append("switch:frame=\(frame);control=\(ObjectIdentifier(control));on=\(control.isOn);enabled=\(control.isEnabled);interactive=\(chain.allSatisfy(\.isUserInteractionEnabled));hit=\(hitChain);gestures=\(gestures)")
             }
         }
         return result.joined(separator: "\n")
@@ -61,11 +105,11 @@ import SwiftUI
 
     override func didMoveToWindow() {
         super.didMoveToWindow()
+        BrowserInputDiagnostics.installWindowTrace()
         if let observer = touchObserver { observer.view?.removeGestureRecognizer(observer) }
         touchObserver = nil
         guard let window, UITestIsolation.namespace() != nil,
-              (ProcessInfo.processInfo.arguments.contains("--uitest-browser-undo-trace")
-               || ProcessInfo.processInfo.arguments.contains("--uitest-browser-input-trace")) else { return }
+              ProcessInfo.processInfo.arguments.contains("--uitest-browser-undo-trace") else { return }
         let observer = BrowserInputTouchObserver(target: nil, action: nil)
         observer.cancelsTouchesInView = false
         observer.delaysTouchesBegan = false
@@ -75,7 +119,7 @@ import SwiftUI
     }
 
     override var accessibilityValue: String? {
-        get { readValue.map { $0() + "\nnativeTouches=" + (touchObserver?.summary ?? "unavailable") } }
+        get { readValue.map { $0() + "\nnativeTouches=" + (touchObserver?.summary ?? BrowserInputDiagnostics.lastSwitchEvent) } }
         set { /* Read-only diagnostic. */ }
     }
 }
@@ -98,26 +142,19 @@ import SwiftUI
             let prefix = ProcessInfo.processInfo.arguments.contains("--uitest-browser-undo-trace")
                 ? "browser.undo.trace" : "browser.input.trace"
             NSLog("%@ phase=native.touch %@", prefix, summary)
-            var ancestor = touch.view
-            while let current = ancestor, !(current is UISwitch) { ancestor = current.superview }
-            if let control = ancestor as? UISwitch {
-                // Observe the actual control reached by this input. Replacing
-                // our registration avoids duplicate callbacks on later taps.
-                control.removeTarget(self, action: #selector(controlEvent(_:event:)), for: .allEvents)
-                control.addTarget(self, action: #selector(controlEvent(_:event:)),
-                                  for: [.touchDown, .touchUpInside, .touchUpOutside, .touchCancel, .valueChanged])
-                NSLog("%@ phase=switch.delivery observer=%@ on=%@ frame=%@", prefix,
-                      String(describing: ObjectIdentifier(self)), String(control.isOn),
-                      String(describing: control.convert(control.bounds, to: view)))
-            }
+
         }
         state = .failed
     }
 
-    @objc private func controlEvent(_ control: UISwitch, event: UIEvent?) {
-        let phases = event?.allTouches?.map { String($0.phase.rawValue) }.sorted().joined(separator: ",") ?? "none"
-        NSLog("browser.input.trace phase=switch.event observer=%@ on=%@ phases=%@ tracking=%@",
-              String(describing: ObjectIdentifier(self)), String(control.isOn), phases, String(control.isTracking))
+}
+
+private extension UIWindow {
+    @objc dynamic func browserInputSendEvent(_ event: UIEvent) {
+        BrowserInputDiagnostics.recordWindowEvent(event, window: self, stage: "before")
+        // After the exchange this selector invokes UIKit's original method.
+        browserInputSendEvent(event)
+        BrowserInputDiagnostics.recordWindowEvent(event, window: self, stage: "after")
     }
 }
 #endif
