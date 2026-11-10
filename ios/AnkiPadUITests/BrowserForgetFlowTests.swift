@@ -9,7 +9,7 @@ final class BrowserForgetFlowTests: StudyFlowTestSupport {
         let file = folder.appendingPathComponent("reset.apkg")
         try Data(contentsOf: source).write(to: file)
         let app = makeApplication()
-        app.launchArguments = ["--uitest-browser-undo-trace"]
+        app.launchArguments = ["--uitest-browser-undo-trace", "--uitest-browser-input-trace"]
         app.launch()
         _ = waitForTestControl(app.buttons.matching(identifier: "collection-menu"), in: app)
         app.open(file)

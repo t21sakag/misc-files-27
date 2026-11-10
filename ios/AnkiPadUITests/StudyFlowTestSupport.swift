@@ -352,18 +352,18 @@ class StudyFlowTestSupport: XCTestCase {
         }
         // Tapping a populated field can move its caret into the source text.
         // Native Select All replaces the complete value regardless of caret.
-        func captureAlertInput(_ stage: String) {
-            guard editingAlert, app.launchArguments.contains("--uitest-browser-input-trace") else { return }
+        func captureFieldInput(_ stage: String) {
+            guard app.launchArguments.contains("--uitest-browser-input-trace") else { return }
             let native = app.staticTexts.matching(identifier: "incoming-native-state")
             let state = native.count == 1 ? String(describing: native.element.value) : "Native input state unavailable"
             let evidence = XCTAttachment(string: state + "\n" + app.debugDescription)
-            evidence.name = "Alert replacement " + stage; evidence.lifetime = .keepAlways; add(evidence)
+            evidence.name = "Field replacement " + stage; evidence.lifetime = .keepAlways; add(evidence)
             let screen = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-            screen.name = "Alert replacement " + stage; screen.lifetime = .keepAlways; add(screen)
+            screen.name = "Field replacement " + stage; screen.lifetime = .keepAlways; add(screen)
         }
-        captureAlertInput("before selection")
+        captureFieldInput("before selection")
         field.typeKey("a", modifierFlags: .command)
-        captureAlertInput("after selection")
+        captureFieldInput("after selection")
         if editingAlert {
             // Selection can rebuild native alert descendants. Re-resolve the
             // same scoped field without tapping away its selected range.
