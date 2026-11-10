@@ -25,12 +25,16 @@ def run(simulator, app, output, timeout=120):
     launch_attempted = False
     def simctl(*args, **kwargs):
         report['phase'] = args[0]
-        command = {'operation': args[0]}
+        # Cold install includes placeholder/extension registration. The last
+        # real runner completed installation near the old 30s cutoff, before
+        # simctl acknowledged it. Keep this separate from service deadlines.
+        command_timeout = 120 if args[0] == 'install' else 30
+        command = {'operation': args[0], 'timeout_seconds': command_timeout}
         report['commands'].append(command)
         began = time.monotonic()
         try:
             result = subprocess.run(['xcrun', 'simctl', *args], check=True,
-                                    capture_output=True, text=True, timeout=30, **kwargs)
+                                    capture_output=True, text=True, timeout=command_timeout, **kwargs)
             command['return_code'] = result.returncode
             return result
         except (subprocess.SubprocessError, OSError) as error:
