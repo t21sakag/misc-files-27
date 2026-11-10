@@ -9,6 +9,14 @@
   "AutomaticSyncTests/testAutomaticSyncRunsAtStartupAndForeground": 71.978,
   "BackendThemeFlowTests/testBundledPagesUseNativeNightThemeAndRemainInteractive": 202.424,
   "BrowserAppearanceFlowTests/testBrowserFontAndSoundNamesPersistAfterRelaunch": 127.958,
+  "BrowserFieldSearchFlowTests/testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection": 580.638,
+  "BrowserFieldSearchFlowTests/testNamedFieldTextSearchCancelExactAndLiteralStar": 542.595,
+  "BrowserFilterInputFlowTests/testLaterNativeDeckSwitchAfterLeavingEditMode": 218.003,
+  "BrowserSearchFiltersFlowTests/testSavedSearchAndFilteredDeckUseCompleteResolvedRequest": 1316.833,
+  "BrowserSearchFiltersFlowTests/testSavedSearchManagementDeletesOnlySelectedCaseSensitiveNameAfterRelaunch": 909.544,
+  "BrowserSearchFiltersFlowTests/testSavedSearchSelectionReplacesGraphicalFiltersAndCommitsPendingRemoval": 1028.106,
+  "BrowserSearchHistoryFlowTests/testSavingRecentSearchWithoutSelectingPreservesCurrentQueryAndPersists": 828.672,
+  "BrowserSearchIdentityFlowTests/testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch": 820.263,
   "BrowserToolsFlowTests/testBrowserPreviewAllResultsAndContextStartKeepBothCards": 363.861,
   "ButtonTimingFlowTests/testRevealHoldPersistsCancelsOutsideAndAcceptsSustainedPress": 216.396,
   "CardAPIFlowTests/testAnkiDroidCardJavaScriptReadsNativeMetadata": 46.575,
@@ -58,7 +66,7 @@
   "MediaFlowTests/testPhotoEditsAndDrawingPersistWhenReeditingNote": 203.495,
   "MediaFlowTests/testZImageOcclusionCanBeCreatedFromPhoto": 67.749,
   "MotionFlowTests/testMotionSettingPersistsCancelsAndControlsNativePresentation": 310.199,
-  "NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement": 290.822,
+  "NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement": 732.128,
   "ReminderFlowTests/testReminderNativeSchedulePersistsReplacesAndCancels": 852.472,
   "ReviewHeaderFlowTests/testReviewTitleAndEstimatePersistAndCanBeHidden": 170.472,
   "ReviewerFlowTests/testAutoAdvancePausesWhileEditing": 47.488,
@@ -91,7 +99,5 @@
   "WidgetGalleryFlowTests/testDeckListWidgetSelectsDeckAndOpensItsReview": 321.831,
   "WidgetGalleryFlowTests/testFixedSummarySurvivesActiveProfileSwitchAndOpensItsOwnProfile": 382.644,
   "WidgetGalleryFlowTests/testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp": 244.827,
-  "WidgetGalleryFlowTests/testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount": 162.555,
-  "BrowserFieldSearchFlowTests/testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection": 580.638,
-  "BrowserFieldSearchFlowTests/testNamedFieldTextSearchCancelExactAndLiteralStar": 542.595
+  "WidgetGalleryFlowTests/testSummaryConfigurationSelectsFixedProfileAndKeepsLiveCount": 162.555
 }
