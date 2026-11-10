@@ -2,6 +2,7 @@
 """Partition every discovered case once; estimates affect placement, not scope."""
 import argparse
 import json
+import math
 from pathlib import Path
 
 def plan(groups, durations, proof=False, selected=None):
@@ -26,11 +27,19 @@ def plan(groups, durations, proof=False, selected=None):
     assert sorted(c for batch in batches for c in batch) == sorted(cases)
     return {'batches': batches, 'estimated_seconds': totals}
 
+def validate_timeout(result, timeout_minutes):
+    # Allow for simulator/setup/export plus variation in the observed cases.
+    # Do not launch a batch whose own estimate already exhausts its runner.
+    required = math.ceil((max(result['estimated_seconds']) * 1.25 + 600) / 60)
+    if timeout_minutes < required:
+        raise ValueError(f'Batch requires at least {required} minutes including setup and 25% timing margin; runner allows {timeout_minutes}')
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--proof', action='store_true')
     ap.add_argument('--selections', type=Path)
     ap.add_argument('--output', type=Path, required=True)
+    ap.add_argument('--timeout-minutes', type=int)
     args = ap.parse_args()
     here = Path(__file__).parent
     selected = None
@@ -41,6 +50,8 @@ if __name__ == '__main__':
             raise ValueError('Expected exact XCTest selections')
         selected = [line[len(prefix):] for line in lines]
     result = plan(json.loads((here/'ui-case-groups.json').read_text()), json.loads((here/'ui-case-durations.json').read_text()), args.proof, selected)
+    if args.timeout_minutes is not None:
+        validate_timeout(result, args.timeout_minutes)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2)+'\n')
     print('matrix=' + json.dumps(list(range(len(result['batches'])))))

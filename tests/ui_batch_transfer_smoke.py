@@ -2,6 +2,7 @@
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import plistlib
 import subprocess
@@ -17,6 +18,18 @@ expected = sorted(c+'/'+m for c, ms in groups.items() for m in ms)
 assert sorted(c for b in result['batches'] for c in b) == expected
 assert all(result['batches']) and len(result['batches']) == 5
 assert result == planner.plan(groups, durations), 'Non-deterministic scope'
+# The completed full run lost three consumers at 90 minutes even though
+# its own plan estimated 91 minutes. Validate the actual workflow budget.
+workflow = (root/'.github/workflows/ipa.yml').read_text()
+consumer = workflow.split('  ui-batch:', 1)[1]
+runner_budget = int(re.search(r'timeout-minutes: (\d+)', consumer)[1])
+planner_budget = int(re.search(r'plan-ui-batches.py.*--timeout-minutes (\d+)', workflow)[1])
+assert runner_budget == planner_budget, 'Planner/runner budgets diverged'
+planner.validate_timeout(result, runner_budget)
+try: planner.validate_timeout({'estimated_seconds':[91.2*60]}, 90)
+except ValueError: pass
+else: raise AssertionError('Impossible 91-minute work in 90-minute runner accepted')
+planner.validate_timeout({'estimated_seconds':[91.2*60]}, 150)
 assert sum(map(len, planner.plan(groups, durations, True)['batches'])) == 2
 native_cases = ['NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement',
                 'WidgetGalleryFlowTests/testHomeGalleryAddsSummaryWithActualSharedCountsAndOpensApp']
