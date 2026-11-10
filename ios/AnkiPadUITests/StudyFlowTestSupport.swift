@@ -66,14 +66,14 @@ class StudyFlowTestSupport: XCTestCase {
         let result = XCTWaiter.wait(for: [expected], timeout: timeout)
         if result == .completed || condition() { return true }
         XCTContext.runActivity(named: "Required UI state failed: " + description) { activity in
+            // AX may itself be the failing service; retain the screen first.
+            let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+            screenshot.name = "Terminal state for " + description; screenshot.lifetime = .keepAlways
+            activity.add(screenshot)
             let hierarchy = XCTAttachment(string: "Application state: \(app.state)\n" + app.debugDescription
                 + (failureContext.map { "\nAdditional process evidence:\n" + $0() } ?? ""))
             hierarchy.name = "Terminal hierarchy for " + description; hierarchy.lifetime = .keepAlways
-            // Keep evidence even when the application has crashed. Asking a
-            // terminated application for its screenshot hides the real error.
-            let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-            screenshot.name = "Terminal state for " + description; screenshot.lifetime = .keepAlways
-            activity.add(hierarchy); activity.add(screenshot)
+            activity.add(hierarchy)
         }
         XCTFail("Required UI state did not arrive: " + description)
         return false
@@ -108,14 +108,16 @@ class StudyFlowTestSupport: XCTestCase {
     enum TestControlPurpose { case action, observation }
 
     private func controlFailure(_ query: XCUIElementQuery, in app: XCUIApplication, reason: String) {
-        let matches = query.allElementsBoundByIndex.prefix(12).map {
-            "id=\($0.identifier) label=\($0.label) frame=\($0.frame) enabled=\($0.isEnabled) hittable=\($0.isHittable)"
-        }.joined(separator: "\n")
-        let evidence = reason + "\nApplication state: \(app.state)\n" + query.debugDescription + "\n" + matches + "\n" + app.debugDescription
+        var evidence = reason
         XCTContext.runActivity(named: "Control prerequisite failed") { activity in
-            let hierarchy = XCTAttachment(string: evidence); hierarchy.name = "Hierarchy and target frames"; hierarchy.lifetime = .keepAlways
             let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); screenshot.lifetime = .keepAlways
-            activity.add(hierarchy); activity.add(screenshot)
+            activity.add(screenshot)
+            let matches = query.allElementsBoundByIndex.prefix(12).map {
+                "id=\($0.identifier) label=\($0.label) frame=\($0.frame) enabled=\($0.isEnabled) hittable=\($0.isHittable)"
+            }.joined(separator: "\n")
+            evidence = reason + "\nApplication state: \(app.state)\n" + query.debugDescription + "\n" + matches + "\n" + app.debugDescription
+            let hierarchy = XCTAttachment(string: evidence); hierarchy.name = "Hierarchy and target frames"; hierarchy.lifetime = .keepAlways
+            activity.add(hierarchy)
         }
         XCTFail(evidence)
     }
@@ -526,6 +528,51 @@ class StudyFlowTestSupport: XCTestCase {
         guard let form = waitForTestControl(app.scrollViews.matching(identifier: "settings-form"),
                                             in: app, keyboard: .keep, purpose: .observation) else { return }
         revealFormControl(item, in: form)
+    }
+
+    /// Inspect only mounted native cells before asking for their text children.
+    /// Resolving an offscreen lazy descendant can stall XCTest before it can
+    /// perform the scroll that would make that descendant available.
+    @discardableResult
+    func scanTestCollectionPages(_ query: XCUIElementQuery, in app: XCUIApplication,
+                                 description: String, maximumPages: Int = 12,
+                                 failureContext: @escaping () -> String,
+                                 inspect: @escaping ([XCUIElement]) -> (ready: Bool, complete: Bool, fingerprint: String)) -> Bool {
+        var traversal = CollectionPageScanState()
+        for _ in 0..<maximumPages {
+            guard let collection = waitForTestControl(query, in: app) else { return false }
+            var viewport = CGRect.zero
+            var page: (ready: Bool, complete: Bool, fingerprint: String) = (false, false, "")
+            guard requireTestCondition("Mounted native page: " + description, in: app, timeout: 10,
+                failureContext: failureContext, condition: {
+                    let bounds = collection.frame.intersection(app.frame)
+                    guard bounds.width > 20, bounds.height > 270, collection.isHittable else { return false }
+                    viewport = CGRect(x: bounds.minX, y: bounds.minY + 150,
+                                      width: bounds.width, height: bounds.height - 230)
+                    // Mounting uses the real clip bounds. The larger gesture
+                    // insets must not exclude the last cell at the scroll end.
+                    let cells = collection.children(matching: .cell).allElementsBoundByIndex.filter {
+                        let frame = $0.frame
+                        return CollectionPageScanState.containsFullyMountedCell(frame, in: bounds) && $0.isHittable
+                    }
+                    page = inspect(cells)
+                    return page.ready
+                }) else { return false }
+            if page.complete { return true }
+            guard let towardsStart = traversal.nextDirection(after: page.fingerprint) else { break }
+            let x = viewport.minX + min(12, max(4, viewport.width * 0.02))
+            let start = CGPoint(x: x, y: viewport.minY + viewport.height * (towardsStart ? 0.25 : 0.75))
+            let end = CGPoint(x: x, y: viewport.minY + viewport.height * (towardsStart ? 0.75 : 0.25))
+            let origin = app.frame.origin
+            XCTContext.runActivity(named: "Scroll mounted collection from \(start) to \(end)") { _ in
+                app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: start.x - origin.x, dy: start.y - origin.y))
+                    .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: .zero)
+                        .withOffset(CGVector(dx: end.x - origin.x, dy: end.y - origin.y)),
+                           withVelocity: .slow, thenHoldForDuration: 0.2)
+            }
+        }
+        controlFailure(query, in: app, reason: "Collection pages did not reach " + description + "\n" + failureContext())
+        return false
     }
 
     func revealFormControl(_ item: XCUIElement, in form: XCUIElement,

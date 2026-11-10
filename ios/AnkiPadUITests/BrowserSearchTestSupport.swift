@@ -50,45 +50,61 @@ class BrowserSearchTestSupport: StudyFlowTestSupport {
                 && status.count == 1 && status.element.label.hasPrefix("\(indices.count)枚")
         }) else { return }
         let lists = app.collectionViews.matching(identifier: "browser-card-list")
-        guard let list = waitForTestControl(lists, in: app, purpose: .observation) else { return }
+        guard waitForTestControl(lists, in: app, purpose: .observation) != nil else { return }
         let namespace = app.launchEnvironment["ANKIPAD_UI_TEST_NAMESPACE"] ?? String(describing: ObjectIdentifier(app))
-        var identifiers = Set<String>()
-        var firstIdentifier: String?
-        // Native List virtualizes rows outside the sheet. Prove every expected
-        // value through the shared reveal/unique resolver and the total count.
-        for index in indices {
-            let expectedLabel = "row" + String(index)
-            let row: XCUIElementQuery
-            if let identifier = observedFrontIdentifiers[namespace]?[index] {
-                // This identity was read from the actual displayed fixture,
-                // not inferred from backend state. Reuse it after relaunch
-                // instead of repeating a broad AX label traversal.
-                row = lists.staticTexts.matching(identifier: identifier)
-            } else {
-                row = lists.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@",
-                                                             "browser-front-", expectedLabel))
-            }
-            guard let value = waitForTestControl(row, in: app, form: list, purpose: .observation) else { return }
-            XCTAssertEqual(value.label, expectedLabel, "Stable card identity must still display the exact expected front")
-            XCTAssertTrue(identifiers.insert(value.identifier).inserted, "Each expected row needs a distinct card identity")
-            observedFrontIdentifiers[namespace, default: [:]][index] = value.identifier
-            if firstIdentifier == nil { firstIdentifier = value.identifier }
-        }
-        XCTAssertEqual(identifiers.count, indices.count)
-        if indices.count > 1, let firstIdentifier {
-            // Every expected value was already verified above. Return to the
-            // first visible card using its observed stable identity; repeating
-            // the broad label query stalled XCTest's snapshot traversal.
-            let row = lists.staticTexts.matching(identifier: firstIdentifier)
-            revealFormControl(row.firstMatch, in: list, topInset: 40, bottomInset: 20,
-                              maximumAttempts: 12, searchUpward: false)
-            _ = waitForTestControl(row, in: app, purpose: .observation)
-        } else if indices.isEmpty {
+        let expected = Set(indices)
+        if expected.isEmpty {
             requireTestCondition("Empty result has no card rows", in: app) {
                 lists.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browser-front-")).count == 0
             }
+            return
         }
+        let firstIndex = indices[0]
+        var seen: [Int: String] = [:]
+        var lastPage = ""
+        func inspect(_ cells: [XCUIElement], returningToFirst: Bool) -> (ready: Bool, complete: Bool, fingerprint: String) {
+            var page: [(index: Int, identifier: String, frame: CGRect)] = []
+            for cell in cells {
+                let fronts = cell.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browser-front-")).allElementsBoundByIndex
+                if fronts.isEmpty { continue }
+                guard fronts.count == 1 else {
+                    lastPage = "Mounted cell has multiple front elements"; return (false, false, lastPage)
+                }
+                let front = fronts[0]
+                guard front.isHittable else { continue }
+                let label = front.label, identifier = front.identifier, frame = front.frame
+                guard label.hasPrefix("row"), let index = Int(label.dropFirst(3)), label == "row" + String(index) else {
+                    lastPage = "Unexpected mounted front: " + label; return (false, false, lastPage)
+                }
+                guard expected.contains(index), !page.contains(where: { $0.index == index || $0.identifier == identifier }) else {
+                    lastPage = "Unexpected or duplicate mounted front: " + label; return (false, false, lastPage)
+                }
+                if let previous = self.observedFrontIdentifiers[namespace]?[index], previous != identifier {
+                    lastPage = "Native card identity changed for " + label; return (false, false, lastPage)
+                }
+                page.append((index, identifier, frame))
+            }
+            lastPage = page.map { "row\($0.index):\($0.identifier):\($0.frame)" }.joined(separator: "|")
+            for item in page {
+                self.observedFrontIdentifiers[namespace, default: [:]][item.index] = item.identifier
+                if expected.contains(item.index) { seen[item.index] = item.identifier }
+            }
+            guard Set(seen.values).count == seen.count else {
+                lastPage = "Expected fronts share a native card identity"; return (false, false, lastPage)
+            }
+            let complete = returningToFirst
+                ? page.contains { $0.index == firstIndex }
+                : Set(seen.keys) == expected
+            return (!page.isEmpty, complete, page.map { $0.identifier }.joined(separator: "|"))
+        }
+        let details = { "Expected: \(indices); observed: \(seen); page: \(lastPage)" }
+        guard scanTestCollectionPages(lists, in: app, description: "all expected fixture cards", failureContext: details,
+            inspect: { inspect($0, returningToFirst: false) }) else { return }
+        XCTAssertEqual(seen.count, indices.count)
+        _ = scanTestCollectionPages(lists, in: app, description: "first verified fixture card", failureContext: details,
+            inspect: { inspect($0, returningToFirst: true) })
     }
+
     func openFields(back: String, mode: String, text: String? = nil, combine: Bool = false, in app: XCUIApplication) {
         tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
         tapTestMenuAction(titles: ["フィールドを検索"], in: app)
