@@ -239,5 +239,8 @@
     "testLaterNativeDeckSwitchAfterReplacingText",
     "testNativeDeckSwitchAfterLeavingEditMode",
     "testLaterNativeDeckSwitchAfterLeavingEditMode"
+  ],
+  "DeckSelectionFlowTests": [
+    "testSearchCreateChildCancelAndPersistNoteDestination"
   ]
 }

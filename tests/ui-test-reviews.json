@@ -10199,6 +10199,403 @@
         }
       ],
       "checked_at": "2026-11-10T14:09:53.773661+00:00"
+    },
+    {
+      "id": "20261110-deck-selection-and-missing-native",
+      "covers": [
+        [
+          42826319803,
+          1
+        ],
+        [
+          42813456408,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42826319803,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Requested UI run stopped in actual host collection-page geometry compilation. Foundation-only imports omitted the Apple CoreGraphics overlay. No native UI was executed. The conservative guard counts failures in a requested UI/full attempt, including setup/compiler failures; it excludes explicit compile-mode and gate-only runs. Reusing history saved before this completed failure caused the prior exact-pair mismatch. No chronology or counting code change is needed."
+        },
+        {
+          "attempt": [
+            42813456408,
+            1
+          ],
+          "kind": "harness",
+          "finding": "After semantic full-value waits and observed-ID reuse, committed history passes855.032seconds. Missing-deck setup now passes typing, scope creation/move/filter/deletion; it stalls later on exact browser-front-1794312767701 lookup after row1 validation, before missing-history selection. Native movie970seconds shows row2 visibly rendered, plus partially clipped row4. Stackshot places main thread inside XCTest matchingSnapshotsInSnapshotTree and descendant filtering, not an app data mutation. Visible target status contradicts the earlier offscreen-target assumption; the exact SDK-internal cause remains unresolved."
+        }
+      ],
+      "rule_review": {
+        "semantic_labels": "Keep exact browser rowN labels/identities for the old failure. New deck test uses native IDs for picker/form/fields, exact parent/child name constraints and the full duplicate error. It reads the actual rendered child ID, then uses that ID in the public browser URL and requires exact one-result query+card content after relaunch; no backend-predicted IDs or injected selection prove persistence.",
+        "foreground_scope": "New UI uses typed note-form/deck-picker-list/create-form CollectionViews; search is scoped to the foreground deck-selection NavigationBar following the existing native navigation search pattern. Note text input/reveal uses the common form helper. Parent context action is resolved uniquely/actionable before a single native press, then shared semantic menu helper handles terminal native menu cells without assuming exported IDs. These new source IDs/scopes are first-pilot hypotheses to verify with actual AX, not claims of successful native exposure.",
+        "unique_reads_and_actions": "Every new required action calls tapTestControl/waitForTestControl; input calls typeInEmptyTestField, exact values are checked. The only native long press uses the unique actionable object and logs its actual frame. Parent choice is queried before any child exists, child choice after a parent+leaf search; require unique matches. Successful creation waits for both nested forms to dismiss and the exact destination to return. Duplicate submission retains typed content and error within the existing form.",
+        "live_state": "All new meaning waits use requireTestCondition with end-state recheck and evidence. Verify full text before save, retained creation input after duplicate rejection, cancellation back to unchanged destination, save completion, and exact committed did+question result after process relaunch. Current source has passed Apple app/test compile and host filter execution; new XCTest method has only local syntax/contract validation until this run.",
+        "keyboard_and_scroll": "Retain shared field and control keyboard policy, native input readiness, form scrolling and oversized editor exposure. Creation is now a native sheet form, not an Alert, so normal form keyboard dismissal is appropriate. Existing pending-history test retains actual mounted-cell page scanning. New final one-result browser assertion has one expected visible front and stays inside the unique native card list; it does not query offscreen multi-card targets by a guessed backend identity.",
+        "environment": "One shared build and two independently isolated native consumers, one XCTest worker each. The new deck case uses no server/photo/import fixture and starts from a real fresh default profile under makeApplication UUID namespace with automatic sync disabled. The old missing-history case still needs its reviewed field fixture; combined scope deliberately starts with native-search-completion so existing producer field/structured prechecks and fixture generation run. Consumer validates fixture digest/metadata. Build transfer, identity, runtime-warning and exact-case gates remain. Fresh completed history was fetched once; explicit compile successes do not reset this pair.",
+        "first_failure_evidence": "Both completed logs, real summaries, terminal AX, native/XCTest recordings, pointer frames and latest stackshot are retained with hashes. The latest movie shows row2 visible; do not claim the target itself was offscreen. The shared matcher still traversed list-wide descendants, including other clipped rows, but its precise blocking node is unknown. Scope reduction avoids global leaf traversal. Common controlled failures now save a screen attachment before full AX reads, because AX itself can stall. For the new native pilot save AX/screen/recording/actual coordinates from the first failure and inspect before altering selectors or timing. No source-only claim of AX terminal shape. Successful31a2e5b compile42835940514 validates type integration only, not nested native presentation or destination persistence.",
+        "failure_classification": "The one fresh bounded history fetch identifies42826319803/1 and42813456408/1. Guard-only42827067692 is excluded. Requested UI/full host/preflight failures conservatively count; explicit compile-mode runs do not count or reset. Prior historical file predated42826319803; correct the review input rather than weakening guard policy. The former42798196189 failure remains contributing evidence, not the exact current pair. This milestone adds one genuinely new functional case alongside the one still-failed case, not reruns of already passed history/reset/layout scopes. The priority plan explicitly permits independent P1 work and closes the old unverified missing-reference condition in parallel. A failed whole combined run remains a failure even if one consumer passes.",
+        "runtime_warnings": "Latest failed summary1fail/0skip/runtimeWarnings=[]; successful committed-history consumer is separately recorded. Retain exact planned/executed case identities, zero skips and runtime-warning gates. Deferring a verified OS-dependent case leaves the overall batch failed; no reduced subset can be reported as full success. New declaration/class extends the real catalog to142 and public dispatch to199; selected cases are exactly2, no success-by-absence or silent skip. No new runtime-warning exception is added.",
+        "device_evidence": "No new IPA, signing or device claim. New native simulator evidence will cover note-editor choice only; IO/template nullable flow, other deck-picker callers, physical data/provider behavior and final whole-app candidate remain tracked."
+      },
+      "root_cause": "XCTest list-wide leaf resolution can stall even when the desired text is visibly rendered. Exact-ID reuse alone was insufficient. The precise internal SDK blocking node remains unproven. A separate immediate typed-value assertion raced UI completion and has been repaired with a strict semantic wait; committed history now passes. Missing-history behavior remains unverified beyond the later data-list observation failure. A later requested UI attempt failed before native UI at Apple host import compilation; its completion changed the required exact pair. Prior local recording used stale history. Keep conservative attempt accounting and refresh the bounded history once before recording; do not exclude a requested UI attempt just because its setup failed.",
+      "common_resolution": "Inspect native direct Cell geometry first, then query exact front content only within fully contained hittable cells. A shared bounded collection page walker observes actual page identities, handles both boundaries and restores the first verified card. No unseen target query precedes scrolling. Enforce exact values, unique identities and current UI readiness; record screenshots before AX diagnostics. Update the common rules and run the production traversal state/geometry test before Apple UI. Explicit conditional CoreGraphics imports make the shared geometry check self-contained on Apple as well as Linux; no traversal/gesture/value assertion change. Current frozen upstream audit also repairs P0 account logout retaining old account replacement directions, canonical backup parent URL comparison, and upstream sync/backup limits. Their production transitions and persistence are locally checked; Keychain/native/device boundaries remain separate. Apple compile of the guarded native picker/filter/create adapter succeeded in42835940514. Add one bounded real native note flow covering new parent/child choice, duplicate rejection, cancel, unsaved content and saved destination through relaunch. Pair it with the uncompleted missing-history condition using the same compiled products and independent consumers; expand no other passed scopes.",
+      "next_scope": [
+        "DeckSelectionFlowTests/testSearchCreateChildCancelAndPersistNoteDestination",
+        "BrowserSearchIdentityFlowTests/testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch"
+      ],
+      "evidence": [
+        {
+          "reference": "completed-evidence/search-input-readiness-run.json",
+          "sha256": "d711bac3e0c36fbe727aff773ac380a0c27b9238ff8c940bf583c66dc1876079"
+        },
+        {
+          "reference": "completed-evidence/search-input-readiness-failed.log",
+          "sha256": "4cc0defbb7df5fafa07b8f075d1dce8f22f5e693d2801ea148308d712ab5133c"
+        },
+        {
+          "reference": "completed-evidence/input-postcondition-run.json",
+          "sha256": "8b614a84889843e11fe768d4839b13056b639bd7ac634860c1102211aea98ecc"
+        },
+        {
+          "reference": "completed-evidence/input-postcondition-failed.log",
+          "sha256": "220148d2e469534e29b04179aa4978eb29e750bd96567c7a1b7b6edb42b6bcc3"
+        },
+        {
+          "reference": "completed-evidence/missing-history-before-snapshot-stall.png",
+          "sha256": "bd1f127b31118def6316ba234290405a4e31ba22af8c39145302e78d1c7e4a36"
+        },
+        {
+          "reference": "completed-evidence/history-snapshot-before-stall.png",
+          "sha256": "4f72c36fcff81496316491da0d38f3748bb9e9cab6f650abad9699d330a65f1e"
+        },
+        {
+          "reference": "completed-evidence/empty-field-after-input.png",
+          "sha256": "dd09203d5932ce26cb45c865bb69709724cd5d40205b20dc0bb658195e7a18f0"
+        },
+        {
+          "reference": "completed-evidence/input-postcondition-42813456408/ui-diagnostics-1/test-summary.json",
+          "sha256": "b09e6ddb40d5f90d75f832e2148040d3687c3e99ff54aadaee4aecd928764cd1"
+        },
+        {
+          "reference": "completed-evidence/input-postcondition-42813456408/ui-diagnostics-1/screenshots/1D2BF115-C889-458D-9B1E-8444BF35C07C.txt",
+          "sha256": "9322a2df6e874cca4e838de1448a1a0b5cd634e8c121238cd723095441c04fa6"
+        },
+        {
+          "reference": "completed-evidence/search-input-readiness-42798196189/ui-diagnostics-4/screenshots/7ADBE89A-AE20-4BF8-85F3-01EEE466598E.txt",
+          "sha256": "1d4818dbea938322457016d0e791f60bef9e9b9ed8e42d23897248eea863b7a8"
+        },
+        {
+          "reference": "completed-evidence/mounted-pages-run.json",
+          "sha256": "4533d8a667c78c5219b8db43a1cf6c7931484e8b87970faf4926ff1a3d8fcbd1"
+        },
+        {
+          "reference": "completed-evidence/mounted-pages-failed.log",
+          "sha256": "1923d283ce275e8e62329df0bed4a001880df5d15f570b831b71fd8f2dbd0f00"
+        },
+        {
+          "reference": "completed-evidence/p0-audit-20261110/history.json",
+          "sha256": "6dc2a8b6d402b68c97d44d896e27adf0d76680ed2b1afdd24c433dd700938873"
+        },
+        {
+          "reference": "completed-evidence/mounted-pages-imports-run.json",
+          "sha256": "806c51011fc6d73ba78ae201ae9b5cc8496e2db5907614b6e9a1e741e6f1f9a3"
+        },
+        {
+          "reference": "completed-evidence/mounted-pages-imports-failed.log",
+          "sha256": "cc319f80405fde38336807ba869e7279d08d3d51b0a869895cf45618f20280de"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-42835940514/run.json",
+          "sha256": "b0cb7bddf927e86cbc3ebe3179c56607aba25faf32dceeea6aaa74cafebe2264"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-42835940514/completed.log",
+          "sha256": "576ed5a1204193718b02b26bafc2d76da9fb75d5b1b4e20274b8474bb8a8f006"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-review/history.json",
+          "sha256": "a1a2131d8c3f24a923addc91c538db183906b100b2e871982948ed2afa1abcab"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "9b0b13ecc83ab70367985467f98dee12e4be6cc5fc666620d30e23ad4e05ae4b",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "e6b4558f169df1aac88f4d9edb52617e33d4a6a267d29240aef9a08df7230777",
+        "ios/AnkiPadUITests/BrowserSearchTestSupport.swift": "dd0291fa6fad2443999483847d1455975f00c180bdfc1e94c275f6ebb02c7218",
+        "ios/AnkiPadUITests/CollectionPageScanState.swift": "470880f0c9d7b778191ed028526ce0569ff55858a388d440f30ea380e171e12c",
+        "ios/AnkiPadUITests/BrowserSearchIdentityFlowTests.swift": "358649262c8209466fba8ab4f5e6f86fb7d1186abcd97e4fded4b94a17e62378",
+        "ios/AnkiPad/BrowserInputDiagnostics.swift": "9cb9c730f556064ef7d0454f0057138a4d8fd374653741b758cabf59abc42bbc",
+        "ios/AnkiPad/ContentView.swift": "7a71cfc4604a619a9b6cdfb0775eb3400ba823addfd39943871f7becb37fe13f",
+        "tests/collection_page_scan_driver.swift": "52e3e9b5d18d7f2f97abaf45779f8f645183ccfe057bf2ecfe7b7144ede43dc3",
+        "tests/collection_page_scan_smoke.py": "c7093d2eaf31143fc91fffe08c9ce340b4e07ed4ca8fc0a96d96cbb233f390a4",
+        "scripts/select-ui-tests.py": "4d4cf66bf98fc9e2241d3d12f2d242ed0390449edcc2b5174ac0cc475445f0ff",
+        "scripts/run-ui-batch.py": "a37190e9ddc10ab05807559673bd29fd43b5651edcaa7dcd9fec198bb887e22a",
+        "scripts/notification-preflight.py": "05dabd6c0960888342651c784646aeed19ff3e5df1e03e68cd1f7f1a7f4072ef",
+        "tests/notification_preflight_smoke.py": "8c6adde0b71d67d23d3d658ed87df40d6e4da77be68b47d5292236008c254ffa",
+        ".github/workflows/ipa.yml": "7d3f7e39bc688ba036f008f97293d2e481631a3723db99ed20240bfe79da59db",
+        "ios/project.yml": "c83afd0b99f2e04b34c9419b66d997bc482f3b40a7275164dc76fb818d76c50a",
+        "scripts/ui-case-groups.json": "b8c0cff904bbe67175ae070566424f0371df6a479ee0ea54c196232dde922e09",
+        "ios/AnkiPad/AnkiPadApp.swift": "5d8c247321575502a4cfc0292e1e6092ea8462f8e2a7f8e461a3eadb878889d3",
+        "ios/AnkiPad/AccountSession.swift": "d1c81d919247da9a5933f25330488fa70cada1c56f3464681afaf95b599bd6e5",
+        "ios/AnkiPad/BackupExport.swift": "2163f411fe4ab97899db6f9e04cc29a5b36aea0c58115a977e3abc65bf2bacce",
+        "ios/AnkiPad/SettingsView.swift": "1a715af30bbde94a3213d1fcc875c640f53e91f9557726ba80f58ac5ae9a42a5",
+        "ios/AnkiPad/SyncNetworkPreferences.swift": "c59949184498ee0c00afb53408205bab9e8a7eafc9299603629f71701dd501c7",
+        "tests/account_session_smoke.swift": "3764232135c78dd2f360608388907346b57d19c3f9e7b594a14ae68a54565de0",
+        "tests/backup_export_smoke.swift": "caf2c5e76896b640248c1934b7cc1feaf52069f45a6e057d767b613e254e100f",
+        "tests/sync_network_preferences_smoke.swift": "3cb841ae427214df6deeb822d5c68e8316a504787b73fcbe7f65eb47b7da2c94",
+        "tests/maintenance_smoke.py": "dae762f7a7d51ef1836831c4968abbfa4c76b749b97960a02dab3bab23a975c8",
+        "ios/AnkiPadUITests/DeckSelectionFlowTests.swift": "74d549d2af8f480944239c9ef18e38862592055a98a6373faa0d7389554af5da",
+        "ios/AnkiPad/DeckSelectionChoices.swift": "ffe3bbbb3fbd2979aae98f6fa0d3c6dc62a99afb290bca2cff01b819b77d8991",
+        "ios/AnkiPad/DeckSelectionEngine.swift": "449d97b27096419e8380161940053f2fa26c8653cfc008ac6e85f31eea4ec192",
+        "ios/AnkiPad/DeckSelectionView.swift": "e30ffb476c1cecc012510ea821a1689d6c97028f0809e17b6ed75579504b4f5a",
+        "ios/AnkiPad/NoteEditorView.swift": "128627425e4b2b971fd9a30d5a197c4d11d68f662ea5652d6808376e8c62f654",
+        "ios/AnkiPad/NoteTemplateEditor.swift": "a9eac82c0a8baf0b55a3c497a62117f231cb446fd3a099825dc30b200c1d45ff",
+        "ios/AnkiPad/ImageOcclusionEntryView.swift": "0ba6ce4d25a6a2bd669a769a40f0898c585d109b761c366b6e8edf7575eb9c08",
+        "tests/deck_selection_choices_smoke.swift": "983a14ee6c702a7b28cc563faf9145c700d46bd03506554b2f2aa12fe301bffc",
+        "tests/deck_selection_driver.swift": "19e947e53a6ea9771058a2b174ae1f288c7f36ee6f7e0c26d9255e818f3e5ead",
+        "tests/deck_selection_engine_smoke.py": "ad02e47337f35e45544de95855d63f2865cc3cafd43edf9a69fffb1f639f3613",
+        "tests/native_consumer_scope_smoke.py": "015eba8a5ea087c47eee54dfec93abea39e1620d2dca342450c448894cc079e4"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e034e778300573277385b1728067e5e7e1b228dd7c398648fcd9d45bbcf73af7"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "37b08fd94a98ca52204d91f1a5e3553feceab95b969b596ee1d4f5159cf4ef99"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "518ba4854d74868f4b132538c334422487ce3d62d07f0dc1adec6ce140fce1fd"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d4ded7da1fe8822fea4a9859b4e15c1db859df45419965c04f745788ca1c54"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b56fde5bcfbffdcfefba40832900911b09cc9f4a123701a21c2965acb8c8e6bc"
+        },
+        {
+          "name": "prerequisite rejection",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "actual consumer runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "actual workflow diagnostics",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "observer interruption and recording",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "read-only notification failure lifecycle",
+          "argv": [
+            "python3",
+            "tests/notification_preflight_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b147885faae5787ea6610b3fcda43acf25b3ec18bed531751ef2d7adedbd2cb7"
+        },
+        {
+          "name": "actual traversal state and mounted-cell geometry",
+          "argv": [
+            "python3",
+            "tests/collection_page_scan_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6f07558ee075a2c35d3ed788a32bc444823d57eb0b72f59b071eeafd5dcb12a"
+        },
+        {
+          "name": "account transition compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPad/AccountSession.swift",
+            "tests/account_session_smoke.swift",
+            "-o",
+            "build/account-session-review"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "account transition runtime",
+          "argv": [
+            "build/account-session-review"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "1ab5ad0176b6ec1f47559335a9edec7201eca89fd60657913828ab83b5893dee"
+        },
+        {
+          "name": "backup ownership compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPad/BackupExport.swift",
+            "tests/backup_export_smoke.swift",
+            "-o",
+            "build/backup-export-review"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "backup ownership runtime",
+          "argv": [
+            "build/backup-export-review"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "3add40ecc3b9e85cbc9fc545a450af8fc1532fb5b177ab064bb72163db34c67b"
+        },
+        {
+          "name": "production deck choice compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPad/DeckTree.swift",
+            "ios/AnkiPad/DeckSelectionChoices.swift",
+            "tests/deck_selection_choices_smoke.swift",
+            "-o",
+            "build/deck-selection-choices"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "production deck choice runtime",
+          "argv": [
+            "build/deck-selection-choices"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "10fb23c1b835357109ab9dddfe6ea4922df1534581d1e40a801c8c062e3ea7ec"
+        },
+        {
+          "name": "production creation adapter compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPad/DeckSelectionEngine.swift",
+            "tests/deck_selection_driver.swift",
+            "-o",
+            "build/deck-selection-driver"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "production creation adapter native CABI",
+          "argv": [
+            "python3",
+            "tests/deck_selection_engine_smoke.py",
+            "env:ANKIPAD_AUDIT_BRIDGE",
+            "build/deck-selection-driver"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "c71e62ada443d52b273d895c45d04cb674ba9cdf8fc03fba45bfdbc41ad309c7"
+        },
+        {
+          "name": "partition and transfer complete catalog",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        }
+      ],
+      "checked_at": "2026-11-10T14:50:25.403488+00:00"
     }
   ]
 }
