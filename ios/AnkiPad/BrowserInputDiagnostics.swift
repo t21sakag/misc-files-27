@@ -6,7 +6,7 @@ import ObjectiveC
 /// application state writes or user content. Native frames can be compared with AX/events.
 @MainActor enum BrowserInputDiagnostics {
     private static var windowTraceInstalled = false
-    private static var switchTouches: [ObjectIdentifier: (control: ObjectIdentifier, window: ObjectIdentifier)] = [:]
+    private static var switchTouches: [ObjectIdentifier: (control: ObjectIdentifier, window: ObjectIdentifier, beganAt: TimeInterval)] = [:]
     private(set) static var lastSwitchEvent = "none"
 
     static func installWindowTrace() {
@@ -26,21 +26,25 @@ import ObjectiveC
             guard touch.window === window || switchTouches[touchID]?.window == windowID else { continue }
             var ancestor = touch.view
             var gestures: [String] = []
+            var presses: [String] = []
             var control: UISwitch?
             while let current = ancestor {
                 if let value = current as? UISwitch { control = value }
-                gestures += (current.gestureRecognizers ?? []).map { recognizer in
-                    "\(type(of: recognizer))=\(recognizer.state.rawValue)"
+                for recognizer in current.gestureRecognizers ?? [] {
+                    gestures.append("\(type(of: recognizer))=\(recognizer.state.rawValue)")
+                    if let press = recognizer as? UILongPressGestureRecognizer {
+                        presses.append("\(type(of: current)):min=\(press.minimumPressDuration),taps=\(press.numberOfTapsRequired),touches=\(press.numberOfTouchesRequired),move=\(press.allowableMovement)")
+                    }
                 }
                 ancestor = current.superview
             }
             if touch.phase == .began, let control {
-                switchTouches[touchID] = (ObjectIdentifier(control), windowID)
+                switchTouches[touchID] = (ObjectIdentifier(control), windowID, touch.timestamp)
             }
             guard let tracked = switchTouches[touchID] else { continue }
             let current = control.map { String(describing: ObjectIdentifier($0)) } ?? "none"
             let on = control.map { String($0.isOn) } ?? "none"
-            lastSwitchEvent = "stage=\(stage);touch=\(touchID);phase=\(touch.phase.rawValue);point=\(touch.location(in: window));initial=\(tracked.control);current=\(current);on=\(on);gestures=\(gestures.joined(separator: ","))"
+            lastSwitchEvent = "stage=\(stage);touch=\(touchID);phase=\(touch.phase.rawValue);point=\(touch.location(in: window));initial=\(tracked.control);current=\(current);on=\(on);elapsed=\(touch.timestamp - tracked.beganAt);presses=\(presses.prefix(2).joined(separator: "|"));gestures=\(gestures.joined(separator: ","))"
             NSLog("browser.input.trace phase=window.touch %@", lastSwitchEvent)
             if stage == "after", touch.phase == .ended || touch.phase == .cancelled {
                 switchTouches.removeValue(forKey: touchID)

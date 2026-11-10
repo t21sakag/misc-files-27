@@ -302,7 +302,13 @@ class StudyFlowTestSupport: XCTestCase {
             controlFailure(native, in: app, reason: "Switch does not expose an on/off value"); return false
         }
         if control.value as? String != desired {
-            guard tapTestControl(native, in: app) != nil else { return false }
+            guard let target = waitForTestControl(native, in: app) else { return false }
+            // The 50ms synthesized tap can end while the native lens press
+            // recognizer is still possible, before it activates the switch.
+            // Keep the same unique target and allow its press to recognize.
+            XCTContext.runActivity(named: "Press native switch for 150ms: " + String(describing: target.frame)) { _ in
+                target.press(forDuration: 0.15)
+            }
         }
         let changed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in control.value as? String == desired }, object: nil)
         let result = XCTWaiter.wait(for: [changed], timeout: 10)
