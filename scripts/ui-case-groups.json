@@ -205,7 +205,8 @@
     "testQuickFilterPreservesOtherCategoryAndTypedHistoryAfterRelaunch",
     "testSavedSearchAndFilteredDeckUseCompleteResolvedRequest",
     "testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable",
-    "testSavedSearchDuplicateNamePreservesOriginalQueryAfterRelaunch"
+    "testSavedSearchDuplicateNamePreservesOriginalQueryAfterRelaunch",
+    "testSavedSearchManagementDeletesOnlySelectedCaseSensitiveNameAfterRelaunch"
   ],
   "TypographyFlowTests": [
     "testReadableNativeBrowserAndEditorInBothOrientations",

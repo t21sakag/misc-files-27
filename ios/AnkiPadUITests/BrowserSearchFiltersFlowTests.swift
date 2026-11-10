@@ -175,6 +175,53 @@ final class BrowserSearchFiltersFlowTests: BrowserSearchTestSupport {
         openBrowser("", in: app); expectRows([0, 1, 2, 3, 4], in: app)
     }
 
+    func testSavedSearchManagementDeletesOnlySelectedCaseSensitiveNameAfterRelaunch() throws {
+        let (app, _) = try fixture()
+        let first = try XCTUnwrap(typeInEmptyTestField(browserSearchFields(app), text: "row0", in: app))
+        first.typeText("\n"); expectRows([0], in: app)
+        saveSearchNamed("Literal", in: app)
+        _ = waitForTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        let second = try XCTUnwrap(replaceTestField(browserSearchFields(app), expected: "row0", with: "row1", in: app))
+        second.typeText("\n"); expectRows([1], in: app)
+        saveSearchNamed("literal", in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["保存した検索"], in: app)
+        tapTestMenuAction(titles: ["保存した検索を管理"], in: app)
+        let lists = app.collectionViews.matching(identifier: "browser-saved-search-list")
+        let list = try XCTUnwrap(waitForTestControl(lists, in: app, purpose: .observation))
+        let original = lists.staticTexts.matching(NSPredicate(format: "label == %@", "Literal"))
+        let retained = lists.staticTexts.matching(NSPredicate(format: "label == %@", "literal"))
+        requireTestCondition("Case-sensitive saved names are separate native rows", in: app) {
+            original.count == 1 && retained.count == 1
+        }
+        let rows = lists.cells.containing(.staticText, identifier: "Literal")
+        let row = try XCTUnwrap(waitForTestControl(rows, in: app, form: list))
+        row.swipeLeft(velocity: .slow)
+        tapTestControl(lists.buttons.matching(NSPredicate(format: "label IN %@", ["Delete", "削除"])), in: app, keyboard: .keep)
+        requireTestCondition("Deleting one saved name preserves its case-distinct neighbour", in: app) {
+            original.count == 0 && retained.count == 1
+        }
+        let close = app.navigationBars.matching(identifier: "保存した検索").buttons
+            .matching(NSPredicate(format: "label == %@", "閉じる"))
+        tapTestControl(close, in: app)
+        _ = waitForTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        expectRows([1], in: app)
+        XCTAssertEqual(app.staticTexts["browser-results"].value as? String, "row1")
+        app.terminate(); app.launchArguments = []; app.launch()
+        openBrowser("", in: app); expectRows([0, 1, 2, 3, 4], in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["保存した検索"], in: app)
+        requireTestCondition("Removed literal name stays absent after relaunch", in: app) {
+            self.menuActions(titles: ["Literal"], in: app).count == 0
+                && self.menuActions(titles: ["literal"], in: app).count == 1
+        }
+        tapTestMenuAction(titles: ["literal"], in: app)
+        requireTestCondition("Retained saved query is reusable after relaunch", in: app) {
+            app.staticTexts["browser-results"].value as? String == "row1"
+        }
+        expectRows([1], in: app)
+    }
+
     func testSavedSearchDuplicateNamePreservesOriginalQueryAfterRelaunch() throws {
         let (app, _) = try fixture()
         let first = try XCTUnwrap(typeInEmptyTestField(browserSearchFields(app), text: "row0", in: app))

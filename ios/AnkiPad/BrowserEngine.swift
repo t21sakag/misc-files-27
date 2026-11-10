@@ -12,7 +12,7 @@ struct BrowserConfiguration {
     var columns: [String]
     var sortColumn: String
     var backwards: Bool
-    var savedSearches: [String: String]
+    var savedSearches: BrowserSavedSearches
 }
 extension Engine {
     func configData(_ key: String) throws -> Data? {
@@ -28,6 +28,9 @@ extension Engine {
     }
     func setConfigValue(_ key: String, value: Any) throws {
         let data = try JSONSerialization.data(withJSONObject: value, options: [.fragmentsAllowed])
+        try setConfigData(key, data: data)
+    }
+    func setConfigData(_ key: String, data: Data) throws {
         _ = try call("ConfigService.SetConfigJson", ["key": key, "valueJson": data.base64EncodedString()])
     }
     func browserConfiguration(notesMode: Bool? = nil) throws -> BrowserConfiguration {
@@ -37,11 +40,14 @@ extension Engine {
         let rawColumns = try configValue(mode ? "activeNoteCols" : "activeCols") as? [String] ?? (mode ? ["noteFld", "note", "template", "noteTags"] : ["noteFld", "template", "cardDue", "deck"])
         var seen: Set<String> = []
         let uniqueColumns = rawColumns.filter { seen.insert($0).inserted }
+        let searches: BrowserSavedSearches
+        do { searches = try browserSavedSearches() }
+        catch BrowserSavedSearchFailure.invalidData { searches = [:] }
         return BrowserConfiguration(notesMode: mode,
             columns: uniqueColumns.isEmpty ? ["noteFld"] : uniqueColumns,
             sortColumn: try configValue(mode ? "noteSortType" : "sortType") as? String ?? "noteFld",
             backwards: try configValue(mode ? "browserNoteSortBackwards" : "sortBackwards") as? Bool ?? false,
-            savedSearches: try configValue("savedFilters") as? [String: String] ?? [:])
+            savedSearches: searches)
     }
     func saveBrowserConfiguration(_ config: BrowserConfiguration) throws {
         try setConfigValue(config.notesMode ? "activeNoteCols" : "activeCols", value: config.columns)
@@ -129,7 +135,7 @@ extension Engine {
             try call("SearchService.BuildSearchString", node)
         })
     }
-    func saveBrowserSearch(name: String, request: BrowserSearchRequest) throws -> [String: String] {
+    func saveBrowserSearch(name: String, request: BrowserSearchRequest) throws -> BrowserSavedSearches {
         let query = try browserSearchQuery(request)
         return try saveBrowserSearch(name: name, query: request.hasFilters ? query : request.query)
     }

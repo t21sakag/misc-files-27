@@ -54,7 +54,7 @@ struct BrowserView: View {
     @State private var searchName = ""
     @State private var savedSearchValue = ""
     @State private var manageSearches = false
-    @State private var removedSearchNames: Set<String> = []
+    @State private var removedSearchNames: Set<BrowserSavedSearchName> = []
     @State private var managingTags = false
     @State private var repositionPrompt = false
     @State private var position = 1
@@ -236,7 +236,7 @@ struct BrowserView: View {
             Menu(AppText.localized("ノートタイプ")) { ForEach(types) { type in Button(type.name) { updateFilter(\.noteTypeIDs, values: [type.id]) } } }
             Menu(AppText.localized("フラグ")) { ForEach(0..<8, id: \.self) { value in Button(model.flagLabels.name(value)) { updateFilter(\.flags, values: [BrowserSearchFlag(rawValue: value)!]) }.accessibilityIdentifier("browser-filter-flag-\(value)") } }.accessibilityIdentifier("browser-filter-flags")
             Menu(AppText.localized("保存した検索")) {
-                ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in Button(name) { submitSearch(config.savedSearches[name] ?? "") } }
+                ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in Button(name.value) { submitSearch(config.savedSearches[name] ?? "") } }
                 Button(AppText.localized("この検索を保存")) {
                     withResolvedSearch { value in searchName = ""; savedSearchValue = value; saveSearchPrompt = true }
                 }.disabled(effectiveSearchRequest.isEmpty)
@@ -349,7 +349,7 @@ struct BrowserView: View {
             }) { BrowserOptionsView(model: model) }
             .sheet(isPresented: $columnPicker, onDismiss: saveConfig) { BrowserColumnPicker(columns: columns, config: $config) }
             .sheet(isPresented: $manageSearches, onDismiss: {
-                let names = Array(removedSearchNames), engine = model.engine
+                let names = removedSearchNames.map(\.value), engine = model.engine
                 removedSearchNames = []
                 guard !names.isEmpty else { return }
                 mutateOpening {
@@ -361,7 +361,7 @@ struct BrowserView: View {
             }) {
                 NavigationStack {
                     List { ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in
-                        VStack(alignment: .leading) { Text(name); Text(config.savedSearches[name] ?? "").font(.caption).foregroundStyle(.secondary) }
+                        VStack(alignment: .leading) { Text(name.value); Text(config.savedSearches[name] ?? "").font(.caption).foregroundStyle(.secondary) }
                     }.onDelete { offsets in
                         let names = config.savedSearches.keys.sorted()
                         for index in offsets {
@@ -369,6 +369,7 @@ struct BrowserView: View {
                             config.savedSearches.removeValue(forKey: names[index])
                         }
                     } }
+                    .accessibilityIdentifier("browser-saved-search-list")
                     .studyThemeSurface().navigationTitle(AppText.localized("保存した検索")).toolbar { ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("閉じる")) { manageSearches = false } } }
                 }
             }

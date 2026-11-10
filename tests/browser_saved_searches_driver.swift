@@ -27,18 +27,21 @@ actor Engine {
         }
         return data
     }
-    func setConfigValue(_ key: String, value: Any) throws {
-        _ = try request(["method": "set", "key": key, "value": value])
+    func setConfigData(_ key: String, data: Data) throws {
+        _ = try request(["method": "set", "key": key, "json": data.base64EncodedString()])
     }
 }
 
 @main struct SavedSearchDriver {
     static func main() async throws {
+        // SwiftUI's erased row identities must retain both literal names.
+        precondition(AnyHashable(BrowserSavedSearchName("caf\u{e9}"))
+            != AnyHashable(BrowserSavedSearchName("cafe\u{301}")))
         let engine = Engine()
         while let line = readLine() {
             let value = try JSONSerialization.jsonObject(with: Data(line.utf8)) as! [String: Any]
             do {
-                let searches: [String: String]
+                let searches: BrowserSavedSearches
                 switch value["operation"] as! String {
                 case "save": searches = try await engine.saveBrowserSearch(name: value["name"] as! String, query: value["query"] as! String)
                 case "remove": searches = try await engine.removeBrowserSearches(value["names"] as! [String])
@@ -61,7 +64,9 @@ actor Engine {
                 case "get": searches = try await engine.browserSavedSearches()
                 default: throw SavedSearchDriverFailure.protocolFailure
                 }
-                try sendSavedSearchMessage(["done": true, "searches": searches])
+                FileHandle.standardOutput.write(Data("{\"done\":true,\"searches\":".utf8))
+                FileHandle.standardOutput.write(try BrowserSavedSearchCoding.encode(searches))
+                FileHandle.standardOutput.write(Data("}\n".utf8))
             } catch let error as BrowserSavedSearchFailure {
                 try sendSavedSearchMessage(["done": true, "error": String(describing: error)])
             } catch { try sendSavedSearchMessage(["done": true, "error": "backend"]) }
