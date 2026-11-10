@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
+import CoreGraphics
+#endif
 
 @main enum CollectionPageScanChecks {
     static func search(_ pages: [[String]], from start: Int, wanted: Set<String>, first: String? = nil)

@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
+import CoreGraphics
+#endif
 
 /// Traverse towards the start once, then towards the end. A repeated
 /// mounted-page identity marks a boundary; missing targets never mean success.

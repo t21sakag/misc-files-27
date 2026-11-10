@@ -9638,6 +9638,253 @@
         }
       ],
       "checked_at": "2026-11-10T13:31:23.355967+00:00"
+    },
+    {
+      "id": "20261110-mounted-pages-apple-imports",
+      "covers": [
+        [
+          42813456408,
+          1
+        ],
+        [
+          42798196189,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42798196189,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Three consumers pass with real native Select All readiness. Committed history advances through reuse/relaunch, then a list-wide StaticText query stalls in XCTest. Missing-deck setup checks inserted row0 too early; its terminal AX/screen contain the exact row0 and one result. Full-value postconditions were immediate assertions rather than shared semantic waits."
+        },
+        {
+          "attempt": [
+            42813456408,
+            1
+          ],
+          "kind": "harness",
+          "finding": "After semantic full-value waits and observed-ID reuse, committed history passes855.032seconds. Missing-deck setup now passes typing, scope creation/move/filter/deletion; it stalls later on exact browser-front-1794312767701 lookup after row1 validation, before missing-history selection. Native movie970seconds shows row2 visibly rendered, plus partially clipped row4. Stackshot places main thread inside XCTest matchingSnapshotsInSnapshotTree and descendant filtering, not an app data mutation. Visible target status contradicts the earlier offscreen-target assumption; the exact SDK-internal cause remains unresolved."
+        }
+      ],
+      "rule_review": {
+        "semantic_labels": "Retain exact rowN front values and observed native card identities per test namespace. Each mounted native cell must expose exactly one front; reject unexpected/duplicate fronts and inconsistent identities. Do not infer rendered values from backend IDs or package metadata.",
+        "foreground_scope": "Observed terminal AX proves browser-card-list is a native CollectionView with direct Cell children; those cells contain row Button/StaticText content. Resolve the unique actionable collection, dismiss keyboard through shared helper, inspect only fully contained hittable native cells, then read their scoped front descendants. Do not query global list text before its owning native cell is inspected.",
+        "unique_reads_and_actions": "Previous exact-ID cache reduced label traversal but did not prevent latest visible-target query timeout. The common collection walker now uses actual native cell geometry plus unique scoped front values. Page identity comes from observed front IDs. It searches start/end boundaries and restores the first verified row without guessing model order or selecting the first duplicate.",
+        "live_state": "Input helpers retain native Select All storage/UTF16 coverage before replacement and wait for the exact full resulting text with requireTestCondition. The last run passes these stages. Collection page readiness uses shared requireTestCondition on actual current cell visibility and values; missing data is a failure, never inferred from model flags or cached labels. Cache only verifies identities of freshly read UI data.",
+        "keyboard_and_scroll": "No new tap/typing/timeout variant. Use one shared page-scanning gesture over the actual collection content and measured safe coordinates. Before leaf queries, enumerate direct native Cell metadata and require full physical clip containment/hittability. Gesture insets are distinct from physical mounting bounds so the last cell is not permanently excluded. The production pure traversal state is compiled and tested for all start positions, reversed order, one/two-card pages, first-row restoration, finite missing-target rejection and end-cell geometry.",
+        "environment": "Keep fresh isolated simulator, ConnectHardwareKeyboard=false, reviewed compiled field fixture, source/hash transfer and existing host contracts. Next scope is only missing-history1case/1consumer with one shared build. Producer validates traversal logic locally before expensive UI. Verified notification-service-only timeouts may preserve independent cases while failing the batch; missing/invalid identity, install/launch/cleanup failures still stop all UI. Actual runner mocks prove both positive and negative branches without authorization pregrant or request mutation. Host compilation42826319803 stopped before Apple app compilation/UI: Foundation on Linux provided CGRect helpers, while Apple requires the CoreGraphics Swift overlay import. Import CoreGraphics explicitly where available in both production state and host driver, retaining Foundation-only Linux support. This is a check-code portability defect, not app/UI execution. The same failed UI pair remains outstanding.",
+        "first_failure_evidence": "Both completed logs, real summaries, terminal AX, native/XCTest recordings, pointer frames and latest stackshot are retained with hashes. The latest movie shows row2 visible; do not claim the target itself was offscreen. The shared matcher still traversed list-wide descendants, including other clipped rows, but its precise blocking node is unknown. Scope reduction avoids global leaf traversal. Common controlled failures now save a screen attachment before full AX reads, because AX itself can stall.",
+        "failure_classification": "Actual executed-step history identifies exact pair42798196189/1 and42813456408/1. Prior reset/layout whole-run success resets are respected; the earlier observation cancel is excluded. Latest1pass/1fail is one failed attempt. Fixing committed history does not hide the remaining missing-history case, and successful typing is not proof of the not-yet-reached missing-reference error path.",
+        "runtime_warnings": "Latest failed summary1fail/0skip/runtimeWarnings=[]; successful committed-history consumer is separately recorded. Retain exact planned/executed case identities, zero skips and runtime-warning gates. Deferring a verified OS-dependent case leaves the overall batch failed; no reduced subset can be reported as full success.",
+        "device_evidence": "These changes affect test observation/selection semantics. No new device audio/notification/signing evidence or IPA distribution. Broad141case regression and physical confirmation remain outstanding; no milestone completes the overall port goal."
+      },
+      "root_cause": "XCTest list-wide leaf resolution can stall even when the desired text is visibly rendered. Exact-ID reuse alone was insufficient. The precise internal SDK blocking node remains unproven. A separate immediate typed-value assertion raced UI completion and has been repaired with a strict semantic wait; committed history now passes. Missing-history behavior remains unverified beyond the later data-list observation failure.",
+      "common_resolution": "Inspect native direct Cell geometry first, then query exact front content only within fully contained hittable cells. A shared bounded collection page walker observes actual page identities, handles both boundaries and restores the first verified card. No unseen target query precedes scrolling. Enforce exact values, unique identities and current UI readiness; record screenshots before AX diagnostics. Update the common rules and run the production traversal state/geometry test before Apple UI. Explicit conditional CoreGraphics imports make the shared geometry check self-contained on Apple as well as Linux; no traversal/gesture/value assertion change.",
+      "next_scope": [
+        "BrowserSearchIdentityFlowTests/testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch"
+      ],
+      "evidence": [
+        {
+          "reference": "completed-evidence/search-input-readiness-run.json",
+          "sha256": "d711bac3e0c36fbe727aff773ac380a0c27b9238ff8c940bf583c66dc1876079"
+        },
+        {
+          "reference": "completed-evidence/search-input-readiness-failed.log",
+          "sha256": "4cc0defbb7df5fafa07b8f075d1dce8f22f5e693d2801ea148308d712ab5133c"
+        },
+        {
+          "reference": "completed-evidence/input-postcondition-run.json",
+          "sha256": "8b614a84889843e11fe768d4839b13056b639bd7ac634860c1102211aea98ecc"
+        },
+        {
+          "reference": "completed-evidence/input-postcondition-failed.log",
+          "sha256": "220148d2e469534e29b04179aa4978eb29e750bd96567c7a1b7b6edb42b6bcc3"
+        },
+        {
+          "reference": "completed-evidence/missing-history-before-snapshot-stall.png",
+          "sha256": "bd1f127b31118def6316ba234290405a4e31ba22af8c39145302e78d1c7e4a36"
+        },
+        {
+          "reference": "completed-evidence/history-snapshot-before-stall.png",
+          "sha256": "4f72c36fcff81496316491da0d38f3748bb9e9cab6f650abad9699d330a65f1e"
+        },
+        {
+          "reference": "completed-evidence/empty-field-after-input.png",
+          "sha256": "dd09203d5932ce26cb45c865bb69709724cd5d40205b20dc0bb658195e7a18f0"
+        },
+        {
+          "reference": "completed-evidence/input-postcondition-42813456408/ui-diagnostics-1/test-summary.json",
+          "sha256": "b09e6ddb40d5f90d75f832e2148040d3687c3e99ff54aadaee4aecd928764cd1"
+        },
+        {
+          "reference": "completed-evidence/input-postcondition-42813456408/ui-diagnostics-1/screenshots/1D2BF115-C889-458D-9B1E-8444BF35C07C.txt",
+          "sha256": "9322a2df6e874cca4e838de1448a1a0b5cd634e8c121238cd723095441c04fa6"
+        },
+        {
+          "reference": "completed-evidence/search-input-readiness-42798196189/ui-diagnostics-4/screenshots/7ADBE89A-AE20-4BF8-85F3-01EEE466598E.txt",
+          "sha256": "1d4818dbea938322457016d0e791f60bef9e9b9ed8e42d23897248eea863b7a8"
+        },
+        {
+          "reference": "completed-evidence/mounted-pages-run.json",
+          "sha256": "4533d8a667c78c5219b8db43a1cf6c7931484e8b87970faf4926ff1a3d8fcbd1"
+        },
+        {
+          "reference": "completed-evidence/mounted-pages-failed.log",
+          "sha256": "1923d283ce275e8e62329df0bed4a001880df5d15f570b831b71fd8f2dbd0f00"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "9b0b13ecc83ab70367985467f98dee12e4be6cc5fc666620d30e23ad4e05ae4b",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "e6b4558f169df1aac88f4d9edb52617e33d4a6a267d29240aef9a08df7230777",
+        "ios/AnkiPadUITests/BrowserSearchTestSupport.swift": "dd0291fa6fad2443999483847d1455975f00c180bdfc1e94c275f6ebb02c7218",
+        "ios/AnkiPadUITests/CollectionPageScanState.swift": "470880f0c9d7b778191ed028526ce0569ff55858a388d440f30ea380e171e12c",
+        "ios/AnkiPadUITests/BrowserSearchIdentityFlowTests.swift": "358649262c8209466fba8ab4f5e6f86fb7d1186abcd97e4fded4b94a17e62378",
+        "ios/AnkiPad/BrowserInputDiagnostics.swift": "9cb9c730f556064ef7d0454f0057138a4d8fd374653741b758cabf59abc42bbc",
+        "ios/AnkiPad/ContentView.swift": "7a71cfc4604a619a9b6cdfb0775eb3400ba823addfd39943871f7becb37fe13f",
+        "tests/collection_page_scan_driver.swift": "52e3e9b5d18d7f2f97abaf45779f8f645183ccfe057bf2ecfe7b7144ede43dc3",
+        "tests/collection_page_scan_smoke.py": "c7093d2eaf31143fc91fffe08c9ce340b4e07ed4ca8fc0a96d96cbb233f390a4",
+        "scripts/select-ui-tests.py": "54feecfd0540ed16fe7a3514fe55524f88e219e70f55c8e6f5c87742d821f32e",
+        "scripts/run-ui-batch.py": "a37190e9ddc10ab05807559673bd29fd43b5651edcaa7dcd9fec198bb887e22a",
+        "scripts/notification-preflight.py": "05dabd6c0960888342651c784646aeed19ff3e5df1e03e68cd1f7f1a7f4072ef",
+        "tests/notification_preflight_smoke.py": "8c6adde0b71d67d23d3d658ed87df40d6e4da77be68b47d5292236008c254ffa",
+        ".github/workflows/ipa.yml": "75b2724176876a63350a4e968af7ae66fa35fcfee596610507dd50ab969ae67f",
+        "ios/project.yml": "c83afd0b99f2e04b34c9419b66d997bc482f3b40a7275164dc76fb818d76c50a",
+        "scripts/ui-case-groups.json": "907b5ea1b0a2f34904bb05ba62406a333307821c7135f90d76fefa4beaf636f8"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "c7b53eb42f0f240a7c43df0e15ec7a1568acb9c3f3cb73d54a333881ca91ff74"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "8b72f67dcb40de03150258f064ffb1f0939a9755d732fa463f4d5e0933ecf371"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b7dc665ba26aa04269f80101ffd329cd70e401abd9bb4282651018d39d877da0"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "f436d4fbaed7a732b9a57695cd257012009e9d5c696c2d5417e19208291971bf"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "0f6dc1cba01134cfbc07df4041824555becc16e105966de9f40095bd91ad697c"
+        },
+        {
+          "name": "prerequisite rejection",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "actual consumer runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "actual workflow diagnostics",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "observer interruption and recording",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "read-only notification failure lifecycle",
+          "argv": [
+            "python3",
+            "tests/notification_preflight_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b147885faae5787ea6610b3fcda43acf25b3ec18bed531751ef2d7adedbd2cb7"
+        },
+        {
+          "name": "actual traversal state and mounted-cell geometry",
+          "argv": [
+            "python3",
+            "tests/collection_page_scan_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6f07558ee075a2c35d3ed788a32bc444823d57eb0b72f59b071eeafd5dcb12a"
+        }
+      ],
+      "checked_at": "2026-11-10T13:42:36.267314+00:00"
     }
   ]
 }
