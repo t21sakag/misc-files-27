@@ -57,16 +57,22 @@ elif a[:2]==['simctl','launch']:
 elif a[:2]==['simctl','terminate']:
  if mode=='terminate-failure':sys.exit(19)
 elif a[:4]==['xcresulttool','get','test-results','summary']:
- print(json.dumps({'totalTestCount':1,'passedTests':1,'failedTests':0,'skippedTests':0,'runtimeWarnings':[]}))
+ cases=json.loads(Path('build/executed-cases.json').read_text())
+ print(json.dumps({'totalTestCount':len(cases),'passedTests':len(cases),'failedTests':0,'skippedTests':0,'runtimeWarnings':[]}))
 elif a[:4]==['xcresulttool','get','test-results','tests']:
- print(json.dumps({'testNodes':[{'nodeType':'Test Case','nodeIdentifier':os.environ['PROBE_CASE']+'()'}]}))
+ cases=json.loads(Path('build/executed-cases.json').read_text())
+ print(json.dumps({'testNodes':[{'nodeType':'Test Case','nodeIdentifier':case+'()'} for case in cases]}))
 else:raise SystemExit('Unexpected OS command '+str(a))
 ''')
     (tools / 'xcodebuild').write_text('''#!/usr/bin/env python3
-import json
+import json,os,sys
 from pathlib import Path
 r=json.loads(Path('build/notification-preflight.json').read_text())
-assert r['ready'] and r['terminated']
+prefix='-only-testing:AnkiPadUITests/'
+cases=[arg[len(prefix):] for arg in sys.argv[1:] if arg.startswith(prefix)]
+assert cases
+if os.environ['PROBE_CASE'] in cases:assert r['ready'] and r['terminated']
+Path('build/executed-cases.json').write_text(json.dumps(cases))
 assert r['permission_requested'] is False and r['requests_mutated'] is False
 Path('build/ui-started').write_text('yes')
 ''')
@@ -121,7 +127,8 @@ Path('build/ui-started').write_text('yes')
     assert 'return_code' not in failed_command and failed_command['elapsed_seconds'] >= 0
     # Execute the real consumer: missing service identity fails before XCTest,
     # while a valid read-only OS reply permits the unmodified xctestrun path.
-    runner=[sys.executable,str(ROOT/'scripts/run-ui-batch.py'),'0','11111111-1111-4111-8111-111111111111']
+    runner=[sys.executable,str(ROOT/'scripts/run-ui-batch.py'),'0','11111111-1111-4111-8111-111111111111',
+            '--notification-timeout','0.1']
     for mode in ('wrong-bundle','ready'):
         marker=base/'build/ui-started';marker.unlink(missing_ok=True)
         (base/'launched-marker').unlink(missing_ok=True)
@@ -130,6 +137,29 @@ Path('build/ui-started').write_text('yes')
         assert marker.exists()==(mode=='ready')
         observer=json.loads((base/'build/notification-preflight-diagnostics/live-collection.json').read_text())
         assert observer['stream_running_before_test']
+    # A verified service timeout must still allow unrelated behavior,
+    # while corrupt identity blocks all UI. Deferred service cases must must report the dependent case as unexecuted and fail overall.
+    independent = 'BrowserToolsFlowTests/testBrowserGlobalFindReplaceShowsAllScopeAndPersistsChanges'
+    planned = [CASE, independent]
+    (base/'build/ui-batches.json').write_text(json.dumps({'batches':[planned]}))
+    for mode in ('wrong-bundle','missing','install-failure','terminate-failure','waiting','ready'):
+        for path in (base/'build/ui-started', base/'build/executed-cases.json', base/'launched-marker'):
+            path.unlink(missing_ok=True)
+        result=subprocess.run(runner,cwd=base,env=dict(env,PROBE_MODE=mode),capture_output=True,text=True,timeout=20)
+        assert (result.returncode==0)==(mode=='ready'),(mode,result.stdout,result.stderr)
+        if mode not in ('waiting','ready'):
+            assert not (base/'build/ui-started').exists(), ('Unverified identity/launch/cleanup must block all UI', mode)
+            continue
+        executed=json.loads((base/'build/executed-cases.json').read_text())
+        assert executed == (planned if mode=='ready' else [independent]), executed
+        report=json.loads((base/'build/batch-environment.json').read_text())
+        assert report['planned_cases']==planned and report['actual_cases']==executed, report
+        assert report['requested_ui_cases']==executed, report
+        assert report['deferred_cases']==([] if mode=='ready' else [CASE]), report
+        assert report['phase']==('success' if mode=='ready' else 'failed_environment'), report
+        summary=json.loads((base/'build/test-summary.json').read_text())
+        assert summary['passedTests']==len(executed) and summary['skippedTests']==0, summary
+    assert 'build/batch-environment.json' in (ROOT/'.github/workflows/ipa.yml').read_text().split('  ui-batch:',1)[1]
     calls=[json.loads(line) for line in (base/'calls.jsonl').read_text().splitlines()]
     assert not any('privacy' in call or 'push' in call for call in calls)
-print('PASS: real read-only preflight rejects stale/corrupt/unresponsive OS replies and cleanup failures; consumer starts XCTest only after valid response, without requiring or granting permission')
+print('PASS: real read-only preflight rejects stale/corrupt/unresponsive OS replies and cleanup failures; dependent XCTest requires valid response; failed service does not suppress independent cases or make the batch pass')

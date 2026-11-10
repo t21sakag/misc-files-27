@@ -827,6 +827,7 @@ jobs:
             build/UITests.xcresult/database.sqlite3
             build/batch-ui-selections.txt
             build/batch-launch.json
+            build/batch-environment.json
             build/notification-preflight.json
             build/notification-preflight-diagnostics
             build/ui-batches.json

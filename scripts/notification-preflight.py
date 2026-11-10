@@ -82,6 +82,7 @@ def run(simulator, app, output, timeout=120):
             time.sleep(min(0.5, max(0, deadline - time.monotonic())))
     except Exception as error:
         report['error'] = str(error)
+        report['error_kind'] = type(error).__name__
         report['failure_phase'] = report.get('phase')
         raise
     finally:
