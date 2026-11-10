@@ -24,6 +24,14 @@ struct SyncNetworkPreferencesSmoke {
         precondition(!restored.showStatusBadge && restored.mediaFetch == .unmetered)
         precondition(restored.ioTimeoutSecs == SyncNetworkPreferences.minimumTimeout, "timeout is clamped to the upstream minimum")
         precondition(SyncNetworkPreferences.clampedTimeout(100_000) == SyncNetworkPreferences.maximumTimeout)
+        // Values valid in the fixed upstream preferences must survive saving
+        // and reopening instead of being silently reduced to the old 600s cap.
+        for timeout in [601, 3_600, 99_999] {
+            var extended = restored
+            extended.ioTimeoutSecs = timeout
+            extended.save(defaults)
+            precondition(SyncNetworkPreferences.load(defaults).ioTimeoutSecs == timeout)
+        }
 
         var never = restored
         never.mediaFetch = .never

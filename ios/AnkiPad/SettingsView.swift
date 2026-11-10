@@ -196,10 +196,10 @@ struct SettingsView: View {
                         Text(AppText.localized("有効にすると、カード内のJavaScriptが現在のカード以外のノートの内容も読み取り、タグを変更できます。")).font(.caption).foregroundStyle(.secondary)
                     }
                     Section(AppText.localized("バックアップの保持数")) {
-                        Stepper(AppText.localized("日次: \(integer("backups", "daily").wrappedValue)"), value: integer("backups", "daily"), in: 0...365)
-                        Stepper(AppText.localized("週次: \(integer("backups", "weekly").wrappedValue)"), value: integer("backups", "weekly"), in: 0...104)
-                        Stepper(AppText.localized("月次: \(integer("backups", "monthly").wrappedValue)"), value: integer("backups", "monthly"), in: 0...120)
-                        Stepper(AppText.localized("作成間隔: \(integer("backups", "minimumIntervalMins").wrappedValue)分"), value: integer("backups", "minimumIntervalMins"), in: 0...1440)
+                        Stepper(AppText.localized("日次: \(integer("backups", "daily").wrappedValue)"), value: integer("backups", "daily"), in: 0...99_999)
+                        Stepper(AppText.localized("週次: \(integer("backups", "weekly").wrappedValue)"), value: integer("backups", "weekly"), in: 0...99_999)
+                        Stepper(AppText.localized("月次: \(integer("backups", "monthly").wrappedValue)"), value: integer("backups", "monthly"), in: 0...99_999)
+                        Stepper(AppText.localized("作成間隔: \(integer("backups", "minimumIntervalMins").wrappedValue)分"), value: integer("backups", "minimumIntervalMins"), in: 5...99_999)
                     }
                 } else { ProgressView() }
             }

@@ -11,7 +11,9 @@ struct BackupExport: Identifiable {
         let folder = backupFolder.standardizedFileURL.resolvingSymlinksInPath()
         let candidate = source.standardizedFileURL
         let attributes = try candidate.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
-        guard candidate.deletingLastPathComponent().resolvingSymlinksInPath() == folder,
+        // URL equality also compares the directory hint/trailing slash. Both
+        // URLs may identify the same folder even when those hints differ.
+        guard candidate.deletingLastPathComponent().resolvingSymlinksInPath().path == folder.path,
               candidate.pathExtension.lowercased() == "colpkg",
               attributes.isRegularFile == true, attributes.isSymbolicLink != true else {
             throw CocoaError(.fileReadNoPermission)

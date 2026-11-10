@@ -119,6 +119,8 @@ jobs:
         run: |
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/SyncDecision.swift tests/sync_decision_smoke.swift -o build/sync-decision-smoke
           build/sync-decision-smoke
+          swiftc -target arm64-apple-macosx15.0 -swift-version 5 -parse-as-library ios/AnkiPad/AccountSession.swift tests/account_session_smoke.swift -o build/account-session-smoke
+          build/account-session-smoke
       - name: Test study timebox interval and answer counts
         run: |
           swiftc -target arm64-apple-macosx15.0 ios/AnkiPad/AppText.swift -swift-version 5 -parse-as-library ios/AnkiPad/ReviewTimebox.swift tests/review_timebox_smoke.swift -o build/review-timebox-smoke

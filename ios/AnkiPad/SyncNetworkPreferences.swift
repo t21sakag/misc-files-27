@@ -17,7 +17,7 @@ enum SyncMediaFetch: String, CaseIterable, Identifiable {
 struct SyncNetworkPreferences: Equatable {
     static let defaultTimeout = 60
     static let minimumTimeout = 30
-    static let maximumTimeout = 600
+    static let maximumTimeout = 99_999
     var allowMetered = false
     var mediaFetch: SyncMediaFetch = .always
     var showStatusBadge = true

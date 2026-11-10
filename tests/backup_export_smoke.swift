@@ -11,6 +11,15 @@ import Foundation
         let source = backups.appendingPathComponent("backup-original.colpkg")
         let original = Data([0x50, 0x4b, 0, 1, 255])
         try original.write(to: source)
+        // Filesystem ownership must not depend on how a caller constructed
+        // the folder URL (with or without an explicit directory hint).
+        for folder in [URL(fileURLWithPath: backups.path, isDirectory: true),
+                       URL(fileURLWithPath: backups.path, isDirectory: false)] {
+            let copy = try BackupExport.prepare(source, backupFolder: folder, temporaryFolder: temporary)
+            let bytes = try Data(contentsOf: copy.url)
+            precondition(bytes == original)
+            copy.removeTemporaryCopy()
+        }
         let exported = try BackupExport.prepare(source, backupFolder: backups, temporaryFolder: temporary)
         precondition(exported.url.lastPathComponent == source.lastPathComponent)
         let originalAfterExport = try Data(contentsOf: source)

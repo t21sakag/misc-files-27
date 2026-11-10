@@ -333,16 +333,6 @@ struct AnkiPadApp: App {
             try await self.performSync()
         }
     }
-    func logout() {
-        guard !busy else { return }
-        do {
-            try AccountStore.delete(profileID: self.currentProfileID)
-            account = nil
-            lastSync = nil
-            syncStatus = ""
-            UserDefaults.standard.removeObject(forKey: profilePreferenceKey("lastSync"))
-        } catch { self.error = error.localizedDescription }
-    }
     func synchronize(allowMeteredThisTime: Bool = false) {
         guard account != nil else { showingAccount = true; return }
         guard !allowMeteredThisTime else { runSync { try await self.performSync() }; return }

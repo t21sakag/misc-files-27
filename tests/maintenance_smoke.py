@@ -29,10 +29,18 @@ with tempfile.TemporaryDirectory() as directory:
     preferences = engine.call('ConfigService.GetPreferences')
     preferences.setdefault('reviewing', {})['showRemainingDueCounts'] = False
     preferences['backups']['daily'] = 9
+    preferences['backups']['weekly'] = 99999
+    preferences['backups']['monthly'] = 99999
+    preferences['backups']['minimumIntervalMins'] = 5
     engine.call('ConfigService.SetPreferences', preferences)
+    engine.call('CollectionService.CloseCollection')
+    reopen()
     saved = engine.call('ConfigService.GetPreferences')
     assert not saved['reviewing'].get('showRemainingDueCounts')
     assert saved['backups']['daily'] == 9
+    assert saved['backups']['weekly'] == 99999
+    assert saved['backups']['monthly'] == 99999
+    assert saved['backups']['minimumIntervalMins'] == 5
     engine.call('MediaService.AddMediaFile', {'desiredName': 'unused.svg', 'data': 'PHN2Zy8+'})
     check = engine.call('MediaService.CheckMedia')
     assert 'unused.svg' in check['unused']
