@@ -130,7 +130,7 @@ class StudyFlowTestSupport: XCTestCase {
             // or its native dismiss button, without hit-testing the container
             // or racing a separate exists/frame read against its dismissal.
             hide.allElementsBoundByIndex.contains { $0.isHittable }
-                || app.keys.firstMatch.isHittable
+                || app.keys.allElementsBoundByIndex.contains { $0.isHittable }
         }
         guard visible() else { return true }
         guard app.alerts.count == 0 else {
@@ -350,6 +350,34 @@ class StudyFlowTestSupport: XCTestCase {
         guard field.value as? String == expected else {
             controlFailure(query, in: app, reason: "Field did not contain the expected replacement source"); return nil
         }
+        // XCTest completing a key event is not proof that UIKit selected
+        // the text. Observe the real focused storage before inserting anything;
+        // a missing/partial selection must fail instead of appending test data.
+        let observesSelection = field.elementType == .textField || field.elementType == .searchField
+        let probe = app.staticTexts.matching(identifier: "incoming-native-state")
+        var latestNativeInput = ""
+        func nativeInput() -> (identity: String, length: Int, selection: Int)? {
+            guard probe.count == 1, let state = probe.element.value as? String else { return nil }
+            latestNativeInput = state
+            let inputs = state.split(separator: "\n").filter { $0.hasPrefix("textInput:class=") }
+            guard inputs.count == 1 else { return nil }
+            let parts = inputs[0].split(separator: ";")
+            func value(_ prefix: String) -> String? {
+                parts.first(where: { $0.hasPrefix(prefix) }).map { String($0.dropFirst(prefix.count)) }
+            }
+            guard let identity = value("id="), let length = value("length=").flatMap(Int.init),
+                  let selection = value("selection=").flatMap(Int.init) else { return nil }
+            return (identity, length, selection)
+        }
+        var focusedIdentity: String?
+        if observesSelection {
+            guard requireTestCondition("Replacement source owns the native text input", in: app,
+                failureContext: { latestNativeInput }, condition: {
+                    guard let input = nativeInput(), input.length == expected.utf16.count else { return false }
+                    focusedIdentity = input.identity
+                    return true
+                }) else { return nil }
+        }
         // Tapping a populated field can move its caret into the source text.
         // Native Select All replaces the complete value regardless of caret.
         func captureFieldInput(_ stage: String) {
@@ -364,6 +392,14 @@ class StudyFlowTestSupport: XCTestCase {
         captureFieldInput("before selection")
         field.typeKey("a", modifierFlags: .command)
         captureFieldInput("after selection")
+        if observesSelection {
+            guard requireTestCondition("Native Select All covers the complete replacement source", in: app,
+                failureContext: { latestNativeInput }, condition: {
+                    guard let input = nativeInput() else { return false }
+                    return input.identity == focusedIdentity && input.length == expected.utf16.count
+                        && input.selection == expected.utf16.count
+                }) else { return nil }
+        }
         if editingAlert {
             // Selection can rebuild native alert descendants. Re-resolve the
             // same scoped field without tapping away its selected range.
@@ -544,6 +580,7 @@ class StudyFlowTestSupport: XCTestCase {
         let app = XCUIApplication()
         launchedApplications.append(app)
         app.launchEnvironment["ANKIPAD_UI_TEST_NAMESPACE"] = UUID().uuidString
+        app.launchEnvironment["ANKIPAD_UI_TEST_INPUT_OBSERVATION"] = "1"
         app.launchArguments = ["--uitest-fixture"]
         if !automaticSync { app.launchEnvironment["ANKIPAD_UI_TEST_DISABLE_AUTOSYNC"] = "1" }
         return app

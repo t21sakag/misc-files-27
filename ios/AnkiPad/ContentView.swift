@@ -121,7 +121,9 @@ struct ContentView: View {
             .background { reviewGamepadCommands }
             .overlay(alignment: .bottomTrailing) {
                 #if DEBUG
-                if UITestIsolation.namespace() != nil, ProcessInfo.processInfo.arguments.contains("--uitest-browser-input-trace") {
+                if UITestIsolation.namespace() != nil,
+                   ProcessInfo.processInfo.arguments.contains("--uitest-browser-input-trace")
+                    || ProcessInfo.processInfo.environment["ANKIPAD_UI_TEST_INPUT_OBSERVATION"] == "1" {
                     BrowserInputDiagnosticsView(identifier: "incoming-native-state", readValue: {
                         incomingInspection + "\n" + BrowserInputDiagnostics.read(loaded: model.profilesReady, busy: model.busy, notes: false)
                     })
