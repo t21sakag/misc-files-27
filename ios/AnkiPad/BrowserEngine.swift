@@ -129,4 +129,8 @@ extension Engine {
             try call("SearchService.BuildSearchString", node)
         })
     }
+    func saveBrowserSearch(name: String, request: BrowserSearchRequest) throws -> [String: String] {
+        let query = try browserSearchQuery(request)
+        return try saveBrowserSearch(name: name, query: request.hasFilters ? query : request.query)
+    }
 }

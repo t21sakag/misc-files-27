@@ -316,6 +316,17 @@ struct BrowserView: View {
             .sheet(item: $historyRequest) { request in
                 BrowserSearchHistoryView(entries: $searchHistory, preferenceKey: request.preferenceKey, resolve: { entry in
                     try await request.engine.browserSearchQuery(entry)
+                }, save: { name, entry in
+                    try requireOpeningProfile()
+                    guard model.currentProfile.id == request.profileID else {
+                        throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
+                    }
+                    let searches = try await request.engine.saveBrowserSearch(name: name, request: entry)
+                    try requireOpeningProfile()
+                    guard model.currentProfile.id == request.profileID else {
+                        throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))
+                    }
+                    config.savedSearches = searches; revision += 1
                 }) { entry, _ in
                     guard model.currentProfile.id == request.profileID else {
                         throw EngineError(message: AppText.localized("プロファイルが変わりました。検索画面を開き直してください。"))

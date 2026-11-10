@@ -5,6 +5,11 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-search-completion-context': ['testLaterNativeDeckSwitchAfterReplacingText', 'testNativeDeckSwitchAfterLeavingEditMode', 'testLaterNativeDeckSwitchAfterLeavingEditMode', 'testSavingRecentSearchWithoutSelectingPreservesCurrentQueryAndPersists'],
+    'native-filter-context': ['testLaterNativeDeckSwitchAfterReplacingText', 'testNativeDeckSwitchAfterLeavingEditMode', 'testLaterNativeDeckSwitchAfterLeavingEditMode'],
+    'filter-context-later': ['testLaterNativeDeckSwitchAfterReplacingText'],
+    'filter-context-editing': ['testNativeDeckSwitchAfterLeavingEditMode'],
+    'filter-context-combined': ['testLaterNativeDeckSwitchAfterLeavingEditMode'],
     'native-filter-input': ['testNativeDeckSwitchWithoutTextEditing', 'testNativeDeckSwitchAfterTypingText', 'testNativeDeckSwitchAfterReplacingText'],
     'filter-input-empty': ['testNativeDeckSwitchWithoutTextEditing'],
     'filter-input-typed': ['testNativeDeckSwitchAfterTypingText'],

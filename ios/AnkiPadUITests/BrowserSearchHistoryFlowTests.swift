@@ -49,6 +49,43 @@ final class BrowserSearchHistoryFlowTests: BrowserSearchTestSupport {
         closeHistory(app); expectRows([0, 1, 2, 3, 4], in: app)
     }
 
+    func testSavingRecentSearchWithoutSelectingPreservesCurrentQueryAndPersists() throws {
+        let (app, _) = try fixture()
+        try submit("row0", replacing: "", in: app)
+        try submit("row1", replacing: "row0", in: app)
+        expectRows([1], in: app)
+        openHistory(app); expectHistory(["row1", "row0"], in: app)
+        let save = app.buttons.matching(identifier: "browser-history-save-1")
+        tapTestControl(save, in: app)
+        let prompt = app.alerts.matching(identifier: "検索を保存")
+        typeInEmptyTestField(prompt.textFields, text: "HistoryPick", in: app)
+        tapTestAlertAction(titles: ["キャンセル"], in: prompt, application: app)
+        requireTestCondition("Cancelling history bookmark keeps history open", in: app) {
+            prompt.count == 0 && app.buttons.matching(identifier: "browser-history-close").count == 1
+        }
+        expectHistory(["row1", "row0"], in: app)
+        tapTestControl(save, in: app)
+        // The same name must still be available after cancelling the first prompt.
+        typeInEmptyTestField(prompt.textFields, text: "HistoryPick", in: app)
+        tapTestAlertAction(titles: ["保存"], in: prompt, application: app)
+        requireTestCondition("History bookmark finishes without selecting its query", in: app) {
+            prompt.count == 0 && app.alerts.count == 0 && save.count == 1 && save.element.isEnabled
+        }
+        expectHistory(["row1", "row0"], in: app)
+        closeHistory(app); expectRows([1], in: app)
+        XCTAssertEqual(app.staticTexts["browser-results"].value as? String, "row1")
+        app.terminate(); app.launchArguments = []; app.launch()
+        openBrowser("", in: app); expectRows([0, 1, 2, 3, 4], in: app)
+        openHistory(app); expectHistory(["row1", "row0"], in: app); closeHistory(app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["保存した検索"], in: app)
+        tapTestMenuAction(titles: ["HistoryPick"], in: app)
+        requireTestCondition("History bookmark preserves the saved older query after relaunch", in: app) {
+            app.staticTexts["browser-results"].value as? String == "row0"
+        }
+        expectRows([0], in: app)
+    }
+
     func testDeletingOneRecentSearchPreservesQueryCardsAndOtherEntryAfterRelaunch() throws {
         let (app, _) = try fixture()
         try submit("row0", replacing: "", in: app)

@@ -196,7 +196,8 @@
   "BrowserSearchHistoryFlowTests": [
     "testCommittedSearchHistoryReuseCancelAndRelaunch",
     "testDeletingOneRecentSearchPreservesQueryCardsAndOtherEntryAfterRelaunch",
-    "testClearingRecentSearchesCanCancelAndPersistsWithoutChangingCards"
+    "testClearingRecentSearchesCanCancelAndPersistsWithoutChangingCards",
+    "testSavingRecentSearchWithoutSelectingPreservesCurrentQueryAndPersists"
   ],
   "BrowserSearchFiltersFlowTests": [
     "testStructuredFilterORCancelFieldIntersectionAndClear",
@@ -232,6 +233,9 @@
   "BrowserFilterInputFlowTests": [
     "testNativeDeckSwitchWithoutTextEditing",
     "testNativeDeckSwitchAfterTypingText",
-    "testNativeDeckSwitchAfterReplacingText"
+    "testNativeDeckSwitchAfterReplacingText",
+    "testLaterNativeDeckSwitchAfterReplacingText",
+    "testNativeDeckSwitchAfterLeavingEditMode",
+    "testLaterNativeDeckSwitchAfterLeavingEditMode"
   ]
 }

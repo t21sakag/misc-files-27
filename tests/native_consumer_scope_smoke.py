@@ -22,6 +22,8 @@ expected['native-widgets'] = {'WidgetGalleryFlowTests/testSummaryConfigurationSe
 expected['native-fields'] = {'BrowserFieldSearchFlowTests/testNamedFieldTextSearchCancelExactAndLiteralStar', 'BrowserFieldSearchFlowTests/testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection'}
 
 expected['native-history'] = {'BrowserSearchHistoryFlowTests/testCommittedSearchHistoryReuseCancelAndRelaunch'}
+expected['native-search-completion-context'] = {'BrowserFilterInputFlowTests/testNativeDeckSwitchAfterLeavingEditMode', 'BrowserFilterInputFlowTests/testLaterNativeDeckSwitchAfterLeavingEditMode', 'BrowserSearchHistoryFlowTests/testSavingRecentSearchWithoutSelectingPreservesCurrentQueryAndPersists', 'BrowserFilterInputFlowTests/testLaterNativeDeckSwitchAfterReplacingText'}
+expected['native-filter-context'] = {'BrowserFilterInputFlowTests/testLaterNativeDeckSwitchAfterReplacingText', 'BrowserFilterInputFlowTests/testLaterNativeDeckSwitchAfterLeavingEditMode', 'BrowserFilterInputFlowTests/testNativeDeckSwitchAfterLeavingEditMode'}
 expected['native-filter-input'] = {'BrowserFilterInputFlowTests/testNativeDeckSwitchAfterTypingText', 'BrowserFilterInputFlowTests/testNativeDeckSwitchWithoutTextEditing', 'BrowserFilterInputFlowTests/testNativeDeckSwitchAfterReplacingText'}
 expected['native-search-completion'] = {
     'BrowserSearchHistoryFlowTests/testDeletingOneRecentSearchPreservesQueryCardsAndOtherEntryAfterRelaunch',
