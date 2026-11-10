@@ -324,7 +324,7 @@ final class BrowserToolsFlowTests: StudyFlowTestSupport {
         addNote("ReplaceOriginal Two", in: app)
         browser("ReplaceOriginal", count: 2, in: app)
         tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
-        tapTestControl(app.buttons.matching(identifier: "browser-find-replace"), in: app)
+        tapTestMenuAction(titles: ["検索と置換"], in: app)
         guard let scope = waitForTestControl(app.staticTexts.matching(identifier: "replace-scope"), in: app, purpose: .observation) else { return }
         XCTAssertEqual(scope.label, "対象: すべてのノート")
         guard let search = tapTestControl(app.textFields.matching(identifier: "replace-search"), in: app) else { return }

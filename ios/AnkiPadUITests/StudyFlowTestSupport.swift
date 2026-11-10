@@ -500,15 +500,24 @@ class StudyFlowTestSupport: XCTestCase {
             let lower = viewport.maxY - bottomInset, upper = viewport.minY + topInset
             let frame = item.exists ? item.frame : .zero
             let located = frame.width > 0 && frame.height > 0
-            if located && frame.minY >= upper && frame.maxY <= lower && item.isHittable {
+            let oversized = located && frame.height > lower - upper
+            // A multiline editor can be taller than the whole sheet. Its
+            // entire frame cannot fit, so require the full usable viewport
+            // and its actual centre to be exposed before native hit testing.
+            let fullyVisible = frame.minY >= upper && frame.maxY <= lower
+            let largeCentreVisible = oversized && frame.minY <= upper && frame.maxY >= lower
+                && frame.midY >= upper && frame.midY <= lower
+            if located && (fullyVisible || largeCentreVisible) && item.isHittable {
                 print("UI reveal \(item.identifier): \(attempt) drags")
                 return
             }
-            let upward = located ? frame.maxY > lower : searchUpward
+            let upward = located ? (oversized ? frame.midY > (upper + lower) / 2 : frame.maxY > lower) : searchUpward
             // Large steps retain at least 80pt of overlap in the usable area;
             // when the row is known, stop near it rather than overshooting.
             let far = min(0.45, max(0.1, (lower - upper - 80) / viewport.height))
-            let delta = upward ? frame.maxY - lower : upper - frame.minY
+            let delta = oversized
+                ? (upward ? frame.midY - lower : upper - frame.midY)
+                : (upward ? frame.maxY - lower : upper - frame.minY)
             let distance = located ? min(far, max(0.1, delta / viewport.height + 0.03)) : far
             let start: CGFloat = upward ? 0.75 : 0.25
             form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: start))
