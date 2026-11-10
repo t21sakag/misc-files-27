@@ -1,6 +1,7 @@
 import XCTest
 
 class BrowserSearchTestSupport: StudyFlowTestSupport {
+    private var observedFrontIdentifiers: [String: [Int: String]] = [:]
     func fixture(extraArguments: [String] = []) throws -> (XCUIApplication, String) {
         let bundle = Bundle(for: Self.self)
         let source = try XCTUnwrap(bundle.url(forResource: "field-search", withExtension: "apkg", subdirectory: "ReceivedFixtures"))
@@ -50,23 +51,39 @@ class BrowserSearchTestSupport: StudyFlowTestSupport {
         }) else { return }
         let lists = app.collectionViews.matching(identifier: "browser-card-list")
         guard let list = waitForTestControl(lists, in: app, purpose: .observation) else { return }
+        let namespace = app.launchEnvironment["ANKIPAD_UI_TEST_NAMESPACE"] ?? String(describing: ObjectIdentifier(app))
         var identifiers = Set<String>()
+        var firstIdentifier: String?
         // Native List virtualizes rows outside the sheet. Prove every expected
         // value through the shared reveal/unique resolver and the total count.
         for index in indices {
-            let row = lists.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@",
-                                                            "browser-front-", "row" + String(index)))
+            let expectedLabel = "row" + String(index)
+            let row: XCUIElementQuery
+            if let identifier = observedFrontIdentifiers[namespace]?[index] {
+                // This identity was read from the actual displayed fixture,
+                // not inferred from backend state. Reuse it after relaunch
+                // instead of repeating a broad AX label traversal.
+                row = lists.staticTexts.matching(identifier: identifier)
+            } else {
+                row = lists.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@",
+                                                             "browser-front-", expectedLabel))
+            }
             guard let value = waitForTestControl(row, in: app, form: list, purpose: .observation) else { return }
+            XCTAssertEqual(value.label, expectedLabel, "Stable card identity must still display the exact expected front")
             XCTAssertTrue(identifiers.insert(value.identifier).inserted, "Each expected row needs a distinct card identity")
+            observedFrontIdentifiers[namespace, default: [:]][index] = value.identifier
+            if firstIdentifier == nil { firstIdentifier = value.identifier }
         }
         XCTAssertEqual(identifiers.count, indices.count)
-        if let first = indices.first {
-            let row = lists.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@",
-                                                            "browser-front-", "row" + String(first)))
+        if indices.count > 1, let firstIdentifier {
+            // Every expected value was already verified above. Return to the
+            // first visible card using its observed stable identity; repeating
+            // the broad label query stalled XCTest's snapshot traversal.
+            let row = lists.staticTexts.matching(identifier: firstIdentifier)
             revealFormControl(row.firstMatch, in: list, topInset: 40, bottomInset: 20,
                               maximumAttempts: 12, searchUpward: false)
             _ = waitForTestControl(row, in: app, purpose: .observation)
-        } else {
+        } else if indices.isEmpty {
             requireTestCondition("Empty result has no card rows", in: app) {
                 lists.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browser-front-")).count == 0
             }

@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-search-completion-last-input': ['testCommittedSearchHistoryReuseCancelAndRelaunch', 'testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch'],
     'native-search-completion-input': ['testCommittedSearchHistoryReuseCancelAndRelaunch', 'testSavedSearchManagementDeletesOnlySelectedCaseSensitiveNameAfterRelaunch', 'testStructuredFiltersSurviveRawTypingAndFilterOnlyFieldAND', 'testSavingRecentSearchWithoutSelectingPreservesCurrentQueryAndPersists', 'testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch'],
     'native-controls-layout-repair': ['testBrowserGlobalFindReplaceShowsAllScopeAndPersistsChanges', 'testNestedTemplateHierarchyAndModeControlsSurviveRevealAndRotation'],
     'native-search-completion-controls': ['testSavedSearchManagementDeletesOnlySelectedCaseSensitiveNameAfterRelaunch', 'testSavedSearchAndFilteredDeckUseCompleteResolvedRequest'],

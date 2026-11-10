@@ -334,10 +334,10 @@ class StudyFlowTestSupport: XCTestCase {
             controlFailure(query, in: app, reason: "Expected an empty field before inserting test text"); return nil
         }
         field.typeText(text)
-        guard field.value as? String == text else {
-            controlFailure(query, in: app, reason: "Field did not contain exactly the inserted test text"); return nil
-        }
-        return field
+        guard requireTestCondition("Inserted field text reaches the complete expected value", in: app, condition: {
+            query.count == 1 && query.element.value as? String == text
+        }) else { return nil }
+        return query.element
     }
 
     /// Replacement starts from known content and verifies the entire result;
@@ -410,10 +410,10 @@ class StudyFlowTestSupport: XCTestCase {
             field = selected
         }
         field.typeText(text)
-        guard field.value as? String == text else {
-            controlFailure(query, in: app, reason: "Field did not contain exactly the replacement text"); return nil
-        }
-        return field
+        guard requireTestCondition("Replacement field text reaches the complete expected value", in: app, condition: {
+            query.count == 1 && query.element.value as? String == text
+        }) else { return nil }
+        return query.element
     }
 
     /// Readiness is also required before reading a value: remote widgets can
