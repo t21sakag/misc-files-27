@@ -206,7 +206,8 @@
     "testSavedSearchAndFilteredDeckUseCompleteResolvedRequest",
     "testNormalBrowserReopenStartsFreshAndKeepsRecentSearchAvailable",
     "testSavedSearchDuplicateNamePreservesOriginalQueryAfterRelaunch",
-    "testSavedSearchManagementDeletesOnlySelectedCaseSensitiveNameAfterRelaunch"
+    "testSavedSearchManagementDeletesOnlySelectedCaseSensitiveNameAfterRelaunch",
+    "testSavedSearchSelectionReplacesGraphicalFiltersAndCommitsPendingRemoval"
   ],
   "TypographyFlowTests": [
     "testReadableNativeBrowserAndEditorInBothOrientations",

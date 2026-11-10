@@ -175,6 +175,60 @@ final class BrowserSearchFiltersFlowTests: BrowserSearchTestSupport {
         openBrowser("", in: app); expectRows([0, 1, 2, 3, 4], in: app)
     }
 
+    func testSavedSearchSelectionReplacesGraphicalFiltersAndCommitsPendingRemoval() throws {
+        let (app, _) = try fixture(extraArguments: ["--uitest-browser-input-trace"])
+        let first = try XCTUnwrap(typeInEmptyTestField(browserSearchFields(app), text: "row0", in: app))
+        first.typeText("\n"); expectRows([0], in: app)
+        saveSearchNamed("ExactZero", in: app)
+        _ = waitForTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        let next = try XCTUnwrap(replaceTestField(browserSearchFields(app), expected: "row0", with: "row1", in: app))
+        next.typeText("\n"); expectRows([1], in: app)
+        saveSearchNamed("RemoveOne", in: app)
+        openFilters(app); setFlag(1, enabled: true, in: app); applyFilters(app)
+        _ = try compiledSearch(containing: ["row1", "flag:1"], in: app); expectRows([], in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["保存した検索"], in: app)
+        tapTestMenuAction(titles: ["ExactZero"], in: app)
+        requireTestCondition("Saved menu selection replaces all current graphical criteria", in: app) {
+            app.staticTexts["browser-results"].value as? String == "row0"
+                && app.buttons.matching(identifier: "browser-filter-chip-flags").count == 0
+        }
+        expectRows([0], in: app)
+        openFilters(app)
+        replaceTestField(app.textFields.matching(identifier: "search-filters-query"), expected: "row0", with: "row1", in: app)
+        setFlag(1, enabled: true, in: app); applyFilters(app)
+        _ = try compiledSearch(containing: ["row1", "flag:1"], in: app); expectRows([], in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["保存した検索"], in: app)
+        tapTestMenuAction(titles: ["保存した検索を管理"], in: app)
+        let lists = app.collectionViews.matching(identifier: "browser-saved-search-list")
+        let list = try XCTUnwrap(waitForTestControl(lists, in: app, purpose: .observation))
+        let removed = lists.cells.containing(.staticText, identifier: "RemoveOne")
+        let row = try XCTUnwrap(waitForTestControl(removed, in: app, form: list))
+        row.swipeLeft(velocity: .slow)
+        tapTestControl(lists.buttons.matching(NSPredicate(format: "label IN %@", ["Delete", "削除"])), in: app, keyboard: .keep)
+        requireTestCondition("Management removal is staged before selecting another saved query", in: app) {
+            lists.staticTexts.matching(NSPredicate(format: "label == %@", "RemoveOne")).count == 0
+        }
+        let selected = "browser-saved-select-" + Data("ExactZero".utf8).base64EncodedString()
+        tapTestControl(lists.buttons.matching(identifier: selected), in: app)
+        requireTestCondition("Management selection closes and replaces all current criteria", in: app) {
+            lists.count == 0 && app.staticTexts["browser-results"].value as? String == "row0"
+                && app.buttons.matching(identifier: "browser-filter-chip-flags").count == 0
+        }
+        expectRows([0], in: app)
+        app.terminate(); app.launchArguments = []; app.launch()
+        openBrowser("", in: app); expectRows([0, 1, 2, 3, 4], in: app)
+        tapTestControl(app.buttons.matching(identifier: "browser-filter-menu"), in: app)
+        tapTestMenuAction(titles: ["保存した検索"], in: app)
+        requireTestCondition("Selecting a managed query also commits its pending removal", in: app) {
+            self.menuActions(titles: ["RemoveOne"], in: app).count == 0
+                && self.menuActions(titles: ["ExactZero"], in: app).count == 1
+        }
+        tapTestMenuAction(titles: ["ExactZero"], in: app)
+        expectRows([0], in: app)
+    }
+
     func testSavedSearchManagementDeletesOnlySelectedCaseSensitiveNameAfterRelaunch() throws {
         let (app, _) = try fixture()
         let first = try XCTUnwrap(typeInEmptyTestField(browserSearchFields(app), text: "row0", in: app))

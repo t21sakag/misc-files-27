@@ -236,7 +236,7 @@ struct BrowserView: View {
             Menu(AppText.localized("ノートタイプ")) { ForEach(types) { type in Button(type.name) { updateFilter(\.noteTypeIDs, values: [type.id]) } } }
             Menu(AppText.localized("フラグ")) { ForEach(0..<8, id: \.self) { value in Button(model.flagLabels.name(value)) { updateFilter(\.flags, values: [BrowserSearchFlag(rawValue: value)!]) }.accessibilityIdentifier("browser-filter-flag-\(value)") } }.accessibilityIdentifier("browser-filter-flags")
             Menu(AppText.localized("保存した検索")) {
-                ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in Button(name.value) { submitSearch(config.savedSearches[name] ?? "") } }
+                ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in Button(name.value) { selectSavedSearch(name) } }
                 Button(AppText.localized("この検索を保存")) {
                     withResolvedSearch { value in searchName = ""; savedSearchValue = value; saveSearchPrompt = true }
                 }.disabled(effectiveSearchRequest.isEmpty)
@@ -361,7 +361,14 @@ struct BrowserView: View {
             }) {
                 NavigationStack {
                     List { ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in
-                        VStack(alignment: .leading) { Text(name.value); Text(config.savedSearches[name] ?? "").font(.caption).foregroundStyle(.secondary) }
+                        Button { selectSavedSearch(name) } label: {
+                            VStack(alignment: .leading) {
+                                Text(name.value)
+                                Text(config.savedSearches[name] ?? "").font(.caption).foregroundStyle(.secondary)
+                            }.frame(maxWidth: .infinity, alignment: .leading).foregroundStyle(.primary)
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityIdentifier("browser-saved-select-" + Data(name.value.utf8).base64EncodedString())
                     }.onDelete { offsets in
                         let names = config.savedSearches.keys.sorted()
                         for index in offsets {
@@ -370,8 +377,9 @@ struct BrowserView: View {
                         }
                     } }
                     .accessibilityIdentifier("browser-saved-search-list")
-                    .studyThemeSurface().navigationTitle(AppText.localized("保存した検索")).toolbar { ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("閉じる")) { manageSearches = false } } }
-                }
+                    .disabled(busy)
+                    .studyThemeSurface().navigationTitle(AppText.localized("保存した検索")).toolbar { ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("閉じる")) { manageSearches = false }.disabled(busy) } }
+                }.interactiveDismissDisabled(busy)
             }
             .sheet(isPresented: $repositionPrompt) {
                 NavigationStack {
@@ -471,6 +479,26 @@ struct BrowserView: View {
         do { try commitSearch(effectiveSearchRequest) }
         catch { self.error = AppText.localized("検索履歴を保存できませんでした。") }
     }
+    private func selectSavedSearch(_ name: BrowserSavedSearchName) {
+        let engine = model.engine
+        let removals = removedSearchNames.map(\.value)
+        mutateOpening {
+            try requireOpeningProfile()
+            let searches: BrowserSavedSearches
+            if removals.isEmpty { searches = try await engine.browserSavedSearches() }
+            else { searches = try await engine.removeBrowserSearches(removals) }
+            try requireOpeningProfile()
+            removedSearchNames = []
+            config.savedSearches = searches
+            manageSearches = false
+            guard let query = searches[name] else { return }
+            // A saved query is a complete snapshot. Current graphical filters
+            // must not narrow it, and selecting it explicitly refreshes results.
+            try commitSearch(BrowserSearchRequest(query: query))
+            revision += 1
+        }
+    }
+
     private func submitSearch(_ value: String) {
         var request = effectiveSearchRequest
         request.query = value
