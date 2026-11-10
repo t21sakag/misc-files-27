@@ -5,22 +5,29 @@ struct NoteTemplateEditor: View {
     @Binding var schema: [String: Any]
     let ordinal: Int
     let saved: () -> Void
+    private let engine: Engine
+    private let profileID: String
+    @State private var choosingDeck = false
     @State private var preview = false
     @State private var busy = false
     @State private var error: String?
     @FocusState private var activeTemplate: String?
     @State private var restoreBrowser = false
     private var template: [String: Any] { (schema["templates"] as? [[String: Any]] ?? [])[ordinal] }
+    init(model: StudyModel, schema: Binding<[String: Any]>, ordinal: Int, saved: @escaping () -> Void) {
+        self.model = model; _schema = schema; self.ordinal = ordinal; self.saved = saved
+        engine = model.engine; profileID = model.currentProfileID
+    }
     var body: some View {
         Form {
             Section(AppText.localized("名前")) { TextField(AppText.localized("カード名"), text: text("name", config: false)) }
             Section(AppText.localized("表面のテンプレート")) { TextEditor(text: text("qFormat")).focused($activeTemplate, equals: "qFormat").font(.system(.body, design: .monospaced)).frame(minHeight: 200) }
             Section(AppText.localized("裏面のテンプレート")) { TextEditor(text: text("aFormat")).focused($activeTemplate, equals: "aFormat").font(.system(.body, design: .monospaced)).frame(minHeight: 200) }
             Section(AppText.localized("デッキの上書き")) {
-                Picker(AppText.localized("生成するカードのデッキ"), selection: text("targetDeckId", fallback: "0")) {
-                    Text(AppText.localized("指定なし")).tag("0")
-                    ForEach(model.decks) { Text($0.name).tag($0.id) }
-                }
+                Button { choosingDeck = true } label: {
+                    let id = text("targetDeckId", fallback: "0").wrappedValue
+                    LabeledContent(AppText.localized("生成するカードのデッキ"), value: id == "0" ? AppText.localized("指定なし") : model.decks.first(where: { $0.id == id })?.name ?? id)
+                }.accessibilityIdentifier("template-deck-select")
             }
             DisclosureGroup(AppText.localized("ブラウザー表示のテンプレート")) {
                 Text(AppText.localized("表面")).font(.caption)
@@ -63,6 +70,12 @@ struct NoteTemplateEditor: View {
         }
         .disabled(busy)
         .studyThemeSurface().navigationTitle(AppText.localized("カードテンプレート"))
+        .sheet(isPresented: $choosingDeck) {
+            let id = text("targetDeckId", fallback: "0").wrappedValue
+            DeckSelectionView(model: model, currentID: id == "0" ? nil : id, noneLabel: AppText.localized("指定なし"), engine: engine, profileID: profileID) { selected in
+                text("targetDeckId", fallback: "0").wrappedValue = selected ?? "0"
+            }
+        }
         .confirmationDialog(AppText.localized("ブラウザー表示のテンプレートをリセットしますか？"), isPresented: $restoreBrowser) {
             Button(AppText.localized("既定に戻す"), role: .destructive) { text("qFormatBrowser").wrappedValue = ""; text("aFormatBrowser").wrappedValue = "" }
         }

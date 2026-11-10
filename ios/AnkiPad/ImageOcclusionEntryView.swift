@@ -7,6 +7,8 @@ struct ImageOcclusionEntryView: View {
     let initialFile: IncomingImportFile?
     let sharedReceipt: SharedInboxReceipt?
     private let engine: Engine
+    private let profileID: String
+    @State private var choosingDeck = false
     @Environment(\.dismiss) private var dismiss
     @State private var picking = false
     @State private var pickingPhoto = false
@@ -19,13 +21,16 @@ struct ImageOcclusionEntryView: View {
     @State private var busy = false
     @State private var receivedImageOpened = false
     init(model: StudyModel, initialFile: IncomingImportFile? = nil, sharedReceipt: SharedInboxReceipt? = nil) {
-        self.model = model; self.initialFile = initialFile; self.sharedReceipt = sharedReceipt; engine = model.engine
-        _deckID = State(initialValue: model.selected?.id ?? model.decks.first(where: { $0.isSelected })?.id ?? model.decks.first?.id ?? "1")
+        self.model = model; self.initialFile = initialFile; self.sharedReceipt = sharedReceipt; engine = model.engine; profileID = model.currentProfileID
+        _deckID = State(initialValue: model.selected.flatMap { $0.filtered ? nil : $0.id }
+            ?? model.decks.first(where: { $0.isSelected && !$0.filtered })?.id ?? model.decks.first(where: { !$0.filtered })?.id ?? "1")
     }
     var body: some View {
         NavigationStack {
             Form {
-                Picker(AppText.localized("デッキ"), selection: $deckID) { ForEach(model.decks) { Text($0.name).tag($0.id) } }
+                Button { choosingDeck = true } label: {
+                    LabeledContent(AppText.localized("デッキ"), value: model.decks.first(where: { $0.id == deckID })?.name ?? deckID)
+                }.accessibilityIdentifier("occlusion-deck-select")
                 Text(AppText.localized("画像を選び、覚えたい部分をマスクで隠します。マスクごとに穴埋めカードを作成します。"))
                 if let initialFile {
                     Text(initialFile.name).foregroundStyle(.secondary)
@@ -59,6 +64,11 @@ struct ImageOcclusionEntryView: View {
                 PhotoSelectionView { data, error in
                     if let data { photoResult = .success(data) }
                     else { photoResult = .failure(EngineError(message: error ?? AppText.localized("画像を読み込めませんでした。"))) }
+                }
+            }
+            .sheet(isPresented: $choosingDeck) {
+                DeckSelectionView(model: model, currentID: deckID, engine: engine, profileID: profileID) { id in
+                    if let id { deckID = id }
                 }
             }
             .sheet(isPresented: $camera, onDismiss: {

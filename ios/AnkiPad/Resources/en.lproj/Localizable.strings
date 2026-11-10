@@ -888,3 +888,13 @@
 "同じ項目ではいずれかに一致し、異なる項目はすべてに一致するカードを検索します。" = "Match any selection within each category and all selected categories.";
 
 "この絞り込みを解除" = "Remove this filter";
+"フィルターデッキの中には作成できません。" = "A deck cannot be created inside a filtered deck.";
+"作成したデッキを確認できませんでした。" = "Could not verify the created deck.";
+"同じ名前のデッキがあります。" = "A deck with this name already exists.";
+"折りたたむ" = "Collapse";
+"サブデッキを作成" = "Create subdeck";
+"該当するデッキがありません" = "No matching decks";
+"デッキを選択" = "Select deck";
+"デッキを選択できませんでした" = "Could not select the deck.";
+"プロファイルが変わりました。画面を開き直してください。" = "The profile changed. Reopen this screen.";
+"フィルターデッキは選択できません。" = "A filtered deck cannot be selected.";

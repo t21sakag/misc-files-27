@@ -364,6 +364,15 @@ jobs:
         run: |
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BrowserForgetOptions.swift ios/AnkiPad/BrowserForgetEngine.swift tests/browser_forget_driver.swift -o build/browser-forget-driver
           swiftc -swift-version 5 -parse-as-library ios/AnkiPad/BrowserUndoStatus.swift tests/browser_undo_status_driver.swift -o build/browser-undo-status-driver
+      - name: Test selection choices and compile creation adapter
+        if: env.CI_MODE == 'compile' || env.CI_MODE == 'full'
+        run: |
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/DeckTree.swift ios/AnkiPad/DeckSelectionChoices.swift tests/deck_selection_choices_smoke.swift -o build/deck-selection-choices
+          build/deck-selection-choices
+          swiftc -swift-version 5 -parse-as-library ios/AnkiPad/DeckSelectionEngine.swift tests/deck_selection_driver.swift -o build/deck-selection-driver
+      - name: Verify real selection creation and rejection boundaries
+        if: env.CI_MODE == 'full'
+        run: python3 tests/deck_selection_engine_smoke.py build/native/host/libankipad_bridge.dylib build/deck-selection-driver
       - name: Verify selected reset backup and undo semantics
         if: env.CI_MODE == 'full' || (env.CI_MODE == 'ui' && (env.UI_SUITE == 'browser-tools' || env.UI_SUITE == 'native-browser-reset' || startsWith(env.UI_SUITE, 'browser-reset-')))
         run: |

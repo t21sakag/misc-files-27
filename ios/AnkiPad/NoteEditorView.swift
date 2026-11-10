@@ -7,6 +7,8 @@ struct NoteEditorView: View {
     @ObservedObject var model: StudyModel
     let request: EditorRequest
     private let engine: Engine
+    private let profileID: String
+    @State private var choosingDeck = false
     @Environment(\.dismiss) private var dismiss
     @State private var document: NoteDocument?
     @State private var types: [NamedID] = []
@@ -47,7 +49,7 @@ struct NoteEditorView: View {
     @ScaledMetric(relativeTo: .body) private var editorReferenceSize: CGFloat = 17
     @AppStorage("closeAfterAdd") private var closeAfterAdd = false
     init(model: StudyModel, request: EditorRequest) {
-        self.model = model; self.request = request; engine = model.engine
+        self.model = model; self.request = request; engine = model.engine; profileID = model.currentProfileID
     }
     var body: some View { NavigationStack { loadedContent }.dynamicTypeSize(.xLarge...) }
     private func fieldFontSize(_ current: NoteDocument, index: Int) -> CGFloat {
@@ -88,9 +90,9 @@ struct NoteEditorView: View {
                                 }
                             }
                         }
-                        Picker(AppText.localized("デッキ"), selection: Binding(get: { document?.deckID ?? "1" }, set: { document?.deckID = $0; dirty = true })) {
-                            ForEach(model.decks) { Text($0.name).tag($0.id) }
-                        }
+                        Button { choosingDeck = true } label: {
+                            LabeledContent(AppText.localized("デッキ"), value: model.decks.first(where: { $0.id == current.deckID })?.name ?? current.deckID)
+                        }.accessibilityIdentifier("note-deck-select")
                     }
                     Toggle(AppText.localized("ビジュアル編集"), isOn: $visualEditor)
                     Toggle(AppText.localized("文頭を自動で大文字にする"), isOn: $capitalizeEditor)
@@ -191,6 +193,12 @@ struct NoteEditorView: View {
     }
     private var schemaContent: some View {
         navigationContent
+            .sheet(isPresented: $choosingDeck) {
+                DeckSelectionView(model: model, currentID: document?.deckID, engine: engine, profileID: profileID) { id in
+                    guard let id, document?.deckID != id else { return }
+                    document?.deckID = id; dirty = true
+                }
+            }
             .sheet(item: $changingType, onDismiss: {
                 guard let current = document else { return }
                 busy = true
