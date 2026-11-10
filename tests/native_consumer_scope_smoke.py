@@ -22,6 +22,7 @@ expected['native-widgets'] = {'WidgetGalleryFlowTests/testSummaryConfigurationSe
 expected['native-fields'] = {'BrowserFieldSearchFlowTests/testNamedFieldTextSearchCancelExactAndLiteralStar', 'BrowserFieldSearchFlowTests/testNamedFieldEmptyNonemptyExistsAndCurrentQueryIntersection'}
 
 expected['native-history'] = {'BrowserSearchHistoryFlowTests/testCommittedSearchHistoryReuseCancelAndRelaunch'}
+expected['native-filter-input'] = {'BrowserFilterInputFlowTests/testNativeDeckSwitchAfterTypingText', 'BrowserFilterInputFlowTests/testNativeDeckSwitchWithoutTextEditing', 'BrowserFilterInputFlowTests/testNativeDeckSwitchAfterReplacingText'}
 expected['native-search-completion'] = {
     'BrowserSearchHistoryFlowTests/testDeletingOneRecentSearchPreservesQueryCardsAndOtherEntryAfterRelaunch',
     'BrowserSearchIdentityFlowTests/testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch',

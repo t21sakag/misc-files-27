@@ -8856,6 +8856,335 @@
         }
       ],
       "checked_at": "2026-11-09T23:54:46.812665+00:00"
+    },
+    {
+      "id": "20261110-isolate-native-filter-input",
+      "covers": [
+        [
+          42724269359,
+          1
+        ],
+        [
+          42720244062,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42720244062,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Deck-scope native switch now changes, actual UIControl value events and filter.binding confirm selection. Case reaches the intended rename alert, checks old name, taps the correct native alert field410,425 and issues Command-A. At the following field.typeText, XCTest explicitly treats that same expected alert as an interruption and presses its Cancel button336,492.5 before failing to resolve the field. No intended rename Save occurs. Original shortcut-to-focus mechanism remains unresolved."
+        },
+        {
+          "attempt": [
+            42724269359,
+            1
+          ],
+          "kind": "undetermined",
+          "finding": "The same deck-scope switch again receives native delivery at607,652.5,63,28 with on=false, but no switch.event or filter.binding follows. Complete critical capture is not truncated. The preceding run with the same switch/action recorded both native value events and binding success. The new Alert replacement observation is not reached. Native recognition/delivery end versus view lifecycle remains unproven."
+        }
+      ],
+      "rule_review": {
+        "semantic_labels": "Original case keeps actual numeric deck ID. Minimal cases require exactly one actual deck-row Switch in the new empty collection by the stable identifier prefix, read its nonempty live semantic name and identifier, then retain that same identifier after reopening. Do not assume Default or a particular locale: local engine initialized its default name as 既定, which was caught before Apple dispatch. Compiled search must contain that actual observed name.",
+        "foreground_scope": "Latest terminal AX again places the intended deck thumb inside the actual foreground filter form. Native touch delivery matches that thumb. Three new cases enter this same form through collection menu/browser/filter menus, without importing, creating decks or moving cards. All actions/readiness remain shared helpers.",
+        "unique_reads_and_actions": "Keep common resolver selecting the unique native child and the original native tap. Three independent minimal cases compare no typing, typing, and Command-A replacement, each with on/off transitions and actual compiled search assertions. No alternate gesture, extra switch retry, timeout increase, direct state mutation or disabled assertion is introduced.",
+        "live_state": "Original long case produced correct4+1deck cardinality before failing on the scope switch. The previous attempt passed this phase then failed in rename Alert replacement, whose source was later observed as default cancellation. Latest run did not reach that Alert, so the latest helper change is not marked validated. Minimal cases will prove native on/off, compiled deck filter, reopening and literal-query preservation using an isolated empty real collection.",
+        "keyboard_and_scroll": "Original switch failure recurs after raw query replacement and keyboard dismissal, while the same action passed in the previous attempt. Decompose the prerequisite into independent empty/typed/replaced cases. Use existing shared input/keyboard/switch helpers and exact full-value checks. Native controls fit the initial form; no synthetic scrolling or extra tap variation is used.",
+        "environment": "Keep mandatory workflow checks and simulator engine, one shared compiled build and three isolated consumers. These minimal cases need no APKG/manifest/photo/server fixture. Confirm dispatcher/catalog, actual consumer entrypoint and prerequisite scope locally. Do not rerun the successful bookmark, duplicate, delete or missing-ID cases to fill capacity. Full132case source plus these3becomes135 publicly; private favorite remains a separate unpublished case. A real isolated CABI empty-collection probe is run before dispatch to validate the one-default-deck and empty-search assumptions; its translated deck name is not hardcoded into UI.",
+        "first_failure_evidence": "Latest complete critical log has switch.delivery false twice for distinct passive observers, with no later UIControl value event/binding, while the prior same case has delivery→binding→on events. Actual synthesized pointer and terminal native state match. This proves an intermittent pre-binding failure, not its cause. Preserve terminal AX/events/recording; prior native recording samples show Home and do not prove current app state. The minimal cases use the existing native diagnostic and evidence attachments to reduce the long setup before gathering the same failure.",
+        "failure_classification": "Exact consecutive pair42720244062/1 and42724269359/1. First is proven default-handler harness cancellation during rename typing, with source-to-focus mechanism unresolved. Second is recurring undetermined native switch failure, before rename. Keep the original test and both failures unresolved rather than treating the reduced reproducer as feature completion. Current attempt duration from summary/start logs is tracked separately from full run time.",
+        "runtime_warnings": "Latest summary runtimeWarnings=[]/one failure/zero skip. Preserve runtime/skip/identity gates and native desired-state assertions. No future case success is evidence for the original rename/relaunch behavior until that original case itself passes.",
+        "device_evidence": "Minimal simulator behavior cannot establish actual device controls, voice/notifications/signing, full regression, or remaining AnkiDroid parity. Last distributed IPA remains build316; favorite source and case remain private and native-unverified."
+      },
+      "root_cause": "The same native switch can pass or fail with identical semantic target/input path. Latest failure reaches native delivery but never emits UIControl value or model binding events. Exact cause is unresolved. Earlier expected-alert default cancellation is a separate proven harness failure and its newly instrumented repair remains untested.",
+      "common_resolution": "Keep native action and shared helper contracts. Reduce the failing prerequisite to three independently selectable cases using the actual engine/default deck and native filter form: no text editing, typing only, and text replacement. Each asserts selected state reaches compiled search, survives form reopen, and can be cleared while preserving literal input. One build/three consumers replaces the lengthy APKG/create/move prelude only for diagnosis; retain the original rename case for subsequent feature verification.",
+      "next_scope": [
+        "BrowserFilterInputFlowTests/testNativeDeckSwitchWithoutTextEditing",
+        "BrowserFilterInputFlowTests/testNativeDeckSwitchAfterTypingText",
+        "BrowserFilterInputFlowTests/testNativeDeckSwitchAfterReplacingText"
+      ],
+      "evidence": [
+        {
+          "reference": "completed-evidence/search-completion-42686954071/run.json",
+          "sha256": "70883e18a136b9c6a1239d44bd9acac8eaa8a2708311e0e8317910cb12b9f237"
+        },
+        {
+          "reference": "completed-evidence/search-completion-42686954071/failed.log",
+          "sha256": "92e9116f453bf1356e1e65bbd0d983d03a945e66ceb1d3ab2b4c3733d6eacfd1"
+        },
+        {
+          "reference": "completed-evidence/state/search-observation-run.json",
+          "sha256": "d21b06ccc7060d9f0251f37faf42f3dc61400f502c91ebcf698b184613e72e75"
+        },
+        {
+          "reference": "completed-evidence/state/search-observation-failed.log",
+          "sha256": "420b282d8d5405480cf03690ab6f04bbfa338f5c8be57f46f149c19eb96b51a7"
+        },
+        {
+          "reference": "completed-evidence/screenshots/8A232784-6809-44EB-8EB4-CC22F2DFD8DC.txt",
+          "sha256": "8b3300a699225443c08a4bf4b33e34df59dc609efba9892f0fcc27e71eb06fb4"
+        },
+        {
+          "reference": "completed-evidence/screenshots/C61D1463-71B5-496F-88B4-7C78C18D7FFB.txt",
+          "sha256": "06c90e2f1b7b559281f495bb755e0fb4524520b63b9dd599cdcfb835015cb8b3"
+        },
+        {
+          "reference": "completed-evidence/screenshots/6D434A3A-E29A-42B0-A708-833F607C34C2.txt",
+          "sha256": "c15f6dd86997f5f2382fed9e809ac90a12c1406d1353f14fb4f2f89c62450c7d"
+        },
+        {
+          "reference": "completed-evidence/screen-images/1B5D9656-81B1-4CE4-BC49-743C1D83F468.png",
+          "sha256": "57d0cf096c77914b32e4c1952a547e114b4515fb9283daeb1f57ac8104fb81a9"
+        },
+        {
+          "reference": "completed-evidence/batch-1/input-events.json",
+          "sha256": "ceabceebccfd9d4833f09e1b2aac947171ab0088b2c8f627131916b634ad7999"
+        },
+        {
+          "reference": "completed-evidence/widget-diagnostics/critical.log",
+          "sha256": "261452ba70922ac92f4bbafa8f105ef4eb9783515e35a4e6f9da28baf95944d2"
+        },
+        {
+          "reference": "completed-evidence/widget-diagnostics/live-collection.json",
+          "sha256": "bec78d0b0054815c5c67698c73746eea63770025e3aee6c59368cdd460b84999"
+        },
+        {
+          "reference": "completed-evidence/widget-diagnostics/screen-recording.json",
+          "sha256": "f487b5872c5a3360b3858d632cb04ba9dc5496dc4c4f7e11331e766b06555fb3"
+        },
+        {
+          "reference": "completed-evidence/widget-diagnostics/native-screen.mp4",
+          "sha256": "a54a5182074194ac84fb19f4d41d2aff93c4e6073158a053a4e3b45dd55e7e48"
+        },
+        {
+          "reference": "completed-evidence/batch-0/test-summary.json",
+          "sha256": "ef4ac5e96fe2b3155a193dfe7998ea951122cd88ddbeee631b3af45eb5c42da8"
+        },
+        {
+          "reference": "completed-evidence/batch-1/test-summary.json",
+          "sha256": "b0246d622a8c63112c188f7859a66a0f244217c7b97ad8fd43c7bb79ad5b154e"
+        },
+        {
+          "reference": "completed-run42720244062/state/search-switch-run.json",
+          "sha256": "dd243ed744087342ced5561b2bca9008d389fdeb50e3517bb9dadfdc1fa05c6b"
+        },
+        {
+          "reference": "completed-run42720244062/state/search-switch-failed.log",
+          "sha256": "769cd41c2426b471074860fa54f4aca62ff0ca32a32a5a96894ea23b5f7bbccf"
+        },
+        {
+          "reference": "completed-run42720244062/search-switch-42720244062/test-summary.json",
+          "sha256": "c9c77f3d5ee8e56b09e47fbbf98bd993837842a1d54724cce64e632ec08a8457"
+        },
+        {
+          "reference": "completed-run42720244062/search-switch-42720244062/input-events.json",
+          "sha256": "0302e7737d759103b90e7bb3a11dcbb093d57c637330c8e2200237bf85e5b6e3"
+        },
+        {
+          "reference": "completed-run42720244062/widget-diagnostics/critical.log",
+          "sha256": "f5985ebe0a931335f9eaf51371dca6d0d2fdcabfc95a1aae8cb8fe15c7da28c8"
+        },
+        {
+          "reference": "completed-run42720244062/widget-diagnostics/screen-recording.json",
+          "sha256": "a64b949a0d2938dc70499797cb54a8b4eda169f4dafc49f5f27c04c32cff78e8"
+        },
+        {
+          "reference": "completed-run42720244062/widget-diagnostics/native-screen.mp4",
+          "sha256": "dbaac09e3f5b6bae4e3fc9800fa47e96a28b0619fe6aa6e61056b37b00c40bfb"
+        },
+        {
+          "reference": "completed-run42720244062/screenshots/518B17E6-2F90-4D75-B6EC-978C43DE0B56.txt",
+          "sha256": "caf2849548a293c26ed01e267aeb476f734ac388961ab64c7ca86c3431feeef9"
+        },
+        {
+          "reference": "completed-run42720244062/screenshots/F9E185FB-711E-4399-8181-693971CAA3A8.txt",
+          "sha256": "3831372f7d89a26b0816fc3d93bd083ca617bbcd231303186fc07560ecc6df99"
+        },
+        {
+          "reference": "completed-run42724269359/state/alert-input-run.json",
+          "sha256": "9b2a9ed568b5b897dfc8043e47b97031d338f020c0eaba2628ebbd4c0fc2ccc3"
+        },
+        {
+          "reference": "completed-run42724269359/state/alert-input-failed.log",
+          "sha256": "03c49b7b927b6e6b703e8a363859234ddc0658bfa0ac452e96c22f171a79eac7"
+        },
+        {
+          "reference": "completed-run42724269359/alert-input-42724269359/test-summary.json",
+          "sha256": "ef47cc3f3f14a95ace886041b68176f862df9c3a7fbefdaeefe38635cccabc95"
+        },
+        {
+          "reference": "completed-run42724269359/alert-input-42724269359/input-events.json",
+          "sha256": "dd7a33c06f610f629db537cd11f541c9d4e0c75ef28c9a5b90014158ebecb13e"
+        },
+        {
+          "reference": "completed-run42724269359/widget-diagnostics/critical.log",
+          "sha256": "74bc6696b9ea63410960b7ee82e9e990538a2d6e362e2c2ec529b07d3db2cf63"
+        },
+        {
+          "reference": "completed-run42724269359/widget-diagnostics/live-collection.json",
+          "sha256": "1471c2ce364d2d549305d87ccb0f82ab76a04e32aea7f72870eed4e9ceef7072"
+        },
+        {
+          "reference": "completed-run42724269359/screenshots/6E9FF0AE-FDAE-44A2-9020-DFC665B151BB.txt",
+          "sha256": "fdb5acbab4a75138c15fe09730045fcdba212305bd4f2d9df6fccb08805732a7"
+        },
+        {
+          "reference": "completed-run42724269359/screenshots/6847FFC9-430D-4736-B032-1CB60E034B28.txt",
+          "sha256": "1b47361fa096b9a3b9c76490efd6b5551706f7debcdfa9ea762e23839c632b11"
+        },
+        {
+          "reference": "completed-run42724269359/screenshots/0A2D28A7-972C-450E-ACFA-ECFFC91F2597.txt",
+          "sha256": "45a6924c7b40ad33a235a10c7585c3b4490a8092dcca4272cb365a895cbf4dea"
+        },
+        {
+          "reference": "local-empty-engine/default-deck-premise.json",
+          "sha256": "c6506e31f2408b270968702fb9c22eb28c81a081e14eaf744b5961bb7145d6d5"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "2a991053bd49aa529a398099492555ee67b9c95a3065d99e385114fc9a04316a",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "c9ad3a1ff06644a8343075426009b408d17a7efca5255153c430ebfe0288dc0b",
+        "ios/AnkiPad/BrowserInputDiagnostics.swift": "d3a71ed7607140306a73e17a6d836377dacc216ce40a1275c30410bdd549280c",
+        "ios/AnkiPad/BrowserSearchFiltersView.swift": "61ea9f97bc75ddac19522caabf784db9e31bdc8ef86010e2d2e3ff53b076efc8",
+        "ios/AnkiPad/ContentView.swift": "4d6d6aa3a0d26bddbe3cf58c02868506981da89ac59e21cafe0a8878f812dfe5",
+        "ios/AnkiPadUITests/BrowserSearchIdentityFlowTests.swift": "358649262c8209466fba8ab4f5e6f86fb7d1186abcd97e4fded4b94a17e62378",
+        "ios/AnkiPadUITests/BrowserSearchTestSupport.swift": "b6c253e7169548278b90c9b35a86c3fd1cf83e7420f5ccce1cc03036217f1491",
+        "scripts/record-ui-screen.py": "8741c46163687a28f881631e8d0d785baf62798ded9c2f8bab0e9638f85c2ad6",
+        "scripts/run-ui-with-diagnostics.py": "f6577089d8713a9f6b7395e3397b34d0a93bcf1776baf787a46b5e3a165d7556",
+        "scripts/select-ui-tests.py": "222aa8f127afad54c1fcdba0b09e09deb2f9a0e4138727f00b3c6bfa38dbf643",
+        "tests/widget_diagnostics_smoke.py": "9b01db44218a3f301c597a0966ec19793f087ac1a9d1e1e535bd29bedb588549",
+        ".github/workflows/ipa.yml": "66f4d6adfab84402af23be20db110c4c7ac827d9bc32f9b4228075cca713b8a4",
+        "ios/AnkiPadUITests/BrowserFilterInputFlowTests.swift": "ad29a37bf5712c2e936db58ec2db3f3c0ff3c052fd3eacc5d40a427d091aae8d",
+        "scripts/ui-case-groups.json": "1fa68ac100ada7386aea69cda9985f9b7c79262e482b86fbd677c88ce664438b",
+        "tests/native_consumer_scope_smoke.py": "e7a565a1b509e932ea26a95f0d7eccc9386b2ae978deabc557f3dc7e63c6ec81"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "20286a3c4a7cff7b41f072d56c33d4272cd655f7430bf1c5f62698841665d966"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d1d32694ddfea50591bfbf72bc77d66a053b4e4f416789873b06f4c3b7dfc48c"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "4b7fdf02d21e53e75d76f31a21ae572ccba5b20f48493b0c0e98917c98a45c33"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e0c0aa84ab53fd92e1da8199e3672ad0a2e75cfb96d4fad7cd2c1edda928f867"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5110d234b6e30e05fd9f425900a0075107854d271f43a2b20efdfd4796bc474b"
+        },
+        {
+          "name": "prerequisite rejection",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "actual consumer runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "actual workflow diagnostics",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "observer interruption and recording",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        },
+        {
+          "name": "actual empty collection premise",
+          "argv": [
+            "python3",
+            "-c",
+            "import sys,tempfile\nfrom pathlib import Path\nsys.path.insert(0,\"tests\")\nfrom engine_smoke import Engine\nwith tempfile.TemporaryDirectory() as directory:\n    engine=Engine(Path(directory)/\"empty\")\n    try:\n        names=engine.call(\"DecksService.GetDeckNames\")[\"entries\"]\n        assert len(names)==1 and names[0][\"name\"], names\n        tree=engine.call(\"DecksService.DeckTree\",{\"now\":\"0\"})\n        assert len(tree.get(\"children\",[]))==1 and tree[\"children\"][0][\"name\"]==names[0][\"name\"], tree\n        cards=engine.call(\"SearchService.SearchCards\",{\"search\":'deck:\"'+names[0][\"name\"]+'\" row'})\n        assert not cards.get(\"ids\"), cards\n        print(\"PASS: actual empty-collection deck and search prerequisites\")\n    finally:\n        engine.close()\n",
+            "env:ANKIPAD_HOST_BRIDGE"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e52ed29be3f2914c1328bbbcadcecf09a6f58a3dd7304329a50cd1ed358217de"
+        }
+      ],
+      "checked_at": "2026-11-10T00:28:02.258783+00:00"
     }
   ]
 }

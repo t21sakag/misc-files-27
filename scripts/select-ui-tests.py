@@ -5,6 +5,10 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-filter-input': ['testNativeDeckSwitchWithoutTextEditing', 'testNativeDeckSwitchAfterTypingText', 'testNativeDeckSwitchAfterReplacingText'],
+    'filter-input-empty': ['testNativeDeckSwitchWithoutTextEditing'],
+    'filter-input-typed': ['testNativeDeckSwitchAfterTypingText'],
+    'filter-input-replace': ['testNativeDeckSwitchAfterReplacingText'],
     'native-template-reading': ['testNestedTemplateHierarchyAndModeControlsSurviveRevealAndRotation', 'testPlainAnswerRevealKeepsQuestionDocumentPositionAndFont', 'testAuthoredTextAndReplayControlsBalanceAfterReveal', 'testAdaptiveReviewRefitsMediaAndKeepsInputAcrossRotation', 'testTypedAnswerAutoFocusCanBeDisabledAndManualInputStillWorks'],
     'template-reading': ['testNestedTemplateHierarchyAndModeControlsSurviveRevealAndRotation'],
     'native-browser-reset': ['testCardResetCancelOptionsPersistAndUndoLeavesSiblingReviewed', 'testNoteResetExpandsOnlySelectedNoteAndUndoRestoresBothCards'],

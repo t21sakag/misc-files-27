@@ -228,5 +228,10 @@
   "BrowserSearchIdentityFlowTests": [
     "testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch",
     "testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch"
+  ],
+  "BrowserFilterInputFlowTests": [
+    "testNativeDeckSwitchWithoutTextEditing",
+    "testNativeDeckSwitchAfterTypingText",
+    "testNativeDeckSwitchAfterReplacingText"
   ]
 }
