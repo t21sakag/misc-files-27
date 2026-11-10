@@ -174,8 +174,10 @@ class StudyFlowTestSupport: XCTestCase {
     /// postcondition. Required controls never skip their readiness checks.
     @discardableResult
     func tapTestControl(_ query: XCUIElementQuery, in app: XCUIApplication, form: XCUIElement? = nil,
-                        keyboard: TestKeyboardPolicy = .dismiss, alreadySatisfied: (() -> Bool)? = nil) -> XCUIElement? {
-        guard let element = waitForTestControl(query, in: app, form: form, keyboard: keyboard, alreadySatisfied: alreadySatisfied) else { return nil }
+                        keyboard: TestKeyboardPolicy = .dismiss, alreadySatisfied: (() -> Bool)? = nil,
+                        searchUpward: Bool = true) -> XCUIElement? {
+        guard let element = waitForTestControl(query, in: app, form: form, keyboard: keyboard,
+                                               alreadySatisfied: alreadySatisfied, searchUpward: searchUpward) else { return nil }
         XCTContext.runActivity(named: "Tap native control: " + element.identifier + " " + String(describing: element.frame)) { _ in
             element.tap()
         }
@@ -423,10 +425,14 @@ class StudyFlowTestSupport: XCTestCase {
     @discardableResult
     func waitForTestControl(_ query: XCUIElementQuery, in app: XCUIApplication, form: XCUIElement? = nil,
                             keyboard: TestKeyboardPolicy = .dismiss, alreadySatisfied: (() -> Bool)? = nil,
-                            timeout: TimeInterval = 20, purpose: TestControlPurpose = .action) -> XCUIElement? {
+                            timeout: TimeInterval = 20, purpose: TestControlPurpose = .action,
+                            searchUpward: Bool = true) -> XCUIElement? {
         if alreadySatisfied?() == true { return nil }
         if case .dismiss = keyboard, !dismissTestKeyboard(in: app) { return nil }
-        if let form { revealFormControl(query.firstMatch, in: form, topInset: 40, bottomInset: 20, maximumAttempts: 12) }
+        if let form {
+            revealFormControl(query.firstMatch, in: form, topInset: 40, bottomInset: 20,
+                              maximumAttempts: 12, searchUpward: searchUpward)
+        }
         let unique: () -> Bool = { alreadySatisfied?() == true || query.count == 1 }
         let exists = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in unique() }, object: nil)
         let existenceResult = XCTWaiter.wait(for: [exists], timeout: timeout)
@@ -543,7 +549,7 @@ class StudyFlowTestSupport: XCTestCase {
             guard let collection = waitForTestControl(query, in: app) else { return false }
             var viewport = CGRect.zero
             var page: (ready: Bool, complete: Bool, fingerprint: String) = (false, false, "")
-            guard requireTestCondition("Mounted native page: " + description, in: app, timeout: 10,
+            guard requireTestCondition("Mounted native page: " + description, in: app, timeout: 30,
                 failureContext: failureContext, condition: {
                     let bounds = collection.frame.intersection(app.frame)
                     guard bounds.width > 20, bounds.height > 270, collection.isHittable else { return false }

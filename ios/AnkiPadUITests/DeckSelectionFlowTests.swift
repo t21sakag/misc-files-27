@@ -17,7 +17,8 @@ final class DeckSelectionFlowTests: StudyFlowTestSupport {
         let picker = app.collectionViews.matching(identifier: "deck-picker-list")
         let createForm = app.collectionViews.matching(identifier: "deck-picker-create-form")
         func openPicker() throws {
-            _ = try XCTUnwrap(tapTestControl(app.buttons.matching(identifier: "note-deck-select"), in: app, form: form))
+            _ = try XCTUnwrap(tapTestControl(app.buttons.matching(identifier: "note-deck-select"),
+                                             in: app, form: form, searchUpward: false))
             _ = try XCTUnwrap(waitForTestControl(picker, in: app, purpose: .observation))
         }
         func enterCreationName(_ name: String) throws {
@@ -40,6 +41,7 @@ final class DeckSelectionFlowTests: StudyFlowTestSupport {
         }
         func search(_ text: String) throws {
             let field = app.navigationBars.matching(identifier: "デッキを選択").searchFields
+                .matching(NSPredicate(format: "label == %@", "デッキを検索"))
             _ = try XCTUnwrap(typeInEmptyTestField(field, text: text, in: app))
         }
 

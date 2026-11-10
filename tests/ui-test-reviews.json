@@ -10596,6 +10596,268 @@
         }
       ],
       "checked_at": "2026-11-10T14:50:25.403488+00:00"
+    },
+    {
+      "id": "20261110-mounted-cell-completeness-and-form-reveal-direction",
+      "covers": [
+        [
+          42838384711,
+          1
+        ],
+        [
+          42826319803,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42826319803,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Requested UI run stopped in host collection-page geometry compilation because Foundation-only imports omitted the Apple CoreGraphics overlay. No native UI executed."
+        },
+        {
+          "attempt": [
+            42838384711,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Consumer 0 (testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch) no longer stalled in XCTest snapshot matching, proving direct-cell page scanning resolved the SDK hang, but scanTestCollectionPages used a 10s XCTWaiter deadline that expired mid-query on row3 at 153.63s; the aborted AX property read returned identifier == \"\" and frame == .zero, polluting observedFrontIdentifiers[namespace][3] = \"\" so the immediate post-waiter recheck failed with 'Native card identity changed for row3' when row3 returned its real ID 'browser-front-1794322429903'. Consumer 1 (testSearchCreateChildCancelAndPersistNoteDestination) typed into note-field-0 and note-field-1, scrolling note-form to 100% and unmounting the top row note-deck-select; openPicker() then called tapTestControl with default searchUpward=true, dragging toward the bottom 12 times instead of scrolling back upward (searchUpward=false)."
+        }
+      ],
+      "rule_review": {
+        "semantic_labels": "Keep exact browser rowN labels/identities and native deck-picker IDs. Scope the deck-picker search field explicitly to label == 'デッキを検索' inside the 'デッキを選択' navigation bar.",
+        "foreground_scope": "Use .searchable(placement: .navigationBarDrawer(displayMode: .always)) in DeckSelectionView matching BrowserView so the search field is consistently mounted in the foreground navigation bar without displacing toolbar actions.",
+        "unique_reads_and_actions": "Require non-empty 'browser-front-' identifier prefix, non-empty card ID suffix, and positive frame dimensions for every mounted cell before recording observedFrontIdentifiers in expectRows, preventing an aborted deadline read from polluting unique card identity state.",
+        "live_state": "Keep all semantic postconditions, duplicate rejection checks, cancel restoration, and relaunch persistence assertions unchanged.",
+        "keyboard_and_scroll": "Forward searchUpward through waitForTestControl and tapTestControl into revealFormControl, and pass searchUpward: false when revisiting the top note-deck-select row after editing lower note fields. Give scanTestCollectionPages's mounted-page requireTestCondition the standard 30s timeout and reject incomplete cell property snapshots before mutating seen/observedFrontIdentifiers.",
+        "environment": "Both consumers built and launched cleanly from the shared compiled products with zero runtime warnings and verified fixture digests.",
+        "first_failure_evidence": "Consumer 0 terminal AX (1AC11428, 448048ED, E21BE1E9) and screenshot (60108787) prove row0..row4 are visibly mounted with valid IDs while observed[3] recorded empty string at the 10.0s waiter cutoff. Consumer 1 terminal AX (C5D2B9BC, D2BF9AED) and screenshot (D2955D66) prove note-form scroll bar is at 100% while revealFormControl searched with searchUpward=true.",
+        "failure_classification": "Both 42826319803/1 and 42838384711/1 are harness defects (host import in 42826319803; waiter-cutoff partial AX read + form reveal direction in 42838384711). Re-run only the two cases in native-search-completion-deck-selection.",
+        "runtime_warnings": "Both consumer summaries reported runtimeWarnings=[]; keep strict zero-warning and exact-case gates.",
+        "device_evidence": "Simulator UI verification only; physical device and SideStore checks remain separate."
+      },
+      "root_cause": "In Consumer 0, direct-cell page scanning eliminated the XCTest snapshot-tree hang, but scanTestCollectionPages used a 10s XCTWaiter timeout that expired mid-AX-read on the 4th cell (row3), returning an empty identifier that expectRows stored into observedFrontIdentifiers before the post-timeout recheck read the real identifier. In Consumer 1, typing into note-field-0 and note-field-1 scrolled note-form to the bottom (100%), unmounting note-deck-select at the top of the lazy form, and openPicker() used the default searchUpward=true direction instead of searchUpward=false.",
+      "common_resolution": "Give scanTestCollectionPages the standard 30s requireTestCondition timeout and guard expectRows against empty/incomplete 'browser-front-' identifiers or zero frames before mutating observedFrontIdentifiers. Thread searchUpward through waitForTestControl/tapTestControl, pass searchUpward: false when revealing note-deck-select at the top of note-form, and pin DeckSelectionView's searchable field to .navigationBarDrawer(displayMode: .always) with explicit label scoping.",
+      "next_scope": [
+        "DeckSelectionFlowTests/testSearchCreateChildCancelAndPersistNoteDestination",
+        "BrowserSearchIdentityFlowTests/testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch"
+      ],
+      "evidence": [
+        {
+          "reference": "completed-evidence/mounted-pages-imports-run.json",
+          "sha256": "806c51011fc6d73ba78ae201ae9b5cc8496e2db5907614b6e9a1e741e6f1f9a3"
+        },
+        {
+          "reference": "completed-evidence/mounted-pages-imports-failed.log",
+          "sha256": "cc319f80405fde38336807ba869e7279d08d3d51b0a869895cf45618f20280de"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/history.json",
+          "sha256": "df1cf3485e4256bbe55159373f6771e75391cb095569af2876357c74cd11ef85"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/run.json",
+          "sha256": "ba157008019b55c5d3e75fec456fcb9ab0669fafbb2981f428f3922e5a8a9d80"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/ui-diagnostics-0/test-summary.json",
+          "sha256": "ccbc50958e9615ea6d4f16feb02fd726ae9b55260d0697ea8efd84b09d972207"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/ui-diagnostics-0/screenshots/1AC11428-81E6-4F07-9C7B-13C5BFF85130.txt",
+          "sha256": "6adfc526cc3de52e115ed0641aa10abdbd32603c10583956f0bc7a48aead8af6"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/ui-diagnostics-0/screenshots/448048ED-EDD0-4D54-8C9C-AE0A28CDA6BB.txt",
+          "sha256": "5696521076270d956c520c1df3f31923a90d39a2034613c8a943f323444e9595"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/ui-diagnostics-0/screenshots/E21BE1E9-C2DE-4754-A7FC-96B66BE795F6.txt",
+          "sha256": "5696521076270d956c520c1df3f31923a90d39a2034613c8a943f323444e9595"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/screenshots-0/60108787-3AAE-4FF7-B4E7-67FA1757181F.png",
+          "sha256": "dab43c07c73798b112a70cb8c02572ec4238ad5493762f3562d1d29ac3c4cc27"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/ui-diagnostics-1/test-summary.json",
+          "sha256": "8b03d09cb95c40c8cbf57d63ce4ac5164e27354a39de343b6bbe809c39b898bf"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/ui-diagnostics-1/screenshots/C5D2B9BC-0368-4B1A-BDBE-24D72FF2A3FE.txt",
+          "sha256": "19fcb762e97e09af05810834f2c6e9249c52180e4e736c2ce7007dc188d485c6"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/ui-diagnostics-1/screenshots/D2BF9AED-E9F5-4BC4-BD3C-4D32D0760050.txt",
+          "sha256": "a21ec37a96ae02085f4f303b374c4ccdf035e91c5b6387970d622bd0e8e1e27b"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/screenshots-1/D2955D66-E6BE-4F99-92F3-E1E5DF3C929B.png",
+          "sha256": "7028f377337da95fb3ea8e67973e8464581d6c0b424266b45282b9e8952ad5e2"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "899e314e13633fc99d4b9046ce1c2035d5cbc8c840986a1835928e3948e5e460",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "338c7c87804e060b150933d0ef7154815e9e7a309dc0eb24eec9537d76272c8c",
+        "ios/AnkiPadUITests/BrowserSearchTestSupport.swift": "95b543b7734530dec4b3abba4202976012d50fe31c2c4291bfd3d9ed5a6d4bdc",
+        "ios/AnkiPadUITests/CollectionPageScanState.swift": "470880f0c9d7b778191ed028526ce0569ff55858a388d440f30ea380e171e12c",
+        "ios/AnkiPadUITests/BrowserSearchIdentityFlowTests.swift": "358649262c8209466fba8ab4f5e6f86fb7d1186abcd97e4fded4b94a17e62378",
+        "ios/AnkiPadUITests/DeckSelectionFlowTests.swift": "77546ced61af5efb6592b0f4682a9a5b94f7d7ad3e6789a489fe6e37739c83e1",
+        "ios/AnkiPad/DeckSelectionChoices.swift": "ffe3bbbb3fbd2979aae98f6fa0d3c6dc62a99afb290bca2cff01b819b77d8991",
+        "ios/AnkiPad/DeckSelectionEngine.swift": "449d97b27096419e8380161940053f2fa26c8653cfc008ac6e85f31eea4ec192",
+        "ios/AnkiPad/DeckSelectionView.swift": "a4bcfb205b7475a5a1028b3dbe837c2a27290ae48d22475682908097430c41a2",
+        "scripts/select-ui-tests.py": "4d4cf66bf98fc9e2241d3d12f2d242ed0390449edcc2b5174ac0cc475445f0ff",
+        "scripts/ui-case-groups.json": "b8c0cff904bbe67175ae070566424f0371df6a479ee0ea54c196232dde922e09",
+        ".github/workflows/ipa.yml": "7d3f7e39bc688ba036f008f97293d2e481631a3723db99ed20240bfe79da59db"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e034e778300573277385b1728067e5e7e1b228dd7c398648fcd9d45bbcf73af7"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "37b08fd94a98ca52204d91f1a5e3553feceab95b969b596ee1d4f5159cf4ef99"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "518ba4854d74868f4b132538c334422487ce3d62d07f0dc1adec6ce140fce1fd"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d4ded7da1fe8822fea4a9859b4e15c1db859df45419965c04f745788ca1c54"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b56fde5bcfbffdcfefba40832900911b09cc9f4a123701a21c2965acb8c8e6bc"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "actual traversal state and mounted-cell geometry",
+          "argv": [
+            "python3",
+            "tests/collection_page_scan_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6f07558ee075a2c35d3ed788a32bc444823d57eb0b72f59b071eeafd5dcb12a"
+        },
+        {
+          "name": "production deck choice compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPad/DeckTree.swift",
+            "ios/AnkiPad/DeckSelectionChoices.swift",
+            "tests/deck_selection_choices_smoke.swift",
+            "-o",
+            "build/deck-selection-choices"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "production deck choice runtime",
+          "argv": [
+            "build/deck-selection-choices"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "10fb23c1b835357109ab9dddfe6ea4922df1534581d1e40a801c8c062e3ea7ec"
+        },
+        {
+          "name": "production creation adapter compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPad/DeckSelectionEngine.swift",
+            "tests/deck_selection_driver.swift",
+            "-o",
+            "build/deck-selection-driver"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "production creation adapter native CABI",
+          "argv": [
+            "python3",
+            "tests/deck_selection_engine_smoke.py",
+            "env:ANKIPAD_AUDIT_BRIDGE",
+            "build/deck-selection-driver"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "c71e62ada443d52b273d895c45d04cb674ba9cdf8fc03fba45bfdbc41ad309c7"
+        },
+        {
+          "name": "partition and transfer complete catalog",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        }
+      ],
+      "checked_at": "2026-11-10T16:11:27.639595+00:00"
     }
   ]
 }

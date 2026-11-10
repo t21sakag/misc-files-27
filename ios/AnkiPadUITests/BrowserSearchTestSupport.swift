@@ -73,6 +73,11 @@ class BrowserSearchTestSupport: StudyFlowTestSupport {
                 let front = fronts[0]
                 guard front.isHittable else { continue }
                 let label = front.label, identifier = front.identifier, frame = front.frame
+                guard identifier.hasPrefix("browser-front-"),
+                      !identifier.dropFirst("browser-front-".count).isEmpty,
+                      frame.width > 0, frame.height > 0 else {
+                    lastPage = "Incomplete mounted front snapshot for " + label; return (false, false, lastPage)
+                }
                 guard label.hasPrefix("row"), let index = Int(label.dropFirst(3)), label == "row" + String(index) else {
                     lastPage = "Unexpected mounted front: " + label; return (false, false, lastPage)
                 }

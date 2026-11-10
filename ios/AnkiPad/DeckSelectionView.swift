@@ -58,7 +58,7 @@ private struct DeckCreationPrompt: Identifiable {
                                     Text(deck.name).multilineTextAlignment(.leading)
                                     Spacer()
                                     if deck.id == currentID { Image(systemName: "checkmark") }
-                                }.contentShape(Rectangle())
+                                }.frame(maxWidth: .infinity).contentShape(Rectangle())
                             }
                             .buttonStyle(.borderless)
                             .accessibilityIdentifier("deck-picker-choice-" + deck.id)
@@ -72,7 +72,7 @@ private struct DeckCreationPrompt: Identifiable {
                 }
             }
             .accessibilityIdentifier("deck-picker-list")
-            .searchable(text: $search, prompt: AppText.localized("デッキを検索"))
+            .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: AppText.localized("デッキを検索"))
             .onChange(of: search) { _, value in
                 // Search expands its matching nodes locally, never in the collection.
                 let matching = DeckSelectionChoices.visible(decks, query: value, collapsed: [])
