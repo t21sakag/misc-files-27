@@ -19,22 +19,43 @@ def run(simulator, app, output, timeout=120):
         raise ValueError('Invalid app bundle identity')
     report = {'version': 1, 'classification': 'environment', 'ready': False,
               'simulator': simulator, 'bundle': bundle, 'namespace': namespace,
-              'permission_requested': False, 'requests_mutated': False}
+              'permission_requested': False, 'requests_mutated': False, 'commands': []}
     output.parent.mkdir(parents=True, exist_ok=True)
     started = time.monotonic()
-    launched = False
+    launch_attempted = False
     def simctl(*args, **kwargs):
-        return subprocess.run(['xcrun', 'simctl', *args], check=True,
-                              capture_output=True, text=True, timeout=30, **kwargs)
+        report['phase'] = args[0]
+        command = {'operation': args[0]}
+        report['commands'].append(command)
+        began = time.monotonic()
+        try:
+            result = subprocess.run(['xcrun', 'simctl', *args], check=True,
+                                    capture_output=True, text=True, timeout=30, **kwargs)
+            command['return_code'] = result.returncode
+            return result
+        except (subprocess.SubprocessError, OSError) as error:
+            command['error_kind'] = type(error).__name__
+            if isinstance(error, subprocess.CalledProcessError):
+                command['return_code'] = error.returncode
+            for name in ('stdout', 'stderr'):
+                value = getattr(error, name, None)
+                if value:
+                    command[name] = (value.decode(errors='replace') if isinstance(value, bytes) else str(value))[-2048:]
+            raise
+        finally:
+            command['elapsed_seconds'] = round(time.monotonic() - began, 3)
     try:
         simctl('install', simulator, str(app))
+        env = dict(os.environ, SIMCTL_CHILD_ANKIPAD_UI_TEST_NAMESPACE=namespace)
+        # Start the actual readiness process before resolving its probe path.
+        # A launch or container failure must still terminate that process.
+        launch_attempted = True
+        simctl('launch', simulator, bundle, '--uitest-notification-readiness', env=env)
         container = Path(simctl('get_app_container', simulator, bundle, 'data').stdout.strip())
         if not container.is_absolute():
             raise ValueError('App data container is not absolute')
         probe = container / 'Library/Application Support/UITests' / namespace / 'notification-service.json'
-        env = dict(os.environ, SIMCTL_CHILD_ANKIPAD_UI_TEST_NAMESPACE=namespace)
-        simctl('launch', simulator, bundle, '--uitest-notification-readiness', env=env)
-        launched = True
+        report['phase'] = 'notification_service'
         deadline = time.monotonic() + timeout
         while True:
             if probe.exists():
@@ -57,16 +78,19 @@ def run(simulator, app, output, timeout=120):
             time.sleep(min(0.5, max(0, deadline - time.monotonic())))
     except Exception as error:
         report['error'] = str(error)
+        report['failure_phase'] = report.get('phase')
         raise
     finally:
-        if launched:
+        if launch_attempted:
             try:
                 simctl('terminate', simulator, bundle)
                 report['terminated'] = True
             except (subprocess.SubprocessError, OSError) as error:
                 report['terminated'] = False
                 report['termination_error'] = str(error)
+                report.setdefault('failure_phase', 'terminate')
                 report['ready'] = False
+        report['phase'] = 'complete' if report['ready'] else 'failed'
         report['elapsed_seconds'] = round(time.monotonic() - started, 3)
         output.write_text(json.dumps(report, indent=2) + '\n')
 
