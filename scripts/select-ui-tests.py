@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-search-completion-final': ['testLaterNativeDeckSwitchAfterLeavingEditMode', 'testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch'],
     'native-search-completion-context': ['testLaterNativeDeckSwitchAfterReplacingText', 'testNativeDeckSwitchAfterLeavingEditMode', 'testLaterNativeDeckSwitchAfterLeavingEditMode', 'testSavingRecentSearchWithoutSelectingPreservesCurrentQueryAndPersists'],
     'native-filter-context': ['testLaterNativeDeckSwitchAfterReplacingText', 'testNativeDeckSwitchAfterLeavingEditMode', 'testLaterNativeDeckSwitchAfterLeavingEditMode'],
     'filter-context-later': ['testLaterNativeDeckSwitchAfterReplacingText'],
