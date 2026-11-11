@@ -11117,6 +11117,273 @@
         }
       ],
       "checked_at": "2026-11-11T00:45:07.138112+00:00"
+    },
+    {
+      "id": "20261111-waiter-in-flight-hittable-and-offscreen-keys",
+      "covers": [
+        [
+          42933956459,
+          1
+        ],
+        [
+          42852225007,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42852225007,
+            1
+          ],
+          "kind": "application",
+          "finding": "Consumer 0 (BrowserSearchIdentityFlowTests/testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch) passed 1/1. Consumer 1 (DeckSelectionFlowTests/testSearchCreateChildCancelAndPersistNoteDestination) failed at line 64 because Deck.flatten stored only leaf node['name'] without accumulating ancestor prefixes into fullName. Fixed in commit 160e54e and verified passing line 64 in 42933956459."
+        },
+        {
+          "attempt": [
+            42933956459,
+            1
+          ],
+          "kind": "harness",
+          "finding": "DeckSelectionFlowTests/testSearchCreateChildCancelAndPersistNoteDestination passed line 64 (expectDestination('Choice Parent::Child')), duplicate error assertion, and create-cancel sheet dismissal through line 83. At line 84 (tapTestControl 'deck-picker-cancel'), AnkiPadUITests-Runner debug log proves 'deck-picker-cancel' (4959641728.854) was enabled and visible at Frame=(134, 284, 105, 36), VisiblePoint=(186.5, 302), but outer 20s XCTWaiter (<XCTWaiter: 0x1121028b0>) expired at 01:03:53.704 while element.isHittable was faulting in XC_kAXXCAttributeFrame during the first actionable() poll (which ran 4 sequential full-app AX queries under PRPosterRootViewController background load), aborting the inner RPC with 'faulted in (null): Interrupted by waiter' and Error 10204 'Invalid input rect {{inf, inf}, {0.0, 0.0}}' before the post-waiter actionable() fallback could run. In addition, dismissTestKeyboard iterated all 34 offscreen Key elements (app.keys.allElementsBoundByIndex) on every control lookup."
+        }
+      ],
+      "root_cause": "In waitForTestControl (StudyFlowTestSupport.swift), unique() and actionable() were entered directly inside XCTNSPredicateExpectation/XCTWaiter without checking the current state first, and actionable() executed a redundant element.exists snapshot right after query.count == 1 (4 full-app AX snapshots per poll). When simulator background poster processes slowed AX snapshots to ~4-5s each, a single actionable() poll reached 20s and the outer XCTWaiter interrupted element.isHittable mid-RPC while faulting in XC_kAXXCAttributeFrame, causing XCTest to raise a fatal UI Automation Failure (Error 10201/10204 Invalid input rect {{inf, inf}, {0, 0}}) before the post-waiter actionable() check could execute. Additionally, dismissTestKeyboard evaluated app.keys.allElementsBoundByIndex.contains { $0.isHittable }, issuing 34 separate Key[0..33] hit-point RPCs whenever an offscreen keyboard remained in AX.",
+      "common_resolution": "In waitForTestControl, evaluate unique() and actionable() once before entering XCTWaiter so already-ready controls never run element.isHittable inside an expiring XCTWaiter watchdog; omit the redundant element.exists after query.count == 1 inside actionable(); and give the fallback readiness waiter max(timeout, 30) so an in-flight hit-point RPC is not interrupted mid-frame. In dismissTestKeyboard, check app.keys.firstMatch.isHittable instead of iterating all 34 offscreen Key elements. Re-verify only the single failed case DeckSelectionFlowTests/testSearchCreateChildCancelAndPersistNoteDestination via native-deck-selection.",
+      "rule_review": {
+        "semantic_labels": "42933956459 passed expectDestination('Choice Parent::Child') at line 64, duplicate creation error ('同じ名前のデッキがあります。'), and 'deck-picker-create-cancel' dismissal, confirming all semantic labels and hierarchical deck names match.",
+        "foreground_scope": "In 42933956459, 'deck-picker-create-form' dismissed cleanly at line 82 (t=449.98s) and 'deck-picker-cancel' was uniquely present in the foreground DeckSelectionView navigation bar at Frame=(134, 284, 105, 36).",
+        "unique_reads_and_actions": "Check unique() and actionable() before starting XCTWaiter, remove redundant element.exists after query.count == 1, and use max(timeout, 30) for the fallback readiness waiter so outer XCTWaiter never aborts an in-flight element.isHittable frame fault with {{inf, inf}, {0, 0}}.",
+        "live_state": "All live-state assertions in DeckSelectionFlowTests (hierarchical destination, search filtering, duplicate error, cancel restoration, unsaved note preservation, relaunch browser did:<childID>) remain strict and unchanged.",
+        "keyboard_and_scroll": "In dismissTestKeyboard, replace app.keys.allElementsBoundByIndex.contains { $0.isHittable } (34 offscreen key RPCs per control lookup) with app.keys.firstMatch.isHittable while preserving object isHittable and post-dismissal verification.",
+        "environment": "All 16 local syntax, catalog, dispatch, consumer, query, localization, review-gate, and native CABI smoke checks pass on the updated common helper and rules.",
+        "first_failure_evidence": "Decompressed .xcresult CAS blobs (data.0~_8tgWo6Rhc... activity log sha256 68d893ea... and data.0~x437yWIiz5... runner debug log sha256 f598a558...) prove 'deck-picker-cancel' had Frame=(134, 284, 105, 36) and VisiblePoint=(186.5, 302) at 01:03:53.384 before outer XCTWaiter (<XCTWaiter: 0x1121028b0>) timed out at 01:03:53.704 and interrupted inner <XCTWaiter: 0x112103270> with 'faulted in (null): Interrupted by waiter. for frame' and Error 10204 'Invalid input rect {{inf, inf}, {0.0, 0.0}}'.",
+        "failure_classification": "42852225007/1 was an application defect in Deck.flatten/fullName (fixed and verified in 42933956459/1); 42933956459/1 was a shared test-harness waiter interruption in waitForTestControl / dismissTestKeyboard. Next scope remains restricted to the single case native-deck-selection.",
+        "runtime_warnings": "Both 42852225007 and 42933956459 recorded runtimeWarnings=[]; strict zero-warning gate remains enforced.",
+        "device_evidence": "Simulator UI verification only; physical device and SideStore checks remain separate."
+      },
+      "next_scope": [
+        "DeckSelectionFlowTests/testSearchCreateChildCancelAndPersistNoteDestination"
+      ],
+      "evidence": [
+        {
+          "reference": "completed-evidence/deck-selection-ui-42852225007/ui-diagnostics-1/test-summary.json",
+          "sha256": "9c2794a53bcc79407e1ab147436f6bef0ff742aef4a039990da788d2b4940349"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42852225007/ui-diagnostics-1/screenshots/0499D7A7-9E8A-4C01-9047-78839383084E.txt",
+          "sha256": "9a8f5af2db5740647648fc3b40c2fc62d8a880607f1e77980bfee4c2e54be23f"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42933956459/ui-diagnostics-0/test-summary.json",
+          "sha256": "4baf0837bd8593ed3af7e1fcc103693dd45b4af25333b1a94e53a1f9a1b6009c"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42933956459/ui-diagnostics-0/input-events.json",
+          "sha256": "de391378d4ff2b43e18462f1c5b1eeedf4a671303ce8ee07ac3707bd11125707"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42933956459/ui-diagnostics-0/widget-diagnostics/live.log",
+          "sha256": "31c32df082f008481734de87e6d2a23f4442b3ac9d228bb3c8eb2800e590ea9a"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42933956459/screenshots-0/325286DF-881A-4C86-84F9-2A3A9816CD3D.mp4",
+          "sha256": "6e359cb48a3c5512e2eec75c9d88267aeb434acb310d348fbe04df78747fd022"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42933956459/test-results-0/UITests.xcresult/Data/data.0~_8tgWo6Rhc_rNPENYdZYG7KtGicOJokMYQ0oAwRM1RzZhVdf6UnagDxLZCUp6yv2n2qRV5lE6QwjCKMTu1ipZA==",
+          "sha256": "68d893ea3afde68d0d125545c87b18b55aa91410732977088ff24c3a6ee1b0db"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42933956459/test-results-0/UITests.xcresult/Data/data.0~x437yWIiz5p1StBXwEn-XoQb_Dj1eRFLo151_R1fMwfyspo4ek2C7tAwMAFYYLIoOElODwskaTDizQ35zhNzIg==",
+          "sha256": "f598a5589c6e7a5888504250de77d56d02c82dcd88e95e8db4ef43d7d588564f"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "619f967e763fd545db53e64ec21dda9c54189135b317606168a895f4224974a1",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "be78890bc9b388a9e7625d851ea85951c65b194ffa62559632f55439f28266fb",
+        "ios/AnkiPadUITests/BrowserSearchTestSupport.swift": "95b543b7734530dec4b3abba4202976012d50fe31c2c4291bfd3d9ed5a6d4bdc",
+        "ios/AnkiPadUITests/CollectionPageScanState.swift": "470880f0c9d7b778191ed028526ce0569ff55858a388d440f30ea380e171e12c",
+        "ios/AnkiPadUITests/DeckSelectionFlowTests.swift": "77546ced61af5efb6592b0f4682a9a5b94f7d7ad3e6789a489fe6e37739c83e1",
+        "ios/AnkiPad/DeckTree.swift": "3677a8a469176942616973cb66e6467b6d09956a2172cc7a21660b08e67aa2d6",
+        "ios/AnkiPad/DeckSelectionChoices.swift": "0c8ad75d086b494284fce4ce2603cf006b68701ec3db4f490e51f4f1485b93a3",
+        "ios/AnkiPad/DeckSelectionEngine.swift": "449d97b27096419e8380161940053f2fa26c8653cfc008ac6e85f31eea4ec192",
+        "ios/AnkiPad/DeckSelectionView.swift": "4048f5933eac5be7650dbffbab0ff39d6ca9f43196baf26f865b6b65dfce0f19",
+        "ios/AnkiPad/NoteEditorView.swift": "4e051936e42bb769064089a754d3a1bf0783a9b9bb1ea8911ca392739d0f2492",
+        "ios/AnkiPad/ImageOcclusionEntryView.swift": "fec41f304a2ebc54b8bf940dd48c9c4d87b73f7d65d1d12d324f890a1e6ee982",
+        "ios/AnkiPad/NoteTemplateEditor.swift": "f50bea3c1566fa24c59b83395fcfd49b06cee92d542caef462f66172ca3e9720",
+        "scripts/select-ui-tests.py": "4d4cf66bf98fc9e2241d3d12f2d242ed0390449edcc2b5174ac0cc475445f0ff",
+        "scripts/ui-case-groups.json": "b8c0cff904bbe67175ae070566424f0371df6a479ee0ea54c196232dde922e09",
+        ".github/workflows/ipa.yml": "7d3f7e39bc688ba036f008f97293d2e481631a3723db99ed20240bfe79da59db"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5a2e6afaa09057b2e84f53736065dee33d87444ac206b4e6f0d5e49f8ddee889"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "37b08fd94a98ca52204d91f1a5e3553feceab95b969b596ee1d4f5159cf4ef99"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "518ba4854d74868f4b132538c334422487ce3d62d07f0dc1adec6ce140fce1fd"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d4ded7da1fe8822fea4a9859b4e15c1db859df45419965c04f745788ca1c54"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "da2f60df5efe43191d86ead4a521f37b93398fe4c53eb4a2e3af3790e66d15e1"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "actual traversal state and mounted-cell geometry",
+          "argv": [
+            "python3",
+            "tests/collection_page_scan_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6f07558ee075a2c35d3ed788a32bc444823d57eb0b72f59b071eeafd5dcb12a"
+        },
+        {
+          "name": "production deck tree compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPad/DeckTree.swift",
+            "tests/deck_tree_smoke.swift",
+            "-o",
+            "build/deck-tree-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "production deck tree runtime",
+          "argv": [
+            "build/deck-tree-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "4e1affd8d61e26c024eacfb4e696ce021802a7938c30fe24ecf8da040658dfab"
+        },
+        {
+          "name": "production deck choice compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPad/DeckTree.swift",
+            "ios/AnkiPad/DeckSelectionChoices.swift",
+            "tests/deck_selection_choices_smoke.swift",
+            "-o",
+            "build/deck-selection-choices"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "production deck choice runtime",
+          "argv": [
+            "build/deck-selection-choices"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "10fb23c1b835357109ab9dddfe6ea4922df1534581d1e40a801c8c062e3ea7ec"
+        },
+        {
+          "name": "production creation adapter compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPad/DeckSelectionEngine.swift",
+            "tests/deck_selection_driver.swift",
+            "-o",
+            "build/deck-selection-driver"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "production creation adapter native CABI",
+          "argv": [
+            "python3",
+            "tests/deck_selection_engine_smoke.py",
+            "env:ANKIPAD_AUDIT_BRIDGE",
+            "build/deck-selection-driver"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "c71e62ada443d52b273d895c45d04cb674ba9cdf8fc03fba45bfdbc41ad309c7"
+        },
+        {
+          "name": "partition and transfer complete catalog",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        }
+      ],
+      "checked_at": "2026-11-11T01:41:05.332420+00:00"
     }
   ]
 }

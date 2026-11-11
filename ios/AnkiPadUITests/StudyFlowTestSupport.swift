@@ -129,10 +129,11 @@ class StudyFlowTestSupport: XCTestCase {
             // iPadOS 27 can retain a Keyboard at (inf, inf, 0, 0).
             // Asking that container for isHittable raises an XCTest failure
             // instead of returning false (42753168312). Observe actual keys
-            // or its native dismiss button, without hit-testing the container
-            // or racing a separate exists/frame read against its dismissal.
+            // or its native dismiss button, without hit-testing the container,
+            // iterating all offscreen keys, or racing a separate exists/frame
+            // read against its dismissal.
             hide.allElementsBoundByIndex.contains { $0.isHittable }
-                || app.keys.allElementsBoundByIndex.contains { $0.isHittable }
+                || app.keys.firstMatch.isHittable
         }
         guard visible() else { return true }
         guard app.alerts.count == 0 else {
@@ -434,10 +435,12 @@ class StudyFlowTestSupport: XCTestCase {
                               maximumAttempts: 12, searchUpward: searchUpward)
         }
         let unique: () -> Bool = { alreadySatisfied?() == true || query.count == 1 }
-        let exists = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in unique() }, object: nil)
-        let existenceResult = XCTWaiter.wait(for: [exists], timeout: timeout)
-        guard existenceResult == .completed || unique() else {
-            controlFailure(query, in: app, reason: "Control did not settle to one match; scope its foreground container and semantic state"); return nil
+        if !unique() {
+            let exists = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in unique() }, object: nil)
+            let existenceResult = XCTWaiter.wait(for: [exists], timeout: timeout)
+            guard existenceResult == .completed || unique() else {
+                controlFailure(query, in: app, reason: "Control did not settle to one match; scope its foreground container and semantic state"); return nil
+            }
         }
         if alreadySatisfied?() == true { return nil }
         guard query.count == 1 else {
@@ -446,7 +449,7 @@ class StudyFlowTestSupport: XCTestCase {
         let element = query.element(boundBy: 0)
         let actionable: () -> Bool = {
             if alreadySatisfied?() == true { return true }
-            guard query.count == 1 && element.exists else { return false }
+            guard query.count == 1 else { return false }
             switch purpose {
             case .action: return element.isEnabled && element.isHittable
             case .observation:
@@ -454,10 +457,12 @@ class StudyFlowTestSupport: XCTestCase {
                 return !visible.isNull && visible.width > 0 && visible.height > 0
             }
         }
-        let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in actionable() }, object: nil)
-        let readinessResult = XCTWaiter.wait(for: [ready], timeout: timeout)
-        guard readinessResult == .completed || actionable() else {
-            controlFailure(query, in: app, reason: "Control did not become actionable"); return nil
+        if !actionable() {
+            let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in actionable() }, object: nil)
+            let readinessResult = XCTWaiter.wait(for: [ready], timeout: max(timeout, 30))
+            guard readinessResult == .completed || actionable() else {
+                controlFailure(query, in: app, reason: "Control did not become actionable"); return nil
+            }
         }
         if alreadySatisfied?() == true { return nil }
         return element
