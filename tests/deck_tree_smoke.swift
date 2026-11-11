@@ -10,6 +10,8 @@ import Foundation
         ]
         var decks = Deck.flatten(nodes)
         precondition(decks.map(\.id) == ["1", "2", "3", "4"])
+        precondition(decks.map(\.name) == ["Parent", "Child", "Grandchild", "Sibling"])
+        precondition(decks.map(\.fullName) == ["Parent", "Parent::Child", "Parent::Child::Grandchild", "Sibling"])
         precondition(decks.map(\.level) == [0, 1, 2, 0])
         precondition(decks[0].newCount == 7) // Counts already include descendants.
         precondition(Deck.visible(decks).map(\.id) == ["1", "4"])

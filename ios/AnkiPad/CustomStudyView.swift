@@ -13,6 +13,8 @@ struct CustomStudyView: View {
     @State private var limit = 100
     @State private var include = ""
     @State private var exclude = ""
+    @State private var choosingIncludeTags = false
+    @State private var choosingExcludeTags = false
     @State private var kind = "CRAM_KIND_DUE"
     @State private var available = ""
     @State private var busy = false
@@ -29,7 +31,13 @@ struct CustomStudyView: View {
                             Text(AppText.localized("復習")).tag("CRAM_KIND_REVIEW"); Text(AppText.localized("すべて（予定を変更しない）")).tag("CRAM_KIND_ALL")
                         }
                         Stepper(AppText.localized("最大 \(limit)枚"), value: $limit, in: 1...10000)
+                        Button { choosingIncludeTags = true } label: {
+                            LabeledContent(AppText.localized("タグを含める"), value: include.isEmpty ? AppText.localized("なし") : include)
+                        }.accessibilityIdentifier("custom-study-include-tags")
                         TextField(AppText.localized("含めるタグ（空白区切り）"), text: $include)
+                        Button { choosingExcludeTags = true } label: {
+                            LabeledContent(AppText.localized("検索対象から除外"), value: exclude.isEmpty ? AppText.localized("なし") : exclude)
+                        }.accessibilityIdentifier("custom-study-exclude-tags")
                         TextField(AppText.localized("除外するタグ（空白区切り）"), text: $exclude)
                     } else {
                     Stepper(action.hasSuffix("Delta") ? AppText.localized("\(amount)枚") : AppText.localized("\(amount)日"), value: $amount, in: 1...10000)
@@ -43,6 +51,18 @@ struct CustomStudyView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("キャンセル")) { dismiss() }.disabled(busy) }
                 ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("作成")) { perform() }.disabled(busy) }
+            }
+            .sheet(isPresented: $choosingIncludeTags) {
+                let current = include.split(whereSeparator: \.isWhitespace).map(String.init)
+                TagSelectionView(model: model, dialogType: .customStudyTags, noteIDs: [], extraCheckedTags: current) { checked, _ in
+                    include = checked.joined(separator: " ")
+                }
+            }
+            .sheet(isPresented: $choosingExcludeTags) {
+                let current = exclude.split(whereSeparator: \.isWhitespace).map(String.init)
+                TagSelectionView(model: model, dialogType: .customStudyTags, noteIDs: [], extraCheckedTags: current) { checked, _ in
+                    exclude = checked.joined(separator: " ")
+                }
             }
             .task {
                 do {
@@ -97,6 +117,7 @@ struct FilteredDeckView: View {
     @State private var good = 0
     @State private var busy = false
     @State private var loaded = false
+    @State private var showingHelp = false
     @State private var error: String?
     private let orders = ["OLDEST_REVIEWED_FIRST", "RANDOM", "INTERVALS_ASCENDING", "INTERVALS_DESCENDING", "LAPSES", "ADDED", "DUE", "REVERSE_ADDED", "RETRIEVABILITY_ASCENDING", "RETRIEVABILITY_DESCENDING", "RELATIVE_OVERDUENESS"]
     var body: some View {
@@ -122,6 +143,11 @@ struct FilteredDeckView: View {
                     Stepper(AppText.localized("難しい: \(hard)秒"), value: $hard, in: 0...86400)
                     Stepper(AppText.localized("普通: \(good)秒（0で元のデッキに戻す）"), value: $good, in: 0...86400)
                 }
+                Section {
+                    Button(AppText.localized("検索条件のヘルプ"), systemImage: "questionmark.circle") {
+                        showingHelp = true
+                    }.accessibilityIdentifier("filtered-help")
+                }
                 if busy { ProgressView() }
             }
             .disabled(busy || !loaded)
@@ -131,6 +157,11 @@ struct FilteredDeckView: View {
                 ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("構築")) { save() }.disabled(busy || !loaded || name.isEmpty).accessibilityIdentifier("filtered-build") }
             }
             .task { await load() }
+            .alert(AppText.localized("検索条件のヘルプ"), isPresented: $showingHelp) {
+                Button(AppText.localized("閉じる"), role: .cancel) {}
+            } message: {
+                Text(AppText.localized("is:due（期日到来）、is:new（新規）、is:review（復習）、deck:\"デッキ名\"、tag:タグ名、prop:ivl>=10 などの検索式を組み合わせて抽出できます。"))
+            }
             .alert(AppText.localized("構築できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button(AppText.localized("閉じる"), role: .cancel) { error = nil } } message: { Text(error ?? "") }
         }
     }

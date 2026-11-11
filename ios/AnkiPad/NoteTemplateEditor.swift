@@ -26,7 +26,7 @@ struct NoteTemplateEditor: View {
             Section(AppText.localized("デッキの上書き")) {
                 Button { choosingDeck = true } label: {
                     let id = text("targetDeckId", fallback: "0").wrappedValue
-                    LabeledContent(AppText.localized("生成するカードのデッキ"), value: id == "0" ? AppText.localized("指定なし") : model.decks.first(where: { $0.id == id })?.name ?? id)
+                    LabeledContent(AppText.localized("生成するカードのデッキ"), value: id == "0" ? AppText.localized("指定なし") : model.decks.first(where: { $0.id == id })?.fullName ?? id)
                 }.accessibilityIdentifier("template-deck-select")
             }
             DisclosureGroup(AppText.localized("ブラウザー表示のテンプレート")) {
@@ -105,31 +105,39 @@ struct NoteTemplatePreviewView: View {
     let typeID: String
     let ordinal: Int
     var document: NoteDocument? = nil
+    var embedded = false
     @Environment(\.dismiss) private var dismiss
     @State private var rendered: TemplatePreview?
     @State private var answer = false
     @State private var error: String?
     @State private var typed = ""
     @State private var audio = CardAudio()
+    private var previewContent: some View {
+        VStack {
+            if let rendered {
+                Picker(AppText.localized("表示する面"), selection: $answer) { Text(AppText.localized("表面")).tag(false); Text(AppText.localized("裏面")).tag(true) }.pickerStyle(.segmented).padding()
+                ReviewerWebView(html: TypedAnswerMarkup.replace(in: answer ? rendered.answer : rendered.question, with: "<span id=typeans>........</span>"), css: rendered.css,
+                    cardID: "preview", ordinal: ordinal, typing: nil, hideAudioButtons: false, typedAnswer: $typed, answer: answer, media: model.engine.media,
+                    playTag: { isAnswer, index in
+                        let tags = isAnswer ? rendered.answerAV : rendered.questionAV
+                        if tags.indices.contains(index) { audio.play([tags[index]], media: model.engine.media) }
+                    }, reveal: { answer = true }, scheduling: nil,
+                    schedulingRequest: { _, _ in throw EngineError(message: AppText.localized("プレビューではスケジュールを変更できません。")) }, schedulingError: { _ in })
+            } else if let error { Text(error).padding() }
+            else { ProgressView() }
+        }
+        .onDisappear { audio.stop() }
+        .task { do { rendered = try await model.engine.templatePreview(typeID: typeID, ordinal: ordinal, document: document) } catch { self.error = error.localizedDescription } }
+    }
     var body: some View {
-        NavigationStack {
-            VStack {
-                if let rendered {
-                    Picker(AppText.localized("表示する面"), selection: $answer) { Text(AppText.localized("表面")).tag(false); Text(AppText.localized("裏面")).tag(true) }.pickerStyle(.segmented).padding()
-                    ReviewerWebView(html: TypedAnswerMarkup.replace(in: answer ? rendered.answer : rendered.question, with: "<span id=typeans>........</span>"), css: rendered.css,
-                        cardID: "preview", ordinal: ordinal, typing: nil, hideAudioButtons: false, typedAnswer: $typed, answer: answer, media: model.engine.media,
-                        playTag: { isAnswer, index in
-                            let tags = isAnswer ? rendered.answerAV : rendered.questionAV
-                            if tags.indices.contains(index) { audio.play([tags[index]], media: model.engine.media) }
-                        }, reveal: { answer = true }, scheduling: nil,
-                        schedulingRequest: { _, _ in throw EngineError(message: AppText.localized("プレビューではスケジュールを変更できません。")) }, schedulingError: { _ in })
-                } else if let error { Text(error).padding() }
-                else { ProgressView() }
+        if embedded {
+            previewContent
+        } else {
+            NavigationStack {
+                previewContent
+                    .studyThemeSurface().navigationTitle(AppText.localized("プレビュー"))
+                    .toolbar { ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("閉じる")) { audio.stop(); dismiss() } } }
             }
-            .studyThemeSurface().navigationTitle(AppText.localized("プレビュー"))
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(AppText.localized("閉じる")) { audio.stop(); dismiss() } } }
-            .onDisappear { audio.stop() }
-            .task { do { rendered = try await model.engine.templatePreview(typeID: typeID, ordinal: ordinal, document: document) } catch { self.error = error.localizedDescription } }
         }
     }
 }

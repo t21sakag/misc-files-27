@@ -251,6 +251,10 @@ struct ReviewerWebView: UIViewRepresentable {
         if(Number.isInteger(number)&&number>=1&&number<=9) window.userAction(number);
       };
       window.ankiPadShowHint = value => value==='all' ? window.showAllHints() : window.showHint();
+      window.ankiPadScrollPage = value => {
+        const step = Math.max(120, Math.round(window.innerHeight * 0.85)) * (value === 'down' ? 1 : -1);
+        window.scrollBy({top: step, left: 0, behavior: 'instant'});
+      };
       const callbacks = {ankiSearchCard:[], ankiSttResult:[]};
       window.addHook = (name, callback) => { if(callbacks[name] && typeof callback === 'function') callbacks[name].push(callback); };
       window.ankiSearchCard = json => { const result=JSON.parse(json); for(const callback of callbacks.ankiSearchCard) callback(result); };
@@ -381,6 +385,15 @@ struct ReviewerWebView: UIViewRepresentable {
             for event in pendingScriptEvents where event.mutationKey == scriptEventScope && !deliveredScriptEvents.contains(event.id) {
                 guard let data = try? JSONSerialization.data(withJSONObject: [event.json]), let argument = String(data: data, encoding: .utf8) else { continue }
                 deliveredScriptEvents.insert(event.id)
+                if event.kind == .scrollPage {
+                    let scrollView = view.scrollView
+                    let step = max(120, scrollView.bounds.height * 0.85) * (event.json == "down" ? 1 : -1)
+                    let maxOffsetY = max(0, scrollView.contentSize.height - scrollView.bounds.height)
+                    if maxOffsetY > 0 {
+                        let targetY = min(maxOffsetY, max(0, scrollView.contentOffset.y + step))
+                        scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: targetY), animated: false)
+                    }
+                }
                 view.evaluateJavaScript("window.\(event.kind.rawValue)?.(\(argument)[0]);") { [weak self] _, error in
                     if let error { self?.scriptEventError?(error.localizedDescription) }
                     // A throwing card hook must not replay earlier hook side effects.

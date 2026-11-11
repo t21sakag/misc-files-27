@@ -70,6 +70,37 @@ import Foundation
         toolbar.items.append(toolbar.items[0])
         let invalidToolbarData = try JSONEncoder().encode(toolbar)
         precondition(!ReviewToolbarConfiguration.load(invalidToolbarData).enabled)
+        let newActions: [ReviewGestureAction] = [
+            .setDue, .resetProgress, .cardInfo, .buryNote, .suspendNote,
+            .whiteboardVisibility, .whiteboardStylusOnly, .undoWhiteboard, .redoWhiteboard, .saveWhiteboard,
+            .pageUp, .pageDown, .exitStudy
+        ]
+        for action in newActions {
+            precondition(!action.title.isEmpty && action.title != action.rawValue)
+            var singleToolbar = ReviewToolbarConfiguration()
+            singleToolbar.enabled = true
+            singleToolbar.items = [ReviewToolbarItem(action: action)]
+            let decoded = ReviewToolbarConfiguration.load(try JSONEncoder().encode(singleToolbar))
+            precondition(decoded.items.first?.action == action)
+        }
+        var previewKeyboard = PreviewKeyboardConfiguration.load(Data("invalid".utf8))
+        precondition(previewKeyboard.action(for: .leftArrow) == .previousCard)
+        precondition(previewKeyboard.action(for: .rightArrow) == .nextCard)
+        precondition(previewKeyboard.action(for: .b) == .backSideOnly)
+        precondition(previewKeyboard.action(for: .e) == .edit)
+        precondition(previewKeyboard.action(for: .r) == .replay)
+        precondition(previewKeyboard.action(for: .star) == .mark)
+        precondition(previewKeyboard.action(for: .control0) == .flag0)
+        precondition(previewKeyboard.action(for: .control7) == .flag7)
+        previewKeyboard.actions[PreviewKey.leftArrow.rawValue] = .nextCard
+        previewKeyboard.actions[PreviewKey.rightArrow.rawValue] = .previousCard
+        previewKeyboard.actions[PreviewKey.b.rawValue] = PreviewAction.none
+        let restoredPreviewKeyboard = PreviewKeyboardConfiguration.load(try JSONEncoder().encode(previewKeyboard))
+        precondition(restoredPreviewKeyboard == previewKeyboard)
+        precondition(restoredPreviewKeyboard.action(for: .leftArrow) == .nextCard)
+        precondition(restoredPreviewKeyboard.action(for: .rightArrow) == .previousCard)
+        precondition(restoredPreviewKeyboard.action(for: .b) == .none)
+        print("PASS: preview keyboard configuration defaults, overrides, and serialization")
         print("PASS: toolbar order/identity persistence and duplicate identity fallback")
         print("PASS: touch zone side separation, boundaries, invalid coordinates and persistence")
         print("PASS: gamepad assignments, opt-in and explicit disabled binding serialization")

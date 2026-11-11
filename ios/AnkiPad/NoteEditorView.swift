@@ -9,6 +9,7 @@ struct NoteEditorView: View {
     private let engine: Engine
     private let profileID: String
     @State private var choosingDeck = false
+    @State private var choosingTags = false
     @Environment(\.dismiss) private var dismiss
     @State private var document: NoteDocument?
     @State private var types: [NamedID] = []
@@ -44,10 +45,13 @@ struct NoteEditorView: View {
         return NewNoteFields.unmapped(preservedNewFields, fieldCount: document.fields.count)
     }
     @AppStorage("visualNoteEditor") private var visualEditor = false
+    @AppStorage("noteEditorShowToolbar") private var showEditorToolbar = true
+    @AppStorage("noteEditorScrollToolbar") private var scrollEditorToolbar = true
     @AppStorage("capitalizeNoteEditor") private var capitalizeEditor = true
     @AppStorage("noteEditorFontSize") private var editorFontSize = 0
     @ScaledMetric(relativeTo: .body) private var editorReferenceSize: CGFloat = 17
     @AppStorage("closeAfterAdd") private var closeAfterAdd = false
+    @State private var inlinePreview = false
     init(model: StudyModel, request: EditorRequest) {
         self.model = model; self.request = request; engine = model.engine; profileID = model.currentProfileID
     }
@@ -91,10 +95,16 @@ struct NoteEditorView: View {
                             }
                         }
                         Button { choosingDeck = true } label: {
-                            LabeledContent(AppText.localized("デッキ"), value: model.decks.first(where: { $0.id == current.deckID })?.name ?? current.deckID)
+                            LabeledContent(AppText.localized("デッキ"), value: model.decks.first(where: { $0.id == current.deckID })?.fullName ?? current.deckID)
                         }.accessibilityIdentifier("note-deck-select")
                     }
                     Toggle(AppText.localized("ビジュアル編集"), isOn: $visualEditor)
+                    if visualEditor {
+                        Toggle(AppText.localized("書式バーを表示"), isOn: $showEditorToolbar).accessibilityIdentifier("note-show-toolbar")
+                        if showEditorToolbar {
+                            Toggle(AppText.localized("書式バーを1行でスクロール"), isOn: $scrollEditorToolbar).accessibilityIdentifier("note-scroll-toolbar")
+                        }
+                    }
                     Toggle(AppText.localized("文頭を自動で大文字にする"), isOn: $capitalizeEditor)
                     Button(AppText.localized("編集時の文字サイズ: ") + (editorFontSize > 0 ? String(editorFontSize) : AppText.localized("既定"))) {
                         fontSizeDraft = editorFontSize > 0 ? String(editorFontSize) : ""
@@ -111,7 +121,7 @@ struct NoteEditorView: View {
                         Section {
                             DisclosureGroup(isExpanded: Binding(get: { expanded.contains(index) }, set: { value in if value { expanded.insert(index) } else { expanded.remove(index) } })) {
                             if visualEditor {
-                                RichFieldEditor(text: Binding(get: { document?.fields[index] ?? "" }, set: { document?.fields[index] = $0; dirty = true }), media: engine.media, label: "note-field-\(index)", fontName: current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", fontSize: Int(fieldFontSize(current, index: index).rounded()), rtl: current.fieldConfigs.indices.contains(index) && current.fieldConfigs[index]["rtl"] as? Bool == true, capitalize: capitalizeEditor)
+                                RichFieldEditor(text: Binding(get: { document?.fields[index] ?? "" }, set: { document?.fields[index] = $0; dirty = true }), media: engine.media, label: "note-field-\(index)", fontName: current.fieldConfigs.indices.contains(index) ? current.fieldConfigs[index]["fontName"] as? String ?? "Arial" : "Arial", fontSize: Int(fieldFontSize(current, index: index).rounded()), rtl: current.fieldConfigs.indices.contains(index) && current.fieldConfigs[index]["rtl"] as? Bool == true, capitalize: capitalizeEditor, showToolbar: showEditorToolbar, scrollToolbar: scrollEditorToolbar)
                             } else {
                             TextEditor(text: Binding(get: { document?.fields[index] ?? "" }, set: { document?.fields[index] = $0; dirty = true }))
                                 .frame(minHeight: max(140, fieldFontSize(current, index: index) * 4.5)).accessibilityIdentifier("note-field-\(index)")
@@ -124,6 +134,11 @@ struct NoteEditorView: View {
                                 Button(AppText.localized("ファイルから画像・音声を追加"), systemImage: "folder") { mediaField = index; importingMedia = true }
                                 Button(AppText.localized("写真ライブラリから追加"), systemImage: "photo.on.rectangle") { mediaField = index; choosingPhoto = true }.accessibilityIdentifier("note-photo-\(index)")
                                 Button(AppText.localized("写真を撮影"), systemImage: "camera") { mediaField = index; camera = true }.disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+                                Button(AppText.localized("手書き"), systemImage: "pencil.tip.crop.circle") {
+                                    mediaField = index
+                                    pendingImage = NoteImageEditRequest(image: NoteImageRendering.blankCanvas(), field: index, initialDrawingMode: true)
+                                    presentPendingImage()
+                                }.accessibilityIdentifier("note-drawing-\(index)")
                                 Button(AppText.localized("フィールド内の画像を編集"), systemImage: "photo.badge.arrow.down") {
                                     let html = document?.fields[index] ?? ""
                                     selectingImage = FieldImageSelection(field: index, html: html, images: FieldImageReference.extract(html))
@@ -158,9 +173,21 @@ struct NoteEditorView: View {
                                 .accessibilityIdentifier("note-insert-received-media")
                         }
                         Button(AppText.localized("保存せずにプレビュー"), systemImage: "eye") { draftPreview = true }.accessibilityIdentifier("note-preview")
+                        Toggle(AppText.localized("編集画面内にプレビューを表示"), isOn: $inlinePreview).accessibilityIdentifier("note-toggle-previewer")
                         Button(AppText.localized("このノートを複製"), systemImage: "doc.on.doc") { copied = EditorRequest(deckID: current.deckID, copiedDocument: current) }
                     }
+                    if inlinePreview {
+                        Section(AppText.localized("プレビュー")) {
+                            NoteTemplatePreviewView(model: model, typeID: current.typeID, ordinal: 0, document: current, embedded: true)
+                                .frame(minHeight: 280)
+                                .id(current.typeID + ":" + current.fields.joined(separator: "\u{1F}"))
+                                .accessibilityIdentifier("note-inline-preview")
+                        }
+                    }
                     Section(AppText.localized("タグ（空白で区切る）")) {
+                        Button { choosingTags = true } label: {
+                            LabeledContent(AppText.localized("タグを編集"), value: current.tags.isEmpty ? AppText.localized("なし") : current.tags)
+                        }.accessibilityIdentifier("note-tag-select")
                         TextField(AppText.localized("タグ"), text: Binding(get: { document?.tags ?? "" }, set: { document?.tags = $0; dirty = true }))
                             .textInputAutocapitalization(.never).autocorrectionDisabled().accessibilityIdentifier("note-tags")
                     }
@@ -197,6 +224,15 @@ struct NoteEditorView: View {
                 DeckSelectionView(model: model, currentID: document?.deckID, engine: engine, profileID: profileID) { id in
                     guard let id, document?.deckID != id else { return }
                     document?.deckID = id; dirty = true
+                }
+            }
+            .sheet(isPresented: $choosingTags) {
+                let currentTags = (document?.tags ?? "").split(whereSeparator: \.isWhitespace).map(String.init)
+                TagSelectionView(model: model, dialogType: .editTags, noteIDs: [], extraCheckedTags: currentTags, engine: engine, profileID: profileID) { checked, _ in
+                    let joined = checked.joined(separator: " ")
+                    guard document?.tags != joined else { return }
+                    document?.tags = joined
+                    dirty = true
                 }
             }
             .sheet(item: $changingType, onDismiss: {

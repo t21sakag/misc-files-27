@@ -6,15 +6,18 @@ struct WhiteboardCanvas: UIViewRepresentable {
     var pencilOnly = false
     var eraser = false
     var penColor: UIColor?
+    var penWidth: CGFloat = 3
     var toolPickerVisible = true
     var penColorChanged: (UIColor) -> Void = { _ in }
+    var penWidthChanged: (CGFloat) -> Void = { _ in }
+    var userDrawingChanged: () -> Void = {}
     func makeCoordinator() -> Coordinator { Coordinator(drawing: $drawing) }
     func makeUIView(context: Context) -> PKCanvasView {
         let canvas = PKCanvasView()
         canvas.backgroundColor = .clear
         canvas.isOpaque = false
         canvas.drawingPolicy = pencilOnly ? .pencilOnly : .anyInput
-        canvas.tool = Self.pen(penColor)
+        canvas.tool = Self.pen(penColor, width: penWidth)
         canvas.delegate = context.coordinator
         canvas.isAccessibilityElement = true
         canvas.accessibilityLabel = AppText.localized("手書きキャンバス")
@@ -22,7 +25,11 @@ struct WhiteboardCanvas: UIViewRepresentable {
         canvas.drawing = drawing
         canvas.accessibilityValue = AppText.localized("\(drawing.strokes.count)本の描線")
         context.coordinator.canvas = canvas
+        context.coordinator.penColorRGBA = penColor?.whiteboardRGBA
+        context.coordinator.penWidth = penWidth
         context.coordinator.penColorChanged = penColorChanged
+        context.coordinator.penWidthChanged = penWidthChanged
+        context.coordinator.userDrawingChanged = userDrawingChanged
         context.coordinator.toolPickerVisible = toolPickerVisible
         DispatchQueue.main.async {
             let picker = PKToolPicker()
@@ -39,18 +46,32 @@ struct WhiteboardCanvas: UIViewRepresentable {
         let coordinator = context.coordinator
         coordinator.drawing = $drawing
         coordinator.penColorChanged = penColorChanged
+        coordinator.penWidthChanged = penWidthChanged
+        coordinator.userDrawingChanged = userDrawingChanged
         canvas.drawingPolicy = pencilOnly ? .pencilOnly : .anyInput
         canvas.accessibilityValue = AppText.localized("\(drawing.strokes.count)本の描線")
+        let nextColorRGBA = penColor?.whiteboardRGBA
+        let penStyleChanged = coordinator.penColorRGBA != nextColorRGBA || abs(coordinator.penWidth - penWidth) > 0.05
+        coordinator.penColorRGBA = nextColorRGBA
+        coordinator.penWidth = penWidth
         if coordinator.eraser != eraser {
             if eraser { coordinator.previousTool = canvas.tool; canvas.tool = PKEraserTool(.vector) }
-            else { canvas.tool = coordinator.previousTool ?? Self.pen(penColor) }
+            else { canvas.tool = Self.pen(penColor, width: penWidth) }
             coordinator.eraser = eraser
+        } else if !eraser && penStyleChanged {
+            let updatedPen = Self.pen(penColor, width: penWidth)
+            canvas.tool = updatedPen
+            coordinator.picker?.selectedTool = updatedPen
         }
         if coordinator.toolPickerVisible != toolPickerVisible {
             coordinator.toolPickerVisible = toolPickerVisible
             coordinator.picker?.setVisible(toolPickerVisible, forFirstResponder: canvas)
         }
-        if canvas.drawing.dataRepresentation() != drawing.dataRepresentation() { canvas.drawing = drawing }
+        if canvas.drawing.dataRepresentation() != drawing.dataRepresentation() {
+            coordinator.suppressUserCallback = true
+            canvas.drawing = drawing
+            coordinator.suppressUserCallback = false
+        }
     }
     static func dismantleUIView(_ canvas: PKCanvasView, coordinator: Coordinator) {
         coordinator.picker?.setVisible(false, forFirstResponder: canvas)
@@ -58,19 +79,34 @@ struct WhiteboardCanvas: UIViewRepresentable {
         coordinator.picker?.removeObserver(coordinator)
         canvas.resignFirstResponder()
     }
-    static func pen(_ color: UIColor?) -> PKInkingTool { PKInkingTool(.pen, color: color ?? .systemBlue, width: 3) }
+    static func pen(_ color: UIColor?, width: CGFloat = 3) -> PKInkingTool {
+        PKInkingTool(.pen, color: color ?? .systemBlue, width: min(40, max(1, width)))
+    }
     final class Coordinator: NSObject, PKCanvasViewDelegate, PKToolPickerObserver {
         var drawing: Binding<PKDrawing>
         var picker: PKToolPicker?
         var previousTool: PKTool?
         var eraser = false
+        var penColorRGBA: UInt32?
+        var penWidth: CGFloat = 3
         var toolPickerVisible = true
+        var suppressUserCallback = false
         var penColorChanged: (UIColor) -> Void = { _ in }
+        var penWidthChanged: (CGFloat) -> Void = { _ in }
+        var userDrawingChanged: () -> Void = {}
         weak var canvas: PKCanvasView?
         init(drawing: Binding<PKDrawing>) { self.drawing = drawing }
-        func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) { drawing.wrappedValue = canvasView.drawing }
+        func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
+            if !suppressUserCallback { userDrawingChanged() }
+            drawing.wrappedValue = canvasView.drawing
+        }
         func toolPickerSelectedToolDidChange(_ toolPicker: PKToolPicker) {
-            if let ink = toolPicker.selectedTool as? PKInkingTool { penColorChanged(ink.color) }
+            if let ink = toolPicker.selectedTool as? PKInkingTool {
+                penColorRGBA = ink.color.whiteboardRGBA
+                penWidth = ink.width
+                penColorChanged(ink.color)
+                penWidthChanged(ink.width)
+            }
         }
     }
 }

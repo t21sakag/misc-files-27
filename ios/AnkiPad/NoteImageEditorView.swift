@@ -10,6 +10,7 @@ struct NoteImageEditRequest: Identifiable {
     var originalExtension: String? = nil
     var originalField: String? = nil
     var replacementRange: NSRange? = nil
+    var initialDrawingMode: Bool = false
 }
 
 struct NoteImageEditorView: View {
@@ -29,6 +30,7 @@ struct NoteImageEditorView: View {
         self.request = request
         self.insert = insert
         _image = State(initialValue: request.image)
+        _drawingMode = State(initialValue: request.initialDrawingMode)
     }
     var body: some View {
         NavigationStack {
@@ -79,8 +81,9 @@ struct NoteImageEditorView: View {
                 HStack {
                     Button(AppText.localized("回転"), systemImage: "rotate.right") { transform(rotate: true) }.accessibilityIdentifier("image-editor-rotate").disabled(drawingMode)
                     Button(AppText.localized("左右反転"), systemImage: "arrow.left.and.right.righttriangle.left.righttriangle.right") { transform(rotate: false) }.accessibilityIdentifier("image-editor-mirror").disabled(drawingMode)
+                    Button(AppText.localized("上下反転"), systemImage: "arrow.up.and.down.righttriangle.up.righttriangle.down") { flipVertically() }.accessibilityIdentifier("image-editor-flip-vertical").disabled(drawingMode)
                     Button(AppText.localized("切り抜く"), systemImage: "crop") { applyCrop() }.accessibilityIdentifier("image-editor-crop").disabled(crop == nil)
-                    Button(AppText.localized("元に戻す")) { image = request.image; crop = nil; changed = false; drawing = PKDrawing(); drawingMode = false }
+                    Button(AppText.localized("元に戻す")) { image = request.image; crop = nil; changed = false; drawing = PKDrawing(); drawingMode = request.initialDrawingMode }
                 }.buttonStyle(.bordered)
             }
             .padding().disabled(saving)
@@ -116,6 +119,13 @@ struct NoteImageEditorView: View {
     private func transform(rotate: Bool) {
         let source = normalized()
         image = NoteImageRendering.transformed(source, rotate: rotate)
+        crop = nil
+        drawing = PKDrawing()
+        changed = true
+    }
+    private func flipVertically() {
+        let source = normalized()
+        image = NoteImageRendering.flippedVertically(source)
         crop = nil
         drawing = PKDrawing()
         changed = true

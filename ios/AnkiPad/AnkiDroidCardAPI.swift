@@ -219,4 +219,8 @@ extension StudyModel {
         guard !busy, !reviewingInteractionBlocked, let card else { return }
         cardScriptEvents.append(CardScriptEvent(mutationKey: card.mutationKey, json: all ? "all" : "next", kind: .hint))
     }
+    func scrollCardPage(down: Bool) {
+        guard !busy, !reviewingInteractionBlocked, let card else { return }
+        cardScriptEvents.append(CardScriptEvent(mutationKey: card.mutationKey, json: down ? "down" : "up", kind: .scrollPage))
+    }
 }

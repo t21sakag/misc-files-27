@@ -26,6 +26,24 @@ enum NoteImageRendering {
         }
     }
 
+    static func flippedVertically(_ source: UIImage) -> UIImage {
+        let size = source.size
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).image { context in
+            context.cgContext.translateBy(x: size.width / 2, y: size.height / 2)
+            context.cgContext.scaleBy(x: 1, y: -1)
+            source.draw(in: CGRect(x: -size.width / 2, y: -size.height / 2, width: size.width, height: size.height))
+        }
+    }
+
+    static func blankCanvas(size: CGSize = CGSize(width: 1200, height: 900)) -> UIImage {
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+        }
+    }
+
     static func cropped(_ source: UIImage, unitRect: CGRect) -> UIImage? {
         let rect = CGRect(x: unitRect.minX * source.size.width, y: unitRect.minY * source.size.height,
                           width: unitRect.width * source.size.width, height: unitRect.height * source.size.height).integral

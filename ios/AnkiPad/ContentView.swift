@@ -63,6 +63,7 @@ struct ContentView: View {
     @State private var renamingDeck: Deck?
     @State private var deletingDeck: Deck?
     @State private var drawing = PKDrawing()
+    @State private var whiteboardHistory = WhiteboardStrokeHistory<PKStroke>()
     @State private var whiteboardPreferences = WhiteboardPreferences()
     @State private var whiteboardToolPicker = true
     @State private var eraser = false
@@ -214,10 +215,10 @@ struct ContentView: View {
             if model.selected != nil {
                 Button(action: model.replay) { Image(systemName: "speaker.wave.2") }.accessibilityLabel(AppText.localized("音声を再生")).accessibilityIdentifier("review-replay-audio")
                 Button { updateWhiteboard { $0.toggleEnabled() } } label: { Image(systemName: whiteboardPreferences.enabled ? "pencil.tip.crop.circle.fill" : "pencil.tip.crop.circle") }.accessibilityLabel(AppText.localized("手書きボード")).accessibilityIdentifier("whiteboard-toggle")
-                if whiteboard { Button { drawing = PKDrawing() } label: { Image(systemName: "trash") }.accessibilityLabel(AppText.localized("手書きを消す")) }
+                if whiteboard { Button { clearWhiteboard() } label: { Image(systemName: "trash") }.accessibilityLabel(AppText.localized("手書きを消す")) }
                 Button(AppText.localized("取り消す"), action: undoStrokeOrReview).disabled(model.busy || !model.profilesReady).accessibilityIdentifier("review-undo")
                 Menu {
-                    Button(AppText.localized("やり直す")) { model.redo() }
+                    Button(AppText.localized("やり直す")) { redoStrokeOrReview() }
                     Button(AppText.localized("自分の声を録音・再生"), systemImage: "mic") {
                         model.openReviewVoice()
                     }.disabled(model.card == nil || model.busy)
@@ -230,20 +231,34 @@ struct ContentView: View {
                     if whiteboard {
                         Button(whiteboardToolPicker ? AppText.localized("ペンの色・道具を隠す") : AppText.localized("ペンの色・道具を表示")) { whiteboardToolPicker.toggle() }
                             .accessibilityIdentifier("whiteboard-pen-palette")
+                        Button(AppText.localized("手書きを取り消す")) { undoWhiteboardStroke() }
+                            .disabled(drawing.strokes.isEmpty)
+                            .accessibilityIdentifier("whiteboard-undo")
+                        Button(AppText.localized("手書きをやり直す")) { redoWhiteboardStroke() }
+                            .disabled(!whiteboardHistory.canRedo)
+                            .accessibilityIdentifier("whiteboard-redo")
+                        Menu(AppText.localized("ブラシと太さ")) {
+                            Button(AppText.localized("現在のペンをブラシに追加")) { addCurrentWhiteboardBrush() }
+                                .accessibilityIdentifier("whiteboard-add-brush")
+                            ForEach([1.0, 3.0, 6.0, 12.0, 24.0], id: \.self) { width in
+                                Button(AppText.localized("太さ \(Int(width))pt")) {
+                                    updateWhiteboard { $0.setStrokeWidth(width) }
+                                }
+                            }
+                            let brushes = whiteboardPreferences.brushes(dark: colorScheme == .dark)
+                            if !brushes.isEmpty {
+                                ForEach(Array(brushes.enumerated()), id: \.offset) { offset, brush in
+                                    Button(AppText.localized("ブラシ \(offset + 1)") + " (\(Int(brush.clampedWidth))pt)") {
+                                        updateWhiteboard { $0.selectBrush(offset, dark: colorScheme == .dark) }
+                                    }.accessibilityIdentifier("whiteboard-brush-\(offset)")
+                                }
+                            }
+                        }.accessibilityIdentifier("whiteboard-brushes-menu")
                         Toggle(AppText.localized("消しゴム"), isOn: $eraser)
                         Toggle(AppText.localized("Apple Pencilのみで描く"), isOn: Binding(get: { whiteboardPreferences.stylusOnly }, set: { value in updateWhiteboard { $0.stylusOnly = value } }))
                             .accessibilityIdentifier("whiteboard-stylus-only")
-                        Button(AppText.localized("手書きを画像で保存")) {
-                            let bounds = drawing.bounds
-                            guard !bounds.isEmpty, !bounds.isNull else { return }
-                            if let data = drawing.image(from: bounds.insetBy(dx: -12, dy: -12), scale: 2).pngData() {
-                                do {
-                                    let url = FileManager.default.temporaryDirectory.appendingPathComponent("whiteboard-" + UUID().uuidString + ".png")
-                                    try data.write(to: url)
-                                    model.exportURL = url
-                                } catch { model.error = error.localizedDescription }
-                            }
-                        }.disabled(drawing.strokes.isEmpty)
+                        Button(AppText.localized("手書きを画像で保存")) { saveWhiteboardImage() }
+                            .disabled(drawing.strokes.isEmpty)
                     }
                     Button(model.card?.marked == true ? AppText.localized("マークを外す") : AppText.localized("マークを付ける"), systemImage: model.card?.marked == true ? "star.fill" : "star") { model.toggleCurrentMark() }
                     Button(AppText.localized("ノートを編集")) { if let card = model.card { model.editorRequest = EditorRequest(cardID: card.id, deckID: card.deckID) } }.accessibilityIdentifier("review-edit-note")
@@ -845,11 +860,20 @@ struct ContentView: View {
                 if whiteboard {
                     WhiteboardCanvas(drawing: $drawing, pencilOnly: whiteboardPreferences.stylusOnly, eraser: eraser,
                                      penColor: whiteboardPreferences.penColor(dark: colorScheme == .dark).map(UIColor.init(whiteboardRGBA:)),
+                                     penWidth: CGFloat(whiteboardPreferences.clampedStrokeWidth),
                                      toolPickerVisible: whiteboardToolPicker,
                                      penColorChanged: { color in
                                          let dark = colorScheme == .dark
                                          guard whiteboardPreferences.penColor(dark: dark) != color.whiteboardRGBA else { return }
                                          updateWhiteboard { $0.setPenColor(color.whiteboardRGBA, dark: dark) }
+                                     },
+                                     penWidthChanged: { width in
+                                         let clamped = WhiteboardPreferences.clampWidth(Double(width))
+                                         guard abs(whiteboardPreferences.clampedStrokeWidth - clamped) > 0.05 else { return }
+                                         updateWhiteboard { $0.setStrokeWidth(clamped) }
+                                     },
+                                     userDrawingChanged: {
+                                         whiteboardHistory.recordUserDrawingChange()
                                      })
                 }
             }
@@ -870,7 +894,7 @@ struct ContentView: View {
                 #endif
             }
             .onChange(of: card.id) { _, _ in
-                if !keepWhiteboard { drawing = PKDrawing() }
+                if !keepWhiteboard { clearWhiteboard() }
             }
             if effectiveAnswerPosition == .bottom { answerControls(card) }
         } else if model.finished {
@@ -889,15 +913,51 @@ private extension ContentView {
         whiteboardPreferences = WhiteboardPreferences.load(whiteboardKey.flatMap { UserDefaults.standard.data(forKey: $0) }, legacyStylusOnly: legacyPencilOnly)
         whiteboardToolPicker = true
         eraser = false
+        whiteboardHistory.clear()
     }
     private func updateWhiteboard(_ change: (inout WhiteboardPreferences) -> Void) {
         change(&whiteboardPreferences)
         if !whiteboard { eraser = false }
         if let key = whiteboardKey { UserDefaults.standard.set(whiteboardPreferences.encoded(), forKey: key) }
     }
+    private func clearWhiteboard() {
+        whiteboardHistory.clear()
+        drawing = PKDrawing()
+    }
+    private func undoWhiteboardStroke() {
+        guard whiteboard else { return }
+        var strokes = drawing.strokes
+        guard whiteboardHistory.undo(from: &strokes) else { return }
+        drawing.strokes = strokes
+    }
+    private func redoWhiteboardStroke() {
+        guard whiteboard else { return }
+        var strokes = drawing.strokes
+        guard whiteboardHistory.redo(into: &strokes) else { return }
+        drawing.strokes = strokes
+    }
+    private func addCurrentWhiteboardBrush() {
+        let dark = colorScheme == .dark
+        let currentColor = whiteboardPreferences.penColor(dark: dark) ?? UIColor.systemBlue.whiteboardRGBA
+        updateWhiteboard { $0.addBrush(colorRGBA: currentColor, width: $0.clampedStrokeWidth, dark: dark) }
+    }
+    private func saveWhiteboardImage() {
+        let bounds = drawing.bounds
+        guard !bounds.isEmpty, !bounds.isNull else { return }
+        if let data = drawing.image(from: bounds.insetBy(dx: -12, dy: -12), scale: 2).pngData() {
+            do {
+                let url = FileManager.default.temporaryDirectory.appendingPathComponent("whiteboard-" + UUID().uuidString + ".png")
+                try data.write(to: url)
+                model.exportURL = url
+            } catch { model.error = error.localizedDescription }
+        }
+    }
     /// Upstream undoes the last whiteboard stroke before undoing a review while the whiteboard is shown.
     private func undoStrokeOrReview() {
-        if whiteboard, !drawing.strokes.isEmpty { drawing.strokes.removeLast() } else { model.undo() }
+        if whiteboard, !drawing.strokes.isEmpty { undoWhiteboardStroke() } else { model.undo() }
+    }
+    private func redoStrokeOrReview() {
+        if whiteboard, whiteboardHistory.canRedo { redoWhiteboardStroke() } else { model.redo() }
     }
     func performGesture(_ action: ReviewGestureAction) {
         switch action {
@@ -915,18 +975,31 @@ private extension ContentView {
         case .saveVoice: model.saveReviewRecording()
         case .selectTTS: model.openSpeechVoicePicker()
         case .undo: undoStrokeOrReview()
-        case .redo: model.redo()
+        case .redo: redoStrokeOrReview()
         case .mark: model.toggleCurrentMark()
         case .edit: if let card = model.card { model.editorRequest = EditorRequest(cardID: card.id, deckID: card.deckID) }
         case .add: model.editorRequest = EditorRequest(deckID: model.selected?.id ?? "0")
         case .tags: openCardAction(.tags)
+        case .setDue: openCardAction(.due)
+        case .resetProgress: openCardAction(.reset)
+        case .cardInfo: if let card = model.card { model.backendPage = BackendPageRequest(path: "card-info/" + card.id, title: AppText.localized("カード情報")) }
         case .bury: model.modifyCurrent { try await model.engine.bury([$0.id]) }
+        case .buryNote: model.modifyCurrent { try await model.engine.bury([$0.noteID], note: true) }
         case .suspend: model.modifyCurrent { try await model.engine.suspend([$0.id]) }
+        case .suspendNote: model.modifyCurrent { _ = try await model.engine.call("SchedulerService.BuryOrSuspendCards", ["noteIds": [$0.noteID], "mode": "SUSPEND"]) }
         case .whiteboard: updateWhiteboard { $0.toggleEnabled() }
+        case .whiteboardVisibility: updateWhiteboard { $0.toggleVisible() }
         case .eraser: if whiteboard { eraser.toggle() }
-        case .clearWhiteboard: drawing = PKDrawing()
+        case .whiteboardStylusOnly: updateWhiteboard { $0.stylusOnly.toggle() }
+        case .undoWhiteboard: undoWhiteboardStroke()
+        case .redoWhiteboard: redoWhiteboardStroke()
+        case .clearWhiteboard: clearWhiteboard()
+        case .saveWhiteboard: saveWhiteboardImage()
         case .penColor: if whiteboard { whiteboardToolPicker.toggle() }
         case .autoAdvance: model.autoAdvance.toggle(); model.scheduleAutoAdvance()
+        case .pageUp: model.scrollCardPage(down: false)
+        case .pageDown: model.scrollCardPage(down: true)
+        case .exitStudy: if model.selected != nil, !model.busy { model.leave() }
         case .hint: model.showTemplateHint(all: false)
         case .allHints: model.showTemplateHint(all: true)
         default:

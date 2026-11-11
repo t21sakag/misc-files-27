@@ -42,7 +42,11 @@ enum ReviewSpeechPreferences {
     }
     static func enabled(profileID: String, defaults: UserDefaults = .standard) -> Bool { defaults.bool(forKey: enabledKey(profileID)) }
     static func setEnabled(_ enabled: Bool, profileID: String, defaults: UserDefaults = .standard) { defaults.set(enabled, forKey: enabledKey(profileID)) }
+    static func resetChoices(profileID: String, defaults: UserDefaults = .standard) {
+        defaults.removeObject(forKey: key(profileID))
+    }
     static func remove(profileID: String, defaults: UserDefaults = .standard) {
-        defaults.removeObject(forKey: key(profileID)); defaults.removeObject(forKey: enabledKey(profileID))
+        resetChoices(profileID: profileID, defaults: defaults)
+        defaults.removeObject(forKey: enabledKey(profileID))
     }
 }

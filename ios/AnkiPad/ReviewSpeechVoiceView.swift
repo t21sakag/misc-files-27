@@ -33,6 +33,10 @@ struct ReviewSpeechVoiceView: View {
                 Section {
                     row(.system, title: AppText.localized("システムの音声"), id: "system")
                     row(.off, title: AppText.localized("自動読み上げをしない"), id: "off")
+                    Button(AppText.localized("読み上げ言語をリセット"), role: .destructive) {
+                        ReviewSpeechPreferences.resetChoices(profileID: request.profileID)
+                        choice = .system
+                    }.accessibilityIdentifier("speech-reset-all")
                 } footer: {
                     Text(request.context.scope.side == .question
                          ? AppText.localized("このデッキの表面の音声を設定します。カードが指定した言語を優先します。")

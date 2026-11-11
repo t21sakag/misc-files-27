@@ -39,6 +39,7 @@ struct BrowserView: View {
     @State private var error: String?
     @State private var deleteConfirm = false
     @State private var tagPrompt = false
+    @State private var editingTags: TagSelectionRequest?
     @State private var tagText = ""
     @State private var duePrompt = false
     @State private var days = ""
@@ -236,7 +237,7 @@ struct BrowserView: View {
             Menu(AppText.localized("ノートタイプ")) { ForEach(types) { type in Button(type.name) { updateFilter(\.noteTypeIDs, values: [type.id]) } } }
             Menu(AppText.localized("フラグ")) { ForEach(0..<8, id: \.self) { value in Button(model.flagLabels.name(value)) { updateFilter(\.flags, values: [BrowserSearchFlag(rawValue: value)!]) }.accessibilityIdentifier("browser-filter-flag-\(value)") } }.accessibilityIdentifier("browser-filter-flags")
             Menu(AppText.localized("保存した検索")) {
-                ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in Button(name.value) { selectSavedSearch(name) } }
+                ForEach(BrowserSavedSearchName.displaySorted(config.savedSearches.keys), id: \.self) { name in Button(name.value) { selectSavedSearch(name) } }
                 Button(AppText.localized("この検索を保存")) {
                     withResolvedSearch { value in searchName = ""; savedSearchValue = value; saveSearchPrompt = true }
                 }.disabled(effectiveSearchRequest.isEmpty)
@@ -287,6 +288,11 @@ struct BrowserView: View {
                 Button(AppText.localized("ノートタイプを変更"), action: changeType)
                 Button(AppText.localized("書き出す")) { mutateOpening { selectionExport = SelectionExportRequest(cardIDs: try await chosenCards()) } }
                 Button(AppText.localized("検索と置換")) { mutateOpening { findReplace = FindReplaceRequest(noteIDs: try await chosenNotes()) } }
+                Button(AppText.localized("タグを編集")) {
+                    mutateOpening {
+                        editingTags = TagSelectionRequest(dialogType: .editTags, noteIDs: try await chosenNotes(), extraCheckedTags: [])
+                    }
+                }.accessibilityIdentifier("browser-edit-tags")
                 Button(AppText.localized("タグを追加・削除")) { tagPrompt = true }
                 Button(AppText.localized("期日を変更")) { duePrompt = true }
                 Button(AppText.localized("新規カードの順番を変更")) { repositionPrompt = true }
@@ -305,6 +311,16 @@ struct BrowserView: View {
             }
             .sheet(item: $filteredDeck, onDismiss: { revision += 1 }) { FilteredDeckView(model: model, request: $0) }
             .sheet(item: $findReplace, onDismiss: { revision += 1 }) { FindReplaceView(model: model, request: $0) }
+            .sheet(item: $editingTags) { request in
+                TagSelectionView(model: model, dialogType: request.dialogType, noteIDs: request.noteIDs, extraCheckedTags: request.extraCheckedTags, engine: model.engine, profileID: openingProfileID) { _, _ in
+                    updateSelection([])
+                    revision += 1
+                    Task {
+                        do { tags = try await model.engine.call("TagsService.AllTags")["vals"] as? [String] ?? [] }
+                        catch { self.error = error.localizedDescription }
+                    }
+                }
+            }
             .sheet(item: $preview, onDismiss: { revision += 1 }) { CardPreviewView(model: model, request: $0) }
             .sheet(isPresented: $managingTags, onDismiss: {
                 revision += 1
@@ -360,7 +376,7 @@ struct BrowserView: View {
                 }
             }) {
                 NavigationStack {
-                    List { ForEach(config.savedSearches.keys.sorted(), id: \.self) { name in
+                    List { ForEach(BrowserSavedSearchName.displaySorted(config.savedSearches.keys), id: \.self) { name in
                         Button { selectSavedSearch(name) } label: {
                             VStack(alignment: .leading) {
                                 Text(name.value)
@@ -370,7 +386,7 @@ struct BrowserView: View {
                         .buttonStyle(.borderless)
                         .accessibilityIdentifier("browser-saved-select-" + Data(name.value.utf8).base64EncodedString())
                     }.onDelete { offsets in
-                        let names = config.savedSearches.keys.sorted()
+                        let names = BrowserSavedSearchName.displaySorted(config.savedSearches.keys)
                         for index in offsets {
                             removedSearchNames.insert(names[index])
                             config.savedSearches.removeValue(forKey: names[index])

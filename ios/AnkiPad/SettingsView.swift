@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var networkPreferences = SyncNetworkPreferences.load()
     @State private var confirmingOneWaySync = false
     @State private var automaticTTS = false
+    @State private var resetTTSChoices = false
     @State private var allowCollectionAPI = UserDefaults.standard.bool(forKey: "allowCollectionCardAPI")
     @State private var allowCardExternalLaunch = UserDefaults.standard.bool(forKey: "allowCardExternalLaunch")
     @State private var allowTemplateAudioRecording = UserDefaults.standard.bool(forKey: CardTemplateAudioCapture.preferenceKey)
@@ -40,6 +41,7 @@ struct SettingsView: View {
     @State private var keepScreenOn: Bool = UserDefaults.standard.object(forKey: "keepScreenOn") as? Bool ?? true
     @State private var gestureConfiguration = ReviewGestureConfiguration.load()
     @State private var keyboardConfiguration = ReviewKeyboardConfiguration.load()
+    @State private var previewKeyboardConfiguration = PreviewKeyboardConfiguration.load()
     @State private var gamepadConfiguration = ReviewGamepadConfiguration.load()
     @State private var touchConfiguration = ReviewTouchConfiguration.load()
     @State private var toolbarConfiguration = ReviewToolbarConfiguration.load()
@@ -143,6 +145,9 @@ struct SettingsView: View {
                     Section(AppText.localized("音声")) {
                         Toggle(AppText.localized("音声がないカードを読み上げる"), isOn: $automaticTTS).accessibilityIdentifier("tts-enabled")
                         Text(AppText.localized("学習画面の「読み上げ音声を選択」から、デッキとカードの面に合わせて音声を選べます。"))
+                        Button(resetTTSChoices ? AppText.localized("読み上げ言語をリセット（保存で適用）") : AppText.localized("読み上げ言語をリセット"), role: .destructive) {
+                            resetTTSChoices = true
+                        }.accessibilityIdentifier("tts-reset-languages")
                     }
                     Section(AppText.localized("学習操作")) {
                         LabeledContent(AppText.localized("解答表示の長押し（ミリ秒）")) {
@@ -160,7 +165,7 @@ struct SettingsView: View {
                         NavigationLink(AppText.localized("スワイプの割り当て")) { ReviewGestureSettingsView(configuration: $gestureConfiguration) }
                         NavigationLink(AppText.localized("タッチ領域の割り当て")) { ReviewTouchSettingsView(configuration: $touchConfiguration) }.accessibilityIdentifier("touch-settings-open")
                         NavigationLink(AppText.localized("操作バーの設定")) { ReviewToolbarSettingsView(configuration: $toolbarConfiguration) }.accessibilityIdentifier("toolbar-settings-open")
-                        NavigationLink(AppText.localized("キーボードの割り当て")) { ReviewKeyboardSettingsView(configuration: $keyboardConfiguration) }
+                        NavigationLink(AppText.localized("キーボードの割り当て")) { ReviewKeyboardSettingsView(configuration: $keyboardConfiguration, previewConfiguration: $previewKeyboardConfiguration) }
                         NavigationLink(AppText.localized("ゲームパッドの割り当て")) { ReviewGamepadSettingsView(configuration: $gamepadConfiguration) }
                         Toggle(AppText.localized("次のカードにも手書きを残す"), isOn: $keepWhiteboard)
                         Toggle(AppText.localized("音声再生ボタンを隠す"), isOn: boolean("reviewing", "hideAudioPlayButtons"))
@@ -246,6 +251,7 @@ struct SettingsView: View {
                             UserDefaults.standard.set(allowTemplateAudioRecording, forKey: CardTemplateAudioCapture.preferenceKey)
                             UserDefaults.standard.set(try JSONEncoder().encode(gestureConfiguration), forKey: "reviewGestureConfiguration")
                             UserDefaults.standard.set(try JSONEncoder().encode(keyboardConfiguration), forKey: "reviewKeyboardConfiguration")
+                            UserDefaults.standard.set(try JSONEncoder().encode(previewKeyboardConfiguration), forKey: "previewKeyboardConfiguration")
                             UserDefaults.standard.set(try JSONEncoder().encode(gamepadConfiguration), forKey: "reviewGamepadConfiguration")
                             UserDefaults.standard.set(try JSONEncoder().encode(touchConfiguration), forKey: "reviewTouchConfiguration")
                             UserDefaults.standard.set(try JSONEncoder().encode(toolbarConfiguration), forKey: "reviewToolbarConfiguration")
@@ -269,6 +275,7 @@ struct SettingsView: View {
                             networkPreferences.save()
                             model.setAutomaticSyncEnabled(automaticSync)
                             ReviewSpeechPreferences.setEnabled(automaticTTS, profileID: model.currentProfileID)
+                            if resetTTSChoices { ReviewSpeechPreferences.resetChoices(profileID: model.currentProfileID) }
                             language.save()
                             model.refreshAfterEditing()
                             dismiss()

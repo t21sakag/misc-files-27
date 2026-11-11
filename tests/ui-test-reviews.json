@@ -10858,6 +10858,265 @@
         }
       ],
       "checked_at": "2026-11-10T16:11:27.639595+00:00"
+    },
+    {
+      "id": "20261111-deck-tree-hierarchical-fullname",
+      "covers": [
+        [
+          42852225007,
+          1
+        ],
+        [
+          42838384711,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42838384711,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Consumer 0 timed out mid-AX-read at 10s in scanTestCollectionPages and stored an empty identifier into observedFrontIdentifiers; Consumer 1 searched upward instead of downward when revisiting note-deck-select at the top of note-form. Both harness issues were resolved in 42852225007 (Consumer 0 passed 1/1; Consumer 1 opened the picker, created Choice Parent, searched, and created Child)."
+        },
+        {
+          "attempt": [
+            42852225007,
+            1
+          ],
+          "kind": "application",
+          "finding": "Consumer 0 (BrowserSearchIdentityFlowTests/testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch) passed 1/1 with 0 warnings. Consumer 1 (DeckSelectionFlowTests/testSearchCreateChildCancelAndPersistNoteDestination) created 'Choice Parent' and subdeck 'Child' ('Choice Parent::Child'), then failed at DeckSelectionFlowTests.swift:64 because NoteEditorView displayed 'デッキ、Child' instead of 'デッキ、Choice Parent::Child' due to Deck.flatten storing only the leaf node['name'] without accumulating ancestor prefixes into fullName."
+        }
+      ],
+      "root_cause": "DecksService.DeckTree returns each deck node's short leaf name ('Child') inside its recursive children array rather than the full '::'-delimited path ('Choice Parent::Child'). Deck.flatten stored only node['name'] in Deck.name without computing fullName, causing NoteEditorView, ImageOcclusionEntryView, NoteTemplateEditor, DeckSelectionView, and DeckSelectionChoices to display and filter child decks by their leaf name ('Child') instead of their hierarchical name ('Choice Parent::Child').",
+      "common_resolution": "Add Deck.fullName (defaulting to name, and populated as prefix + '::' + name in Deck.flatten) while keeping Deck.name as the short leaf name for the indented home deck list. Update DeckSelectionChoices, DeckSelectionView, NoteEditorView, ImageOcclusionEntryView, and NoteTemplateEditor to use deck.fullName. Re-verify only the single failed case DeckSelectionFlowTests/testSearchCreateChildCancelAndPersistNoteDestination via native-deck-selection without re-running the already passed BrowserSearchIdentityFlowTests case.",
+      "rule_review": {
+        "semantic_labels": "Terminal AX 0499D7A7-9E8A-4C01-9047-78839383084E.txt line 192 ('note-deck-select', label: 'デッキ、Child') and screenshot 3EED09CF-AF16-4EBF-9622-93E291562E15.png confirm the test's semantic expectation ('Choice Parent::Child') is right and the app was displaying only the leaf name. No test label relaxation.",
+        "foreground_scope": "DeckSelectionView search bar (.navigationBarDrawer(displayMode: .always)), context menu ('サブデッキを作成'), and creation sheet ('deck-picker-create-form') all resolved and operated cleanly in the foreground in 42852225007.",
+        "unique_reads_and_actions": "Mounted-cell completeness check in BrowserSearchTestSupport passed Consumer 0 cleanly in 42852225007. DeckSelectionFlowTests continues to require unique 'deck-picker-choice-' prefix and exact hierarchical label prefix.",
+        "live_state": "Keep all semantic postconditions, duplicate creation error check, cancel restoration, unsaved note field preservation, and relaunch browser did:<childID> verification.",
+        "keyboard_and_scroll": "searchUpward: false in openPicker() and 30s timeout in scanTestCollectionPages worked as intended in 42852225007; no further scroll/keyboard helper changes needed.",
+        "environment": "Both consumers built and ran cleanly in 42852225007; localization resources smoke and Swift syntax checks pass on all 267 files and 894 ja/en translations.",
+        "first_failure_evidence": "Consumer 1 terminal AX 0499D7A7-9E8A-4C01-9047-78839383084E.txt (sha256 9a8f5af2db5740647648fc3b40c2fc62d8a880607f1e77980bfee4c2e54be23f) and screenshot 3EED09CF-AF16-4EBF-9622-93E291562E15.png (sha256 cd995f4c863a0870448a030cfe16dece14f891bf2b391a1e98b82e838b697412) show the NoteEditor form after subdeck creation with 'デッキ' displaying 'Child' instead of 'Choice Parent::Child'.",
+        "failure_classification": "42838384711/1 was harness (resolved in 42852225007/1); 42852225007/1 Consumer 1 is a genuine application bug in Deck.flatten / Deck.fullName. Next scope is restricted to the single failed case native-deck-selection.",
+        "runtime_warnings": "Both Consumer 0 and Consumer 1 in 42852225007 reported runtimeWarnings=[]; keep strict zero-warning enforcement.",
+        "device_evidence": "Simulator UI verification only; physical device and SideStore checks remain separate."
+      },
+      "next_scope": [
+        "DeckSelectionFlowTests/testSearchCreateChildCancelAndPersistNoteDestination"
+      ],
+      "evidence": [
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/ui-diagnostics-1/test-summary.json",
+          "sha256": "8b03d09cb95c40c8cbf57d63ce4ac5164e27354a39de343b6bbe809c39b898bf"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42838384711/ui-diagnostics-1/screenshots/C5D2B9BC-0368-4B1A-BDBE-24D72FF2A3FE.txt",
+          "sha256": "19fcb762e97e09af05810834f2c6e9249c52180e4e736c2ce7007dc188d485c6"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42852225007/ui-diagnostics-0/test-summary.json",
+          "sha256": "7d57b6416ac43545d9453165a8132fed4ea988ec00146db3de524a12bd055635"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42852225007/ui-diagnostics-1/test-summary.json",
+          "sha256": "9c2794a53bcc79407e1ab147436f6bef0ff742aef4a039990da788d2b4940349"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42852225007/ui-diagnostics-1/screenshots/0499D7A7-9E8A-4C01-9047-78839383084E.txt",
+          "sha256": "9a8f5af2db5740647648fc3b40c2fc62d8a880607f1e77980bfee4c2e54be23f"
+        },
+        {
+          "reference": "completed-evidence/deck-selection-ui-42852225007/screenshots-1/3EED09CF-AF16-4EBF-9622-93E291562E15.png",
+          "sha256": "cd995f4c863a0870448a030cfe16dece14f891bf2b391a1e98b82e838b697412"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "899e314e13633fc99d4b9046ce1c2035d5cbc8c840986a1835928e3948e5e460",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "338c7c87804e060b150933d0ef7154815e9e7a309dc0eb24eec9537d76272c8c",
+        "ios/AnkiPadUITests/BrowserSearchTestSupport.swift": "95b543b7734530dec4b3abba4202976012d50fe31c2c4291bfd3d9ed5a6d4bdc",
+        "ios/AnkiPadUITests/CollectionPageScanState.swift": "470880f0c9d7b778191ed028526ce0569ff55858a388d440f30ea380e171e12c",
+        "ios/AnkiPadUITests/DeckSelectionFlowTests.swift": "77546ced61af5efb6592b0f4682a9a5b94f7d7ad3e6789a489fe6e37739c83e1",
+        "ios/AnkiPad/DeckTree.swift": "3677a8a469176942616973cb66e6467b6d09956a2172cc7a21660b08e67aa2d6",
+        "ios/AnkiPad/DeckSelectionChoices.swift": "0c8ad75d086b494284fce4ce2603cf006b68701ec3db4f490e51f4f1485b93a3",
+        "ios/AnkiPad/DeckSelectionEngine.swift": "449d97b27096419e8380161940053f2fa26c8653cfc008ac6e85f31eea4ec192",
+        "ios/AnkiPad/DeckSelectionView.swift": "4048f5933eac5be7650dbffbab0ff39d6ca9f43196baf26f865b6b65dfce0f19",
+        "ios/AnkiPad/NoteEditorView.swift": "4e051936e42bb769064089a754d3a1bf0783a9b9bb1ea8911ca392739d0f2492",
+        "ios/AnkiPad/ImageOcclusionEntryView.swift": "fec41f304a2ebc54b8bf940dd48c9c4d87b73f7d65d1d12d324f890a1e6ee982",
+        "ios/AnkiPad/NoteTemplateEditor.swift": "f50bea3c1566fa24c59b83395fcfd49b06cee92d542caef462f66172ca3e9720",
+        "scripts/select-ui-tests.py": "4d4cf66bf98fc9e2241d3d12f2d242ed0390449edcc2b5174ac0cc475445f0ff",
+        "scripts/ui-case-groups.json": "b8c0cff904bbe67175ae070566424f0371df6a479ee0ea54c196232dde922e09",
+        ".github/workflows/ipa.yml": "7d3f7e39bc688ba036f008f97293d2e481631a3723db99ed20240bfe79da59db"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "5a2e6afaa09057b2e84f53736065dee33d87444ac206b4e6f0d5e49f8ddee889"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "37b08fd94a98ca52204d91f1a5e3553feceab95b969b596ee1d4f5159cf4ef99"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "518ba4854d74868f4b132538c334422487ce3d62d07f0dc1adec6ce140fce1fd"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d4ded7da1fe8822fea4a9859b4e15c1db859df45419965c04f745788ca1c54"
+        },
+        {
+          "name": "query regression",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "da2f60df5efe43191d86ead4a521f37b93398fe4c53eb4a2e3af3790e66d15e1"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "actual traversal state and mounted-cell geometry",
+          "argv": [
+            "python3",
+            "tests/collection_page_scan_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6f07558ee075a2c35d3ed788a32bc444823d57eb0b72f59b071eeafd5dcb12a"
+        },
+        {
+          "name": "production deck tree compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPad/DeckTree.swift",
+            "tests/deck_tree_smoke.swift",
+            "-o",
+            "build/deck-tree-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "production deck tree runtime",
+          "argv": [
+            "build/deck-tree-smoke"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "4e1affd8d61e26c024eacfb4e696ce021802a7938c30fe24ecf8da040658dfab"
+        },
+        {
+          "name": "production deck choice compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPad/DeckTree.swift",
+            "ios/AnkiPad/DeckSelectionChoices.swift",
+            "tests/deck_selection_choices_smoke.swift",
+            "-o",
+            "build/deck-selection-choices"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "production deck choice runtime",
+          "argv": [
+            "build/deck-selection-choices"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "10fb23c1b835357109ab9dddfe6ea4922df1534581d1e40a801c8c062e3ea7ec"
+        },
+        {
+          "name": "production creation adapter compile",
+          "argv": [
+            "env:ANKIPAD_SWIFTC",
+            "-swift-version",
+            "5",
+            "-parse-as-library",
+            "ios/AnkiPad/DeckSelectionEngine.swift",
+            "tests/deck_selection_driver.swift",
+            "-o",
+            "build/deck-selection-driver"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "production creation adapter native CABI",
+          "argv": [
+            "python3",
+            "tests/deck_selection_engine_smoke.py",
+            "env:ANKIPAD_AUDIT_BRIDGE",
+            "build/deck-selection-driver"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "c71e62ada443d52b273d895c45d04cb674ba9cdf8fc03fba45bfdbc41ad309c7"
+        },
+        {
+          "name": "partition and transfer complete catalog",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        }
+      ],
+      "checked_at": "2026-11-11T00:45:07.138112+00:00"
     }
   ]
 }

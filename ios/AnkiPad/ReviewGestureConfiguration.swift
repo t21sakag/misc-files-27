@@ -5,8 +5,8 @@ import SwiftUI
 
 enum ReviewGestureAction: String, Codable, CaseIterable, Identifiable {
     case none, flipOrGood, flipOrAgain, showAnswer, again, hard, good, easy
-    case replay, recordVoice, replayVoice, saveVoice, selectTTS, undo, redo, mark, edit, add, tags, bury, suspend
-    case whiteboard, eraser, clearWhiteboard, penColor, autoAdvance, hint, allHints
+    case replay, recordVoice, replayVoice, saveVoice, selectTTS, undo, redo, mark, edit, add, tags, setDue, resetProgress, cardInfo, bury, buryNote, suspend, suspendNote
+    case whiteboard, whiteboardVisibility, eraser, whiteboardStylusOnly, undoWhiteboard, redoWhiteboard, clearWhiteboard, saveWhiteboard, penColor, autoAdvance, pageUp, pageDown, exitStudy, hint, allHints
     case flag0, flag1, flag2, flag3, flag4, flag5, flag6, flag7
     case user1, user2, user3, user4, user5, user6, user7, user8, user9
     var id: String { rawValue }
@@ -16,9 +16,9 @@ enum ReviewGestureAction: String, Codable, CaseIterable, Identifiable {
         return ["none": AppText.localized("何もしない"), "flipOrGood": AppText.localized("解答表示 / 普通"), "flipOrAgain": AppText.localized("解答表示 / もう一度"),
             "showAnswer": AppText.localized("解答を表示"), "again": AppText.localized("もう一度"), "hard": AppText.localized("難しい"), "good": AppText.localized("普通"), "easy": AppText.localized("簡単"),
             "replay": AppText.localized("音声を再生"), "recordVoice": AppText.localized("自分の声を録音"), "replayVoice": AppText.localized("自分の声を再生・一時停止"), "saveVoice": AppText.localized("録音を停止して保持"), "selectTTS": AppText.localized("読み上げ音声を選択"), "undo": AppText.localized("取り消す"), "redo": AppText.localized("やり直す"), "mark": AppText.localized("マークを切り替え"),
-            "edit": AppText.localized("ノートを編集"), "add": AppText.localized("ノートを追加"), "tags": AppText.localized("タグを編集"), "bury": AppText.localized("今日は表示しない"), "suspend": AppText.localized("保留"),
-            "whiteboard": AppText.localized("手書きを切り替え"), "eraser": AppText.localized("消しゴムを切り替え"), "clearWhiteboard": AppText.localized("手書きを消去"), "penColor": AppText.localized("ペンの色を変更"),
-            "autoAdvance": AppText.localized("自動進行を切り替え"), "hint": AppText.localized("次のヒントを表示"), "allHints": AppText.localized("すべてのヒントを表示")][rawValue] ?? rawValue
+            "edit": AppText.localized("ノートを編集"), "add": AppText.localized("ノートを追加"), "tags": AppText.localized("タグを編集"), "setDue": AppText.localized("期日を変更"), "resetProgress": AppText.localized("新規カードに戻す"), "cardInfo": AppText.localized("カード情報"), "bury": AppText.localized("今日は表示しない"), "buryNote": AppText.localized("関連カードを今日は表示しない"), "suspend": AppText.localized("保留"), "suspendNote": AppText.localized("関連カードを保留"),
+            "whiteboard": AppText.localized("手書きを切り替え"), "whiteboardVisibility": AppText.localized("手書きの表示を切り替え"), "eraser": AppText.localized("消しゴムを切り替え"), "whiteboardStylusOnly": AppText.localized("Apple Pencilのみで描く"), "undoWhiteboard": AppText.localized("手書きを取り消す"), "redoWhiteboard": AppText.localized("手書きをやり直す"), "clearWhiteboard": AppText.localized("手書きを消去"), "saveWhiteboard": AppText.localized("手書きを画像で保存"), "penColor": AppText.localized("ペンの色を変更"),
+            "autoAdvance": AppText.localized("自動進行を切り替え"), "pageUp": AppText.localized("ページを上へスクロール"), "pageDown": AppText.localized("ページを下へスクロール"), "exitStudy": AppText.localized("学習を終了"), "hint": AppText.localized("次のヒントを表示"), "allHints": AppText.localized("すべてのヒントを表示")][rawValue] ?? rawValue
     }
 }
 struct ReviewGestureConfiguration: Codable {

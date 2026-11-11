@@ -55,7 +55,7 @@ private struct DeckCreationPrompt: Identifiable {
                             }
                             Button { choose(deck.id) } label: {
                                 HStack {
-                                    Text(deck.name).multilineTextAlignment(.leading)
+                                    Text(deck.fullName).multilineTextAlignment(.leading)
                                     Spacer()
                                     if deck.id == currentID { Image(systemName: "checkmark") }
                                 }.frame(maxWidth: .infinity).contentShape(Rectangle())
@@ -63,7 +63,7 @@ private struct DeckCreationPrompt: Identifiable {
                             .buttonStyle(.borderless)
                             .accessibilityIdentifier("deck-picker-choice-" + deck.id)
                             .contextMenu {
-                                Button(AppText.localized("サブデッキを作成")) { prompt = DeckCreationPrompt(parentID: deck.id, parentName: deck.name) }
+                                Button(AppText.localized("サブデッキを作成")) { prompt = DeckCreationPrompt(parentID: deck.id, parentName: deck.fullName) }
                                     .accessibilityIdentifier("deck-picker-add-child")
                             }
                         }.padding(.leading, CGFloat(deck.level) * 12)

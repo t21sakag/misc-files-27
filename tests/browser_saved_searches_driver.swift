@@ -37,6 +37,12 @@ actor Engine {
         // SwiftUI's erased row identities must retain both literal names.
         precondition(AnyHashable(BrowserSavedSearchName("caf\u{e9}"))
             != AnyHashable(BrowserSavedSearchName("cafe\u{301}")))
+        let sortedDisplay = BrowserSavedSearchName.displaySorted([
+            BrowserSavedSearchName("Zeta"),
+            BrowserSavedSearchName("alpha"),
+            BrowserSavedSearchName("Alpha")
+        ]).map(\.value)
+        precondition(sortedDisplay == ["Alpha", "alpha", "Zeta"])
         let engine = Engine()
         while let line = readLine() {
             let value = try JSONSerialization.jsonObject(with: Data(line.utf8)) as! [String: Any]

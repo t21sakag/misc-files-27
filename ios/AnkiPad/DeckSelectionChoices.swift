@@ -10,12 +10,12 @@ enum DeckSelectionChoices {
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
         if !filters.isEmpty {
             return eligible.filter { deck in
-                filters.allSatisfy { matchesName(deck.name, filter: $0, locale: locale) }
-                    && filters.contains { matchesLeaf(deck.name, filter: $0, locale: locale) }
+                filters.allSatisfy { matchesName(deck.fullName, filter: $0, locale: locale) }
+                    && filters.contains { matchesLeaf(deck.fullName, filter: $0, locale: locale) }
             }
         }
-        let hiddenParents = eligible.filter { collapsed.contains($0.id) }.map { $0.name + "::" }
-        return eligible.filter { deck in !hiddenParents.contains { deck.name.hasPrefix($0) } }
+        let hiddenParents = eligible.filter { collapsed.contains($0.id) }.map { $0.fullName + "::" }
+        return eligible.filter { deck in !hiddenParents.contains { deck.fullName.hasPrefix($0) } }
     }
 
     private static func contains(_ name: String, _ filter: String) -> Bool {

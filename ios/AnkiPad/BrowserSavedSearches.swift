@@ -26,6 +26,16 @@ struct BrowserSavedSearchName: Hashable, Comparable, Sendable {
     static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.value.utf16.lexicographicallyPrecedes(rhs.value.utf16)
     }
+
+    static func displayPrecedes(_ lhs: Self, _ rhs: Self) -> Bool {
+        let cmp = lhs.value.caseInsensitiveCompare(rhs.value)
+        if cmp != .orderedSame { return cmp == .orderedAscending }
+        return lhs < rhs
+    }
+
+    static func displaySorted(_ names: some Sequence<Self>) -> [Self] {
+        names.sorted(by: displayPrecedes)
+    }
 }
 
 typealias BrowserSavedSearches = [BrowserSavedSearchName: String]

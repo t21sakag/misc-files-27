@@ -67,6 +67,7 @@ struct CardPreviewView: View {
     @State private var recognition = CardScriptRecognition()
     @State private var scriptEvents: [CardScriptEvent] = []
     @State private var loadGeneration = UUID()
+    @AppStorage("previewKeyboardConfiguration") private var previewKeyboardData = Data()
     init(model: StudyModel, request: CardPreviewRequest) {
         self.model = model
         self.request = request
@@ -89,18 +90,19 @@ struct CardPreviewView: View {
                         scriptEventDelivered: { id in scriptEvents.removeAll { $0.id == id } },
                         scriptEventError: { error = $0 })
                     HStack {
-                        Button { move(-1) } label: { Image(systemName: "chevron.left") }.disabled(index == 0 || busy).keyboardShortcut(.leftArrow, modifiers: [])
+                        Button { move(-1) } label: { Image(systemName: "chevron.left") }.disabled(index == 0 || busy)
                             .accessibilityLabel(AppText.localized("前のカード")).accessibilityIdentifier("preview-previous")
                         Spacer()
                         Button(answer ? AppText.localized("表面を表示") : AppText.localized("解答を表示")) { if answer { answer = false } else { reveal() } }.disabled(busy)
                         Spacer()
-                        Button { move(1) } label: { Image(systemName: "chevron.right") }.disabled(index + 1 >= request.ids.count || busy).keyboardShortcut(.rightArrow, modifiers: [])
+                        Button { move(1) } label: { Image(systemName: "chevron.right") }.disabled(index + 1 >= request.ids.count || busy)
                             .accessibilityLabel(AppText.localized("次のカード")).accessibilityIdentifier("preview-next")
                     }.padding()
                 } else if let error { ContentUnavailableView(AppText.localized("カードを表示できませんでした"), systemImage: "exclamationmark.triangle", description: Text(error)) }
                 else if request.ids.isEmpty { ContentUnavailableView(AppText.localized("カードがありません"), systemImage: "rectangle.stack") }
                 else { ProgressView() }
             }
+            .background { previewKeyboardCommands }
             .overlay(alignment: .bottom) {
                 if let toast {
                     Text(toast).multilineTextAlignment(.center).padding()
@@ -114,21 +116,21 @@ struct CardPreviewView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(AppText.localized("閉じる")) { visible = false; loadGeneration = UUID(); stopScriptAudio(); audio.stop(); dismiss() }.accessibilityIdentifier("preview-close") }
                 ToolbarItemGroup(placement: .primaryAction) {
-                    Button { if let card { editor = EditorRequest(cardID: card.id, deckID: card.deckID) } } label: { Image(systemName: "pencil") }.disabled(card == nil || busy).keyboardShortcut("e", modifiers: [])
+                    Button { if let card { editor = EditorRequest(cardID: card.id, deckID: card.deckID) } } label: { Image(systemName: "pencil") }.disabled(card == nil || busy)
                     Button(card?.marked == true ? AppText.localized("マークを外す") : AppText.localized("マークを付ける"), systemImage: card?.marked == true ? "star.fill" : "star") {
                         toggleMark()
-                    }.disabled(card == nil || busy).keyboardShortcut("*", modifiers: []).accessibilityIdentifier("preview-mark")
-                    Button(AppText.localized("音声を再生"), systemImage: "speaker.wave.2") { replay() }.disabled(card == nil || busy).accessibilityIdentifier("preview-replay").keyboardShortcut("r", modifiers: [])
+                    }.disabled(card == nil || busy).accessibilityIdentifier("preview-mark")
+                    Button(AppText.localized("音声を再生"), systemImage: "speaker.wave.2") { replay() }.disabled(card == nil || busy).accessibilityIdentifier("preview-replay")
                     Menu((card?.flag ?? 0) == 0 ? AppText.localized("フラグなし") : model.flagLabels.name(card?.flag ?? 0), systemImage: "flag") {
                         ForEach(0..<8, id: \.self) { flag in
                             Button { setFlag(flag) } label: {
                                 if card?.flag == flag { Label(model.flagLabels.name(flag), systemImage: "checkmark") }
                                 else { Text(model.flagLabels.name(flag)) }
-                            }.keyboardShortcut(flag == 0 ? nil : KeyboardShortcut(KeyEquivalent(Character(String(flag))), modifiers: .control))
+                            }
                             .accessibilityIdentifier("preview-flag-\(flag)").accessibilityValue(card?.flag == flag ? AppText.localized("選択中") : AppText.localized("未選択"))
                         }
                     }.disabled(card == nil || busy).accessibilityIdentifier("preview-flags")
-                    Toggle(AppText.localized("裏面のみ"), isOn: $answerOnly).disabled(card == nil || busy).keyboardShortcut("b", modifiers: []).onChange(of: answerOnly) { _, next in if next { reveal() } else { answer = false } }
+                    Toggle(AppText.localized("裏面のみ"), isOn: $answerOnly).disabled(card == nil || busy).onChange(of: answerOnly) { _, next in if next { reveal() } else { answer = false } }
                 }
             }
             .sheet(item: $tagRequest, onDismiss: { revision += 1 }) { ReviewCardActionsView(model: model, request: $0) }
@@ -288,6 +290,42 @@ struct CardPreviewView: View {
                 return try result("This AnkiDroid API endpoint is not yet available in preview: " + endpoint, success: false)
             }
             return try result(value)
+        }
+    }
+    private var previewKeyboardCommands: some View {
+        let configuration = PreviewKeyboardConfiguration.load(previewKeyboardData)
+        return VStack {
+            ForEach(PreviewKey.allCases) { key in
+                let action = configuration.action(for: key)
+                Button(action.title) { performPreviewAction(action) }
+                    .keyboardShortcut(key.shortcut)
+                    .disabled(action == .none || card == nil || busy || editor != nil || tagRequest != nil
+                        || (!answer && card?.typing != nil && key != .enter))
+            }
+        }.frame(width: 0, height: 0).clipped().opacity(0).accessibilityHidden(true)
+    }
+    private func performPreviewAction(_ action: PreviewAction) {
+        guard visible, let card, !busy, editor == nil, tagRequest == nil else { return }
+        switch action {
+        case .none: break
+        case .previousCard: move(-1)
+        case .nextCard: move(1)
+        case .toggleSide:
+            if answer { answer = false } else { reveal() }
+        case .backSideOnly:
+            answerOnly.toggle()
+        case .edit:
+            editor = EditorRequest(cardID: card.id, deckID: card.deckID)
+        case .replay:
+            replay()
+        case .mark:
+            toggleMark()
+        case .flag0:
+            if card.flag != 0 { setFlag(0) }
+        default:
+            if action.rawValue.hasPrefix("flag"), let flag = Int(action.rawValue.dropFirst(4)) {
+                setFlag(flag)
+            }
         }
     }
     private func clearToast() { toastTask?.cancel(); toastTask = nil; toast = nil }

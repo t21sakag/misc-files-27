@@ -29,7 +29,7 @@ struct ImageOcclusionEntryView: View {
         NavigationStack {
             Form {
                 Button { choosingDeck = true } label: {
-                    LabeledContent(AppText.localized("デッキ"), value: model.decks.first(where: { $0.id == deckID })?.name ?? deckID)
+                    LabeledContent(AppText.localized("デッキ"), value: model.decks.first(where: { $0.id == deckID })?.fullName ?? deckID)
                 }.accessibilityIdentifier("occlusion-deck-select")
                 Text(AppText.localized("画像を選び、覚えたい部分をマスクで隠します。マスクごとに穴埋めカードを作成します。"))
                 if let initialFile {

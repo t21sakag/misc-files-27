@@ -28,6 +28,14 @@ import Foundation
         precondition(DeckSelectionChoices.visible(unicode, query: "😀::wo", collapsed: []).map(\.id) == ["c"])
         precondition(DeckSelectionChoices.visible(unicode, query: "istanbul", collapsed: [], locale: Locale(identifier: "tr_TR")).map(\.id) == ["d"])
         precondition(decks[1].collapsed == false, "Local picker folding must not mutate the home tree")
+        let flattened = Deck.flatten([
+            ["deckId": "10", "name": "Choice Parent",
+             "children": [["deckId": "11", "name": "Child"]]]
+        ])
+        precondition(flattened.map(\.name) == ["Choice Parent", "Child"])
+        precondition(flattened.map(\.fullName) == ["Choice Parent", "Choice Parent::Child"])
+        precondition(DeckSelectionChoices.visible(flattened, query: "Choice Child", collapsed: []).map(\.id) == ["11"])
+        precondition(DeckSelectionChoices.visible(flattened, query: "", collapsed: ["10"]).map(\.id) == ["10"])
         print("PASS: production deck selection filter/tree, last-leaf AND semantics, hierarchy alignment, colon typing, whitespace/case, Unicode, Turkish, filtered eligibility and local folding")
     }
 }

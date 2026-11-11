@@ -2,7 +2,13 @@ import Foundation
 import AVFoundation
 import Speech
 
-enum CardScriptEventKind: String { case speech = "ankiSttResult", search = "ankiSearchCard", userAction = "ankiPadUserAction", hint = "ankiPadShowHint" }
+enum CardScriptEventKind: String {
+    case speech = "ankiSttResult"
+    case search = "ankiSearchCard"
+    case userAction = "ankiPadUserAction"
+    case hint = "ankiPadShowHint"
+    case scrollPage = "ankiPadScrollPage"
+}
 struct CardScriptEvent {
     let id = UUID()
     let mutationKey: String
