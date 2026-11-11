@@ -188,12 +188,14 @@ struct ReviewReminderSettingsView: View {
     let profile: StudyProfile
     let engine: Engine
     let decks: [Deck]
+    var initialDeckID: String? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var config = ReviewReminderConfiguration()
     @State private var loaded = false
     @State private var busy = false
     @State private var error: String?
     @State private var permission = ""
+    @State private var diagnosticReport: String?
     #if DEBUG
     @State private var nativeSchedule = ""
     @ObservedObject private var diagnostics = ReminderSaveDiagnostics.shared
@@ -259,6 +261,16 @@ struct ReviewReminderSettingsView: View {
                     }
                 }.accessibilityIdentifier("reminder-save")
             }
+            Section(AppText.localized("通知の診断と設定")) {
+                Button(AppText.localized("通知の診断"), systemImage: "stethoscope") {
+                    Task { await runDiagnostics() }
+                }.accessibilityIdentifier("reminder-troubleshoot")
+                Button(AppText.localized("iPadの通知設定を開く"), systemImage: "gear") {
+                    if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }.accessibilityIdentifier("reminder-notification-settings")
+            }
         }
         .overlay(alignment: .bottomLeading) {
             #if DEBUG
@@ -276,7 +288,14 @@ struct ReviewReminderSettingsView: View {
             #if DEBUG
             nativeSchedule = ""
             #endif
-            do { config = try ReviewReminderStore.load(profileID: profile.id); loaded = true }
+            do {
+                var current = try ReviewReminderStore.load(profileID: profile.id)
+                if let initialDeckID, !current.enabled, current.deckID == nil {
+                    current.deckID = initialDeckID
+                }
+                config = current
+                loaded = true
+            }
             catch { self.error = error.localizedDescription }
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("--uitest-reminders") {
@@ -290,5 +309,21 @@ struct ReviewReminderSettingsView: View {
         .alert(AppText.localized("保存できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
             Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
         } message: { Text(error ?? "") }
+        .alert(AppText.localized("通知の診断"), isPresented: Binding(get: { diagnosticReport != nil }, set: { if !$0 { diagnosticReport = nil } })) {
+            Button(AppText.localized("閉じる"), role: .cancel) { diagnosticReport = nil }
+        } message: { Text(diagnosticReport ?? "") }
+    }
+    private func runDiagnostics() async {
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        let pending = await center.pendingNotificationRequests()
+        let status: String
+        switch settings.authorizationStatus {
+        case .authorized, .provisional, .ephemeral: status = AppText.localized("許可済み")
+        case .denied: status = AppText.localized("拒否")
+        case .notDetermined: status = AppText.localized("未確認")
+        @unknown default: status = AppText.localized("不明")
+        }
+        diagnosticReport = AppText.localized("通知許可: ") + status + " / " + AppText.localized("予約件数: \(pending.count)件")
     }
 }

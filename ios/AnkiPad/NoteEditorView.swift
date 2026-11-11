@@ -47,6 +47,7 @@ struct NoteEditorView: View {
     @AppStorage("visualNoteEditor") private var visualEditor = false
     @AppStorage("noteEditorShowToolbar") private var showEditorToolbar = true
     @AppStorage("noteEditorScrollToolbar") private var scrollEditorToolbar = true
+    @AppStorage("noteEditorNewlineReplace") private var newlineReplace = true
     @AppStorage("capitalizeNoteEditor") private var capitalizeEditor = true
     @AppStorage("noteEditorFontSize") private var editorFontSize = 0
     @ScaledMetric(relativeTo: .body) private var editorReferenceSize: CGFloat = 17
@@ -372,7 +373,12 @@ struct NoteEditorView: View {
         expanded = Set(document.fields.indices.filter { !document.fieldConfigs.indices.contains($0) || document.fieldConfigs[$0]["collapsed"] as? Bool != true })
     }
     private func save(force: Bool = false) {
-        guard let document, !busy, extraFieldIndices.isEmpty else { return }
+        guard var document, !busy, extraFieldIndices.isEmpty else { return }
+        if !visualEditor && newlineReplace {
+            document.fields = document.fields.map {
+                $0.replacingOccurrences(of: "\r\n", with: "<br>").replacingOccurrences(of: "\n", with: "<br>")
+            }
+        }
         busy = true
         Task {
             defer { busy = false }

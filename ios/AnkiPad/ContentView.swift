@@ -56,6 +56,7 @@ struct ContentView: View {
     @State private var customStudy: CustomStudyRequest?
     @State private var filteredDeck: FilteredDeckRequest?
     @State private var deckDescription: DeckDescriptionRequest?
+    @State private var reminderDeck: CustomStudyRequest?
     @State private var deckName = ""
     @State private var deckSearch = ""
     @State private var uploadConfirmation = ""
@@ -80,6 +81,13 @@ struct ContentView: View {
     @AppStorage("showLargeAnswerButtons") private var largeAnswerButtons = false
     @AppStorage("showDeckTitle") private var showDeckTitle = false
     @AppStorage("showETA") private var showETA = false
+    @AppStorage("reviewerFrameStyle") private var reviewerFrameStyle = ReviewerFrameStyle.none.rawValue
+    @AppStorage("reviewerToolbarPosition") private var reviewerToolbarPosition = ReviewerToolbarPosition.top.rawValue
+    @AppStorage("hideSystemBarsInReview") private var hideSystemBarsInReview = false
+    @AppStorage("showAnswerFeedback") private var showAnswerFeedback = false
+    @AppStorage("hideHardAndEasyButtons") private var hideHardAndEasyButtons = false
+    @AppStorage("showBottomNavigationBar") private var showBottomNavigationBar = false
+    @AppStorage("navDrawerGesture") private var navDrawerGesture = true
     @AppStorage("showCardAnswerButtonTime") private var answerHoldMilliseconds = 0
     @AppStorage("dayTheme") private var dayTheme = "1"
     @AppStorage("nightTheme") private var nightTheme = "3"
@@ -191,7 +199,20 @@ struct ContentView: View {
     private var navigationContent: some View {
         VStack(spacing: 0) {
             if model.selected != nil { reviewer }
-            else { deckList }
+            else {
+                deckList
+                if showBottomNavigationBar {
+                    Divider()
+                    HStack {
+                        Button { model.leave() } label: { Label(AppText.localized("デッキ一覧"), systemImage: "rectangle.stack").frame(maxWidth: .infinity) }
+                            .accessibilityIdentifier("bottom-nav-decks")
+                        Button { model.browserSearch = ""; model.showingBrowser = true } label: { Label(AppText.localized("カードブラウザー"), systemImage: "magnifyingglass").frame(maxWidth: .infinity) }
+                            .accessibilityIdentifier("bottom-nav-browser")
+                        Button { model.showingNavigationDrawer = true } label: { Label(AppText.localized("ナビゲーション"), systemImage: "ellipsis.circle").frame(maxWidth: .infinity) }
+                            .accessibilityIdentifier("bottom-nav-more")
+                    }.buttonStyle(.borderless).padding(.vertical, 8).background(.bar).accessibilityIdentifier("bottom-navigation-bar")
+                }
+            }
             if model.busy {
                 HStack {
                     ProgressView(model.isSyncing ? model.syncStatus : AppText.localized("処理中…"))
@@ -203,7 +224,11 @@ struct ContentView: View {
         .navigationTitle(model.selected.map { showDeckTitle ? $0.name : "" } ?? (model.profileRegistry.profiles.count > 1 ? "AnkiPad · " + model.currentProfile.name : "AnkiPad"))
         .toolbar { navigationToolbar }
         .toolbar(model.selected != nil && model.reviewDisplayMode.isFullscreen ? .hidden : .visible, for: .navigationBar)
-        .statusBarHidden(model.selected != nil && model.reviewDisplayMode.isFullscreen)
+        .statusBarHidden(model.selected != nil && (model.reviewDisplayMode.isFullscreen || hideSystemBarsInReview))
+        .simultaneousGesture(DragGesture(minimumDistance: 24).onEnded { value in
+            guard navDrawerGesture, model.selected == nil, !model.busy, value.startLocation.x < 28, value.translation.width > 60 else { return }
+            model.showingNavigationDrawer = true
+        })
         .simultaneousGesture(TapGesture(count: 3).onEnded { tapSuppressedUntil = Date().addingTimeInterval(0.8); model.reviewDisplayMode = .buttonsAndMenu }, including: model.selected != nil && model.reviewDisplayMode.isFullscreen ? .all : .subviews)
     }
     @ToolbarContentBuilder private var navigationToolbar: some ToolbarContent {
@@ -403,6 +428,16 @@ struct ContentView: View {
         .sheet(item: $deckDescription, onDismiss: openPendingExternalRequest) { DeckDescriptionView(model: model, request: $0) }
         .sheet(item: $customStudy, onDismiss: openPendingExternalRequest) { CustomStudyView(model: model, request: $0) }
         .sheet(item: $filteredDeck, onDismiss: openPendingExternalRequest) { FilteredDeckView(model: model, request: $0) }
+        .sheet(item: $reminderDeck, onDismiss: openPendingExternalRequest) { request in
+            NavigationStack {
+                ReviewReminderSettingsView(profile: model.currentProfile, engine: model.engine, decks: model.decks, initialDeckID: request.deck.id)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button(AppText.localized("閉じる")) { reminderDeck = nil }.accessibilityIdentifier("reminder-close")
+                        }
+                    }
+            }
+        }
         .sheet(isPresented: $addingOcclusion, onDismiss: {
             receivedOcclusionFile?.receipt?.deferUntilRequested()
             receivedOcclusionFile = nil; openPendingExternalRequest()
@@ -720,6 +755,7 @@ struct ContentView: View {
                                 Button(AppText.localized("カスタム学習")) { customStudy = CustomStudyRequest(deck: deck) }
                             }
                             Button(AppText.localized("デッキオプション")) { model.backendPage = BackendPageRequest(path: "deck-options/" + deck.id, title: AppText.localized("デッキオプション")) }
+                            Button(AppText.localized("学習リマインダー")) { reminderDeck = CustomStudyRequest(deck: deck) }.accessibilityIdentifier("deck-reminder-\(deck.id)")
                             Button(AppText.localized("統計")) { model.run { try await model.engine.select(deck.id); model.backendPage = BackendPageRequest(path: "graphs", title: AppText.localized("統計")) } }
                             Button(AppText.localized("名前を変更")) { renamingDeck = deck; deckName = deck.name; namingDeck = true }
                             Button(AppText.localized("ノートを追加")) { model.editorRequest = EditorRequest(deckID: deck.id) }.accessibilityIdentifier("deck-add-note-\(deck.id)")
@@ -773,7 +809,12 @@ struct ContentView: View {
     }
     private var answerScale: CGFloat { CGFloat(min(200, max(10, answerButtonSize))) / 100 }
     private func ratingButton(_ rating: Int, card: StudyCard) -> some View {
-        Button { model.answerFromButton(rating, cardKey: card.mutationKey) } label: {
+        Button {
+            if showAnswerFeedback && ratings.indices.contains(rating) {
+                model.showCardToast(ratings[rating].0, short: true)
+            }
+            model.answerFromButton(rating, cardKey: card.mutationKey)
+        } label: {
             VStack(spacing: 6 * answerScale) {
                 if card.options.showIntervals && card.intervals.indices.contains(rating) {
                     Text(card.intervals[rating]).font(.system(size: answerFontSize * 0.75 * answerScale))
@@ -791,11 +832,19 @@ struct ContentView: View {
         Divider()
         if model.revealed {
             VStack(spacing: 8) {
-                // Upstream's large layout: Hard/Easy, then Again/Good.
-                ForEach(0..<(largeAnswerButtons ? 2 : 1), id: \.self) { row in
+                if hideHardAndEasyButtons {
                     HStack(spacing: 12) {
-                        ForEach(largeAnswerButtons ? (row == 0 ? [1, 3] : [0, 2]) : [0, 1, 2, 3], id: \.self) { rating in
+                        ForEach([0, 2], id: \.self) { rating in
                             ratingButton(rating, card: card)
+                        }
+                    }
+                } else {
+                    // Upstream's large layout: Hard/Easy, then Again/Good.
+                    ForEach(0..<(largeAnswerButtons ? 2 : 1), id: \.self) { row in
+                        HStack(spacing: 12) {
+                            ForEach(largeAnswerButtons ? (row == 0 ? [1, 3] : [0, 2]) : [0, 1, 2, 3], id: \.self) { rating in
+                                ratingButton(rating, card: card)
+                            }
                         }
                     }
                 }
@@ -830,7 +879,7 @@ struct ContentView: View {
                 }
             }.font(.subheadline.monospacedDigit()).foregroundStyle(.secondary).padding(12)
             }
-            customReviewToolbar
+            if reviewerToolbarPosition == ReviewerToolbarPosition.top.rawValue { customReviewToolbar }
             if effectiveAnswerPosition == .top { answerControls(card) }
             ZStack {
                 ReviewerWebView(html: model.revealed ? (model.answerOverride ?? card.answer) : card.question, css: card.css,
@@ -896,6 +945,15 @@ struct ContentView: View {
             .onChange(of: card.id) { _, _ in
                 if !keepWhiteboard { clearWhiteboard() }
             }
+            .overlay {
+                if reviewerFrameStyle != ReviewerFrameStyle.none.rawValue {
+                    RoundedRectangle(cornerRadius: reviewerFrameStyle == ReviewerFrameStyle.card.rawValue ? 12 : 0)
+                        .stroke(Color.secondary.opacity(0.35), lineWidth: 1)
+                        .padding(4)
+                        .allowsHitTesting(false)
+                }
+            }
+            if reviewerToolbarPosition == ReviewerToolbarPosition.bottom.rawValue { customReviewToolbar }
             if effectiveAnswerPosition == .bottom { answerControls(card) }
         } else if model.finished {
             ContentUnavailableView(AppText.localized("このデッキの学習は終了です"), systemImage: "checkmark.circle", description: Text(AppText.localized("デッキ一覧に戻って、別のデッキを選べます。")))

@@ -28,6 +28,9 @@ struct AppNavigationDrawerView: View {
                         model.showingNavigationDrawer = false
                     }.disabled(model.busy).accessibilityIdentifier("destination-" + choice.rawValue)
                 }
+                NavigationLink(AppText.localized("ヘルプと使い方")) { AppHelpView() }.accessibilityIdentifier("destination-help")
+                NavigationLink(AppText.localized("AnkiDroidを支援")) { AppSupportView() }.accessibilityIdentifier("destination-support")
+                NavigationLink(AppText.localized("このアプリについて")) { AppAboutView() }.accessibilityIdentifier("destination-about")
                 NavigationLink(AppText.localized("ライセンスとソース")) { OpenSourceLicensesView() }
             }
             .studyThemeSurface().navigationTitle(AppText.localized("ナビゲーション"))

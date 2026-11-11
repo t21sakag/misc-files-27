@@ -13,6 +13,9 @@ struct NoteTemplateEditor: View {
     @State private var error: String?
     @FocusState private var activeTemplate: String?
     @State private var restoreBrowser = false
+    @State private var editingBrowserAppearance = false
+    @State private var draftQFormatBrowser = ""
+    @State private var draftAFormatBrowser = ""
     private var template: [String: Any] { (schema["templates"] as? [[String: Any]] ?? [])[ordinal] }
     init(model: StudyModel, schema: Binding<[String: Any]>, ordinal: Int, saved: @escaping () -> Void) {
         self.model = model; _schema = schema; self.ordinal = ordinal; self.saved = saved
@@ -34,6 +37,11 @@ struct NoteTemplateEditor: View {
                 TextEditor(text: text("qFormatBrowser")).focused($activeTemplate, equals: "qFormatBrowser").font(.system(.body, design: .monospaced)).frame(minHeight: 100)
                 Text(AppText.localized("裏面")).font(.caption)
                 TextEditor(text: text("aFormatBrowser")).focused($activeTemplate, equals: "aFormatBrowser").font(.system(.body, design: .monospaced)).frame(minHeight: 100)
+                Button(AppText.localized("ブラウザー表示を個別に編集")) {
+                    draftQFormatBrowser = text("qFormatBrowser").wrappedValue
+                    draftAFormatBrowser = text("aFormatBrowser").wrappedValue
+                    editingBrowserAppearance = true
+                }.accessibilityIdentifier("template-browser-appearance-open")
             }
             Section {
                 Menu(AppText.localized("フィールドを挿入"), systemImage: "text.badge.plus") {
@@ -78,6 +86,40 @@ struct NoteTemplateEditor: View {
         }
         .confirmationDialog(AppText.localized("ブラウザー表示のテンプレートをリセットしますか？"), isPresented: $restoreBrowser) {
             Button(AppText.localized("既定に戻す"), role: .destructive) { text("qFormatBrowser").wrappedValue = ""; text("aFormatBrowser").wrappedValue = "" }
+        }
+        .sheet(isPresented: $editingBrowserAppearance) {
+            NavigationStack {
+                Form {
+                    Section(AppText.localized("表面")) {
+                        TextEditor(text: $draftQFormatBrowser).font(.system(.body, design: .monospaced)).frame(minHeight: 140)
+                            .accessibilityIdentifier("template-browser-question")
+                    }
+                    Section(AppText.localized("裏面")) {
+                        TextEditor(text: $draftAFormatBrowser).font(.system(.body, design: .monospaced)).frame(minHeight: 140)
+                            .accessibilityIdentifier("template-browser-answer")
+                    }
+                    Section {
+                        Button(AppText.localized("既定に戻す"), role: .destructive) {
+                            draftQFormatBrowser = ""
+                            draftAFormatBrowser = ""
+                        }.accessibilityIdentifier("template-browser-restore")
+                    }
+                }
+                .studyThemeSurface().navigationTitle(AppText.localized("ブラウザー表示のテンプレート"))
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(AppText.localized("キャンセル")) { editingBrowserAppearance = false }
+                            .accessibilityIdentifier("template-browser-cancel")
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(AppText.localized("適用")) {
+                            text("qFormatBrowser").wrappedValue = draftQFormatBrowser
+                            text("aFormatBrowser").wrappedValue = draftAFormatBrowser
+                            editingBrowserAppearance = false
+                        }.accessibilityIdentifier("template-browser-confirm")
+                    }
+                }
+            }
         }
         .sheet(isPresented: $preview) { NoteTemplatePreviewView(model: model, typeID: schema["id"] as? String ?? "0", ordinal: ordinal) }
         .alert(AppText.localized("保存できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {

@@ -47,6 +47,16 @@ struct SettingsView: View {
     @State private var toolbarConfiguration = ReviewToolbarConfiguration.load()
     @State private var swipeReview: Bool = UserDefaults.standard.object(forKey: "swipeReview") as? Bool ?? true
     @State private var keepWhiteboard: Bool = UserDefaults.standard.object(forKey: "keepWhiteboard") as? Bool ?? false
+    @State private var newlineReplace: Bool = UserDefaults.standard.object(forKey: "noteEditorNewlineReplace") as? Bool ?? true
+    @State private var enableExternalAPI: Bool = UserDefaults.standard.object(forKey: "enableAnkiDroidAPI") as? Bool ?? true
+    @State private var navigationDrawerGesture: Bool = UserDefaults.standard.object(forKey: "navDrawerGesture") as? Bool ?? true
+    @State private var reviewerFrameStyle = ReviewerFrameStyle(rawValue: UserDefaults.standard.string(forKey: "reviewerFrameStyle") ?? "none") ?? .none
+    @State private var hideSystemBars: Bool = UserDefaults.standard.bool(forKey: "hideSystemBarsInReview")
+    @State private var showAnswerFeedback: Bool = UserDefaults.standard.bool(forKey: "showAnswerFeedback")
+    @State private var reviewerToolbarPosition = ReviewerToolbarPosition(rawValue: UserDefaults.standard.string(forKey: "reviewerToolbarPosition") ?? "top") ?? .top
+    @State private var hideHardAndEasy: Bool = UserDefaults.standard.bool(forKey: "hideHardAndEasyButtons")
+    @State private var showBottomNavigationBar: Bool = UserDefaults.standard.bool(forKey: "showBottomNavigationBar")
+    @State private var browserSplitNoteEditor: Bool = UserDefaults.standard.bool(forKey: "browserSplitNoteEditor")
     var body: some View {
         NavigationStack {
             SettingsForm {
@@ -121,7 +131,7 @@ struct SettingsView: View {
                             .accessibilityIdentifier("image-zoom")
                         Toggle(AppText.localized("カード内容を上下の中央に表示"), isOn: $centerVertically).accessibilityIdentifier("center-vertically")
                         Toggle(AppText.localized("学習中は画面を消灯しない"), isOn: $keepScreenOn)
-                        Toggle(AppText.localized("学習枚数を表示"), isOn: boolean("reviewing", "showRemainingDueCounts"))
+                        Toggle(AppText.localized("学習枚数を表示"), isOn: boolean("reviewing", "showRemainingDueCounts")).accessibilityIdentifier("show-remaining-due-counts")
                         Toggle(AppText.localized("評価ボタンに次回の間隔を表示"), isOn: boolean("reviewing", "showIntervalsOnButtons"))
                     }
                     Section(AppText.localized("評価ボタン")) {
@@ -206,6 +216,36 @@ struct SettingsView: View {
                         Stepper(AppText.localized("月次: \(integer("backups", "monthly").wrappedValue)"), value: integer("backups", "monthly"), in: 0...99_999)
                         Stepper(AppText.localized("作成間隔: \(integer("backups", "minimumIntervalMins").wrappedValue)分"), value: integer("backups", "minimumIntervalMins"), in: 5...99_999)
                     }
+                    Section(AppText.localized("学習画面と操作の詳細設定")) {
+                        NavigationLink(AppText.localized("言語を検索して選択")) {
+                            AppLanguageSearchView(selection: $language)
+                        }.accessibilityIdentifier("app-language-search")
+                        LabeledContent(AppText.localized("カードの枠スタイル")) {
+                            Picker("", selection: $reviewerFrameStyle) {
+                                ForEach(ReviewerFrameStyle.allCases) { Text($0.title).tag($0) }
+                            }.accessibilityIdentifier("reviewer-frame-style").labelsHidden().pickerStyle(.menu)
+                        }
+                        LabeledContent(AppText.localized("操作バーの表示位置")) {
+                            Picker("", selection: $reviewerToolbarPosition) {
+                                ForEach(ReviewerToolbarPosition.allCases) { Text($0.title).tag($0) }
+                            }.accessibilityIdentifier("reviewer-toolbar-position").labelsHidden().pickerStyle(.menu)
+                        }
+                        Toggle(AppText.localized("全画面学習時にステータスバーも隠す"), isOn: $hideSystemBars).accessibilityIdentifier("hide-system-bars")
+                        Toggle(AppText.localized("解答評価時にフィードバックを表示"), isOn: $showAnswerFeedback).accessibilityIdentifier("show-answer-feedback")
+                        Toggle(AppText.localized("「難しい」「簡単」ボタンを隠す"), isOn: $hideHardAndEasy).accessibilityIdentifier("hide-hard-and-easy")
+                        Toggle(AppText.localized("プレーンテキスト編集時の改行をHTMLの改行に置換"), isOn: $newlineReplace).accessibilityIdentifier("note-newline-replace")
+                        Toggle(AppText.localized("画面端スワイプでナビゲーションを開く"), isOn: $navigationDrawerGesture).accessibilityIdentifier("nav-drawer-gesture")
+                        Toggle(AppText.localized("外部連携URL・カードAPIを有効にする"), isOn: $enableExternalAPI).accessibilityIdentifier("enable-external-api")
+                    }
+                    Section(AppText.localized("画面レイアウトの実験的機能")) {
+                        Toggle(AppText.localized("下部ナビゲーションバーを表示"), isOn: $showBottomNavigationBar).accessibilityIdentifier("dev-bottom-nav")
+                        Toggle(AppText.localized("カードブラウザーで編集画面を並べて表示"), isOn: $browserSplitNoteEditor).accessibilityIdentifier("dev-browser-split")
+                    }
+                    Section(AppText.localized("ヘルプとアプリ情報")) {
+                        NavigationLink(AppText.localized("ヘルプと使い方")) { AppHelpView() }.accessibilityIdentifier("settings-help-open")
+                        NavigationLink(AppText.localized("AnkiDroidを支援")) { AppSupportView() }.accessibilityIdentifier("settings-support-open")
+                        NavigationLink(AppText.localized("このアプリについて")) { AppAboutView() }.accessibilityIdentifier("about-open")
+                    }
                 } else { ProgressView() }
             }
             .accessibilityIdentifier("settings-form")
@@ -272,6 +312,16 @@ struct SettingsView: View {
                             UserDefaults.standard.set(dayTheme.rawValue, forKey: "dayTheme")
                             UserDefaults.standard.set(nightTheme.rawValue, forKey: "nightTheme")
                             UserDefaults.standard.set(removeAnimations, forKey: "safeDisplay")
+                            UserDefaults.standard.set(newlineReplace, forKey: "noteEditorNewlineReplace")
+                            UserDefaults.standard.set(enableExternalAPI, forKey: "enableAnkiDroidAPI")
+                            UserDefaults.standard.set(navigationDrawerGesture, forKey: "navDrawerGesture")
+                            UserDefaults.standard.set(reviewerFrameStyle.rawValue, forKey: "reviewerFrameStyle")
+                            UserDefaults.standard.set(hideSystemBars, forKey: "hideSystemBarsInReview")
+                            UserDefaults.standard.set(showAnswerFeedback, forKey: "showAnswerFeedback")
+                            UserDefaults.standard.set(reviewerToolbarPosition.rawValue, forKey: "reviewerToolbarPosition")
+                            UserDefaults.standard.set(hideHardAndEasy, forKey: "hideHardAndEasyButtons")
+                            UserDefaults.standard.set(showBottomNavigationBar, forKey: "showBottomNavigationBar")
+                            UserDefaults.standard.set(browserSplitNoteEditor, forKey: "browserSplitNoteEditor")
                             networkPreferences.save()
                             model.setAutomaticSyncEnabled(automaticSync)
                             ReviewSpeechPreferences.setEnabled(automaticTTS, profileID: model.currentProfileID)

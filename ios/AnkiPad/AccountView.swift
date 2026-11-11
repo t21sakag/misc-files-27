@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 struct AccountView: View {
     @ObservedObject var model: StudyModel
@@ -8,6 +9,9 @@ struct AccountView: View {
     @State private var password = ""
     @State private var customServer = false
     @State private var endpoint = ""
+    @State private var importingCertificate = false
+    @State private var certificateSummary = CustomSyncCertificateStore.summary()
+    @State private var certificateError: String?
     private var valid: Bool {
         !username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !password.isEmpty &&
         (!customServer || (["https", "http"].contains(URL(string: endpoint)?.scheme ?? "") && URL(string: endpoint)?.host != nil))
@@ -47,6 +51,21 @@ struct AccountView: View {
                         if customServer {
                             TextField("https://server.example/", text: $endpoint)
                                 .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled().accessibilityIdentifier("custom-server-endpoint")
+                            if let certificateSummary {
+                                LabeledContent(AppText.localized("登録した証明書"), value: certificateSummary)
+                                    .accessibilityIdentifier("custom-server-certificate-summary")
+                                Button(AppText.localized("証明書を削除"), role: .destructive) {
+                                    CustomSyncCertificateStore.clear()
+                                    self.certificateSummary = nil
+                                }.accessibilityIdentifier("custom-server-certificate-remove")
+                            }
+                            Button(AppText.localized("自己署名・独自CA証明書を選択"), systemImage: "lock.doc") {
+                                importingCertificate = true
+                            }.accessibilityIdentifier("custom-server-certificate")
+                            if let certificateError {
+                                Text(certificateError).font(.caption).foregroundStyle(.red)
+                                    .accessibilityIdentifier("custom-server-certificate-error")
+                            }
                         }
                     }
                     Section {
@@ -74,6 +93,23 @@ struct AccountView: View {
             .alert(AppText.localized("ログインできませんでした"), isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) {
                 Button(AppText.localized("閉じる"), role: .cancel) { model.error = nil }
             } message: { Text(model.error ?? "") }
+            .fileImporter(isPresented: $importingCertificate, allowedContentTypes: [.x509Certificate, .data]) { result in
+                switch result {
+                case .failure(let error):
+                    certificateError = error.localizedDescription
+                case .success(let url):
+                    let accessed = url.startAccessingSecurityScopedResource()
+                    defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+                    do {
+                        let data = try Data(contentsOf: url)
+                        _ = try CustomSyncCertificateStore.save(data)
+                        certificateSummary = CustomSyncCertificateStore.summary()
+                        certificateError = nil
+                    } catch {
+                        certificateError = error.localizedDescription
+                    }
+                }
+            }
         }
     }
     private var accountNativeInputState: String {

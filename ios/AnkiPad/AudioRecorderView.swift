@@ -218,10 +218,20 @@ struct AudioRecorderView: View {
             VStack(spacing: 24) {
                 Image(systemName: recorder.recording ? "waveform" : "mic").font(.system(size: 60)).foregroundStyle(recorder.recording ? .red : .primary)
                 Text(recorder.recording ? AppText.localized("録音中") : AppText.localized("音声を録音"))
-                if recorder.recording { Button(AppText.localized("停止"), systemImage: "stop.circle") { recorder.stop() }.accessibilityIdentifier("note-record-stop") }
+                if recorder.recording {
+                    Button(AppText.localized("停止"), systemImage: "stop.circle") { recorder.stop() }.accessibilityIdentifier("note-record-stop")
+                    Button(AppText.localized("最初からやり直す"), systemImage: "arrow.counterclockwise") {
+                        recorder.discard()
+                        Task { await recorder.start() }
+                    }.accessibilityIdentifier("note-record-restart")
+                }
                 else {
                     Button(recorder.file == nil ? AppText.localized("録音を開始") : AppText.localized("録り直す"), systemImage: "record.circle") { Task { await recorder.start() } }.disabled(recorder.requestingPermission).accessibilityIdentifier("note-record-start")
-                    if recorder.file != nil { Button(AppText.localized("再生して確認"), systemImage: "play.circle") { recorder.preview() } }
+                    if recorder.file != nil {
+                        Button(AppText.localized("再生して確認"), systemImage: "play.circle") { recorder.preview() }
+                        Button(AppText.localized("最初に戻す"), systemImage: "arrow.counterclockwise", role: .destructive) { recorder.discard() }
+                            .accessibilityIdentifier("note-record-restart")
+                    }
                 }
                 TimelineView(.periodic(from: .now, by: 0.2)) { _ in
                     Text(AppText.localized("録音時間: \(String(format: "%.1f", recorder.duration))秒"))

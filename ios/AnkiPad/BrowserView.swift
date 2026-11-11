@@ -6,6 +6,8 @@ struct BrowserView: View {
     @AppStorage("isTruncated") private var truncateRows = false
     @AppStorage("relativeCardBrowserFontSize") private var fontPercent = 100
     @AppStorage("card_browser_show_media_filenames") private var showMediaFilenames = false
+    @AppStorage("browserSplitNoteEditor") private var splitNoteEditor = false
+    @State private var inlineEditor: EditorRequest?
     @ScaledMetric(relativeTo: .body) private var primarySize: CGFloat = 17
     @ScaledMetric(relativeTo: .body) private var secondarySize: CGFloat = 16
     @ScaledMetric(relativeTo: .body) private var metadataSize: CGFloat = 14
@@ -302,7 +304,16 @@ struct BrowserView: View {
         } label: { Image(systemName: "ellipsis.circle") }.disabled(interactionBlocked).accessibilityIdentifier("browser-actions-menu")
     }
     private var sheets: some View {
-        list
+        HStack(spacing: 0) {
+            list
+            if splitNoteEditor, let inlineEditor {
+                Divider()
+                NoteEditorView(model: model, request: inlineEditor)
+                    .id(inlineEditor.id)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("browser-split-editor")
+            }
+        }
             .sheet(item: $changingType, onDismiss: { revision += 1 }) { BackendPageView(model: model, request: $0) }
             .sheet(item: $editor, onDismiss: { revision += 1 }) { NoteEditorView(model: model, request: $0) }
             .sheet(item: $selectionExport) { SelectionExportView(model: model, request: $0) }
@@ -569,7 +580,11 @@ struct BrowserView: View {
             undoStatus = undo
         } catch is CancellationError {} catch { self.error = error.localizedDescription }
     }
-    private func edit(_ row: BrowserCard) { editor = config.notesMode ? EditorRequest(noteID: row.noteID, deckID: row.deckID) : EditorRequest(cardID: row.id, deckID: row.deckID) }
+    private func edit(_ row: BrowserCard) {
+        let request = config.notesMode ? EditorRequest(noteID: row.noteID, deckID: row.deckID) : EditorRequest(cardID: row.id, deckID: row.deckID)
+        if splitNoteEditor { inlineEditor = request }
+        else { editor = request }
+    }
     private func columnLabel(_ key: String) -> String { columns.first(where: { $0.id == key }).map { config.notesMode ? $0.noteLabel : $0.cardLabel } ?? key }
     private func quoted(_ value: String) -> String { "\"" + value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\"" }
     private func flagColor(_ flag: Int) -> Color { [.gray, .red, .orange, .green, .blue, .pink, .cyan, .purple][min(7, max(0, flag))] }
