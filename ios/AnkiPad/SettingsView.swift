@@ -48,7 +48,7 @@ struct SettingsView: View {
     @State private var swipeReview: Bool = UserDefaults.standard.object(forKey: "swipeReview") as? Bool ?? true
     @State private var keepWhiteboard: Bool = UserDefaults.standard.object(forKey: "keepWhiteboard") as? Bool ?? false
     @State private var newlineReplace: Bool = UserDefaults.standard.object(forKey: "noteEditorNewlineReplace") as? Bool ?? true
-    @State private var enableExternalAPI: Bool = UserDefaults.standard.object(forKey: "enableAnkiDroidAPI") as? Bool ?? true
+    @State private var enableExternalAPI: Bool = ExternalAPIPreferences.isEnabled()
     @State private var navigationDrawerGesture: Bool = UserDefaults.standard.object(forKey: "navDrawerGesture") as? Bool ?? true
     @State private var reviewerFrameStyle = ReviewerFrameStyle(rawValue: UserDefaults.standard.string(forKey: "reviewerFrameStyle") ?? "none") ?? .none
     @State private var hideSystemBars: Bool = UserDefaults.standard.bool(forKey: "hideSystemBarsInReview")
@@ -313,7 +313,7 @@ struct SettingsView: View {
                             UserDefaults.standard.set(nightTheme.rawValue, forKey: "nightTheme")
                             UserDefaults.standard.set(removeAnimations, forKey: "safeDisplay")
                             UserDefaults.standard.set(newlineReplace, forKey: "noteEditorNewlineReplace")
-                            UserDefaults.standard.set(enableExternalAPI, forKey: "enableAnkiDroidAPI")
+                            ExternalAPIPreferences.setEnabled(enableExternalAPI)
                             UserDefaults.standard.set(navigationDrawerGesture, forKey: "navDrawerGesture")
                             UserDefaults.standard.set(reviewerFrameStyle.rawValue, forKey: "reviewerFrameStyle")
                             UserDefaults.standard.set(hideSystemBars, forKey: "hideSystemBarsInReview")

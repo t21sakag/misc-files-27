@@ -212,7 +212,6 @@ final class MediaFlowTests: StudyFlowTestSupport {
         }
         openNote()
         XCTAssertEqual(maskCount(), 1)
-        app.collectionViews["note-form"].swipeDown()
         let web = openMasks()
         guard let image = web.images.allElementsBoundByIndex.max(by: { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height }) else { XCTFail(app.debugDescription); return }
         image.coordinate(withNormalizedOffset: CGVector(dx: 0.37, dy: 0.37)).tap()

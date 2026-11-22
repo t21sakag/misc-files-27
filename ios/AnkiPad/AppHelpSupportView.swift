@@ -1,5 +1,5 @@
 import Foundation
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && canImport(UIKit)
 import SwiftUI
 import UniformTypeIdentifiers
 #endif
@@ -31,7 +31,7 @@ enum ReviewerToolbarPosition: String, CaseIterable, Identifiable {
     }
 }
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && canImport(UIKit)
 struct AppLanguageSearchView: View {
     @Binding var selection: AppLanguageChoice
     @Environment(\.dismiss) private var dismiss
@@ -142,8 +142,25 @@ struct AppAboutView: View {
 }
 #endif
 
+enum ExternalAPIPreferences {
+    static let key = "enableAnkiDroidAPI"
+    static func isEnabled(_ defaults: UserDefaults = .standard) -> Bool {
+        defaults.object(forKey: key) as? Bool ?? true
+    }
+    static func setEnabled(_ enabled: Bool, defaults: UserDefaults = .standard) {
+        defaults.set(enabled, forKey: key)
+    }
+}
+
 enum CustomSyncCertificateStore {
     private static let key = "customSyncCertificateDER"
+    private static func isValidDER(_ data: Data) -> Bool {
+        #if canImport(Security)
+        return SecCertificateCreateWithData(nil, data as CFData) != nil
+        #else
+        return data.count >= 4 && data[data.startIndex] == 0x30
+        #endif
+    }
     static func summary(_ defaults: UserDefaults = .standard) -> String? {
         guard let data = defaults.data(forKey: key) else { return nil }
         #if canImport(Security)
@@ -151,18 +168,31 @@ enum CustomSyncCertificateStore {
         let subject = (SecCertificateCopySubjectSummary(cert) as String?) ?? "Certificate"
         return subject + " (\(data.count) bytes)"
         #else
-        guard data.count >= 4, data[data.startIndex] == 0x30 else { return nil }
+        guard isValidDER(data) else { return nil }
         return "Certificate (\(data.count) bytes)"
         #endif
     }
+    static func pem(_ defaults: UserDefaults = .standard) -> String? {
+        guard let data = defaults.data(forKey: key), isValidDER(data) else { return nil }
+        return "-----BEGIN CERTIFICATE-----\n"
+            + data.base64EncodedString(options: [.lineLength64Characters, .endLineWithLineFeed])
+            + "\n-----END CERTIFICATE-----\n"
+    }
     static func save(_ rawData: Data, defaults: UserDefaults = .standard) throws -> String {
         let der: Data
+        let beginMarker = "-----BEGIN CERTIFICATE-----"
+        let endMarker = "-----END CERTIFICATE-----"
         if let text = String(data: rawData, encoding: .utf8),
-           let begin = text.range(of: "-----BEGIN CERTIFICATE-----"),
-           let end = text.range(of: "-----END CERTIFICATE-----") {
+           text.contains(beginMarker) || text.contains(endMarker) {
+            guard let begin = text.range(of: beginMarker),
+                  let end = text.range(of: endMarker, range: begin.upperBound..<text.endIndex),
+                  text.range(of: beginMarker, range: begin.upperBound..<text.endIndex) == nil,
+                  text.range(of: endMarker, range: end.upperBound..<text.endIndex) == nil else {
+                throw EngineError(message: AppText.localized("証明書ファイルを読み込めませんでした。"))
+            }
             let body = text[begin.upperBound..<end.lowerBound]
                 .components(separatedBy: .whitespacesAndNewlines).joined()
-            guard let decoded = Data(base64Encoded: body) else {
+            guard !body.isEmpty, let decoded = Data(base64Encoded: body) else {
                 throw EngineError(message: AppText.localized("証明書ファイルを読み込めませんでした。"))
             }
             der = decoded
@@ -176,7 +206,7 @@ enum CustomSyncCertificateStore {
         defaults.set(der, forKey: key)
         return (SecCertificateCopySubjectSummary(cert) as String?) ?? "Certificate"
         #else
-        guard der.count >= 4, der[der.startIndex] == 0x30 else {
+        guard isValidDER(der) else {
             throw EngineError(message: AppText.localized("有効なX.509証明書ではありません。"))
         }
         defaults.set(der, forKey: key)

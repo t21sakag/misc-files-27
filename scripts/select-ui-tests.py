@@ -5,6 +5,19 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-search-completion-m4-repair': [
+        'testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch',
+        'testCommittedSearchHistoryReuseCancelAndRelaunch',
+        'testFullSyncWithLocalDataRequiresTypedUploadConfirmation',
+        'testAuthoredTextAndReplayControlsBalanceAfterReveal',
+        'testCardTextGrowsWithoutChangingImageWidth',
+        'testNestedTemplateHierarchyAndModeControlsSurviveRevealAndRotation',
+        'testAnswerLayoutPersistsWithTopLargeButtonsAndHiddenMode',
+        'testCardAppLinkIsDeniedByDefaultAndOpensAfterSavedPermission',
+        'testNewNoteTypeSwitchRetainsExtraFieldAndBlocksPrematureSave',
+        'testImageOcclusionMaskCopyPersistsAndDiscardPreservesSavedMasks',
+        'testDayAndNightThemeChoicesPersistAndStyleNativeAndCardSurfaces',
+    ],
     'native-search-completion-deck-selection': ['testSearchCreateChildCancelAndPersistNoteDestination', 'testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch'],
     'native-deck-selection': ['testSearchCreateChildCancelAndPersistNoteDestination'],
     'native-search-completion-missing': ['testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch'],

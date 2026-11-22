@@ -12,6 +12,7 @@ class StudyFlowTestSupport: XCTestCase {
         // Release WebKit/audio/keyboard activity before the next case starts.
         for app in launchedApplications where app.state != .notRunning { app.terminate() }
         launchedApplications.removeAll()
+        if XCUIDevice.shared.orientation != .portrait { XCUIDevice.shared.orientation = .portrait }
         try super.tearDownWithError()
     }
 
@@ -133,7 +134,7 @@ class StudyFlowTestSupport: XCTestCase {
             // iterating all offscreen keys, or racing a separate exists/frame
             // read against its dismissal.
             hide.allElementsBoundByIndex.contains { $0.isHittable }
-                || app.keys.firstMatch.isHittable
+                || (app.keys.count > 0 && app.keys.firstMatch.isHittable)
         }
         guard visible() else { return true }
         guard app.alerts.count == 0 else {
@@ -361,7 +362,7 @@ class StudyFlowTestSupport: XCTestCase {
         let observesSelection = field.elementType == .textField || field.elementType == .searchField
         let probe = app.staticTexts.matching(identifier: "incoming-native-state")
         var latestNativeInput = ""
-        func nativeInput() -> (identity: String, length: Int, selection: Int)? {
+        func nativeInput() -> (identity: String, length: Int, selection: Int, caret: Int)? {
             guard probe.count == 1, let state = probe.element.value as? String else { return nil }
             latestNativeInput = state
             let inputs = state.split(separator: "\n").filter { $0.hasPrefix("textInput:class=") }
@@ -371,20 +372,21 @@ class StudyFlowTestSupport: XCTestCase {
                 parts.first(where: { $0.hasPrefix(prefix) }).map { String($0.dropFirst(prefix.count)) }
             }
             guard let identity = value("id="), let length = value("length=").flatMap(Int.init),
-                  let selection = value("selection=").flatMap(Int.init) else { return nil }
-            return (identity, length, selection)
+                  let selection = value("selection=").flatMap(Int.init),
+                  let caret = value("caret=").flatMap(Int.init) else { return nil }
+            return (identity, length, selection, caret)
         }
         var focusedIdentity: String?
+        var initialInput: (identity: String, length: Int, selection: Int, caret: Int)?
         if observesSelection {
             guard requireTestCondition("Replacement source owns the native text input", in: app,
                 failureContext: { latestNativeInput }, condition: {
                     guard let input = nativeInput(), input.length == expected.utf16.count else { return false }
                     focusedIdentity = input.identity
+                    initialInput = input
                     return true
                 }) else { return nil }
         }
-        // Tapping a populated field can move its caret into the source text.
-        // Native Select All replaces the complete value regardless of caret.
         func captureFieldInput(_ stage: String) {
             guard app.launchArguments.contains("--uitest-browser-input-trace") else { return }
             let native = app.staticTexts.matching(identifier: "incoming-native-state")
@@ -394,27 +396,65 @@ class StudyFlowTestSupport: XCTestCase {
             let screen = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
             screen.name = "Field replacement " + stage; screen.lifetime = .keepAlways; add(screen)
         }
-        captureFieldInput("before selection")
-        field.typeKey("a", modifierFlags: .command)
-        captureFieldInput("after selection")
-        if observesSelection {
-            guard requireTestCondition("Native Select All covers the complete replacement source", in: app,
-                failureContext: { latestNativeInput }, condition: {
-                    guard let input = nativeInput() else { return false }
-                    return input.identity == focusedIdentity && input.length == expected.utf16.count
-                        && input.selection == expected.utf16.count
-                }) else { return nil }
-        }
-        if editingAlert {
-            // Selection can rebuild native alert descendants. Re-resolve the
-            // same scoped field without tapping away its selected range.
-            guard let selected = waitForTestControl(query, in: app, keyboard: .keep) else { return nil }
-            guard selected.value as? String == expected else {
-                controlFailure(query, in: app, reason: "Alert replacement source changed during selection"); return nil
+        captureFieldInput("before clearing")
+        if !expected.isEmpty {
+            if field.elementType == .searchField {
+                // UISearchTextField Clear reliably empties the entire value while preserving focus;
+                // UIKit/SwiftUI key-chord Select All fails after app.terminate() on subsequent cases.
+                let clear = field.buttons.matching(NSPredicate(format: "label IN %@", ["Clear text", "テキストを消去"]))
+                guard requireTestCondition("Search field clear button is actionable", in: app,
+                    failureContext: { latestNativeInput }, condition: {
+                        clear.count == 1 && clear.element.isHittable
+                    }) else { return nil }
+                clear.element.tap()
+                captureFieldInput("after clearing")
+                guard requireTestCondition("Search field clears complete replacement source", in: app,
+                    failureContext: { latestNativeInput }, condition: {
+                        guard let input = nativeInput() else { return false }
+                        return input.identity == focusedIdentity && input.length == 0
+                    }) else { return nil }
+                field = query.element
+            } else if observesSelection {
+                if let initial = initialInput, !(initial.selection == 0 && initial.caret == expected.utf16.count) {
+                    field.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+                }
+                guard requireTestCondition("Text field caret reaches end of replacement source", in: app,
+                    failureContext: { latestNativeInput }, condition: {
+                        guard let input = nativeInput() else { return false }
+                        return input.identity == focusedIdentity && input.length == expected.utf16.count
+                            && input.selection == 0 && input.caret == expected.utf16.count
+                    }) else { return nil }
+                if editingAlert {
+                    guard let focused = waitForTestControl(query, in: app, keyboard: .keep) else { return nil }
+                    guard focused.value as? String == expected else {
+                        controlFailure(query, in: app, reason: "Alert replacement source changed before clearing"); return nil
+                    }
+                    field = focused
+                }
+                field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: expected.count))
+                captureFieldInput("after clearing")
+                guard requireTestCondition("Text field clears complete replacement source", in: app,
+                    failureContext: { latestNativeInput }, condition: {
+                        guard let input = nativeInput() else { return false }
+                        return input.identity == focusedIdentity && input.length == 0
+                    }) else { return nil }
+                if editingAlert {
+                    guard let cleared = waitForTestControl(query, in: app, keyboard: .keep) else { return nil }
+                    field = cleared
+                }
+            } else {
+                field.typeKey("a", modifierFlags: .command)
+                captureFieldInput("after selection")
+                if editingAlert {
+                    guard let selected = waitForTestControl(query, in: app, keyboard: .keep) else { return nil }
+                    guard selected.value as? String == expected else {
+                        controlFailure(query, in: app, reason: "Alert replacement source changed during selection"); return nil
+                    }
+                    field = selected
+                }
             }
-            field = selected
         }
-        field.typeText(text)
+        if !text.isEmpty { field.typeText(text) }
         guard requireTestCondition("Replacement field text reaches the complete expected value", in: app, condition: {
             query.count == 1 && query.element.value as? String == text
         }) else { return nil }
@@ -432,7 +472,7 @@ class StudyFlowTestSupport: XCTestCase {
         if case .dismiss = keyboard, !dismissTestKeyboard(in: app) { return nil }
         if let form {
             revealFormControl(query.firstMatch, in: form, topInset: 40, bottomInset: 20,
-                              maximumAttempts: 12, searchUpward: searchUpward)
+                              maximumAttempts: 24, searchUpward: searchUpward)
         }
         let unique: () -> Bool = { alreadySatisfied?() == true || query.count == 1 }
         if !unique() {

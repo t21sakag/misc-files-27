@@ -977,3 +977,5 @@
 "ヘルプとアプリ情報" = "Help and app info";
 "上部" = "Top";
 "下部" = "Bottom";
+"独自同期サーバーの証明書を適用できませんでした。" = "Could not apply the custom sync server certificate.";
+"外部連携URL・カードAPIは設定で無効になっています。" = "External URL and card API integration is disabled in Settings.";

@@ -1,6 +1,19 @@
 import Foundation
 
 extension Engine {
+    private func decodeNoteTags(_ note: [String: Any], expectedID: String) throws -> [String] {
+        guard let returnedID = note["id"] as? String, returnedID == expectedID else {
+            throw EngineError(message: AppText.localized("変更対象のノートが一致しません。"))
+        }
+        guard let rawTags = note["tags"] else {
+            return []
+        }
+        guard let tags = rawTags as? [String] else {
+            throw EngineError(message: AppText.localized("変更対象のノートが一致しません。"))
+        }
+        return tags
+    }
+
     /// Loads the complete collection tag vocabulary and optional per-note tag state in one actor turn.
     func loadTagSelectionState(noteIDs: [String] = [],
                                extraCheckedTags: [String] = [],
@@ -23,10 +36,7 @@ extension Engine {
                 throw EngineError(message: AppText.localized("変更対象のノートが一致しません。"))
             }
             let note = try call("NotesService.GetNote", ["nid": rawID])
-            guard let returnedID = note["id"] as? String, returnedID == rawID,
-                  let tags = note["tags"] as? [String] else {
-                throw EngineError(message: AppText.localized("変更対象のノートが一致しません。"))
-            }
+            let tags = try decodeNoteTags(note, expectedID: rawID)
             let normalized = tags.map(TagSelectionHierarchy.uniformedTag)
             noteTagLists.append(normalized)
             unionNoteTags.formUnion(normalized)
@@ -63,10 +73,7 @@ extension Engine {
                 throw EngineError(message: AppText.localized("変更対象のノートが一致しません。"))
             }
             var note = try call("NotesService.GetNote", ["nid": rawID])
-            guard let returnedID = note["id"] as? String, returnedID == rawID,
-                  let previousTags = note["tags"] as? [String] else {
-                throw EngineError(message: AppText.localized("変更対象のノートが一致しません。"))
-            }
+            let previousTags = try decodeNoteTags(note, expectedID: rawID)
             note["tags"] = TagSelectionHierarchy.updatedTags(
                 previous: previousTags.map(TagSelectionHierarchy.uniformedTag),
                 selected: checkedTags,

@@ -123,6 +123,7 @@ final class IncomingFlowTests: StudyFlowTestSupport {
             picker.tap(); app.buttons[type].firstMatch.tap()
         }
         func field(_ index: Int) -> XCUIElement {
+            dismissTestKeyboard(in: app)
             let value = app.textViews["note-field-\(index)"]
             revealFormControl(value, in: form, topInset: 40, bottomInset: 20)
             return value

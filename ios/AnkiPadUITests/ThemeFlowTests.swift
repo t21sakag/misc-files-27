@@ -43,8 +43,19 @@ final class ThemeFlowTests: StudyFlowTestSupport {
         }
         func inspectCard(_ expected: String) {
             app.buttons["deck-1"].tap()
+            XCTAssertTrue(app.buttons["reveal"].waitForExistence(timeout: 30), app.debugDescription)
             let inspect = app.webViews.buttons["Inspect card theme"]
-            XCTAssertTrue(inspect.waitForExistence(timeout: 30)); waitUntilHittable(inspect)
+            var previousFrame: CGRect?
+            XCTAssertTrue(requireTestCondition("Inspect card theme control stabilizes", in: app) {
+                guard inspect.exists && inspect.isHittable else {
+                    previousFrame = nil
+                    return false
+                }
+                let frame = inspect.frame
+                let stable = !frame.isEmpty && previousFrame == frame
+                previousFrame = frame
+                return stable
+            })
             tapScreenFrame(inspect, in: app)
             XCTAssertTrue(app.webViews.staticTexts["Theme verified " + expected].waitForExistence(timeout: 20), app.debugDescription)
             app.buttons["デッキ"].tap()

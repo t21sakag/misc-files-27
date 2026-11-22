@@ -45,21 +45,7 @@ final class TypographyFlowTests: TypographyTestSupport {
         let app = application()
         defer { XCUIDevice.shared.orientation = .portrait }
         let html = """
-        <div id="read-en" style="font-family:Arial;font-size:20px;white-space:nowrap">English text</div>
-        <div id="read-ja" style="font-family:Arial;font-size:20px;white-space:nowrap">日本語を読む</div>
-        <img id="read-image" alt="Typography image" style="width:100px;height:50px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jwZkAAAAASUVORK5CYII="><br>
-        <script>
-        function measureReading(){
-          const qa=document.getElementById('qa'),en=document.getElementById('read-en'),ja=document.getElementById('read-ja');
-          let output=document.getElementById('read-result');
-          if(!output){output=document.createElement('div');output.id='read-result';output.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(output);}
-          const er=document.createRange(),jr=document.createRange();er.selectNodeContents(en);jr.selectNodeContents(ja);
-          const eb=er.getBoundingClientRect(),jb=jr.getBoundingClientRect(),image=document.getElementById('read-image').getBoundingClientRect();
-          const ok=qa.dataset.studyLayout==='fit' && parseFloat(getComputedStyle(en).fontSize)>28 && getComputedStyle(en).fontSize===getComputedStyle(ja).fontSize && jb.top>=eb.bottom && Math.abs(image.width-100)<1 && qa.scrollWidth<=innerWidth-47;
-          output.textContent=ok?'Typography verified '+(innerWidth>innerHeight?'landscape':'portrait'):'Typography failed '+JSON.stringify({font:getComputedStyle(en).fontSize,english:eb.toJSON(),japanese:jb.toJSON(),image:image.width,state:qa.dataset.studyLayout});
-        }
-        document.getElementById('qa').addEventListener('study-layout',measureReading);window.addEventListener('load',measureReading);
-        </script>
+        <div id="read-en" style="font-family:Arial;font-size:20px;white-space:nowrap">English text</div> <div id="read-ja" style="font-family:Arial;font-size:20px;white-space:nowrap">日本語を読む</div> <img id="read-image" alt="Typography image" style="width:100px;height:50px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jwZkAAAAASUVORK5CYII="><br> <script>function measureReading(){const qa=document.getElementById('qa'),en=document.getElementById('read-en'),ja=document.getElementById('read-ja');let output=document.getElementById('read-result');if(!output){output=document.createElement('div');output.id='read-result';output.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(output);}const er=document.createRange(),jr=document.createRange();er.selectNodeContents(en);jr.selectNodeContents(ja);const eb=er.getBoundingClientRect(),jb=jr.getBoundingClientRect(),image=document.getElementById('read-image').getBoundingClientRect();const ok=qa.dataset.studyLayout==='fit' && parseFloat(getComputedStyle(en).fontSize)>28 && getComputedStyle(en).fontSize===getComputedStyle(ja).fontSize && jb.top>=eb.bottom && Math.abs(image.width-100)<1 && qa.scrollWidth<=innerWidth-47;output.textContent=ok?'Typography verified '+(innerWidth>innerHeight?'landscape':'portrait'):'Typography failed '+JSON.stringify({font:getComputedStyle(en).fontSize,english:eb.toJSON(),japanese:jb.toJSON(),image:image.width,state:qa.dataset.studyLayout});}document.getElementById('qa').addEventListener('study-layout',measureReading);window.addEventListener('load',measureReading);</script>
         """
         try addNote(front: html, back: "English answer 日本語の答え", in: app)
         tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)

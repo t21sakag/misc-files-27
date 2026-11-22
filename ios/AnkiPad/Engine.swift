@@ -171,14 +171,24 @@ actor Engine {
             "limit": ["wholeCollection": [:]]])
         return url
     }
-    func login(username: String, password: String, endpoint: String?) async throws -> SyncCredentials {
+    func applyCustomSyncCertificate(_ pem: String?) throws {
+        let result = try call("SyncService.SetCustomCertificate", ["val": pem ?? ""])
+        guard result["val"] as? Bool == true else {
+            throw EngineError(message: AppText.localized("独自同期サーバーの証明書を適用できませんでした。"))
+        }
+    }
+    func login(username: String, password: String, endpoint: String?,
+               customCertificatePEM: String? = CustomSyncCertificateStore.pem()) async throws -> SyncCredentials {
+        try applyCustomSyncCertificate((endpoint?.isEmpty == false) ? customCertificatePEM : nil)
         var request: [String: Any] = ["username": username, "password": password]
         if let endpoint, !endpoint.isEmpty { request["endpoint"] = endpoint }
         let auth = try await longCall("SyncService.SyncLogin", request)
         guard let key = auth["hkey"] as? String, !key.isEmpty else { throw EngineError(message: AppText.localized("ログイン情報を取得できませんでした。")) }
         return SyncCredentials(username: username, hkey: key, endpoint: auth["endpoint"] as? String)
     }
-    func sync(_ credentials: SyncCredentials, syncMedia: Bool = true) async throws -> SyncDecision {
+    func sync(_ credentials: SyncCredentials, syncMedia: Bool = true,
+              customCertificatePEM: String? = CustomSyncCertificateStore.pem()) async throws -> SyncDecision {
+        try applyCustomSyncCertificate((credentials.endpoint?.isEmpty == false) ? customCertificatePEM : nil)
         try backup(force: false)
         let result = try await longCall("SyncService.SyncCollection", ["auth": credentials.request, "syncMedia": syncMedia])
         var cardCount = 0
@@ -194,7 +204,9 @@ actor Engine {
         return SyncDecision(response: result, localCardCount: cardCount, localDeckCount: deckCount)
     }
     /// Omitting `serverUsn` makes the engine skip media, as upstream does when media fetching is off.
-    func fullSync(_ credentials: SyncCredentials, upload: Bool, serverUSN: Int, syncMedia: Bool = true) async throws {
+    func fullSync(_ credentials: SyncCredentials, upload: Bool, serverUSN: Int, syncMedia: Bool = true,
+                  customCertificatePEM: String? = CustomSyncCertificateStore.pem()) async throws {
+        try applyCustomSyncCertificate((credentials.endpoint?.isEmpty == false) ? customCertificatePEM : nil)
         if upload {
             let ids = try call("SearchService.SearchCards", ["search": ""])["ids"] as? [String] ?? []
             guard !ids.isEmpty else { throw EngineError(message: AppText.localized("空のコレクションはAnkiWebにアップロードできません。ダウンロードで同期してください。")) }

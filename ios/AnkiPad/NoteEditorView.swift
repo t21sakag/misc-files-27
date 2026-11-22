@@ -78,7 +78,7 @@ struct NoteEditorView: View {
                                     Task {
                                         defer { busy = false }
                                         do {
-                                            if dirty { try await engine.saveNote(current, isNew: false); dirty = false }
+                                            if dirty { try await engine.saveNote(saveReadyDocument(current), isNew: false); dirty = false }
                                             changingType = BackendPageRequest(path: "image-occlusion/" + current.id, title: AppText.localized("画像穴埋め"), noteIDs: [current.id])
                                         } catch { self.error = error.localizedDescription }
                                     }
@@ -89,7 +89,7 @@ struct NoteEditorView: View {
                                 Task {
                                     defer { busy = false }
                                     do {
-                                        if dirty { try await engine.saveNote(current, isNew: false); dirty = false }
+                                        if dirty { try await engine.saveNote(saveReadyDocument(current), isNew: false); dirty = false }
                                         changingType = BackendPageRequest(path: "change-notetype/" + current.typeID, title: AppText.localized("ノートタイプを変更"), noteIDs: [current.id])
                                     } catch { self.error = error.localizedDescription }
                                 }
@@ -243,7 +243,7 @@ struct NoteEditorView: View {
                     defer { busy = false }
                     do {
                         let cards = try await engine.call("NotesService.CardsOfNote", ["nid": current.id])["cids"] as? [String] ?? []
-                        let updated = try await engine.noteDocument(cardID: cards.first, noteID: cards.isEmpty ? current.id : nil, typeID: nil, deckID: current.deckID)
+                        let updated = loadedDocumentForEditor(try await engine.noteDocument(cardID: cards.first, noteID: cards.isEmpty ? current.id : nil, typeID: nil, deckID: current.deckID))
                         document = updated
                         typeID = updated.typeID
                         types = try await engine.noteTypes()
@@ -319,6 +319,15 @@ struct NoteEditorView: View {
             .alert(AppText.localized("処理できませんでした"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
                 Button(AppText.localized("閉じる"), role: .cancel) { error = nil }
             } message: { Text(error ?? "") }
+            .onChange(of: visualEditor) { _, isVisual in
+                guard newlineReplace, var current = document else { return }
+                current.fields = current.fields.map {
+                    isVisual
+                        ? NoteFieldNewlineCoding.toHTML($0, replaceNewlines: true)
+                        : NoteFieldNewlineCoding.fromHTML($0, replaceNewlines: true)
+                }
+                document = current
+            }
             .task {
                 guard document == nil else { return }
                 busy = true
@@ -334,6 +343,7 @@ struct NoteEditorView: View {
                         dirty = draft.fields.contains(where: { !$0.isEmpty }) || draft.tags != nil
                     }
                     typeID = loaded.typeID
+                    loaded = loadedDocumentForEditor(loaded)
                     document = loaded
                     preservedNewFields = loaded.fields
                     isOcclusion = (try? await engine.call("ImageOcclusionService.GetImageOcclusionFields", ["notetypeId": loaded.typeID]))?["fields"] != nil
@@ -372,13 +382,21 @@ struct NoteEditorView: View {
     private func expandFields(_ document: NoteDocument) {
         expanded = Set(document.fields.indices.filter { !document.fieldConfigs.indices.contains($0) || document.fieldConfigs[$0]["collapsed"] as? Bool != true })
     }
+    private func loadedDocumentForEditor(_ source: NoteDocument) -> NoteDocument {
+        guard !request.isNew && request.initialDraft == nil && !visualEditor && newlineReplace else { return source }
+        var updated = source
+        updated.fields = updated.fields.map { NoteFieldNewlineCoding.fromHTML($0, replaceNewlines: true) }
+        return updated
+    }
+    private func saveReadyDocument(_ source: NoteDocument) -> NoteDocument {
+        guard !visualEditor && newlineReplace else { return source }
+        var updated = source
+        updated.fields = updated.fields.map { NoteFieldNewlineCoding.toHTML($0, replaceNewlines: true) }
+        return updated
+    }
     private func save(force: Bool = false) {
-        guard var document, !busy, extraFieldIndices.isEmpty else { return }
-        if !visualEditor && newlineReplace {
-            document.fields = document.fields.map {
-                $0.replacingOccurrences(of: "\r\n", with: "<br>").replacingOccurrences(of: "\n", with: "<br>")
-            }
-        }
+        guard let currentDocument = document, !busy, extraFieldIndices.isEmpty else { return }
+        let document = saveReadyDocument(currentDocument)
         busy = true
         Task {
             defer { busy = false }

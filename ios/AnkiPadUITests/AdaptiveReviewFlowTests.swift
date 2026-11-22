@@ -29,23 +29,7 @@ final class AdaptiveReviewFlowTests: TypographyTestSupport {
         let app = application()
         defer { XCUIDevice.shared.orientation = .portrait }
         let front = """
-        <div style="font-size:160px!important"><font id="balance-question" size="7">calculation</font></div>
-        <div style="font-size:180px!important"><a id="balance-replay" href="ankiplay://q/0" style="font-size:180px!important;text-decoration:underline">▶︎</a></div>
-        <p id="balance-example" style="font-size:16px!important">(check the calculation again)</p>
-        <script>
-        (()=>{
-          const qa=document.getElementById('qa');
-          function report(){
-            let out=document.getElementById('balance-result');
-            if(!out){out=document.createElement('div');out.id='balance-result';out.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(out);}
-            const question=document.getElementById('balance-question'),answer=document.getElementById('balance-answer'),example=document.getElementById('balance-example'),play=document.getElementById('balance-replay');
-            const font=getComputedStyle(question).fontSize,icon=play.getBoundingClientRect().height;
-            const ok=qa.dataset.studyLayout==='fit' && parseFloat(font)>=30 && parseFloat(font)<=100 && icon>=44 && icon<=48 && parseFloat(getComputedStyle(example).fontSize)<parseFloat(font)*.7 && parseFloat(getComputedStyle(example).fontSize)>=20 && (!answer || font===getComputedStyle(answer).fontSize);
-            out.textContent=ok?'Balanced text verified '+(answer?'answer':'question'):'Balanced text failed '+JSON.stringify({font,icon,state:qa.dataset.studyLayout,answer:answer?getComputedStyle(answer).fontSize:null});
-          }
-          qa.addEventListener('study-layout',report);
-        })();
-        </script>
+        <div style="font-size:160px!important"><font id="balance-question" size="7">calculation</font></div> <div style="font-size:180px!important"><a id="balance-replay" href="ankiplay://q/0" style="font-size:180px!important;text-decoration:underline">▶︎</a></div> <p id="balance-example" style="font-size:16px!important">(check the calculation again)</p> <script>(()=>{const qa=document.getElementById('qa');function report(){let out=document.getElementById('balance-result');if(!out){out=document.createElement('div');out.id='balance-result';out.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(out);}const question=document.getElementById('balance-question'),answer=document.getElementById('balance-answer'),example=document.getElementById('balance-example'),play=document.getElementById('balance-replay');const font=getComputedStyle(question).fontSize,icon=play.getBoundingClientRect().height;const ok=qa.dataset.studyLayout==='fit' && parseFloat(font)>=30 && parseFloat(font)<=100 && icon>=44 && icon<=48 && parseFloat(getComputedStyle(example).fontSize)<parseFloat(font)*.7 && parseFloat(getComputedStyle(example).fontSize)>=20 && (!answer || font===getComputedStyle(answer).fontSize);out.textContent=ok?'Balanced text verified '+(answer?'answer':'question'):'Balanced text failed '+JSON.stringify({font,icon,state:qa.dataset.studyLayout,answer:answer?getComputedStyle(answer).fontSize:null});}qa.addEventListener('study-layout',report);})();</script>
         """
         let back = "<div style=\"font-size:12px!important\"><font id=\"balance-answer\" size=\"2\">計算</font></div><p style=\"font-size:16px!important\">（計算をもう一度確認する）</p>"
         try addNote(front: front, back: back, in: app)
@@ -71,29 +55,10 @@ final class AdaptiveReviewFlowTests: TypographyTestSupport {
         let app = application()
         defer { XCUIDevice.shared.orientation = .portrait }
         let front = """
-        <div id="vocabulary-word" style="font-size:20px">dispatch</div
-        <div style="font-size:20px"><a id="vocabulary-replay" href="ankiplay://q/0">▶︎</a></div>
-        <br><div id="vocabulary-example" style="font-size:20px">The package is ready for dispatch this morning.</div>
-        <div style="font-size:20px"><a href="ankiplay://q/1">▶︎</a></div>
-        <script>
-        (()=>{
-          window.vocabularyHooks=(window.vocabularyHooks||0)+1;
-          const qa=document.getElementById('qa');
-          qa.addEventListener('study-layout',()=>{
-            let out=document.getElementById('vocabulary-result');
-            if(!out){out=document.createElement('div');out.id='vocabulary-result';out.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(out);}
-            const word=document.getElementById('vocabulary-word'),example=document.getElementById('vocabulary-example'),meaning=document.getElementById('vocabulary-meaning'),translation=document.getElementById('vocabulary-translation');
-            const font=parseFloat(getComputedStyle(word).fontSize),secondary=parseFloat(getComputedStyle(example).fontSize),icon=document.getElementById('vocabulary-replay').getBoundingClientRect().height;
-            const nodes=[word,example,meaning,translation].filter(Boolean);
-            const ok=nodes.every(node=>qa.contains(node)) && window.vocabularyHooks===1 && qa.dataset.studyLayout==='fit' && qa.getBoundingClientRect().height<=Number(qa.dataset.studyAvailableHeight)+1 && font>=30 && secondary/font>=.60 && secondary/font<=.65 && icon>=44 && icon<=48 && (!meaning || getComputedStyle(word).fontSize===getComputedStyle(meaning).fontSize) && (!translation || getComputedStyle(example).fontSize===getComputedStyle(translation).fontSize);
-            out.textContent=ok?'Vocabulary verified '+(meaning?'answer':'question'):'Vocabulary failed '+JSON.stringify({font,secondary,icon,state:qa.dataset.studyLayout,hooks:window.vocabularyHooks});
-          });
-        })();
-        </script>
+        <div id="vocabulary-word" style="font-size:20px">dispatch</div <div style="font-size:20px"><a id="vocabulary-replay" href="ankiplay://q/0">▶︎</a></div> <br><div id="vocabulary-example" style="font-size:20px">The package is ready for dispatch this morning.</div> <div style="font-size:20px"><a href="ankiplay://q/1">▶︎</a></div> <script>(()=>{window.vocabularyHooks=(window.vocabularyHooks||0)+1;const qa=document.getElementById('qa');qa.addEventListener('study-layout',()=>{let out=document.getElementById('vocabulary-result');if(!out){out=document.createElement('div');out.id='vocabulary-result';out.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(out);}const word=document.getElementById('vocabulary-word'),example=document.getElementById('vocabulary-example'),meaning=document.getElementById('vocabulary-meaning'),translation=document.getElementById('vocabulary-translation');const font=parseFloat(getComputedStyle(word).fontSize),secondary=parseFloat(getComputedStyle(example).fontSize),icon=document.getElementById('vocabulary-replay').getBoundingClientRect().height;const nodes=[word,example,meaning,translation].filter(Boolean);const ok=nodes.every(node=>qa.contains(node)) && window.vocabularyHooks===1 && qa.dataset.studyLayout==='fit' && qa.getBoundingClientRect().height<=Number(qa.dataset.studyAvailableHeight)+1 && font>=30 && secondary/font>=.60 && secondary/font<=.65 && icon>=44 && icon<=48 && (!meaning || getComputedStyle(word).fontSize===getComputedStyle(meaning).fontSize) && (!translation || getComputedStyle(example).fontSize===getComputedStyle(translation).fontSize);out.textContent=ok?'Vocabulary verified '+(meaning?'answer':'question'):'Vocabulary failed '+JSON.stringify({font,secondary,icon,state:qa.dataset.studyLayout,hooks:window.vocabularyHooks});});})();</script>
         """
         let back = """
-        <div id="vocabulary-meaning" style="font-size:20px">発送する</div>
-        <br><div id="vocabulary-translation" style="font-size:20px">荷物は今朝発送する準備ができています。</div>
+        <div id="vocabulary-meaning" style="font-size:20px">発送する</div> <br><div id="vocabulary-translation" style="font-size:20px">荷物は今朝発送する準備ができています。</div>
         """
         try addNote(front: front, back: back, in: app)
         XCUIDevice.shared.orientation = .landscapeLeft
@@ -117,25 +82,7 @@ final class AdaptiveReviewFlowTests: TypographyTestSupport {
         let app = application()
         defer { XCUIDevice.shared.orientation = .portrait }
         let html = """
-        <div id="adaptive-question" style="font-size:18px">English and 日本語の問題</div>
-        <hr id="answer"><div id="adaptive-answer" style="font-size:40px">画像と音声を含む答え</div>
-        <audio controls></audio><video controls style="width:180px;height:90px"></video>
-        <input id="adaptive-input" value="Keep this answer"><div id="adaptive-media"></div>
-        <script>
-        (()=>{
-          const qa=document.getElementById('qa');let added=false;
-          const report=()=>{
-            let out=document.getElementById('adaptive-result');
-            if(!out){out=document.createElement('div');out.id='adaptive-result';out.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(out);}
-            const question=document.getElementById('adaptive-question'),answer=document.getElementById('adaptive-answer'),image=document.getElementById('adaptive-picture');
-            if(!added){added=true;const picture=document.createElement('img');picture.id='adaptive-picture';picture.alt='Adaptive image';picture.src='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="900" height="600"%3E%3Crect width="900" height="600" fill="orange"/%3E%3C/svg%3E';document.getElementById('adaptive-media').append(picture);return;}
-            const font=getComputedStyle(question).fontSize;
-            const ok=image?.naturalWidth>0 && qa.dataset.studyLayout==='fit' && font===getComputedStyle(answer).fontSize && document.getElementById('adaptive-input').value==='Keep this answer' && image.getBoundingClientRect().height<=Number(qa.dataset.studyAvailableHeight)*.55+1;
-            out.textContent=ok?'Adaptive media verified '+(innerWidth>innerHeight?'landscape':'portrait'):'Adaptive media pending '+JSON.stringify({font,state:qa.dataset.studyLayout,loaded:image?.naturalWidth});
-          };
-          qa.addEventListener('study-layout',report);
-        })();
-        </script>
+        <div id="adaptive-question" style="font-size:18px">English and 日本語の問題</div> <hr id="answer"><div id="adaptive-answer" style="font-size:40px">画像と音声を含む答え</div> <audio controls></audio><video controls style="width:180px;height:90px"></video> <input id="adaptive-input" value="Keep this answer"><div id="adaptive-media"></div> <script>(()=>{const qa=document.getElementById('qa');let added=false;const report=()=>{let out=document.getElementById('adaptive-result');if(!out){out=document.createElement('div');out.id='adaptive-result';out.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(out);}const question=document.getElementById('adaptive-question'),answer=document.getElementById('adaptive-answer'),image=document.getElementById('adaptive-picture');if(!added){added=true;const picture=document.createElement('img');picture.id='adaptive-picture';picture.alt='Adaptive image';picture.src='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="900" height="600"%3E%3Crect width="900" height="600" fill="orange"/%3E%3C/svg%3E';document.getElementById('adaptive-media').append(picture);return;}const font=getComputedStyle(question).fontSize;const ok=image?.naturalWidth>0 && qa.dataset.studyLayout==='fit' && font===getComputedStyle(answer).fontSize && document.getElementById('adaptive-input').value==='Keep this answer' && image.getBoundingClientRect().height<=Number(qa.dataset.studyAvailableHeight)*.55+1;out.textContent=ok?'Adaptive media verified '+(innerWidth>innerHeight?'landscape':'portrait'):'Adaptive media pending '+JSON.stringify({font,state:qa.dataset.studyLayout,loaded:image?.naturalWidth});};qa.addEventListener('study-layout',report);})();</script>
         """
         try addNote(front: html, back: "English answer 日本語の答え", in: app)
         tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)
@@ -161,20 +108,7 @@ final class AdaptiveReviewFlowTests: TypographyTestSupport {
     func testAdaptiveLongContentKeepsReadableMinimumAndNativeButtons() throws {
         let app = application()
         let html = """
-        <div id="long-question"></div><hr><div id="long-answer">長文の答え</div>
-        <script>
-        (()=>{
-          document.getElementById('long-question').textContent='English sentences and 日本語の長い説明。 '.repeat(150);
-          const qa=document.getElementById('qa');
-          qa.addEventListener('study-layout',()=>{
-            let out=document.getElementById('long-result');
-            if(!out){out=document.createElement('div');out.id='long-result';out.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(out);}
-            const font=getComputedStyle(document.getElementById('long-question')).fontSize;
-            const ok=qa.dataset.studyLayout==='scroll' && Number(qa.dataset.studyFont)>=26 && qa.scrollHeight>Number(qa.dataset.studyAvailableHeight) && font===getComputedStyle(document.getElementById('long-answer')).fontSize;
-            out.textContent=ok?'Long content verified':'Long content failed '+JSON.stringify({font,state:qa.dataset.studyLayout});
-          });
-        })();
-        </script>
+        <div id="long-question"></div><hr><div id="long-answer">長文の答え</div> <script>(()=>{document.getElementById('long-question').textContent='English sentences and 日本語の長い説明。 '.repeat(150);const qa=document.getElementById('qa');qa.addEventListener('study-layout',()=>{let out=document.getElementById('long-result');if(!out){out=document.createElement('div');out.id='long-result';out.style='position:fixed;bottom:0;left:0;font-size:12px;background:white;color:black';document.body.append(out);}const font=getComputedStyle(document.getElementById('long-question')).fontSize;const ok=qa.dataset.studyLayout==='scroll' && Number(qa.dataset.studyFont)>=26 && qa.scrollHeight>Number(qa.dataset.studyAvailableHeight) && font===getComputedStyle(document.getElementById('long-answer')).fontSize;out.textContent=ok?'Long content verified':'Long content failed '+JSON.stringify({font,state:qa.dataset.studyLayout});});})();</script>
         """
         try addNote(front: html, back: "Long answer", in: app)
         tapTestControl(app.buttons.matching(identifier: "deck-1"), in: app)

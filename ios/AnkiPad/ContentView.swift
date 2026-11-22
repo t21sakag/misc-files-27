@@ -665,9 +665,19 @@ struct ContentView: View {
                 openPendingExternalRequest()
             }
         } else if let draft = IncomingNoteDraft(url: url) {
+            guard ExternalAPIPreferences.isEnabled() else {
+                model.error = AppText.localized("外部連携URL・カードAPIは設定で無効になっています。")
+                return
+            }
             pendingNoteActions.append(.edit(EditorRequest(initialDraft: draft)))
             openPendingExternalRequest()
-        } else if browserLinks.receive(url) { openPendingExternalRequest() }
+        } else if BrowserLink(url: url) != nil {
+            guard ExternalAPIPreferences.isEnabled() else {
+                model.error = AppText.localized("外部連携URL・カードAPIは設定で無効になっています。")
+                return
+            }
+            if browserLinks.receive(url) { openPendingExternalRequest() }
+        }
     }
     private var observedContent: some View {
         errorContent
@@ -699,7 +709,7 @@ struct ContentView: View {
     }
     private var localCollectionPresentationActive: Bool {
         importing || addingOcclusion || addingTextNote || showingSharedInbox || customStudy != nil || filteredDeck != nil || deckDescription != nil
-            || namingDeck || deletingDeck != nil || model.pendingCollectionImport != nil || incomingFileReview != nil
+            || reminderDeck != nil || namingDeck || deletingDeck != nil || model.pendingCollectionImport != nil || incomingFileReview != nil
     }
     private var deckList: some View {
         themedDeckList.scrollContentBackground(.hidden).background {

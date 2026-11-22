@@ -28,12 +28,12 @@ final class CardExternalLaunchFlowTests: StudyFlowTestSupport {
         XCTAssertEqual(app.state, .runningForeground)
         app.buttons["デッキ"].tap()
         app.buttons["collection-menu"].tap(); app.buttons["設定"].tap()
-        let outer = app.switches["allow-card-external-launch"]
-        revealSettingsControl(outer, in: app)
-        let toggle = outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
-        XCTAssertEqual(toggle.value as? String, "0")
-        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
-        XCTAssertEqual(toggle.value as? String, "1")
+        let outer = app.switches.matching(identifier: "allow-card-external-launch")
+        revealSettingsControl(outer.firstMatch, in: app)
+        let toggle = outer.children(matching: .switch).count > 0 ? outer.children(matching: .switch) : outer
+        guard let initial = waitForTestControl(toggle, in: app, purpose: .observation) else { return }
+        XCTAssertEqual(initial.value as? String, "0")
+        XCTAssertTrue(setTestSwitch(outer, enabled: true, in: app))
         app.buttons["settings-save"].tap()
         XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30))
         app.terminate(); app.launch()

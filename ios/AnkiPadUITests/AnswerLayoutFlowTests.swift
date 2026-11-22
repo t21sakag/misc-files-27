@@ -17,14 +17,10 @@ final class AnswerLayoutFlowTests: StudyFlowTestSupport {
         }
         settings()
         app.buttons["answer-position"].tap(); app.buttons["上"].firstMatch.tap()
-        let outer = app.switches["answer-large"]
-        XCTAssertTrue(outer.waitForExistence(timeout: 20))
-        revealSettingsControl(outer, in: app)
-        let toggle = outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
-        waitUntilHittable(toggle)
-        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
-        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '1'"), object: toggle)
-        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 10), .completed)
+        let outer = app.switches.matching(identifier: "answer-large")
+        XCTAssertTrue(outer.firstMatch.waitForExistence(timeout: 20))
+        revealSettingsControl(outer.firstMatch, in: app)
+        XCTAssertTrue(setTestSwitch(outer, enabled: true, in: app))
         let form = app.scrollViews["settings-form"]
         let size = app.sliders["answer-size"]
         for _ in 0..<12 {

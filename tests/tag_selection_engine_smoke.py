@@ -32,11 +32,13 @@ with tempfile.TemporaryDirectory() as directory:
         return engine.call('NotesService.AddNote', {'note': note, 'deckId': '1'})['noteId']
 
     def note_tags(nid):
-        return engine.call('NotesService.GetNote', {'nid': nid})['tags']
+        return engine.call('NotesService.GetNote', {'nid': nid}).get('tags', [])
 
     try:
         n1 = add_note('Q1', 'A1', ['common', 'science::physics'])
         n2 = add_note('Q2', 'A2', ['common', 'history'])
+        n3 = add_note('Q3', 'A3', [])
+        assert 'tags' not in engine.call('NotesService.GetNote', {'nid': n3})
 
         loaded, calls = operate({'op': 'load', 'noteIDs': [n1, n2]})
         assert loaded['done'], loaded
@@ -62,6 +64,39 @@ with tempfile.TemporaryDirectory() as directory:
         engine.call('CollectionService.Undo')
         assert set(note_tags(n1)) == {'common', 'science::physics'}
         assert set(note_tags(n2)) == {'common', 'history'}
+
+        # Mixed tagged + untagged notes: omitted protobuf tags field must load and apply cleanly
+        mixed, _ = operate({'op': 'load', 'noteIDs': [n1, n2, n3]})
+        assert mixed['done'], mixed
+        assert mixed['checkedTags'] == [], mixed
+        assert set(mixed['partiallySelectedTags']) == {'common', 'science::physics', 'history'}, mixed
+
+        mixed_applied, _ = operate({
+            'op': 'apply',
+            'noteIDs': [n1, n2, n3],
+            'checkedTags': ['reviewed'],
+            'partiallySelectedTags': mixed['partiallySelectedTags']
+        })
+        assert mixed_applied['done'], mixed_applied
+        assert set(note_tags(n1)) == {'common', 'science::physics', 'reviewed'}
+        assert set(note_tags(n2)) == {'common', 'history', 'reviewed'}
+        assert set(note_tags(n3)) == {'reviewed'}
+
+        # Clear tags on untagged-originally note n3, then Undo restores mixed state
+        cleared, _ = operate({
+            'op': 'apply',
+            'noteIDs': [n3],
+            'checkedTags': [],
+            'partiallySelectedTags': []
+        })
+        assert cleared['done'], cleared
+        assert note_tags(n3) == []
+        engine.call('CollectionService.Undo')
+        assert set(note_tags(n3)) == {'reviewed'}
+        engine.call('CollectionService.Undo')
+        assert set(note_tags(n1)) == {'common', 'science::physics'}
+        assert set(note_tags(n2)) == {'common', 'history'}
+        assert note_tags(n3) == []
 
         # Invalid/missing/duplicate note IDs fail before any UpdateNotes call
         for bad_ids in [[], [n1, '9223372036854775807'], [n1, n1], ['0']]:
