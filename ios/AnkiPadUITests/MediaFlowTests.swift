@@ -197,10 +197,11 @@ final class MediaFlowTests: StudyFlowTestSupport {
             tapScreenFrame(button, in: app)
             let web = app.webViews.firstMatch
             XCTAssertTrue(web.waitForExistence(timeout: 30))
-            let loaded = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            let tool = web.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'duplicate' OR label CONTAINS '複製'")).firstMatch
+            XCTAssertTrue(tool.waitForExistence(timeout: 60), app.debugDescription)
+            XCTAssertTrue(requireTestCondition("Image occlusion canvas renders image", in: app, timeout: 30) {
                 web.images.allElementsBoundByIndex.contains { $0.frame.width > 100 && $0.frame.height > 100 }
-            }, object: nil)
-            XCTAssertEqual(XCTWaiter.wait(for: [loaded], timeout: 30), .completed, app.debugDescription)
+            })
             return web
         }
         func maskCount() -> Int {
@@ -225,7 +226,6 @@ final class MediaFlowTests: StudyFlowTestSupport {
         app.terminate(); app.launchArguments = []; app.launch()
         openNote()
         XCTAssertEqual(maskCount(), 2, "Mask copy must persist across app relaunch")
-        app.collectionViews["note-form"].swipeDown()
         let reopened = openMasks()
         guard let again = reopened.images.allElementsBoundByIndex.max(by: { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height }) else { XCTFail(app.debugDescription); return }
         again.coordinate(withNormalizedOffset: CGVector(dx: 0.37, dy: 0.37)).tap()

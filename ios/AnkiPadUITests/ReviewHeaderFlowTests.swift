@@ -11,13 +11,9 @@ final class ReviewHeaderFlowTests: StudyFlowTestSupport {
             XCTAssertTrue(app.buttons["settings-save"].waitForExistence(timeout: 20))
         }
         func toggle(_ identifier: String, on: Bool) {
-            let outer = app.switches[identifier]
-            revealSettingsControl(outer, in: app)
-            let inner = outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
-            if (inner.value as? String == "1") != on {
-                inner.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
-            }
-            XCTAssertEqual(inner.value as? String, on ? "1" : "0")
+            let outer = app.switches.matching(identifier: identifier)
+            revealSettingsControl(outer.firstMatch, in: app)
+            XCTAssertTrue(setTestSwitch(outer, enabled: on, in: app))
         }
         func saveAndRelaunch() {
             app.buttons["settings-save"].tap()

@@ -410,10 +410,30 @@ class StudyFlowTestSupport: XCTestCase {
                 captureFieldInput("after clearing")
                 guard requireTestCondition("Search field clears complete replacement source", in: app,
                     failureContext: { latestNativeInput }, condition: {
-                        guard let input = nativeInput() else { return false }
-                        return input.identity == focusedIdentity && input.length == 0
+                        if let input = nativeInput() {
+                            return input.identity == focusedIdentity && input.length == 0
+                        }
+                        guard query.count == 1 else { return false }
+                        let current = query.element
+                        let value = current.value as? String
+                        let empty = value == "" || (current.placeholderValue != nil && value == current.placeholderValue)
+                        return empty && clear.count == 0
                     }) else { return nil }
-                field = query.element
+                if !text.isEmpty {
+                    if nativeInput()?.length != 0 {
+                        guard let refocused = tapTestControl(query, in: app, form: form, keyboard: .keep) else { return nil }
+                        field = refocused
+                        guard requireTestCondition("Cleared search field owns the native text input", in: app,
+                            failureContext: { latestNativeInput }, condition: {
+                                guard let input = nativeInput() else { return false }
+                                return input.length == 0
+                            }) else { return nil }
+                    } else {
+                        field = query.element
+                    }
+                } else {
+                    field = query.element
+                }
             } else if observesSelection {
                 if let initial = initialInput, !(initial.selection == 0 && initial.caret == expected.utf16.count) {
                     field.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()

@@ -5,6 +5,12 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-search-completion-m4-followup': [
+        'testCommittedSearchHistoryReuseCancelAndRelaunch',
+        'testDayAndNightThemeChoicesPersistAndStyleNativeAndCardSurfaces',
+        'testImageOcclusionMaskCopyPersistsAndDiscardPreservesSavedMasks',
+        'testReviewTitleAndEstimatePersistAndCanBeHidden',
+    ],
     'native-search-completion-m4-repair': [
         'testStructuredHistoryResolvesRenamedDeckIDAfterRelaunch',
         'testCommittedSearchHistoryReuseCancelAndRelaunch',

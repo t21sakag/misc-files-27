@@ -222,6 +222,7 @@ struct ContentView: View {
         }
         .disabled(!model.profilesReady)
         .navigationTitle(model.selected.map { showDeckTitle ? $0.name : "" } ?? (model.profileRegistry.profiles.count > 1 ? "AnkiPad · " + model.currentProfile.name : "AnkiPad"))
+        .navigationBarTitleDisplayMode(model.selected == nil ? .large : .inline)
         .toolbar { navigationToolbar }
         .toolbar(model.selected != nil && model.reviewDisplayMode.isFullscreen ? .hidden : .visible, for: .navigationBar)
         .statusBarHidden(model.selected != nil && (model.reviewDisplayMode.isFullscreen || hideSystemBarsInReview))

@@ -44,7 +44,8 @@ final class ThemeFlowTests: StudyFlowTestSupport {
         func inspectCard(_ expected: String) {
             app.buttons["deck-1"].tap()
             XCTAssertTrue(app.buttons["reveal"].waitForExistence(timeout: 30), app.debugDescription)
-            let inspect = app.webViews.buttons["Inspect card theme"]
+            guard let web = waitForTestCardWebView(in: app, purpose: .observation) else { return }
+            let inspect = web.buttons["Inspect card theme"]
             var previousFrame: CGRect?
             XCTAssertTrue(requireTestCondition("Inspect card theme control stabilizes", in: app) {
                 guard inspect.exists && inspect.isHittable else {
@@ -57,7 +58,7 @@ final class ThemeFlowTests: StudyFlowTestSupport {
                 return stable
             })
             tapScreenFrame(inspect, in: app)
-            XCTAssertTrue(app.webViews.staticTexts["Theme verified " + expected].waitForExistence(timeout: 20), app.debugDescription)
+            XCTAssertTrue(web.staticTexts["Theme verified " + expected].waitForExistence(timeout: 20), app.debugDescription)
             app.buttons["デッキ"].tap()
         }
         openSettings(); pick("app-theme-mode", "ダーク"); pick("night-theme", "ダーク")

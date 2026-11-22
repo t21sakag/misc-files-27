@@ -11384,6 +11384,249 @@
         }
       ],
       "checked_at": "2026-11-11T01:41:05.332420+00:00"
+    },
+    {
+      "id": "20261123-search-clear-focus-reviewer-inline-and-occlusion-wait",
+      "covers": [
+        [
+          45035142297,
+          1
+        ],
+        [
+          42944401203,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            42944401203,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Check full failed across batches 0/1/2/3/4 (27 failed test cases logged in failed.log, plus batch 3 simctl --uitest-notification-readiness timeout in notification-preflight.py). Primary causes: Cmd-A selection in replaceTestField failed after app.terminate(), noteEditorNewlineReplace altered multiline test HTML probes, aborted landscape case left orientation non-portrait across later tests, form reveal stopped at 12 attempts, and legacy tests used raw 50ms switch taps, un-dismissed keyboard, swipeDown on unmodified editor sheet, and unstably shifting ThemeFlow tap coordinates."
+        },
+        {
+          "attempt": [
+            45035142297,
+            1
+          ],
+          "kind": "application",
+          "finding": "Run 45035142297 passed build (macOS host M4/SecCertificateCreateWithData, tag selection, rustls custom TLS cert smoke) and 8/11 UI cases with 0 runtime warnings. Remaining 3 failures: (1) Application layout shift in Batch 1 ThemeFlowTests:60: ContentView navigationContent inherited .large title display mode and collapsed 52pt to .inline after reviewer layout settled (mp4 frame Y=206.02..256.07 -> terminal AX Y=154.0..204.1), causing tap point (410.5, 231.05) to miss below Button 'Inspect card theme'. (2) Harness focus assumption in Batch 3 BrowserSearchHistoryFlowTests (StudyFlowTestSupport.swift:79): Clear text emptied SearchField and restored all 5 rows (C3037315.txt, 99EF2431.png) while SwiftUI .searchable resigned first responder (responder=none), failing responder-only clearing wait. (3) Harness AX snapshot starvation in Batch 4 MediaFlowTests:203: polling web.images.allElementsBoundByIndex every ~4-6s starved Svelte occlusion WebKit startup over 30s before Image {{162, 461}, {530, 398}} appeared at capture (34BC9ECD.txt)."
+        }
+      ],
+      "root_cause": "Three distinct causes across CI 45035142297: (1) ContentView reviewer transition omitted explicit .navigationBarTitleDisplayMode(.inline), allowing a 52pt large-title collapse after the initial stable-frame probe; (2) replaceTestField required SearchField Clear text to retain UIKit firstResponder even when SwiftUI .searchable legitimately resigns focus while clearing the value and Clear button; (3) MediaFlowTests openMasks polled expensive full-WebView images snapshots before a lightweight toolbar button confirmed bundled Svelte UI load.",
+      "common_resolution": "Set .navigationBarTitleDisplayMode(model.selected == nil ? .large : .inline) on ContentView navigationContent and resolve ThemeFlowTests card webviews via waitForTestCardWebView; update replaceTestField .searchField Clear postcondition to accept empty SearchField + clear.count == 0 when first responder resigns and tap back before typeText; wait for the occlusion toolbar duplicate button before polling web.images.allElementsBoundByIndex via requireTestCondition (removing the remaining swipeDown before reopened masks); and upgrade ReviewHeaderFlowTests toggle from raw coordinate tap to shared setTestSwitch.",
+      "next_scope": [
+        "BrowserSearchHistoryFlowTests/testCommittedSearchHistoryReuseCancelAndRelaunch",
+        "ThemeFlowTests/testDayAndNightThemeChoicesPersistAndStyleNativeAndCardSurfaces",
+        "MediaFlowTests/testImageOcclusionMaskCopyPersistsAndDiscardPreservesSavedMasks",
+        "ReviewHeaderFlowTests/testReviewTitleAndEstimatePersistAndCanBeHidden"
+      ],
+      "rule_review": {
+        "semantic_labels": "Reviewed: all semantic titles and localized labels matched cleanly across 8/11 passing UI cases and localization_resources_smoke (1530 sites, 953 used keys, 955 ja/en translations). No label rule change needed.",
+        "foreground_scope": "Reviewed: ThemeFlowTests previously used app.webViews.buttons instead of the shared waitForTestCardWebView foreground host helper. Switched ThemeFlowTests to waitForTestCardWebView; foreground_scope rule remains sound.",
+        "unique_reads_and_actions": "Updated: added rule for heavy bundled WebKit sheets (Image Occlusion) to wait for a lightweight targeted toolbar button before polling web.images.allElementsBoundByIndex via requireTestCondition so multi-second full-hierarchy AX snapshots do not starve WebKit startup. Also upgraded ReviewHeaderFlowTests toggle to shared setTestSwitch.",
+        "live_state": "Updated: added rule requiring explicit .inline navigationBarTitleDisplayMode on reviewer views transitioned from a large-title deck list so a late 52pt large-title collapse cannot shift initial card coordinates.",
+        "keyboard_and_scroll": "Updated: replaced the obsolete Command+A replacement rule with the empirically proven field-type-specific strategy (.searchField Clear button with empty/clear-absent check and refocus before typeText if SwiftUI .searchable resigns responder; .textField trailing tap + caret/selection verification + XCUIKeyboardKey.delete) and removed the remaining note-form swipeDown before reopening masks in MediaFlowTests.",
+        "environment": "Reviewed: all 14 public pre-CI checks, Apple host M4/TagSelection/LibreSSL-portable rustls TLS checks, and batch consumer fixtures (occlusion-fixture.png and dual sync servers) ran cleanly with zero missing environment prerequisites.",
+        "first_failure_evidence": "Reviewed: Batch 1 screen recording (b1_m30/b1_m10 vs terminal AX), Batch 3 terminal hierarchy + screenshot (C3037315.txt, 99EF2431.png), and Batch 4 terminal hierarchy + video (34BC9ECD.txt, b4_m15) directly isolated all 3 failures without guessing.",
+        "failure_classification": "Reviewed: accurately separated application layout bug (ContentView large->inline 52pt shift in Batch 1) from harness synchronization defects (StudyFlowTestSupport SearchField responder-loss wait in Batch 3 and MediaFlowTests WebKit snapshot polling + residual swipeDown in Batch 4) across both attempts.",
+        "runtime_warnings": "Reviewed: all 5 UI batches in CI 45035142297 reported 0 runtime warnings; summarize-ui-results --reject-runtime-warnings remains active.",
+        "device_evidence": "Reviewed: simulator TLS, WebKit, and occlusion tests do not replace real-device verification for SideStore re-signing, App Group extensions, real audio, and notifications; remains deferred until M5 gate."
+      },
+      "evidence": [
+        {
+          "reference": "completed-evidence/42944401203/run.json",
+          "sha256": "98a0da17a49820ac62518bc1256591215cc2c5ed6937e8e5015331099ebbf225"
+        },
+        {
+          "reference": "completed-evidence/42944401203/failed.log",
+          "sha256": "2bdf63dab7a1b9cf716af59e2e0c4ab80b8abb461827c2a35d1014b3a496a7cb"
+        },
+        {
+          "reference": "completed-evidence/45035142297/run.json",
+          "sha256": "aba1b6351af79deaac55445c9132c12c0ea0440104c256cfdf9d73b2247a254d"
+        },
+        {
+          "reference": "completed-evidence/45035142297/failed.log",
+          "sha256": "b08191d03020ef46874d453b39653eb71d52e44be28b7b671df69f23694fabc9"
+        },
+        {
+          "reference": "completed-evidence/45035142297/ui-diagnostics-1/test-summary.json",
+          "sha256": "46255a0750efc3d7f2be691d477ab4cf610d77708b2a272623641fd0136f7912"
+        },
+        {
+          "reference": "completed-evidence/45035142297/ui-diagnostics-3/test-summary.json",
+          "sha256": "a608470a588d8662e001070157e960ff719c485d41164b3692faec52c0e7bedd"
+        },
+        {
+          "reference": "completed-evidence/45035142297/ui-diagnostics-4/test-summary.json",
+          "sha256": "19eae50c696a934d1921ae738780a9b04400a71d03386e4967245d6dc48b37c9"
+        },
+        {
+          "reference": "completed-evidence/45035142297/ui-diagnostics-3/screenshots/C3037315-56C4-4C68-9C70-B147AF86E4AA.txt",
+          "sha256": "0194e65af2e650642078fa557b04f702022402ac8c71979297cbc69bcc488194"
+        },
+        {
+          "reference": "completed-evidence/45035142297/ui-diagnostics-4/screenshots/34BC9ECD-61E5-4276-A06D-E97D1759796E.txt",
+          "sha256": "7b4c4ae29692863696503f372ba03beab41ea4cd71d7b5647228ca6d03dd097f"
+        },
+        {
+          "reference": "completed-evidence/45035142297/screenshots-3/99EF2431-21E9-443E-9CAD-9A794297D172.png",
+          "sha256": "7647005a5706b2c3ec22271c1011c48878df001b3ce0549a3cb8f1cbbd491c32"
+        },
+        {
+          "reference": "completed-evidence/45035142297/screenshots-1/4C02B5AC-F309-40F6-8ABB-E7FDE9DD7B04.mp4",
+          "sha256": "f5b11f1e8456c8e5c0ec0400a367c10270e77506f98f70cdff42641475a30aca"
+        },
+        {
+          "reference": "completed-evidence/45035142297/screenshots-4/1BCFFC8F-58BF-4CE8-8F0F-9DAD827F66B9.mp4",
+          "sha256": "83355a8acd4893caeb909a3c825d8b530c9524d7491098cdd4fc71871ca592e2"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "df1cfbfc168c038ff4bd33ec3b023dd2797cffa2f7b37d8c65769525aa5b652d",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "0b93d8aea0ab4f669a2c5db7268cc7753892300363e6ccdd2dfad61f60054b79",
+        "ios/AnkiPadUITests/ThemeFlowTests.swift": "d7a93536ca5d6fb254470eb7a8926e8298fa3ea332123c6838ec0b346120ff56",
+        "ios/AnkiPadUITests/MediaFlowTests.swift": "76387c7b146149743758d4aa2b04b440983d14d4832d3689eff9fc66ffe459b4",
+        "ios/AnkiPadUITests/ReviewHeaderFlowTests.swift": "2c21cbc1a0f6ed6c9494847b1fa783ba8d37520ce77537d83cc51bbdcfdb382f",
+        "ios/AnkiPad/ContentView.swift": "21f10c1d77c545fbc040d673e85be6cedc903c50e1643a6beb95198ba2ec4437",
+        "scripts/select-ui-tests.py": "7c0fe41c9800c2d086eb52ee3a7ec1cb4032f89889b794b20d60311ec1920b09",
+        "scripts/ui-case-groups.json": "b8c0cff904bbe67175ae070566424f0371df6a479ee0ea54c196232dde922e09",
+        ".github/workflows/ipa.yml": "a1c79b59bca766a100ed48e51425abb0d7ef77c9fa16408fd119da9ec648266c"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "754138bf0b4dff53223c9d3f40a7f2e3e3978f10dacb5f363c724cc15383eedb"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "37b08fd94a98ca52204d91f1a5e3553feceab95b969b596ee1d4f5159cf4ef99"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "bfe408b9f32f6f3d9531f0856ba80bc9f27b4a3d20fe339227bed3e5392ab0cc"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query_lint",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d4ded7da1fe8822fea4a9859b4e15c1db859df45419965c04f745788ca1c54"
+        },
+        {
+          "name": "query_smoke",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "168965be4793b6eaa7cf9c1b95ac061de05ffdf2115c95051c835451a89cf9cb"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "simulator_identity",
+          "argv": [
+            "python3",
+            "tests/simulator_identity_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec4dcf530af5a45941f312753ffde3ef60300e306e01d38acb91bbb4bbca02fb"
+        },
+        {
+          "name": "app_intents_metadata",
+          "argv": [
+            "python3",
+            "tests/app_intents_metadata_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "a9cdefae97417785914d4e57a55ec6afa1346fc2bc9bf86a789b00ae8d350d3f"
+        },
+        {
+          "name": "ui_events",
+          "argv": [
+            "python3",
+            "tests/ui_events_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ecd4775e323cfe5034323f413df7a6e2ab0b180471780cd7de39d89d9f1c1910"
+        },
+        {
+          "name": "ui_workflow_diagnostics",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "ui_prerequisites",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "partition_transfer",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        }
+      ],
+      "checked_at": "2026-11-22T16:02:53.214903+00:00"
     }
   ]
 }
