@@ -15,8 +15,14 @@ final class AutomaticSyncTests: StudyFlowTestSupport {
         let web = try XCTUnwrap(waitForTestCardWebView(in: app))
         tapTestControl(app.buttons.matching(identifier: "reveal"), in: app)
         _ = try XCTUnwrap(waitForTestControl(app.buttons.matching(identifier: "answer-2"), in: app))
-        let original = web.staticTexts.allElementsBoundByIndex.map(\.label)
-        XCTAssertFalse(original.isEmpty)
+        var original: [String] = []
+        guard requireTestCondition("Revealed answer renders inside WebView", in: app, timeout: 30, condition: {
+            let labels = web.staticTexts.allElementsBoundByIndex.map(\.label)
+            guard labels.contains(where: { $0.contains("iPad移植の質問") }),
+                  labels.contains(where: { $0.contains("Rustエンジンの解答") }) else { return false }
+            original = labels
+            return true
+        }) else { return }
         let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         screenshot.name = "Revealed review before lifecycle transition"
         screenshot.lifetime = .keepAlways
@@ -25,9 +31,12 @@ final class AutomaticSyncTests: StudyFlowTestSupport {
         requireTestCondition("Review app really enters background", in: app) { app.state == .runningBackground }
         app.activate()
         requireTestCondition("Automatic sync keeps the revealed card and controls after returning", in: app) {
-            app.state == .runningForeground && app.buttons.matching(identifier: "answer-2").count == 1
+            let current = web.staticTexts.allElementsBoundByIndex.map(\.label)
+            return app.state == .runningForeground && app.buttons.matching(identifier: "answer-2").count == 1
                 && app.buttons.matching(identifier: "answer-2").element.isHittable
-                && web.staticTexts.allElementsBoundByIndex.map(\.label) == original
+                && current.contains(where: { $0.contains("iPad移植の質問") })
+                && current.contains(where: { $0.contains("Rustエンジンの解答") })
+                && original.allSatisfy { current.contains($0) }
         }
         let exitTime = Date().timeIntervalSince1970
         tapTestControl(app.navigationBars.buttons.matching(NSPredicate(format: "label == %@", "デッキ")), in: app)
