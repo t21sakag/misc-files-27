@@ -57,11 +57,12 @@ final class TemplateAudioFlowTests: StudyFlowTestSupport {
         print("Background microphone observation: " + stopped.label)
         app.buttons["デッキ"].tap()
         app.buttons["collection-menu"].tap(); app.buttons["設定"].tap()
-        let outer = app.switches["allow-template-audio-recording"]
-        revealSettingsControl(outer, in: app)
-        let toggle = outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
-        XCTAssertEqual(toggle.value as? String, "1", "Successful card consent persists the app permission")
-        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
+        let outer = app.switches.matching(identifier: "allow-template-audio-recording")
+        revealSettingsControl(outer.firstMatch, in: app)
+        let toggle = outer.children(matching: .switch).count > 0 ? outer.children(matching: .switch) : outer
+        guard let initial = waitForTestControl(toggle, in: app, purpose: .observation) else { return }
+        XCTAssertEqual(initial.value as? String, "1", "Successful card consent persists the app permission")
+        XCTAssertTrue(setTestSwitch(outer, enabled: false, in: app))
         app.buttons["settings-save"].tap()
         XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30))
         app.terminate(); app.launch()

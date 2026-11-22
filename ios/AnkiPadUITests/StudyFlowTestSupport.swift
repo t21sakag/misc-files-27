@@ -839,13 +839,9 @@ class StudyFlowTestSupport: XCTestCase {
         XCTAssertTrue(menu.waitForExistence(timeout: 30))
         menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         tapScreenFrame(app.buttons["設定"], in: app)
-        let toggle = app.switches["allow-collection-card-api"]
-        revealSettingsControl(toggle, in: app)
-        let control = toggle.switches.firstMatch.exists ? toggle.switches.firstMatch : toggle
-        if (control.value as? String == "1") != enabled {
-            control.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
-        }
-        XCTAssertEqual(control.value as? String, enabled ? "1" : "0")
+        let toggle = app.switches.matching(identifier: "allow-collection-card-api")
+        revealSettingsControl(toggle.firstMatch, in: app)
+        XCTAssertTrue(setTestSwitch(toggle, enabled: enabled, in: app))
         app.buttons["settings-save"].tap()
         XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30))
     }

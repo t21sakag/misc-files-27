@@ -9,8 +9,9 @@ final class TagFlowTests: StudyFlowTestSupport {
         let front = app.textViews["note-field-0"]
         XCTAssertTrue(front.waitForExistence(timeout: 20))
         front.tap(); front.typeText("Tag hierarchy verification")
+        dismissTestKeyboard(in: app)
         let tags = app.textFields["note-tags"]
-        for _ in 0..<12 { if tags.exists && tags.isHittable { break }; app.collectionViews["note-form"].swipeUp() }
+        revealFormControl(tags, in: app.collectionViews["note-form"], topInset: 40, bottomInset: 20, maximumAttempts: 24)
         waitUntilHittable(tags)
         tags.tap(); tags.typeText("TreeRoot::Branch::Leaf Unrelated")
         app.buttons["note-save"].tap()
@@ -77,7 +78,8 @@ final class TagFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(row.waitForExistence(timeout: 20), "Tag removal must retain the note and card")
         row.tap()
         XCTAssertTrue(front.waitForExistence(timeout: 20))
-        for _ in 0..<12 { if tags.exists && tags.isHittable { break }; app.collectionViews["note-form"].swipeUp() }
+        dismissTestKeyboard(in: app)
+        revealFormControl(tags, in: app.collectionViews["note-form"], topInset: 40, bottomInset: 20, maximumAttempts: 24)
         XCTAssertTrue(tags.waitForExistence(timeout: 20))
         XCTAssertEqual(tags.value as? String, "Unrelated", "Rename/reparent/delete must update actual note tags without removing unrelated tags")
         XCTAssertFalse(app.alerts.firstMatch.exists)

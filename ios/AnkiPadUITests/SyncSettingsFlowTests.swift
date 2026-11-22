@@ -8,16 +8,10 @@ final class SyncSettingsFlowTests: StudyFlowTestSupport {
         XCTAssertTrue(app.scrollViews["settings-form"].waitForExistence(timeout: 20))
     }
     private func setSwitch(_ app: XCUIApplication, _ id: String, enabled: Bool) {
-        let outer = app.switches[id]
-        XCTAssertTrue(outer.waitForExistence(timeout: 20))
-        let item = outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
-        waitUntilHittable(item)
-        let desired = enabled ? "1" : "0"
-        if item.value as? String != desired {
-            item.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
-        }
-        let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", desired), object: item)
-        XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 10), .completed, app.debugDescription)
+        let outer = app.switches.matching(identifier: id)
+        XCTAssertTrue(outer.firstMatch.waitForExistence(timeout: 20))
+        revealSettingsControl(outer.firstMatch, in: app)
+        XCTAssertTrue(setTestSwitch(outer, enabled: enabled, in: app))
     }
     func testNetworkSyncSettingsSurviveRelaunchAndCancelDoesNotSave() {
         let app = makeApplication()

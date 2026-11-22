@@ -62,19 +62,17 @@ final class ConditionalRefreshFlowTests: StudyFlowTestSupport {
             refreshed(after: beforeSettings)
         }
         open()
-        let outer = app.switches["reminder-enabled"]
-        XCTAssertTrue(outer.waitForExistence(timeout: 20))
-        let toggle = outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
-        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
+        let outer = app.switches.matching(identifier: "reminder-enabled")
+        XCTAssertTrue(outer.firstMatch.waitForExistence(timeout: 20))
+        XCTAssertTrue(setTestSwitch(outer, enabled: true, in: app))
         changeMinimum(true)
         chooseDeck("Empty reminder scope")
         save()
         open(); XCTAssertTrue(records().isEmpty, "Cards in other decks must not satisfy this empty scope")
         chooseDeck("すべてのデッキ")
-        let noReviews = app.switches["reminder-no-reviews"]
-        reveal(noReviews)
-        let inner = noReviews.switches.firstMatch.exists ? noReviews.switches.firstMatch : noReviews
-        inner.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
+        let noReviews = app.switches.matching(identifier: "reminder-no-reviews")
+        reveal(noReviews.firstMatch)
+        XCTAssertTrue(setTestSwitch(noReviews, enabled: true, in: app))
         save()
         open()
         let initial = records()

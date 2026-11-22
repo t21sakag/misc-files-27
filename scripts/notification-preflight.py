@@ -28,7 +28,7 @@ def run(simulator, app, output, timeout=120):
         # Cold install includes placeholder/extension registration. The last
         # real runner completed installation near the old 30s cutoff, before
         # simctl acknowledged it. Keep this separate from service deadlines.
-        command_timeout = 120 if args[0] == 'install' else 30
+        command_timeout = 120 if args[0] in ('install', 'launch') else 30
         command = {'operation': args[0], 'timeout_seconds': command_timeout}
         report['commands'].append(command)
         began = time.monotonic()
