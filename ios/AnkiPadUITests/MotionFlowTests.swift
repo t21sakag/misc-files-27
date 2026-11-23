@@ -28,9 +28,9 @@ final class MotionFlowTests: StudyFlowTestSupport {
             return outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
         }
         func setReduced(_ reduced: Bool) {
-            let toggle = animationToggle()
-            if (toggle.value as? String == "1") != reduced { tapScreenFrame(toggle, in: app) }
-            XCTAssertEqual(toggle.value as? String, reduced ? "1" : "0")
+            let outer = app.switches.matching(identifier: "remove-app-animations")
+            revealSettingsControl(outer.firstMatch, in: app)
+            XCTAssertTrue(setTestSwitch(outer, enabled: reduced, in: app))
         }
         func save() {
             app.buttons["settings-save"].tap()

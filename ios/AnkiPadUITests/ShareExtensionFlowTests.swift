@@ -11,17 +11,40 @@ final class ShareExtensionFlowTests: StudyFlowTestSupport {
         let url = URL(string: "http://127.0.0.1:18892/share-note")!
         XCUIDevice.shared.system.open(url)
         XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 20))
-        for title in ["Continue", "続ける", "Not Now", "今はしない"] {
-            let button = safari.buttons[title].firstMatch
-            if button.waitForExistence(timeout: 2) && button.isHittable {
-                tapTestControl(safari.buttons.matching(NSPredicate(format: "label == %@", title)), in: safari, keyboard: .keep,
-                               alreadySatisfied: {
-                    let share = safari.buttons["ShareButton"]
-                    return share.exists && share.isEnabled && share.isHittable
-                })
+        let share = safari.buttons.matching(identifier: "ShareButton")
+        let startPage = safari.collectionViews.matching(identifier: "StartPageCollectionView")
+        func shareReady() -> Bool {
+            share.count == 1 && share.element.isEnabled && share.element.isHittable
+        }
+        func blockingPrompt() -> XCUIElementQuery? {
+            if startPage.count == 0 {
+                for title in ["Continue", "続ける"] {
+                    let query = safari.buttons.matching(NSPredicate(format: "label == %@", title))
+                    if query.count == 1 && query.element.isEnabled && query.element.isHittable {
+                        return query
+                    }
+                }
+            }
+            for container in [safari.alerts, safari.sheets] {
+                for title in ["Continue", "続ける", "Not Now", "今はしない"] {
+                    let query = container.buttons.matching(NSPredicate(format: "label == %@", title))
+                    if query.count == 1 && query.element.isEnabled && query.element.isHittable {
+                        return query
+                    }
+                }
+            }
+            return nil
+        }
+        for _ in 0..<3 {
+            guard requireTestCondition("Safari reaches Share button or a blocking onboarding prompt", in: safari, timeout: 30, condition: {
+                shareReady() || blockingPrompt() != nil
+            }) else { return }
+            if shareReady() { break }
+            if let prompt = blockingPrompt() {
+                tapTestControl(prompt, in: safari, keyboard: .keep, alreadySatisfied: shareReady)
             }
         }
-        tapTestControl(safari.buttons.matching(identifier: "ShareButton"), in: safari)
+        tapTestControl(share, in: safari)
         // Exercise the exact presentation that previously failed, rather than
         // passing by chance through the already-working icon-row route.
         openTestShareService(in: safari, useAppsList: true)

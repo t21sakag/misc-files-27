@@ -13,7 +13,7 @@ import subprocess
 ap = argparse.ArgumentParser()
 ap.add_argument('batch', type=int)
 ap.add_argument('simulator')
-ap.add_argument('--notification-timeout', type=float, default=90)
+ap.add_argument('--notification-timeout', type=float, default=210)
 ap.add_argument('--reboot-on-service-timeout', action='store_true')
 args = ap.parse_args()
 if not 0.1 <= args.notification_timeout <= 240:

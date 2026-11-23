@@ -5,6 +5,13 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-full-regression-repair': [
+        'testNoteResetExpandsOnlySelectedNoteAndUndoRestoresBothCards',
+        'testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel',
+        'testAutomaticSyncDefersUntilRevealedReviewIsClosed',
+        'testMotionSettingPersistsCancelsAndControlsNativePresentation',
+        'testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode',
+    ],
     'native-preflight-account-repair': [
         'testActualNotificationAuthorizationAndScheduleReplacement',
         'testReminderNativeSchedulePersistsReplacesAndCancels',

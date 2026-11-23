@@ -30,13 +30,22 @@ final class AutomaticSyncTests: StudyFlowTestSupport {
         XCUIDevice.shared.press(.home)
         requireTestCondition("Review app really enters background", in: app) { app.state == .runningBackground }
         app.activate()
-        requireTestCondition("Automatic sync keeps the revealed card and controls after returning", in: app) {
-            let current = web.staticTexts.allElementsBoundByIndex.map(\.label)
-            return app.state == .runningForeground && app.buttons.matching(identifier: "answer-2").count == 1
+        requireTestCondition("Automatic sync keeps the revealed review screen in foreground", in: app) {
+            app.state == .runningForeground
+                && app.buttons.matching(identifier: "answer-2").count == 1
                 && app.buttons.matching(identifier: "answer-2").element.isHittable
-                && current.contains(where: { $0.contains("iPad移植の質問") })
-                && current.contains(where: { $0.contains("Rustエンジンの解答") })
-                && original.allSatisfy { current.contains($0) }
+        }
+        let resumedWeb = try XCTUnwrap(waitForTestCardWebView(in: app, purpose: .observation))
+        let expectedTexts = Array(Set(["iPad移植の質問", "Rustエンジンの解答"] + original.filter {
+            !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }))
+        requireTestCondition("Automatic sync keeps the revealed card and controls after returning", in: app) {
+            app.state == .runningForeground
+                && app.buttons.matching(identifier: "answer-2").count == 1
+                && app.buttons.matching(identifier: "answer-2").element.isHittable
+                && expectedTexts.allSatisfy { text in
+                    resumedWeb.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", text)).count > 0
+                }
         }
         let exitTime = Date().timeIntervalSince1970
         tapTestControl(app.navigationBars.buttons.matching(NSPredicate(format: "label == %@", "デッキ")), in: app)
@@ -97,10 +106,11 @@ final class AutomaticSyncTests: StudyFlowTestSupport {
         XCTAssertTrue(app.staticTexts["同期しました"].waitForExistence(timeout: 60), app.debugDescription)
         app.buttons["collection-menu"].tap()
         app.buttons["設定"].tap()
+        let autoSyncSwitch = app.switches.matching(identifier: "automatic-sync")
         let toggle = app.switches["automatic-sync"].switches.firstMatch
         XCTAssertTrue(toggle.waitForExistence(timeout: 20))
         XCTAssertEqual(toggle.value as? String, "1")
-        toggle.tap()
+        XCTAssertTrue(setTestSwitch(autoSyncSwitch, enabled: false, in: app))
         app.buttons["settings-save"].tap()
         waitForSyncIdle(app)
         addUnsyncedNote(app)
