@@ -12613,6 +12613,250 @@
         }
       ],
       "checked_at": "2026-11-23T06:44:35.313297+00:00"
+    },
+    {
+      "id": "20261123-reveal-form-control-bulk-query-and-log-filter",
+      "covers": [
+        [
+          45158364176,
+          1
+        ],
+        [
+          45128915814,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            45128915814,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Run 45128915814 (mode=full) passed 141 of 142 UI cases across Batches 0 (28/28), 1 (30/30), 2 (27/28), 3 (28/28), and 4 (28/28) with 0 skips and runtimeWarnings: []. Only Batch 2 AutomaticSyncTests/testAutomaticFullDownloadRequiresDirectionChoice failed (381.897s, 'Failed to get matching snapshot: Timed out while evaluating UI query.'). Screenshots/AX dumps (4BABBCD3, 54FEB899 at t=07:41:01) prove 'login-submit' was visible inside foreground 'account-form' at {{136.0, 520.5}, {548.0, 52.0}}, while Spindump A1C4824C shows AnkiPad main thread idle (<0.001s CPU) and AnkiPadUITests-Runner blocked inside loginToSyncFixture -> tapTestControl -> waitForTestControl -> revealFormControl(query.firstMatch) -> XCUIElement.frame (item.exists took 29.22s, item.frame timed out at 33.08s/30.01s/29.48s) while log [14330] + diagnosticd [8103/6649] consumed 3.79s CPU across 5s streaming 548,659,852 bytes of com.apple.dt.xctest and com.apple.Accessibility logs."
+        },
+        {
+          "attempt": [
+            45158364176,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Run 45158364176 (mode=ui download-only) failed in build step 'Build signed simulator app and UI test targets' (exit code 65) before UI execution because StudyFlowTestSupport subclasses XCTestCase and adding revealFormControl(_ query: XCUIElementQuery, ...) alongside revealFormControl(_ item: XCUIElement, ...) produced duplicate Objective-C selector revealFormControl:in:topInset:bottomInset:maximumAttempts:searchUpward:, which swiftc -frontend -parse does not detect."
+        }
+      ],
+      "root_cause": "Two harness issues combined: (1) waitForTestControl passed query.firstMatch to revealFormControl, switching XCTest from bulk-snapshot evaluation into lazy node-by-node AX traversal (4x-10x slower across Batch 2, timing out on login-submit under 548 MB XCTest/AXRuntime log-stream CPU contention from run-ui-with-diagnostics.py); (2) the first overload repair used an unlabeled first parameter in StudyFlowTestSupport: XCTestCase, causing an Objective-C selector collision in Xcode compilation.",
+      "common_resolution": "Replaced the colliding overload with revealFormControl(matching query: XCUIElementQuery, in form: XCUIElement, ...) using bulk-snapshot query.count and query.element(boundBy: 0), updated waitForTestControl to call revealFormControl(matching: query, ...), removed extra item.identifier AX reads from reveal logging, filtered com.apple.dt.xctest and com.apple.Accessibility subsystems out of run-ui-with-diagnostics.py log stream, and added static guards in scripts/check-ui-query-predicates.py (both revealFormControl .firstMatch and duplicate XCTestCase Objective-C selectors) plus smoke tests in tests/query_predicate_smoke.py and tests/widget_diagnostics_smoke.py.",
+      "next_scope": [
+        "AutomaticSyncTests/testAutomaticFullDownloadRequiresDirectionChoice"
+      ],
+      "rule_review": {
+        "semantic_labels": "Checked: 4BABBCD3 and 54FEB899 confirm 'login-submit' ('ログインして同期') and all other AccountView labels match verbatim; no label rule change needed.",
+        "foreground_scope": "Checked: login-submit was already scoped inside foreground 'account-form' CollectionView ({{120.0, 260.0}, {580.0, 660.0}}); waitForTestControl preserves exact foreground container scoping.",
+        "unique_reads_and_actions": "Checked: revealFormControl(matching:in:) checks query.count via bulk snapshot, returns immediately on ambiguity for waitForTestControl to fail uniquely, and inspects query.element(boundBy: 0) without lazy .firstMatch traversal or redundant item.identifier logging.",
+        "live_state": "Checked: 37D0DA76 and 54FEB899 confirm live native switch state (server=true;busy=false) and form button availability with zero application bugs across all 142 cases.",
+        "keyboard_and_scroll": "Strengthened: documented revealFormControl(matching:in:) bulk-snapshot reveal handling, removal of redundant item.identifier AX reads in reveal logging, and static revealFormControl .firstMatch enforcement in check-ui-query-predicates.py.",
+        "environment": "Strengthened: documented static duplicate Objective-C selector checking on XCTestCase subclasses in check-ui-query-predicates.py and exclusion of com.apple.dt.xctest/com.apple.Accessibility log subsystems in run-ui-with-diagnostics.py to eliminate 548 MB log-stream CPU contention while keeping app/OS diagnostics.",
+        "first_failure_evidence": "Applied: correlated Batch 2 failed.log timings, 4BABBCD3/54FEB899 AX trees, A1C4824C Spindump stackshots/CPU totals, live-collection.json (548.6 MB), and 45158364176 compiler error before finalizing edits.",
+        "failure_classification": "Applied: classified both 45128915814 Batch 2 (1/142 timeout in waitForTestControl->revealFormControl(query.firstMatch) under log-stream contention) and 45158364176 (XCTestCase ObjC selector collision at compile time) as harness issues with zero app defects.",
+        "runtime_warnings": "Verified: all 5 batches (0..4) of 45128915814 reported runtimeWarnings: [] and 0 skips.",
+        "device_evidence": "Maintained: simulator harness AX/log-stream repairs remain separate from physical-device verification."
+      },
+      "evidence": [
+        {
+          "reference": "run:45128915814/failed.log",
+          "sha256": "6add944fbe520050dac2d629f3f431d11c237695865e86638a484350c979b06c"
+        },
+        {
+          "reference": "run:45128915814/ui-diagnostics-2/test-summary.json",
+          "sha256": "3d5672d1f3573ac982912d01984b5c6cce84b781cfff59f38b177d669be0e8c2"
+        },
+        {
+          "reference": "run:45128915814/ui-diagnostics-2/widget-diagnostics/live-collection.json",
+          "sha256": "7bbe2832b029b2153ea887b01547fc71bf4390dc68eb58ce8157cacd1aa53804"
+        },
+        {
+          "reference": "run:45128915814/ui-diagnostics-2/screenshots/4BABBCD3-9B9F-4CD0-BCF2-45066DC767C1.txt",
+          "sha256": "c6dc303744f97eba600e517f9554fafc90cd3ac27f25df4be9c2ade5230d36f5"
+        },
+        {
+          "reference": "run:45128915814/ui-diagnostics-2/screenshots/54FEB899-0FA8-4888-A10D-84D9FCA92849.txt",
+          "sha256": "13bd967418cf9398b609a9c56c1543db84d907dbcd7863f45c8950511d8880d5"
+        },
+        {
+          "reference": "run:45128915814/ui-diagnostics-2/screenshots/A1C4824C-7939-473D-B3C8-93437B865496.txt",
+          "sha256": "dd6a7d769a2959e4021548b477509b5e9d6cb6d39303b36cd6d3b21b77d9c6d5"
+        },
+        {
+          "reference": "run:45158364176/failed.log",
+          "sha256": "5874f4ee935f3cc6887d53ca17ad84948024c2862d1ed9a64c6cbf03ed1d3695"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "0a20c70363772521e9e8ed5de945b29a38a9e620c8d866af2779660f93efbb8b",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "b018616ab2c4c1f2fb9c3efc7c95bad55ad82db05ea4b1312762b9fe93dc54bd",
+        "scripts/run-ui-with-diagnostics.py": "835e505206c5fa7afea26de22c7a006cb5492cbac895b7d670617bb35584fb62",
+        "scripts/check-ui-query-predicates.py": "16852c64ef73fe944fc644c625e1d2e6b38cb072fd3d5df03d1ae1854451f619",
+        "tests/widget_diagnostics_smoke.py": "0283d95019f1abb19c035e8f6fa5dda96c84ca14c7033514d58a5968d184e0e9",
+        "tests/query_predicate_smoke.py": "1e93965660f0142322b026ab1cc92138883fff9ed8138ce2a611f52cc407dc20"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "754138bf0b4dff53223c9d3f40a7f2e3e3978f10dacb5f363c724cc15383eedb"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "37b08fd94a98ca52204d91f1a5e3553feceab95b969b596ee1d4f5159cf4ef99"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ad52726fcdeca55ded9240cac281a9e31ade64d91b6d85e148c4ff03b087b238"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query_lint",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cb29788c40699e685de4dfa2c85c638c938c0cd4fa5d27202508c7e52fb9632b"
+        },
+        {
+          "name": "query_smoke",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "71291a33554a6d1db15fb261e22f9798bba9b41c1013c185193c8597e53d84cf"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "168965be4793b6eaa7cf9c1b95ac061de05ffdf2115c95051c835451a89cf9cb"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "notification_preflight",
+          "argv": [
+            "python3",
+            "tests/notification_preflight_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b147885faae5787ea6610b3fcda43acf25b3ec18bed531751ef2d7adedbd2cb7"
+        },
+        {
+          "name": "batch_runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "simulator_identity",
+          "argv": [
+            "python3",
+            "tests/simulator_identity_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec4dcf530af5a45941f312753ffde3ef60300e306e01d38acb91bbb4bbca02fb"
+        },
+        {
+          "name": "app_intents_metadata",
+          "argv": [
+            "python3",
+            "tests/app_intents_metadata_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "a9cdefae97417785914d4e57a55ec6afa1346fc2bc9bf86a789b00ae8d350d3f"
+        },
+        {
+          "name": "ui_events",
+          "argv": [
+            "python3",
+            "tests/ui_events_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ecd4775e323cfe5034323f413df7a6e2ab0b180471780cd7de39d89d9f1c1910"
+        },
+        {
+          "name": "ui_workflow_diagnostics",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "ui_prerequisites",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "partition_transfer",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        },
+        {
+          "name": "widget_diagnostics",
+          "argv": [
+            "python3",
+            "tests/widget_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "39d6e6fe443d3acf813f38a50473614f3c49af504b712d82998449db54e604cb"
+        }
+      ],
+      "checked_at": "2026-11-23T11:05:41.428522+00:00"
     }
   ]
 }

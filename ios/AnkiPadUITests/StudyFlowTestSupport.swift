@@ -519,7 +519,7 @@ class StudyFlowTestSupport: XCTestCase {
         if alreadySatisfied?() == true { return nil }
         if case .dismiss = keyboard, !dismissTestKeyboard(in: app) { return nil }
         if let form {
-            revealFormControl(query, in: form, topInset: 40, bottomInset: 20,
+            revealFormControl(matching: query, in: form, topInset: 40, bottomInset: 20,
                               maximumAttempts: 24, searchUpward: searchUpward)
         }
         let unique: () -> Bool = { alreadySatisfied?() == true || query.count == 1 }
@@ -677,7 +677,7 @@ class StudyFlowTestSupport: XCTestCase {
     /// Resolve form controls via bulk-snapshot query count and bound index
     /// rather than first-match traversal, avoiding lazy node-by-node AX
     /// faulting across SwiftUI Forms under load.
-    func revealFormControl(_ query: XCUIElementQuery, in form: XCUIElement,
+    func revealFormControl(matching query: XCUIElementQuery, in form: XCUIElement,
                            topInset: CGFloat = 150, bottomInset: CGFloat = 80, maximumAttempts: Int = 40, searchUpward: Bool = true) {
         if !form.exists { XCTAssertTrue(form.waitForExistence(timeout: 20)) }
         for attempt in 0..<maximumAttempts {

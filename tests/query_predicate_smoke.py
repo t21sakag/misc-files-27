@@ -31,8 +31,32 @@ for source in ['query.children(matching: .switch)', 'app.switches.matching(ident
     assert module.chained_switch_first_match(source) == [], source
 print('PASS: chained .switches.firstMatch rejected before CI; bulk children/matching switch queries remain allowed')
 
-for source in ['revealFormControl(query.firstMatch, in: form)', 'revealFormControl(app.buttons["x"].firstMatch, in: form)']:
+for source in ['revealFormControl(query.firstMatch, in: form)', 'revealFormControl(matching: query.firstMatch, in: form)', 'revealFormControl(app.buttons["x"].firstMatch, in: form)']:
     assert module.reveal_form_control_first_match(source) == [1], source
-for source in ['revealFormControl(query, in: form)', 'revealFormControl(controls.element, in: form)']:
+for source in ['revealFormControl(matching: query, in: form)', 'revealFormControl(query, in: form)', 'revealFormControl(controls.element, in: form)']:
     assert module.reveal_form_control_first_match(source) == [], source
 print('PASS: revealFormControl with .firstMatch rejected before CI; bulk query and explicit elements remain allowed')
+
+dup_source = '''class SampleTests: XCTestCase {
+    func foo(_ x: XCUIElementQuery, in y: XCUIElement) {}
+    func foo(_ x: XCUIElement, in y: XCUIElement) {}
+}'''
+assert module.duplicate_objc_selectors(dup_source) == [(3, 'foo(_:in:)', 2)], module.duplicate_objc_selectors(dup_source)
+ok_label = '''class SampleTests: XCTestCase {
+    func foo(matching x: XCUIElementQuery, in y: XCUIElement) {}
+    func foo(_ x: XCUIElement, in y: XCUIElement) {}
+}'''
+assert module.duplicate_objc_selectors(ok_label) == [], module.duplicate_objc_selectors(ok_label)
+ok_nonobjc = '''class SampleTests: XCTestCase {
+    @nonobjc func foo(_ x: XCUIElementQuery, in y: XCUIElement) {}
+    func foo(_ x: XCUIElement, in y: XCUIElement) {}
+}'''
+assert module.duplicate_objc_selectors(ok_nonobjc) == [], module.duplicate_objc_selectors(ok_nonobjc)
+ok_separate = '''class FirstTests: XCTestCase {
+    func foo(_ x: XCUIElement, in y: XCUIElement) {}
+}
+class SecondTests: XCTestCase {
+    func foo(_ x: XCUIElement, in y: XCUIElement) {}
+}'''
+assert module.duplicate_objc_selectors(ok_separate) == [], module.duplicate_objc_selectors(ok_separate)
+print('PASS: duplicate Objective-C selectors on XCTestCase subclasses rejected before CI')
