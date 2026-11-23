@@ -37,6 +37,13 @@ def chained_switch_first_match(source):
     return [source[:match.start()].count('\n') + 1 for match in re.finditer(pattern, source)]
 
 
+def reveal_form_control_first_match(source):
+    # Passing a first-match element into revealFormControl forces lazy AX
+    # traversal on every reveal attempt instead of bulk query resolution.
+    pattern = r"\brevealFormControl\s*\([^,\n]*\.firstMatch\b"
+    return [source[:match.start()].count('\n') + 1 for match in re.finditer(pattern, source)]
+
+
 if __name__ == '__main__':
     root = Path(__file__).resolve().parents[1]
     files = sorted((root/'ios/AnkiPadUITests').rglob('*.swift'))
@@ -46,6 +53,8 @@ if __name__ == '__main__':
                for path in files for line in unscoped_search_fields(path.read_text())]
     errors += [f'{path.relative_to(root)}:{line}: use shared readTestSwitchValue/setTestSwitch instead of chained .switches.firstMatch'
                for path in files for line in chained_switch_first_match(path.read_text())]
+    errors += [f'{path.relative_to(root)}:{line}: pass an XCUIElementQuery or non-firstMatch element to revealFormControl instead of .firstMatch'
+               for path in files for line in reveal_form_control_first_match(path.read_text())]
     if errors:
         raise SystemExit('\n'.join(errors))
-    print(f'PASS: {len(files)} UI files reject unsupported hit-testing predicates, unscoped root search fields and chained .switches.firstMatch')
+    print(f'PASS: {len(files)} UI files reject unsupported hit-testing predicates, unscoped root search fields, chained .switches.firstMatch and revealFormControl .firstMatch')

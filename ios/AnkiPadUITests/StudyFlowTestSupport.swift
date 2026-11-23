@@ -519,7 +519,7 @@ class StudyFlowTestSupport: XCTestCase {
         if alreadySatisfied?() == true { return nil }
         if case .dismiss = keyboard, !dismissTestKeyboard(in: app) { return nil }
         if let form {
-            revealFormControl(query.firstMatch, in: form, topInset: 40, bottomInset: 20,
+            revealFormControl(query, in: form, topInset: 40, bottomInset: 20,
                               maximumAttempts: 24, searchUpward: searchUpward)
         }
         let unique: () -> Bool = { alreadySatisfied?() == true || query.count == 1 }
@@ -674,6 +674,50 @@ class StudyFlowTestSupport: XCTestCase {
         return false
     }
 
+    /// Resolve form controls via bulk-snapshot query count and bound index
+    /// rather than first-match traversal, avoiding lazy node-by-node AX
+    /// faulting across SwiftUI Forms under load.
+    func revealFormControl(_ query: XCUIElementQuery, in form: XCUIElement,
+                           topInset: CGFloat = 150, bottomInset: CGFloat = 80, maximumAttempts: Int = 40, searchUpward: Bool = true) {
+        if !form.exists { XCTAssertTrue(form.waitForExistence(timeout: 20)) }
+        for attempt in 0..<maximumAttempts {
+            let viewport = form.frame
+            let lower = viewport.maxY - bottomInset, upper = viewport.minY + topInset
+            let matches = query.count
+            if matches > 1 { return }
+            let item = matches == 1 ? query.element(boundBy: 0) : nil
+            let frame = item?.frame ?? .zero
+            let located = frame.width > 0 && frame.height > 0
+            let oversized = located && frame.height > lower - upper
+            let fullyVisible = frame.minY >= upper && frame.maxY <= lower
+            let largeCentreVisible = oversized && frame.minY <= upper && frame.maxY >= lower
+                && frame.midY >= upper && frame.midY <= lower
+            if let item, located && (fullyVisible || largeCentreVisible) && item.isHittable {
+                print("UI reveal: \(attempt) drags")
+                return
+            }
+            let upward = located ? (oversized ? frame.midY > (upper + lower) / 2 : frame.maxY > lower) : searchUpward
+            let far = min(0.45, max(0.1, (lower - upper - 80) / viewport.height))
+            let delta = oversized
+                ? (upward ? frame.midY - lower : upper - frame.midY)
+                : (upward ? frame.maxY - lower : upper - frame.minY)
+            let distance = located ? min(far, max(0.1, delta / viewport.height + 0.03)) : far
+            let start: CGFloat = upward ? 0.75 : 0.25
+            form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: start))
+                .press(forDuration: 0.1, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: start + (upward ? -distance : distance))), withVelocity: .slow, thenHoldForDuration: 0.2)
+        }
+        let evidence = "Form control did not become fully visible; searchUpward=\(searchUpward)\n"
+            + query.debugDescription + "\n" + form.debugDescription
+        XCTContext.runActivity(named: "Form reveal terminal state") { activity in
+            let hierarchy = XCTAttachment(string: evidence)
+            hierarchy.name = "Target query and terminal form"; hierarchy.lifetime = .keepAlways
+            let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+            screenshot.name = "Terminal form viewport"; screenshot.lifetime = .keepAlways
+            activity.add(hierarchy); activity.add(screenshot)
+        }
+        XCTFail(evidence)
+    }
+
     func revealFormControl(_ item: XCUIElement, in form: XCUIElement,
                            topInset: CGFloat = 150, bottomInset: CGFloat = 80, maximumAttempts: Int = 40, searchUpward: Bool = true) {
         XCTAssertTrue(form.waitForExistence(timeout: 20))
@@ -690,7 +734,7 @@ class StudyFlowTestSupport: XCTestCase {
             let largeCentreVisible = oversized && frame.minY <= upper && frame.maxY >= lower
                 && frame.midY >= upper && frame.midY <= lower
             if located && (fullyVisible || largeCentreVisible) && item.isHittable {
-                print("UI reveal \(item.identifier): \(attempt) drags")
+                print("UI reveal: \(attempt) drags")
                 return
             }
             let upward = located ? (oversized ? frame.midY > (upper + lower) / 2 : frame.maxY > lower) : searchUpward

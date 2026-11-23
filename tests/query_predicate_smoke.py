@@ -30,3 +30,9 @@ for source in ['outer.switches.firstMatch.exists', 'app.switches["automatic-sync
 for source in ['query.children(matching: .switch)', 'app.switches.matching(identifier: "remove-app-animations")']:
     assert module.chained_switch_first_match(source) == [], source
 print('PASS: chained .switches.firstMatch rejected before CI; bulk children/matching switch queries remain allowed')
+
+for source in ['revealFormControl(query.firstMatch, in: form)', 'revealFormControl(app.buttons["x"].firstMatch, in: form)']:
+    assert module.reveal_form_control_first_match(source) == [1], source
+for source in ['revealFormControl(query, in: form)', 'revealFormControl(controls.element, in: form)']:
+    assert module.reveal_form_control_first_match(source) == [], source
+print('PASS: revealFormControl with .firstMatch rejected before CI; bulk query and explicit elements remain allowed')
