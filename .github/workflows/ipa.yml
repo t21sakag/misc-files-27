@@ -826,6 +826,8 @@ jobs:
           echo "id=$simulator_id" >> "$GITHUB_OUTPUT"
           xcrun simctl bootstatus "$simulator_id" -b
           xcrun simctl addmedia "$simulator_id" build/occlusion-fixture.png
+          xcrun simctl shutdown "$simulator_id"
+          xcrun simctl bootstatus "$simulator_id" -b
       - name: Execute assigned cases without compiling
         env:
           BATCH_INDEX: ${{ matrix.batch }}
@@ -854,6 +856,7 @@ jobs:
             build/batch-launch.json
             build/batch-environment.json
             build/notification-preflight.json
+            build/notification-preflight-attempt-1.json
             build/notification-preflight-diagnostics
             build/ui-batches.json
             build/project-settings.json

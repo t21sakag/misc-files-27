@@ -57,10 +57,17 @@ elif a[:2]==['simctl','launch']:
  if mode=='bad-status':v['authorizationStatus']=True
  if mode=='bad-pending':v['pendingCount']=-1
  if mode=='waiting':v['phase']='notificationSettings'
+ if mode=='reboot-ready' and not Path('rebooted-marker').exists():v['phase']='notificationSettings'
  if mode=='oversized':v['noise']='x'*5000
  if mode!='missing':p.write_text(json.dumps(v))
 elif a[:2]==['simctl','terminate']:
  if mode in ('terminate-failure','retry-terminate-failure'):sys.exit(19)
+elif a[:2]==['simctl','shutdown']:
+ assert len(a)==3
+ Path('shutdown-marker').write_text(a[2])
+elif a[:2]==['simctl','bootstatus']:
+ assert len(a)==4 and a[3]=='-b' and Path('shutdown-marker').read_text()==a[2]
+ Path('rebooted-marker').write_text(a[2])
 elif a[:4]==['xcresulttool','get','test-results','summary']:
  cases=json.loads(Path('build/executed-cases.json').read_text())
  print(json.dumps({'totalTestCount':len(cases),'passedTests':len(cases),'failedTests':0,'skippedTests':0,'runtimeWarnings':[]}))
@@ -165,7 +172,10 @@ Path('build/ui-started').write_text('yes')
         assert report['phase']==('success' if mode=='ready' else 'failed_environment'), report
         summary=json.loads((base/'build/test-summary.json').read_text())
         assert summary['passedTests']==len(executed) and summary['skippedTests']==0, summary
-    assert 'build/batch-environment.json' in (ROOT/'.github/workflows/ipa.yml').read_text().split('  ui-batch:',1)[1]
+    ui_batch_workflow = (ROOT/'.github/workflows/ipa.yml').read_text().split('  ui-batch:',1)[1]
+    assert 'build/batch-environment.json' in ui_batch_workflow
+    assert 'xcrun simctl shutdown "$simulator_id"' in ui_batch_workflow
+    assert 'build/notification-preflight-attempt-1.json' in ui_batch_workflow
     calls=[json.loads(line) for line in (base/'calls.jsonl').read_text().splitlines()]
     assert not any('privacy' in call or 'push' in call for call in calls)
     # Bounded cold-boot retry recovers once from a single stalled probe without bypassing corruption or cleanup gates.
@@ -195,4 +205,48 @@ Path('build/ui-started').write_text('yes')
         else:
             assert result.returncode != 0 and report['failure_phase'] == 'terminate' and report['terminated'] is False, report
             assert operations.count('launch') == 1, operations
+    reboot_runner = [*runner, '--reboot-on-service-timeout']
+    (base/'build/ui-batches.json').write_text(json.dumps({'batches':[planned]}))
+    for mode in ('reboot-ready', 'waiting', 'wrong-bundle', 'terminate-failure'):
+        for path in (
+            base/'build/ui-started',
+            base/'build/executed-cases.json',
+            base/'launched-marker',
+            base/'shutdown-marker',
+            base/'rebooted-marker',
+            base/'build/notification-preflight.json',
+            base/'build/notification-preflight-attempt-1.json',
+            base/'build/notification-preflight-diagnostics/live-attempt-1.log',
+            base/'build/notification-preflight-diagnostics/live-collection-attempt-1.json',
+        ):
+            path.unlink(missing_ok=True)
+        result = subprocess.run(reboot_runner, cwd=base, env=dict(env, PROBE_MODE=mode), capture_output=True, text=True, timeout=20)
+        if mode == 'reboot-ready':
+            assert result.returncode == 0, (mode, result.stdout, result.stderr)
+            executed = json.loads((base/'build/executed-cases.json').read_text())
+            assert executed == planned, executed
+            env_report = json.loads((base/'build/batch-environment.json').read_text())
+            assert env_report['phase'] == 'success' and env_report['deferred_cases'] == [], env_report
+            assert env_report['notification_preflight_rebooted'] is True, env_report
+            attempt1 = json.loads((base/'build/notification-preflight-attempt-1.json').read_text())
+            assert attempt1['ready'] is False and attempt1['failure_phase'] == 'notification_service', attempt1
+            assert (base/'build/notification-preflight-diagnostics/live-attempt-1.log').is_file()
+            assert (base/'shutdown-marker').read_text() == '11111111-1111-4111-8111-111111111111'
+            assert (base/'rebooted-marker').read_text() == '11111111-1111-4111-8111-111111111111'
+        elif mode == 'waiting':
+            assert result.returncode != 0, (mode, result.stdout, result.stderr)
+            executed = json.loads((base/'build/executed-cases.json').read_text())
+            assert executed == [independent], executed
+            env_report = json.loads((base/'build/batch-environment.json').read_text())
+            assert env_report['phase'] == 'failed_environment' and env_report['deferred_cases'] == [CASE], env_report
+            assert env_report['notification_preflight_rebooted'] is True, env_report
+            attempt1 = json.loads((base/'build/notification-preflight-attempt-1.json').read_text())
+            assert attempt1['ready'] is False, attempt1
+        else:
+            assert result.returncode != 0, (mode, result.stdout, result.stderr)
+            assert not (base/'build/ui-started').exists(), mode
+            assert not (base/'shutdown-marker').exists(), mode
+            assert not (base/'rebooted-marker').exists(), mode
+    calls = [json.loads(line) for line in (base/'calls.jsonl').read_text().splitlines()]
+    assert not any('privacy' in call or 'push' in call for call in calls)
 print('PASS: real read-only preflight rejects stale/corrupt/unresponsive OS replies and cleanup failures; dependent XCTest requires valid response; failed service does not suppress independent cases or make the batch pass')

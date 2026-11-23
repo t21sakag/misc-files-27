@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import plistlib
+import shutil
 import uuid
 import sys
 from pathlib import Path
@@ -12,7 +13,8 @@ import subprocess
 ap = argparse.ArgumentParser()
 ap.add_argument('batch', type=int)
 ap.add_argument('simulator')
-ap.add_argument('--notification-timeout', type=float, default=180)
+ap.add_argument('--notification-timeout', type=float, default=90)
+ap.add_argument('--reboot-on-service-timeout', action='store_true')
 args = ap.parse_args()
 if not 0.1 <= args.notification_timeout <= 240:
     ap.error("Notification deadline must be between 0.1 and 240 seconds")
@@ -50,28 +52,36 @@ notification_cases = {
     'ConditionalRefreshFlowTests/testScopedReminderRecomputesAfterActualReview',
 }
 preflight_code = None
+preflight_rebooted = False
 deferred_cases = []
 if notification_cases.intersection(cases):
     applications = list(Path('build/simulator/Build/Products').glob('Debug-iphonesimulator/AnkiPad.app'))
     assert len(applications) == 1, ('Expected one verified notification host', applications)
     probe_path = Path('build/notification-preflight.json')
+    attempt1_probe_path = Path('build/notification-preflight-attempt-1.json')
+    diagnostics_dir = Path('build/notification-preflight-diagnostics')
     probe_path.unlink(missing_ok=True)
-    preflight = subprocess.run([sys.executable, str(Path(__file__).with_name('run-ui-with-diagnostics.py')),
-        '--simulator', args.simulator, '--output', 'build/notification-preflight-diagnostics', '--',
-        sys.executable, str(Path(__file__).with_name('notification-preflight.py')),
-        '--simulator', args.simulator, '--app', str(applications[0]),
-        '--timeout', str(args.notification_timeout)])
-    preflight_code = preflight.returncode
-    if preflight_code != 0:
+    attempt1_probe_path.unlink(missing_ok=True)
+    (diagnostics_dir / 'live-attempt-1.log').unlink(missing_ok=True)
+    (diagnostics_dir / 'live-collection-attempt-1.json').unlink(missing_ok=True)
+
+    def run_preflight():
+        return subprocess.run([sys.executable, str(Path(__file__).with_name('run-ui-with-diagnostics.py')),
+            '--simulator', args.simulator, '--output', str(diagnostics_dir), '--',
+            sys.executable, str(Path(__file__).with_name('notification-preflight.py')),
+            '--simulator', args.simulator, '--app', str(applications[0]),
+            '--timeout', str(args.notification_timeout), '--max-attempts', '1'])
+
+    def is_verified_service_timeout():
         # Only an actual OS-service timeout from the verified app identity,
         # followed by successful cleanup, is independent of other features.
         # Identity/corruption/install/launch/cleanup failures still block all UI.
         try:
             report = json.loads(probe_path.read_text())
             namespace = str(uuid.UUID(report['namespace'])).upper()
-            bundle = plistlib.loads((applications[0]/'Info.plist').read_bytes())['CFBundleIdentifier']
+            bundle = plistlib.loads((applications[0] / 'Info.plist').read_bytes())['CFBundleIdentifier']
             native = report['native']
-            service_timeout = (report['version'] == 1 and report['ready'] is False
+            return (report['version'] == 1 and report['ready'] is False
                 and report['simulator'] == str(uuid.UUID(args.simulator)).upper()
                 and report['bundle'] == bundle and report['terminated'] is True
                 and report['permission_requested'] is False and report['requests_mutated'] is False
@@ -79,15 +89,39 @@ if notification_cases.intersection(cases):
                 and native['version'] == 1 and native['namespace'] == namespace and native['bundle'] == bundle
                 and native['phase'] in ('notificationSettings', 'pendingNotificationRequests'))
         except (OSError, ValueError, KeyError, TypeError):
-            service_timeout = False
-        if not service_timeout:
+            return False
+
+    preflight = run_preflight()
+    preflight_code = preflight.returncode
+    if preflight_code != 0:
+        if not is_verified_service_timeout():
             raise subprocess.CalledProcessError(preflight_code, preflight.args)
-        deferred_cases = [case for case in cases if case in notification_cases]
+        reboot_enabled = args.reboot_on_service_timeout or args.notification_timeout >= 30
+        if reboot_enabled:
+            shutil.copy2(probe_path, attempt1_probe_path)
+            for src_name, dst_name in (('live.log', 'live-attempt-1.log'), ('live-collection.json', 'live-collection-attempt-1.json')):
+                src_path = diagnostics_dir / src_name
+                if src_path.is_file():
+                    shutil.copy2(src_path, diagnostics_dir / dst_name)
+            simulator_id = str(uuid.UUID(args.simulator)).upper()
+            subprocess.run(['xcrun', 'simctl', 'shutdown', simulator_id], check=True, timeout=120)
+            subprocess.run(['xcrun', 'simctl', 'bootstatus', simulator_id, '-b'], check=True, timeout=240)
+            preflight_rebooted = True
+            probe_path.unlink(missing_ok=True)
+            preflight = run_preflight()
+            preflight_code = preflight.returncode
+            if preflight_code != 0:
+                if not is_verified_service_timeout():
+                    raise subprocess.CalledProcessError(preflight_code, preflight.args)
+                deferred_cases = [case for case in cases if case in notification_cases]
+        else:
+            deferred_cases = [case for case in cases if case in notification_cases]
 # A failed OS notification premise must block every dependent case, while
 # unrelated cases still provide evidence. Deferral always fails this batch.
 runnable_cases = [case for case in cases if case not in deferred_cases]
 environment_report = {'version': 1, 'planned_cases': cases, 'requested_ui_cases': runnable_cases,
                       'deferred_cases': deferred_cases, 'notification_preflight_exit': preflight_code,
+                      'notification_preflight_rebooted': preflight_rebooted,
                       'phase': 'planned'}
 report_path = Path('build/batch-environment.json')
 report_path.write_text(json.dumps(environment_report, indent=2) + '\n')

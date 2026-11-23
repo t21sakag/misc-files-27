@@ -11867,6 +11867,252 @@
         }
       ],
       "checked_at": "2026-11-23T00:29:04.553584+00:00"
+    },
+    {
+      "id": "20261123-post-migration-simulator-reboot-for-notifications",
+      "covers": [
+        [
+          45089138894,
+          1
+        ],
+        [
+          45077499482,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            45077499482,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Run 45077499482 passed build and Batch 1 while hitting cold-simulator 30s get_app_container/terminate timeouts in Batches 0 and 4, single-shot 120s UNUserNotificationCenter preflight timeouts in Batches 2 and 3, stale pre-press Switch snapshots in setTestSwitch plus unscoped account-form queries in AutomaticSyncTests/testAutomaticSyncCanBeDisabledPersistently, and a post-teardown _XCTRunnerRunTests crash after BrowserFilterInputFlowTests/testNativeDeckSwitchAfterLeavingEditMode."
+        },
+        {
+          "attempt": [
+            45089138894,
+            1
+          ],
+          "kind": "environment",
+          "finding": "Run 45089138894 verified all three prior fixes by passing Batches 0 (ReminderFlowTests, getNotificationSettings in 30ms), 2 (AutomaticSyncTests/testAutomaticSyncDefersUntilRevealedReviewIsClosed), and 3 (AutomaticSyncTests/testAutomaticSyncCanBeDisabledPersistently) with 0 skips and 0 runtime warnings. Batch 1 (NotificationAuthorizationFlowTests) failed in scripts/notification-preflight.py with TimeoutError (254.881s across Attempt 1 and Attempt 2, both stuck in phase notificationSettings) because Start fresh iPad simulator completed in 4m45s and first-boot SpringBoard[2613] raced DataMigration, logging zero com.apple.UserNotifications:* lines and wedging remindd, weatherd, and both AnkiPad launches, whereas Batch 0's 13m33s startup let SpringBoard[1634] initialize UserNotifications:DataProviderFactory cleanly."
+        }
+      ],
+      "root_cause": "Freshly created iPadOS 27 CI simulators run SpringBoard alongside first-boot DataMigration; when startup finishes under ~5 minutes before DataProviderFactory finishes loading, SpringBoard enters a wedged notification state where usernotificationsd forwards getNotificationSettings to SpringBoard and never receives a reply, so relaunching AnkiPad inside the same SpringBoard session hits the identical deadlock.",
+      "common_resolution": "Added a clean post-migration simulator shutdown + bootstatus -b in .github/workflows/ipa.yml ui-batch startup after addmedia so SpringBoard boots cleanly with DataMigration already on disk, plus ui-diagnostics upload for build/notification-preflight-attempt-1.json; updated scripts/run-ui-batch.py to invoke notification-preflight.py with --max-attempts 1 (default 90s) and perform one bounded owned-simulator reboot (preserving attempt-1 JSON/live diagnostics) on identity-verified service_timeout before failing closed and deferring dependent notification cases.",
+      "next_scope": [
+        "NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement"
+      ],
+      "rule_review": {
+        "semantic_labels": "Checked: no label normalization changes required; Batch 1 failed in read-only OS notification preflight before launching XCTest.",
+        "foreground_scope": "Verified in 45089138894 Batch 3: scoping login/custom-server controls to the resolved foreground account-form CollectionView eliminated unscoped custom-server-endpoint timeouts.",
+        "unique_reads_and_actions": "Verified in 45089138894 Batch 3: re-evaluating the fresh unique native Switch query in setTestSwitch passed AutomaticSyncTests/testAutomaticSyncCanBeDisabledPersistently cleanly with zero retry triage dumps.",
+        "live_state": "Checked: notification-preflight remains strictly read-only (permission_requested=false, requests_mutated=false) and waits for an authentic UNUserNotificationCenter reply.",
+        "keyboard_and_scroll": "Checked: no keyboard/scroll changes required; form reveal and switch interactions passed in Batches 0, 2, and 3.",
+        "environment": "Strengthened: ui-batch startup now performs a clean post-migration shutdown + bootstatus -b so SpringBoard initializes UserNotifications:DataProviderFactory cleanly, and run-ui-batch.py recovers once from an identity-verified notification_service TimeoutError by preserving attempt-1 evidence, rebooting only the owned simulator once, and re-running read-only preflight (--max-attempts 1), verified by tests/notification_preflight_smoke.py.",
+        "first_failure_evidence": "Applied: compared 45089138894 Batch 0 vs Batch 1 preflight JSON, live syslog streams, and simulator startup step logs to isolate the first-boot SpringBoard[2613] DataProviderFactory initialization failure, and added upload of build/notification-preflight-attempt-1.json and live-attempt-1.log.",
+        "failure_classification": "Applied: classified 45077499482 as harness (resolved in 45089138894 Batches 0, 2, and 3) and 45089138894 Batch 1 as environment (first-boot SpringBoard notification deadlock with zero application defects).",
+        "runtime_warnings": "Checked: all passing batches in 45089138894 (Batches 0, 2, 3) reported runtimeWarnings: [].",
+        "device_evidence": "Preserved: simulator notification preflight and reboot recovery remain separate from physical-device notification delivery acceptance."
+      },
+      "evidence": [
+        {
+          "reference": "run:45077499482/failed.log",
+          "sha256": "0eded60f29d09c0c069da1c03867b65a8a4141c304524e19c74b02c46036f71f"
+        },
+        {
+          "reference": "run:45077499482/ui-diagnostics-0/notification-preflight.json",
+          "sha256": "53d4784734b6cbb71a6e65d586722c46135ff4c22b47794bd28d64cd02b87e41"
+        },
+        {
+          "reference": "run:45077499482/ui-diagnostics-4/notification-preflight.json",
+          "sha256": "e57b7997c2b88b11b441538aa3bb9efaeb5b3e533e4694798e01a3fcc8e54ac7"
+        },
+        {
+          "reference": "run:45089138894/failed.log",
+          "sha256": "f75817e55d7b3c5295096ffc0fd974ce0c6dc80d4be32476a0b04bce19c5bc9e"
+        },
+        {
+          "reference": "run:45089138894/ui-diagnostics-0/notification-preflight.json",
+          "sha256": "215167878cf304f3e45d1a213afad7fa41d0faa8a24b6c8721fd7699465133f3"
+        },
+        {
+          "reference": "run:45089138894/ui-diagnostics-0/notification-preflight-diagnostics/live.log",
+          "sha256": "e7c114b24766911d01bb183c7a09bd97904731f6dc790f05f2820075faa00df3"
+        },
+        {
+          "reference": "run:45089138894/job:b0/log",
+          "sha256": "663fc4c7282a3e77ea8e7f328113d2a87da7bd09bd1df6206b88a6d843da3456"
+        },
+        {
+          "reference": "run:45089138894/ui-diagnostics-1/notification-preflight.json",
+          "sha256": "7ac77d4a6f1e81b9004c48aed8b3b646bdb5d6f3a59371663bc4bf209d643f20"
+        },
+        {
+          "reference": "run:45089138894/ui-diagnostics-1/notification-preflight-diagnostics/live.log",
+          "sha256": "d940ed9685738fcb15d3907de8d82846937772d39d3be66ac6334e165e2cc4f5"
+        },
+        {
+          "reference": "run:45089138894/job:b1/log",
+          "sha256": "c2394db78bd846b3056c3824dd06d69fedaf69148bbc5a44c3ef0093f4bb30d0"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "1f7e7e9a231e32904a9a5b33e1a6d07c14f34b822f62113f694af505cc0ce76c",
+        "scripts/run-ui-batch.py": "9a85d46cd05a6063764fcb5890757a4dbbf3224537545f5c97856385023ab6e7",
+        "scripts/notification-preflight.py": "dd26d5c579f812123cea1bbf986e61148508f9809e6e4b145c57d28fb66abef7",
+        "tests/notification_preflight_smoke.py": "c1bd32f3cf8e8579bea23401eb710f2dc4d4d98c3fa1b16ceb783a6acf0d8a33",
+        ".github/workflows/ipa.yml": "e58e3322fc54463923ab6356ccb35975a0c4f35abbbf64442adcab86373c7428"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "754138bf0b4dff53223c9d3f40a7f2e3e3978f10dacb5f363c724cc15383eedb"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "37b08fd94a98ca52204d91f1a5e3553feceab95b969b596ee1d4f5159cf4ef99"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "497332c0ad8f3a6be846ed43c49c2dcf7146287c0c138d858f967fa719e21604"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query_lint",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d4ded7da1fe8822fea4a9859b4e15c1db859df45419965c04f745788ca1c54"
+        },
+        {
+          "name": "query_smoke",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "168965be4793b6eaa7cf9c1b95ac061de05ffdf2115c95051c835451a89cf9cb"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "notification_preflight",
+          "argv": [
+            "python3",
+            "tests/notification_preflight_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b147885faae5787ea6610b3fcda43acf25b3ec18bed531751ef2d7adedbd2cb7"
+        },
+        {
+          "name": "batch_runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "simulator_identity",
+          "argv": [
+            "python3",
+            "tests/simulator_identity_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec4dcf530af5a45941f312753ffde3ef60300e306e01d38acb91bbb4bbca02fb"
+        },
+        {
+          "name": "app_intents_metadata",
+          "argv": [
+            "python3",
+            "tests/app_intents_metadata_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "a9cdefae97417785914d4e57a55ec6afa1346fc2bc9bf86a789b00ae8d350d3f"
+        },
+        {
+          "name": "ui_events",
+          "argv": [
+            "python3",
+            "tests/ui_events_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ecd4775e323cfe5034323f413df7a6e2ab0b180471780cd7de39d89d9f1c1910"
+        },
+        {
+          "name": "ui_workflow_diagnostics",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "ui_prerequisites",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "partition_transfer",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        }
+      ],
+      "checked_at": "2026-11-23T01:18:59.239772+00:00"
     }
   ]
 }
