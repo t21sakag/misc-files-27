@@ -39,11 +39,20 @@ final class MotionFlowTests: StudyFlowTestSupport {
         }
         func checkDialog(animated: Bool) {
             app.buttons["deck-1"].tap()
-            let button = app.webViews.buttons["Check motion dialog"]
-            XCTAssertTrue(button.waitForExistence(timeout: 30)); tapScreenFrame(button, in: app)
-            XCTAssertTrue(app.alerts.staticTexts["Motion transition check"].waitForExistence(timeout: 20))
+            guard let web = waitForTestCardWebView(in: app, purpose: .observation) else { return }
+            guard let button = waitForTestControl(
+                web.buttons.matching(NSPredicate(format: "label == %@", "Check motion dialog")),
+                in: app, timeout: 60
+            ) else { return }
+            tapScreenFrame(button, in: app)
+            guard requireTestCondition("Motion transition alert appears", in: app, timeout: 30, condition: {
+                app.alerts.staticTexts["Motion transition check"].exists
+            }) else { return }
             app.alerts.buttons["OK"].tap()
-            XCTAssertTrue(app.webViews.staticTexts["Motion dialog returned"].waitForExistence(timeout: 20))
+            guard waitForTestControl(
+                web.staticTexts.matching(NSPredicate(format: "label == %@", "Motion dialog returned")),
+                in: app, timeout: 30, purpose: .observation
+            ) != nil else { return }
             observation("presentation=" + (animated ? "animated" : "none"))
             app.buttons["デッキ"].tap()
         }

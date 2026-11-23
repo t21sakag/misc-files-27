@@ -32,9 +32,10 @@ class StudyFlowTestSupport: XCTestCase {
     /// WebKit exports multiple nested WebView AX wrappers for one card. Resolve
     /// the unique native host's direct WebView, rather than selecting a wrapper
     /// by index or treating all descendants as independent card surfaces.
-    func waitForTestCardWebView(in app: XCUIApplication, purpose: TestControlPurpose = .action) -> XCUIElement? {
+    func waitForTestCardWebView(in app: XCUIApplication, purpose: TestControlPurpose = .action,
+                                timeout: TimeInterval = 60) -> XCUIElement? {
         let roots = app.descendants(matching: .other).children(matching: .webView)
-        return waitForTestControl(roots, in: app, purpose: purpose)
+        return waitForTestControl(roots, in: app, timeout: timeout, purpose: purpose)
     }
 
     func tapScreenFrame(_ element: XCUIElement, in app: XCUIApplication,
