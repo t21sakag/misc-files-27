@@ -12113,6 +12113,262 @@
         }
       ],
       "checked_at": "2026-11-23T01:18:59.239772+00:00"
+    },
+    {
+      "id": "20261123-switch-read-parity-and-launch-budget",
+      "covers": [
+        [
+          45116031376,
+          1
+        ],
+        [
+          45095745171,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            45095745171,
+            1
+          ],
+          "kind": "environment",
+          "finding": "Run 45095745171 completed all 5 batches with 0 skips and 0 runtime warnings, passing 137 of 141 executed tests (Batch 0 28/28, Batch 1 30/30). Five harness/environment failures occurred: Batch 4 notification preflight exceeded the 90s cutoff while SpringBoard notificationSourcesDidInstall initialLoad=1 took 45..115s+ under 5-runner contention (Batch 2/3 were rescued by reboot recovery), and 4 UI test harness issues in BrowserForgetFlowTests, MotionFlowTests, AutomaticSyncTests, and ShareExtensionFlowTests that were repaired in 56eb2a6 and proven passing in 45116031376 Batches 2, 3, and 4."
+        },
+        {
+          "attempt": [
+            45116031376,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Run 45116031376 (native-full-regression-repair on 56eb2a6) passed Batches 2 (AutomaticSyncTests/testAutomaticSyncDefersUntilRevealedReviewIsClosed), 3 (BrowserForgetFlowTests/testNoteResetExpandsOnlySelectedNoteAndUndoRestoresBothCards with 300ms setTestSwitch), and 4 (ShareExtensionFlowTests/testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel) with 0 skips and 0 runtime warnings. Batch 0 (ConditionalReminderFlowTests) failed in scripts/notification-preflight.py:33 when simctl launch timed out at 120s (122.272s, terminated: true) 57ms after CoreSimulatorBridge logged launch success pid 10291 at 05:22:32.852. Batch 1 (MotionFlowTests) succeeded on both 300ms setTestSwitch toggles (t=90.08s, t=144.16s) and saved remove-app-animations=1, then timed out at MotionFlowTests.swift:62 because legacy animationToggle() called outer.switches.firstMatch.exists, switching XCTest into lazy node-by-node AX faulting (XCTFilteringTransformerIterator) with 572 main-thread AX IPCs across SettingsView over 193s despite locating remove-app-animations value=1 at 05:25:51.423."
+        }
+      ],
+      "root_cause": "Two non-app failures: (1) notification-preflight.py gave only simctl install a 240s budget while capping cold simctl launch at 120s under 5-runner concurrent CI startup, killing a launch that succeeded at 122.27s; (2) MotionFlowTests.animationToggle(), AutomaticSyncTests:110, and MediaFlowTests:64 retained legacy chained .switches.firstMatch queries that force XCTest into lazy node-by-node AX faulting (XCTFilteringTransformerIterator) instead of sharing the bulk-snapshot children(matching: .switch) resolver used by setTestSwitch.",
+      "common_resolution": "Raised simctl launch timeout in scripts/notification-preflight.py to 240s alongside install (updated tests/notification_preflight_smoke.py); extracted shared resolveTestSwitchQuery and readTestSwitchValue in StudyFlowTestSupport.swift so both Switch reads and setTestSwitch writes use the same bulk-snapshot children(matching: .switch) unique resolver (and fixed setCollectionPermission reveal to avoid .firstMatch); eliminated all chained .switches.firstMatch calls in MotionFlowTests, AutomaticSyncTests, and MediaFlowTests; added chained_switch_first_match static lint to scripts/check-ui-query-predicates.py and tests/query_predicate_smoke.py; added 4-case parallel suite native-switch-launch-repair covering both failed tests and the two other touched Switch tests.",
+      "next_scope": [
+        "ConditionalReminderFlowTests/testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode",
+        "MotionFlowTests/testMotionSettingPersistsCancelsAndControlsNativePresentation",
+        "AutomaticSyncTests/testAutomaticSyncCanBeDisabledPersistently",
+        "MediaFlowTests/testPhotoEditsAndDrawingPersistWhenReeditingNote"
+      ],
+      "rule_review": {
+        "semantic_labels": "Checked: no label normalization changes required; remove-app-animations switch value=1 was confirmed verbatim in AX logs.",
+        "foreground_scope": "Checked: Safari StartPageCollectionView fix and review-resume foreground checks both passed in 45116031376 Batches 2 and 4; resolveTestSwitchQuery preserves exact foreground Form container scoping via revealSettingsControl.",
+        "unique_reads_and_actions": "Strengthened: both passive switch reads (readTestSwitchValue) and writes (setTestSwitch) now share resolveTestSwitchQuery using bulk-snapshot children(matching: .switch) + waitForTestControl, eliminating chained .switches.firstMatch lazy AX faulting (572 IPCs in 193s) and enforced statically by check-ui-query-predicates.py.",
+        "live_state": "Verified: MotionFlowTests setTestSwitch (300ms) persisted remove-app-animations=1 across relaunch in 45116031376; readTestSwitchValue verifies explicit 0/1 string values via the same live AX resolver.",
+        "keyboard_and_scroll": "Checked: revealSettingsControl scrolled to remove-app-animations in 3 drags reliably in 45116031376 Batch 1 and no longer passes toggle.firstMatch in setCollectionPermission.",
+        "environment": "Strengthened: scripts/notification-preflight.py now gives both install and launch a 240s cold-boot budget (matching 122.27s observed launch time in 45116031376 Batch 0) while retaining 120s for get_app_container and terminate, verified in tests/notification_preflight_smoke.py.",
+        "first_failure_evidence": "Applied: correlated 45116031376 Batch 0 preflight JSON/live.log (pid 10291 at 05:22:32.852 vs 05:22:32.909 terminate) and Batch 1 live.log + testmanagerd stackshot (572 AX IPCs under XCTFilteringTransformerIterator) before changing code.",
+        "failure_classification": "Applied: classified 45095745171 as environment and 45116031376 as harness (launch 120s timeout + legacy .switches.firstMatch query hang), with zero application defects observed across all 142 cases.",
+        "runtime_warnings": "Verified: 45095745171 ( Batches 0..4 ) and 45116031376 ( Batches 1..4 ) all recorded runtimeWarnings: [].",
+        "device_evidence": "Maintained: simulator launch-budget and AX query fixes remain clearly separated from physical-device verification."
+      },
+      "evidence": [
+        {
+          "reference": "run:45095745171/failed.log",
+          "sha256": "1d51737d3d8f0c22c6e4a0e3d0741d01f8173199971e9e77c2708cfad064d35f"
+        },
+        {
+          "reference": "run:45095745171/ui-diagnostics-2/widget-diagnostics/critical.log",
+          "sha256": "6caf4f1424889d726d0f004a9e2a63d752f0d2b2d631e139672d5686993d399e"
+        },
+        {
+          "reference": "run:45095745171/ui-diagnostics-4/notification-preflight.json",
+          "sha256": "82d1f268f1eefb9aed601224d584de40e6d5a8ab1ed71363febe8dab703ff609"
+        },
+        {
+          "reference": "run:45095745171/ui-diagnostics-4/notification-preflight-diagnostics/live.log",
+          "sha256": "4a5d91ff0411ff0675fe4ded98defbfdd8abba0c527daeb4e28ceb2ed75db096"
+        },
+        {
+          "reference": "run:45116031376/failed.log",
+          "sha256": "9185e85eebf1df81d223418b22b607ffd308ccc591a245c3a776ba3b519daf46"
+        },
+        {
+          "reference": "run:45116031376/ui-diagnostics-0/notification-preflight.json",
+          "sha256": "a1db7a10a80fef73db2f132b104962fc923d7ba5ad5bad07f8baef2e441bd243"
+        },
+        {
+          "reference": "run:45116031376/ui-diagnostics-0/notification-preflight-diagnostics/live.log",
+          "sha256": "594a0f96201d2fb0753f3f0f814cc59231af4e8356a259f1032e9d0d85f792e0"
+        },
+        {
+          "reference": "run:45116031376/ui-diagnostics-1/test-summary.json",
+          "sha256": "c97533928739e451efeb259ccbbf2b28a42128a9706514f1957fa4218133d451"
+        },
+        {
+          "reference": "run:45116031376/ui-diagnostics-1/widget-diagnostics/live.log",
+          "sha256": "a7ffb33c3dbec1939c2d8d52fe0fd373e295eaf3ef5d8f7e3fd641aafcd7e44c"
+        },
+        {
+          "reference": "run:45116031376/ui-diagnostics-1/screenshots/CE62A12F-75B2-4B44-99C6-EA53D29F2648.txt",
+          "sha256": "bed25491a6e2aa3c871d76d9cbbe0298a19f7cbed6177d40a3b1b89a64063f3c"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "5d4ad144ed2965afa8febba10f2e2e6665daa90867177924557d21df9a578acd",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "7ab223228d2682386bf25e975c30bfd2ee604b2a44a487d70f098eec596a5ec1",
+        "ios/AnkiPadUITests/MotionFlowTests.swift": "08aeed68e5985da1bc46fe056cd587f16c17db2717e49648948d2e047a395010",
+        "ios/AnkiPadUITests/AutomaticSyncTests.swift": "19a58e023d07caaea3cb6e2458d2e24e77992b80bcdcf3bf9a24213ac14c86b0",
+        "ios/AnkiPadUITests/MediaFlowTests.swift": "8ae25e2e4549756ae5dc1f4bcf6a62ffb7909ce7a7473a37585d07d4ddbb1aca",
+        "scripts/check-ui-query-predicates.py": "4eaeac08949145b7f82033e896001a06b51827616edf976209549d1560b4ad63",
+        "tests/query_predicate_smoke.py": "6ce2ebc58a97d08a96147406bf3e5ad5c0cf142618bd174b6f2aba701977e615",
+        "scripts/notification-preflight.py": "11b5f7b66d43557b1e19120e7d356a4c9324710d126b1821fbbf65e6a2537368",
+        "tests/notification_preflight_smoke.py": "19fa302cd723058968d23781d1f2967b2555987e15c103c695ab0f9c3b38ef03",
+        "scripts/select-ui-tests.py": "8995f54544c8eaa6175559ad22851c9f78dec068197842b2c15287c1d430c8b6",
+        "tests/native_consumer_scope_smoke.py": "7029c056bd72fa531cae511440334d34b73462fc6b3e8659af67f9654c4ee700",
+        ".github/workflows/ipa.yml": "9985d9777977af4a2bf91bdb8c354e189e0c12f054ce5181445cbeacbdd6f506"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "754138bf0b4dff53223c9d3f40a7f2e3e3978f10dacb5f363c724cc15383eedb"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "37b08fd94a98ca52204d91f1a5e3553feceab95b969b596ee1d4f5159cf4ef99"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ad52726fcdeca55ded9240cac281a9e31ade64d91b6d85e148c4ff03b087b238"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query_lint",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "197384e857024f30a909373140b6fc3ec7d34008a029dfe32125c5bb4b4696a6"
+        },
+        {
+          "name": "query_smoke",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "383393b5f28bb2cd8a56fde2d73ad3e928fe50e65b853c76739ed08b6ebc183d"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "168965be4793b6eaa7cf9c1b95ac061de05ffdf2115c95051c835451a89cf9cb"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "notification_preflight",
+          "argv": [
+            "python3",
+            "tests/notification_preflight_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b147885faae5787ea6610b3fcda43acf25b3ec18bed531751ef2d7adedbd2cb7"
+        },
+        {
+          "name": "batch_runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "simulator_identity",
+          "argv": [
+            "python3",
+            "tests/simulator_identity_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec4dcf530af5a45941f312753ffde3ef60300e306e01d38acb91bbb4bbca02fb"
+        },
+        {
+          "name": "app_intents_metadata",
+          "argv": [
+            "python3",
+            "tests/app_intents_metadata_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "a9cdefae97417785914d4e57a55ec6afa1346fc2bc9bf86a789b00ae8d350d3f"
+        },
+        {
+          "name": "ui_events",
+          "argv": [
+            "python3",
+            "tests/ui_events_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ecd4775e323cfe5034323f413df7a6e2ab0b180471780cd7de39d89d9f1c1910"
+        },
+        {
+          "name": "ui_workflow_diagnostics",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "ui_prerequisites",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "partition_transfer",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        }
+      ],
+      "checked_at": "2026-11-23T05:57:15.591824+00:00"
     }
   ]
 }

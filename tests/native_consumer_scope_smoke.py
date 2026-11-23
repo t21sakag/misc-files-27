@@ -11,6 +11,12 @@ workflow = (root / '.github/workflows/ipa.yml').read_text()
 mode_choices = re.search(r'^      mode:\n.*?^        options: \[([^\n]+)\]$', workflow, re.M | re.S)[1]
 assert {value.strip() for value in mode_choices.split(',')} == {'configuration', 'compile', 'ui', 'ipa', 'full'}
 expected = {
+    'native-switch-launch-repair': {
+        'ConditionalReminderFlowTests/testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode',
+        'MotionFlowTests/testMotionSettingPersistsCancelsAndControlsNativePresentation',
+        'AutomaticSyncTests/testAutomaticSyncCanBeDisabledPersistently',
+        'MediaFlowTests/testPhotoEditsAndDrawingPersistWhenReeditingNote',
+    },
     'native-full-regression-repair': {
         'BrowserForgetFlowTests/testNoteResetExpandsOnlySelectedNoteAndUndoRestoresBothCards',
         'ShareExtensionFlowTests/testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel',

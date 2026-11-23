@@ -118,7 +118,7 @@ Path('build/ui-started').write_text('yes')
     spec = importlib.util.spec_from_file_location('notification_preflight', ROOT/'scripts/notification-preflight.py')
     preflight = importlib.util.module_from_spec(spec); spec.loader.exec_module(preflight)
     def container_timeout(command, **kwargs):
-        expected_timeout = 240 if command[2] == 'install' else 120
+        expected_timeout = 240 if command[2] in ('install', 'launch') else 120
         assert kwargs['timeout'] == expected_timeout, (command, kwargs)
         if command[2] == 'get_app_container':
             raise subprocess.TimeoutExpired(command, 30, output=b'x'*3000, stderr=b'container service stalled')

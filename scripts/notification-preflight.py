@@ -29,8 +29,9 @@ def run(simulator, app, output, timeout=180, max_attempts=None):
     def simctl(*args, **kwargs):
         report['phase'] = args[0]
         # Cold simulators finishing first-boot LaunchServices/SpringBoard migration
-        # can exceed 30s on get_app_container and terminate as well as launch.
-        command_timeout = 240 if args[0] == 'install' else 120
+        # can exceed 120s on install and launch (observed 122.27s in 45116031376),
+        # and exceed 30s on get_app_container and terminate.
+        command_timeout = 240 if args[0] in ('install', 'launch') else 120
         command = {'operation': args[0], 'timeout_seconds': command_timeout}
         report['commands'].append(command)
         began = time.monotonic()

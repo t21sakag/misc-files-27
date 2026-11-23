@@ -298,14 +298,35 @@ class StudyFlowTestSupport: XCTestCase {
     }
 
     /// SwiftUI can export a labelled full-row Switch wrapping the native
+    /// thumb. Resolve its unique direct Switch child via bulk snapshot
+    /// (`children(matching: .switch)` + `waitForTestControl`) for both reads
+    /// and writes; avoid chained child-switch firstMatch queries which force
+    /// XCTest into lazy node-by-node AX faulting (`XCTFilteringTransformerIterator`)
+    /// across large SwiftUI Forms.
+    private func resolveTestSwitchQuery(_ query: XCUIElementQuery, in app: XCUIApplication) -> XCUIElementQuery? {
+        guard waitForTestControl(query, in: app, purpose: .observation) != nil else { return nil }
+        let children = query.children(matching: .switch)
+        return children.count > 0 ? children : query
+    }
+
+    func readTestSwitchValue(_ query: XCUIElementQuery, in app: XCUIApplication) -> String? {
+        guard let native = resolveTestSwitchQuery(query, in: app),
+              let control = waitForTestControl(native, in: app, purpose: .observation) else { return nil }
+        let value = control.value as? String ?? ""
+        guard ["0", "1"].contains(value) else {
+            controlFailure(native, in: app, reason: "Switch does not expose an on/off value")
+            return nil
+        }
+        return value
+    }
+
+    /// SwiftUI can export a labelled full-row Switch wrapping the native
     /// thumb. Activate its unique direct Switch child, not the row's centre.
     @discardableResult
     func setTestSwitch(_ query: XCUIElementQuery, enabled: Bool, in app: XCUIApplication,
                        failureContext: (() -> String)? = nil) -> Bool {
-        guard waitForTestControl(query, in: app, purpose: .observation) != nil else { return false }
-        let children = query.children(matching: .switch)
-        let native = children.count > 0 ? children : query
-        guard let control = waitForTestControl(native, in: app) else { return false }
+        guard let native = resolveTestSwitchQuery(query, in: app),
+              let control = waitForTestControl(native, in: app) else { return false }
         let desired = enabled ? "1" : "0"
         guard ["0", "1"].contains(control.value as? String ?? "") else {
             controlFailure(native, in: app, reason: "Switch does not expose an on/off value"); return false
@@ -848,7 +869,7 @@ class StudyFlowTestSupport: XCTestCase {
         menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         tapScreenFrame(app.buttons["設定"], in: app)
         let toggle = app.switches.matching(identifier: "allow-collection-card-api")
-        revealSettingsControl(toggle.firstMatch, in: app)
+        revealSettingsControl(app.switches["allow-collection-card-api"], in: app)
         XCTAssertTrue(setTestSwitch(toggle, enabled: enabled, in: app))
         app.buttons["settings-save"].tap()
         XCTAssertTrue(app.navigationBars["設定"].waitForNonExistence(timeout: 30))

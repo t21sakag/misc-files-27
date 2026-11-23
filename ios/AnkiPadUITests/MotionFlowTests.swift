@@ -22,15 +22,16 @@ final class MotionFlowTests: StudyFlowTestSupport {
             XCTAssertTrue(app.buttons["collection-menu"].waitForExistence(timeout: 30))
             app.buttons["collection-menu"].tap(); app.buttons["設定"].tap()
         }
-        func animationToggle() -> XCUIElement {
-            let outer = app.switches["remove-app-animations"]
-            revealSettingsControl(outer, in: app)
-            return outer.switches.firstMatch.exists ? outer.switches.firstMatch : outer
+        func animationToggleQuery() -> XCUIElementQuery {
+            let outer = app.switches.matching(identifier: "remove-app-animations")
+            revealSettingsControl(app.switches["remove-app-animations"], in: app)
+            return outer
+        }
+        func animationToggleValue() -> String? {
+            readTestSwitchValue(animationToggleQuery(), in: app)
         }
         func setReduced(_ reduced: Bool) {
-            let outer = app.switches.matching(identifier: "remove-app-animations")
-            revealSettingsControl(outer.firstMatch, in: app)
-            XCTAssertTrue(setTestSwitch(outer, enabled: reduced, in: app))
+            XCTAssertTrue(setTestSwitch(animationToggleQuery(), enabled: reduced, in: app))
         }
         func save() {
             app.buttons["settings-save"].tap()
@@ -53,13 +54,13 @@ final class MotionFlowTests: StudyFlowTestSupport {
         settings(); setReduced(true)
         app.navigationBars["設定"].buttons["キャンセル"].tap()
         observation("transaction=normal")
-        settings(); XCTAssertEqual(animationToggle().value as? String, "0", "Cancelling must not save")
+        settings(); XCTAssertEqual(animationToggleValue(), "0", "Cancelling must not save")
         setReduced(true); save()
         app.terminate(); app.launch()
         XCTAssertTrue(app.buttons["deck-1"].waitForExistence(timeout: 30))
         observation("transaction=disabled;animation=none")
         checkDialog(animated: false)
-        settings(); XCTAssertEqual(animationToggle().value as? String, "1", "Saved choice must survive relaunch")
+        settings(); XCTAssertEqual(animationToggleValue(), "1", "Saved choice must survive relaunch")
         setReduced(false); save()
         // The last update can be the settings dismissal under the previous
         // transaction. Check the current policy and an actual new presentation.

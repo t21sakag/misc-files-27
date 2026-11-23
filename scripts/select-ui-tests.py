@@ -5,6 +5,12 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-switch-launch-repair': [
+        'testConditionalDueThresholdCreatesDatedRequestsAndPreservesLegacyRepeatingMode',
+        'testMotionSettingPersistsCancelsAndControlsNativePresentation',
+        'testAutomaticSyncCanBeDisabledPersistently',
+        'testPhotoEditsAndDrawingPersistWhenReeditingNote',
+    ],
     'native-full-regression-repair': [
         'testNoteResetExpandsOnlySelectedNoteAndUndoRestoresBothCards',
         'testSafariSharePersistsUntilExplicitNoteSaveAndDoesNotReopenAfterCancel',

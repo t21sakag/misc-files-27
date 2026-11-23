@@ -57,16 +57,9 @@ final class MediaFlowTests: StudyFlowTestSupport {
         }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [cropped], timeout: 20), .completed)
         let savedSize = dimensions()
-        let drawing = app.switches["image-editor-drawing"]
+        let drawing = app.switches.matching(identifier: "image-editor-drawing")
         func setDrawing(_ enabled: Bool) {
-            let desired = enabled ? "1" : "0"
-            if drawing.value as? String != desired {
-                let native = drawing.switches.firstMatch
-                if native.exists { native.tap() }
-                else { drawing.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap() }
-            }
-            let updated = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", desired), object: drawing)
-            XCTAssertEqual(XCTWaiter.wait(for: [updated], timeout: 10), .completed, app.debugDescription)
+            XCTAssertTrue(setTestSwitch(drawing, enabled: enabled, in: app))
         }
         setDrawing(true)
         let canvas = app.descendants(matching: .any).matching(identifier: "whiteboard").firstMatch

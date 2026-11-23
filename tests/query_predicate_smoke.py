@@ -24,3 +24,9 @@ for source in ['let fields = app.searchFields', 'app.searchFields.firstMatch', '
 for source in ['app.navigationBars["カードブラウザー"].searchFields', 'app.searchFields["デッキを検索"]', 'app.searchFields.matching(NSPredicate(format: "label == %@", title))']:
     assert module.unscoped_search_fields(source) == [], source
 print('PASS: root SearchField ambiguity rejected before CI; scoped or semantically narrowed queries remain allowed')
+
+for source in ['outer.switches.firstMatch.exists', 'app.switches["automatic-sync"].switches.firstMatch', 'drawing.switches\n .firstMatch']:
+    assert module.chained_switch_first_match(source) == [1], source
+for source in ['query.children(matching: .switch)', 'app.switches.matching(identifier: "remove-app-animations")']:
+    assert module.chained_switch_first_match(source) == [], source
+print('PASS: chained .switches.firstMatch rejected before CI; bulk children/matching switch queries remain allowed')

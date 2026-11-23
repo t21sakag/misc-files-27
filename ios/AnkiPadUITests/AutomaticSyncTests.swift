@@ -107,9 +107,7 @@ final class AutomaticSyncTests: StudyFlowTestSupport {
         app.buttons["collection-menu"].tap()
         app.buttons["設定"].tap()
         let autoSyncSwitch = app.switches.matching(identifier: "automatic-sync")
-        let toggle = app.switches["automatic-sync"].switches.firstMatch
-        XCTAssertTrue(toggle.waitForExistence(timeout: 20))
-        XCTAssertEqual(toggle.value as? String, "1")
+        XCTAssertEqual(readTestSwitchValue(autoSyncSwitch, in: app), "1")
         XCTAssertTrue(setTestSwitch(autoSyncSwitch, enabled: false, in: app))
         app.buttons["settings-save"].tap()
         waitForSyncIdle(app)
@@ -122,8 +120,7 @@ final class AutomaticSyncTests: StudyFlowTestSupport {
         XCTAssertTrue(app.staticTexts["sync-local-changes"].exists)
         app.buttons["collection-menu"].tap()
         app.buttons["設定"].tap()
-        XCTAssertTrue(toggle.waitForExistence(timeout: 20))
-        XCTAssertEqual(toggle.value as? String, "0")
+        XCTAssertEqual(readTestSwitchValue(autoSyncSwitch, in: app), "0")
         app.buttons["settings-save"].tap()
         removeSyncProfile(app, id: profile)
     }

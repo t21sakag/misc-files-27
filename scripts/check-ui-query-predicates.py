@@ -29,6 +29,14 @@ def unscoped_search_fields(source):
     return [source[:match.start()].count('\n') + 1 for match in re.finditer(pattern, source)]
 
 
+def chained_switch_first_match(source):
+    # Chained .switches.firstMatch forces XCTest into lazy node-by-node AX
+    # faulting (XCTFilteringTransformerIterator) across large SwiftUI Forms
+    # and bypasses readTestSwitchValue/setTestSwitch bulk snapshot resolution.
+    pattern = r"\.switches\s*\.firstMatch\b"
+    return [source[:match.start()].count('\n') + 1 for match in re.finditer(pattern, source)]
+
+
 if __name__ == '__main__':
     root = Path(__file__).resolve().parents[1]
     files = sorted((root/'ios/AnkiPadUITests').rglob('*.swift'))
@@ -36,6 +44,8 @@ if __name__ == '__main__':
               for path in files for line in violations(path.read_text())]
     errors += [f'{path.relative_to(root)}:{line}: root SearchField queries need foreground or semantic narrowing'
                for path in files for line in unscoped_search_fields(path.read_text())]
+    errors += [f'{path.relative_to(root)}:{line}: use shared readTestSwitchValue/setTestSwitch instead of chained .switches.firstMatch'
+               for path in files for line in chained_switch_first_match(path.read_text())]
     if errors:
         raise SystemExit('\n'.join(errors))
-    print(f'PASS: {len(files)} UI files reject unsupported hit-testing predicates and unscoped root search fields')
+    print(f'PASS: {len(files)} UI files reject unsupported hit-testing predicates, unscoped root search fields and chained .switches.firstMatch')
