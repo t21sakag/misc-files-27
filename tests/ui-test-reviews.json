@@ -11627,6 +11627,246 @@
         }
       ],
       "checked_at": "2026-11-22T16:02:53.214903+00:00"
+    },
+    {
+      "id": "20261123-preflight-cold-budget-and-account-form-scoping",
+      "covers": [
+        [
+          45077499482,
+          1
+        ],
+        [
+          45061040827,
+          1
+        ]
+      ],
+      "classifications": [
+        {
+          "attempt": [
+            45061040827,
+            1
+          ],
+          "kind": "environment",
+          "finding": "Run 45061040827 passed build, Batch 1 (30/30), and Batch 2 (28/28 after 240s install timeout), with zero runtime warnings and zero app logic regressions. Remaining full-suite failures were cold-simulator/host-overload environment stalls: Batch 0 (27/28) failed on DeckBackgroundFlowTests post-terminate accessibility load timeout and suffered 59x 60s 'App animations complete notification not received' idle stalls; Batch 3 (26/27) deferred ReminderFlowTests on a 120s UNUserNotificationCenter preflight timeout and failed in AutomaticSyncTests/testAutomaticSyncDefersUntilRevealedReviewIsClosed at loginToSyncFixture login-password AX snapshot timeout during the 19:49-19:55Z host overload window; Batch 4 timed out at 150m after BrowserSearchIdentityFlowTests/testMissingHistoryDeckShowsErrorWithoutBroadeningCurrentSearch hit 61x 60s animation-idle stalls (4253.6s) and AutomaticSyncTests/testAutomaticSyncPushesChangesInBackground timed out at login-username AX snapshot with HALC_ProxyIOContext overload warnings."
+        },
+        {
+          "attempt": [
+            45077499482,
+            1
+          ],
+          "kind": "harness",
+          "finding": "Run 45077499482 passed build and Batch 1 while hitting four harness/preflight bottlenecks under cold-simulator migration: (1) Batches 0 and 4 failed before XCTest in scripts/notification-preflight.py because get_app_container (32.1s/33.7s) and terminate (31.2s/31.6s) hit the hardcoded 30s timeout while LaunchServices/SpringBoard migration finished (live.log confirmed usernotificationsd forwarded getNotificationSettings to SpringBoard); (2) Batches 2 and 3 hit single-shot 120s TimeoutError in notification-preflight.py and deferred dependent notification tests; (3) Batch 2 AutomaticSyncTests/testAutomaticSyncCanBeDisabledPersistently triggered 3x 'Find the \"0\" Switch' retry triage AX dumps after toggling custom-server-toggle because setTestSwitch polled a cached pre-press control snapshot, followed by a 72s AX snapshot timeout on unscoped custom-server-endpoint; (4) Batch 2 BrowserFilterInputFlowTests/testNativeDeckSwitchAfterLeavingEditMode passed all assertions through Tear Down before Xcode 27 test runner crashed at _XCTRunnerRunTests."
+        }
+      ],
+      "root_cause": "Cold iOS 27 simulator migration exceeded the 30s get_app_container/terminate subcommand cap and stalled a single-shot UNUserNotificationCenter XPC readiness probe during SpringBoard bundle/widget discovery; additionally, setTestSwitch polled a pre-press XCUIElement snapshot instead of re-evaluating the fresh unique native query, and loginToSyncFixture/configureSyncEndpoint queried unscoped root app elements rather than the foreground account-form CollectionView.",
+      "common_resolution": "Raised notification-preflight.py get_app_container and terminate timeouts to 120s (install 240s, default service deadline 180s in notification-preflight.py and run-ui-batch.py) and added one bounded clean-terminate plus fresh-UUID relaunch retry on cold notification_service timeout while keeping strict fail-closed rejection on identity/corruption/cleanup failures. Updated StudyFlowTestSupport.setTestSwitch to re-evaluate the fresh unique native Switch query after press, and scoped account-form login/custom-server controls to the resolved foreground account-form CollectionView. Retained the 240-minute batch budget for animation-idle stalls and added focused smoke suite native-preflight-account-repair.",
+      "next_scope": [
+        "NotificationAuthorizationFlowTests/testActualNotificationAuthorizationAndScheduleReplacement",
+        "ReminderFlowTests/testReminderNativeSchedulePersistsReplacesAndCancels",
+        "AutomaticSyncTests/testAutomaticSyncCanBeDisabledPersistently",
+        "AutomaticSyncTests/testAutomaticSyncDefersUntilRevealedReviewIsClosed"
+      ],
+      "rule_review": {
+        "semantic_labels": "Checked; no label normalization changes needed. Failed lookups targeted stable accessibility identifiers in account-form and Switch controls.",
+        "foreground_scope": "Strengthened: scoped login-username, login-password, custom-server-toggle, custom-server-endpoint, and login-submit inside the resolved foreground account-form CollectionView in loginToSyncFixture and configureSyncEndpoint.",
+        "unique_reads_and_actions": "Strengthened: updated setTestSwitch to re-evaluate the fresh unique native Switch query (native.count == 1 && native.element(boundBy: 0).value as? String == desired) instead of polling a stale pre-press snapshot that caused Find '0 Switch' failure-triage dumps.",
+        "live_state": "Checked: preserved strict value equality assertions in typeInEmptyTestField and desired-value checks in setTestSwitch without weakening conditions.",
+        "keyboard_and_scroll": "Checked: kept dismissTestKeyboard and form reveal bounds intact while scoping account-form queries to the verified foreground CollectionView.",
+        "environment": "Strengthened: aligned get_app_container/terminate cold-boot subcommand cap with launch (120s), raised default preflight service deadline to 180s (max 240s), and added one bounded clean-terminate + fresh-UUID relaunch attempt when notification_service stalls on cold simulator migration, covered by notification_preflight_smoke.py.",
+        "first_failure_evidence": "Applied: inspected failed.log, Batch 4 job log, and Batches 0/4 preflight JSON and compact syslog streams showing 32-37s container/launch timings and SpringBoard forwarding delays before changing preflight budgets.",
+        "failure_classification": "Applied: separated environment (Batch 0 accessibility-load flake, animation stalls, host overload snapshot timeouts, post-teardown _XCTRunnerRunTests crash) from harness (30s get_app_container cap, single-shot cold preflight, stale setTestSwitch snapshot, unscoped account-form queries); zero app defects found.",
+        "runtime_warnings": "Checked: all executed batches across 45061040827 and 45077499482 reported runtimeWarnings: [].",
+        "device_evidence": "Preserved: simulator preflight and UI batch recovery remain separate from physical-device notification/sync acceptance."
+      },
+      "evidence": [
+        {
+          "reference": "run:45061040827/failed.log",
+          "sha256": "75342304eb90559fd5cc8a584bf8f984e06b4bc946d99423e9df2ec0f79a2da2"
+        },
+        {
+          "reference": "run:45061040827/job:137329316386/log",
+          "sha256": "5ea402ad2291233d0fb8e5dd7a94f5e07680556382b265fd6bd5ead406dc1489"
+        },
+        {
+          "reference": "run:45077499482/failed.log",
+          "sha256": "0eded60f29d09c0c069da1c03867b65a8a4141c304524e19c74b02c46036f71f"
+        },
+        {
+          "reference": "run:45077499482/ui-diagnostics-0/notification-preflight.json",
+          "sha256": "53d4784734b6cbb71a6e65d586722c46135ff4c22b47794bd28d64cd02b87e41"
+        },
+        {
+          "reference": "run:45077499482/ui-diagnostics-4/notification-preflight.json",
+          "sha256": "e57b7997c2b88b11b441538aa3bb9efaeb5b3e533e4694798e01a3fcc8e54ac7"
+        },
+        {
+          "reference": "run:45077499482/ui-diagnostics-0/notification-preflight-diagnostics/live.log",
+          "sha256": "8347d1b65860140dd670275c5f88dac70594c6ba979048bb1c32433bd771814a"
+        },
+        {
+          "reference": "run:45077499482/ui-diagnostics-4/notification-preflight-diagnostics/live.log",
+          "sha256": "9db55df1e1936e6e22af255c33e469d632a4c749bc7e7ceb78fac4b0c499e803"
+        }
+      ],
+      "files": {
+        "tests/ui-test-rules.json": "2a3bbf63f559da73ddaa4a0d546613f0dbd2800c8280d4d9fea0214ff8d7f757",
+        "ios/AnkiPadUITests/StudyFlowTestSupport.swift": "2f6ae74f3d0a4bfded37cd2fd7d3229fb46d45e7dd6f965555e4d5842ec2be2e",
+        "scripts/notification-preflight.py": "dd26d5c579f812123cea1bbf986e61148508f9809e6e4b145c57d28fb66abef7",
+        "scripts/run-ui-batch.py": "0c28dcf01e388c7b9be42fecba68bbbd5761b0046694b17b966d6fdfdef90ba6",
+        "tests/notification_preflight_smoke.py": "c7c05e875df9d6f60a6cbad960defbefa4fb4a80b76c7bace4fac866cf8c6ce6",
+        "scripts/select-ui-tests.py": "ef636f3be7cba72f651b8adb617cbbf9444be794b05612180d21e89f6d3ed057",
+        "tests/native_consumer_scope_smoke.py": "deae93404d8677e50d4dbd4aad15e29cf42eca07a59c8f126f649c9aefc16b39",
+        ".github/workflows/ipa.yml": "16827c4b168fdd30d5f1ad66f639a170c981c6d886d53d2f61fedae93d40d7de"
+      },
+      "checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "scripts/check-swift-syntax.py",
+            "--swiftc",
+            "env:ANKIPAD_SWIFTC"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "754138bf0b4dff53223c9d3f40a7f2e3e3978f10dacb5f363c724cc15383eedb"
+        },
+        {
+          "name": "catalog",
+          "argv": [
+            "python3",
+            "tests/ui_case_groups_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "37b08fd94a98ca52204d91f1a5e3553feceab95b969b596ee1d4f5159cf4ef99"
+        },
+        {
+          "name": "dispatch",
+          "argv": [
+            "python3",
+            "tests/ci_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "497332c0ad8f3a6be846ed43c49c2dcf7146287c0c138d858f967fa719e21604"
+        },
+        {
+          "name": "consumers",
+          "argv": [
+            "python3",
+            "tests/native_consumer_scope_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "51757ed0bd8fb311652499bdec0aa620833d062e59132eb7b9e6b70b032543f8"
+        },
+        {
+          "name": "query_lint",
+          "argv": [
+            "python3",
+            "scripts/check-ui-query-predicates.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d4ded7da1fe8822fea4a9859b4e15c1db859df45419965c04f745788ca1c54"
+        },
+        {
+          "name": "query_smoke",
+          "argv": [
+            "python3",
+            "tests/query_predicate_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "cdea704d88490dffd8f656bbe5c9b29fb7c5cb5ba01b9eb9b3dd8b94aa7f52a1"
+        },
+        {
+          "name": "localization",
+          "argv": [
+            "python3",
+            "tests/localization_resources_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "168965be4793b6eaa7cf9c1b95ac061de05ffdf2115c95051c835451a89cf9cb"
+        },
+        {
+          "name": "guard",
+          "argv": [
+            "python3",
+            "tests/ui_failure_review_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "2b863c2f7290266668fa45b97b0a827525b1d030a70c9d12a345ac9ba7def59f"
+        },
+        {
+          "name": "notification_preflight",
+          "argv": [
+            "python3",
+            "tests/notification_preflight_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "b147885faae5787ea6610b3fcda43acf25b3ec18bed531751ef2d7adedbd2cb7"
+        },
+        {
+          "name": "batch_runner",
+          "argv": [
+            "python3",
+            "tests/ui_batch_runner_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "61d7c8524cbd2d5138a654961e6cb325a396873cd033b988e816ef56309d5cc7"
+        },
+        {
+          "name": "simulator_identity",
+          "argv": [
+            "python3",
+            "tests/simulator_identity_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec4dcf530af5a45941f312753ffde3ef60300e306e01d38acb91bbb4bbca02fb"
+        },
+        {
+          "name": "app_intents_metadata",
+          "argv": [
+            "python3",
+            "tests/app_intents_metadata_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "a9cdefae97417785914d4e57a55ec6afa1346fc2bc9bf86a789b00ae8d350d3f"
+        },
+        {
+          "name": "ui_events",
+          "argv": [
+            "python3",
+            "tests/ui_events_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ecd4775e323cfe5034323f413df7a6e2ab0b180471780cd7de39d89d9f1c1910"
+        },
+        {
+          "name": "ui_workflow_diagnostics",
+          "argv": [
+            "python3",
+            "tests/ui_workflow_diagnostics_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "d6b5a12b881bde089544eb9f3d404894eff1061cbee7cf779f1a79be4954dc43"
+        },
+        {
+          "name": "ui_prerequisites",
+          "argv": [
+            "python3",
+            "tests/ui_prerequisites_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "6e97fc7f4ca18d6ecde35271d3425e2a0d36f17e6ba50c1f3280c46ca228f2a7"
+        },
+        {
+          "name": "partition_transfer",
+          "argv": [
+            "python3",
+            "tests/ui_batch_transfer_smoke.py"
+          ],
+          "exit_code": 0,
+          "stdout_sha256": "ec64eb6a32423dcc15f6975c18c3517860c09faed12072d181934f2361f23d69"
+        }
+      ],
+      "checked_at": "2026-11-23T00:29:04.553584+00:00"
     }
   ]
 }

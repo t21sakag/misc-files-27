@@ -41,8 +41,13 @@ elif a[:2]==['simctl','launch']:
  Path('launched-marker').write_text('started')
  namespace=os.environ['SIMCTL_CHILD_ANKIPAD_UI_TEST_NAMESPACE']
  p=Path(os.environ['PROBE_CONTAINER'])/'Library/Application Support/UITests'/namespace/'notification-service.json'
- p.parent.mkdir(parents=True)
+ p.parent.mkdir(parents=True,exist_ok=True)
  v={'version':1,'namespace':namespace,'bundle':'org.example.checks','phase':'complete','authorizationStatus':0,'pendingCount':0}
+ if mode=='retry-ready':
+  c=int(Path('launch-count').read_text())+1 if Path('launch-count').exists() else 1
+  Path('launch-count').write_text(str(c))
+  if c==1:v['phase']='notificationSettings'
+ if mode=='retry-terminate-failure':v['phase']='notificationSettings'
  if mode=='denied':v['authorizationStatus']=1
  if mode=='authorized':v['authorizationStatus']=2
  if mode=='wrong-namespace':v['namespace']='stale'
@@ -55,7 +60,7 @@ elif a[:2]==['simctl','launch']:
  if mode=='oversized':v['noise']='x'*5000
  if mode!='missing':p.write_text(json.dumps(v))
 elif a[:2]==['simctl','terminate']:
- if mode=='terminate-failure':sys.exit(19)
+ if mode in ('terminate-failure','retry-terminate-failure'):sys.exit(19)
 elif a[:4]==['xcresulttool','get','test-results','summary']:
  cases=json.loads(Path('build/executed-cases.json').read_text())
  print(json.dumps({'totalTestCount':len(cases),'passedTests':len(cases),'failedTests':0,'skippedTests':0,'runtimeWarnings':[]}))
@@ -106,7 +111,7 @@ Path('build/ui-started').write_text('yes')
     spec = importlib.util.spec_from_file_location('notification_preflight', ROOT/'scripts/notification-preflight.py')
     preflight = importlib.util.module_from_spec(spec); spec.loader.exec_module(preflight)
     def container_timeout(command, **kwargs):
-        expected_timeout = 240 if command[2] == 'install' else (120 if command[2] == 'launch' else 30)
+        expected_timeout = 240 if command[2] == 'install' else 120
         assert kwargs['timeout'] == expected_timeout, (command, kwargs)
         if command[2] == 'get_app_container':
             raise subprocess.TimeoutExpired(command, 30, output=b'x'*3000, stderr=b'container service stalled')
@@ -163,4 +168,31 @@ Path('build/ui-started').write_text('yes')
     assert 'build/batch-environment.json' in (ROOT/'.github/workflows/ipa.yml').read_text().split('  ui-batch:',1)[1]
     calls=[json.loads(line) for line in (base/'calls.jsonl').read_text().splitlines()]
     assert not any('privacy' in call or 'push' in call for call in calls)
+    # Bounded cold-boot retry recovers once from a single stalled probe without bypassing corruption or cleanup gates.
+    retry_command = [sys.executable, str(ROOT/'scripts/notification-preflight.py'),
+                     '--simulator', '11111111-1111-4111-8111-111111111111', '--app', str(app),
+                     '--timeout', '0.2', '--max-attempts', '2']
+    for mode in ('retry-ready', 'waiting', 'wrong-bundle', 'retry-terminate-failure'):
+        output = base/'build/notification-preflight.json'; output.unlink(missing_ok=True)
+        (base/'launched-marker').unlink(missing_ok=True)
+        (base/'launch-count').unlink(missing_ok=True)
+        result = subprocess.run(retry_command, cwd=base, env=dict(env, PROBE_MODE=mode), capture_output=True, text=True, timeout=5)
+        report = json.loads(output.read_text())
+        operations = [item['operation'] for item in report['commands']]
+        if mode == 'retry-ready':
+            assert result.returncode == 0 and report['ready'] is True and report['terminated'] is True, report
+            assert len(report['attempts']) == 2, report
+            assert report['attempts'][0]['namespace'] != report['attempts'][1]['namespace'], report
+            assert report['namespace'] == report['attempts'][1]['namespace'], report
+            assert operations == ['install', 'launch', 'get_app_container', 'terminate', 'launch', 'get_app_container', 'terminate'], operations
+        elif mode == 'waiting':
+            assert result.returncode != 0 and report['ready'] is False and report['terminated'] is True, report
+            assert report['failure_phase'] == 'notification_service' and report['error_kind'] == 'TimeoutError', report
+            assert len(report['attempts']) == 2, report
+            assert report['namespace'] == report['native']['namespace'] == report['attempts'][1]['namespace'], report
+        elif mode == 'wrong-bundle':
+            assert result.returncode != 0 and len(report['attempts']) == 1 and report['terminated'] is True, report
+        else:
+            assert result.returncode != 0 and report['failure_phase'] == 'terminate' and report['terminated'] is False, report
+            assert operations.count('launch') == 1, operations
 print('PASS: real read-only preflight rejects stale/corrupt/unresponsive OS replies and cleanup failures; dependent XCTest requires valid response; failed service does not suppress independent cases or make the batch pass')

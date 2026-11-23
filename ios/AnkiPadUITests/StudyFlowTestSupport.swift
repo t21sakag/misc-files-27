@@ -320,10 +320,15 @@ class StudyFlowTestSupport: XCTestCase {
                 target.press(forDuration: 0.15)
             }
         }
-        let changed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in control.value as? String == desired }, object: nil)
-        let result = XCTWaiter.wait(for: [changed], timeout: 10)
-        guard result == .completed || control.value as? String == desired else {
-            controlFailure(native, in: app, reason: "Native switch did not reach the requested state\n" + (failureContext?() ?? "")); return false
+        let reached: () -> Bool = {
+            native.count == 1 && native.element(boundBy: 0).value as? String == desired
+        }
+        if !reached() {
+            let changed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in reached() }, object: nil)
+            let result = XCTWaiter.wait(for: [changed], timeout: 10)
+            guard result == .completed || reached() else {
+                controlFailure(native, in: app, reason: "Native switch did not reach the requested state\n" + (failureContext?() ?? "")); return false
+            }
         }
         return true
     }
@@ -726,8 +731,9 @@ class StudyFlowTestSupport: XCTestCase {
     }
 
     func configureSyncEndpoint(_ app: XCUIApplication, server: String) {
-        let form = app.collectionViews["account-form"]
-        let toggle = app.switches.matching(identifier: "custom-server-toggle")
+        guard let form = waitForTestControl(app.collectionViews.matching(identifier: "account-form"), in: app,
+                                            keyboard: .keep, purpose: .observation) else { return }
+        let toggle = form.switches.matching(identifier: "custom-server-toggle")
         guard waitForTestControl(toggle, in: app, form: form, purpose: .observation) != nil else { return }
         if app.launchArguments.contains("--uitest-presentation-trace") {
             guard let state = waitForTestControl(app.staticTexts.matching(identifier: "account-native-input-state"),
@@ -751,7 +757,7 @@ class StudyFlowTestSupport: XCTestCase {
                 XCTAssertTrue(value.contains("server=true;"), "Native switch and its actual model binding must agree")
             }
         }
-        typeInEmptyTestField(app.textFields.matching(identifier: "custom-server-endpoint"), text: server, in: app, form: form)
+        typeInEmptyTestField(form.textFields.matching(identifier: "custom-server-endpoint"), text: server, in: app, form: form)
     }
 
     private func accountInputDiagnostic(in app: XCUIApplication) -> String {
@@ -764,12 +770,13 @@ class StudyFlowTestSupport: XCTestCase {
 
     func loginToSyncFixture(_ app: XCUIApplication, username value: String, server: String? = nil) {
         tapTestControl(app.buttons.matching(identifier: "ankiweb-account"), in: app)
-        let form = app.collectionViews["account-form"]
-        typeInEmptyTestField(app.textFields.matching(identifier: "login-username"), text: value, in: app, form: form)
-        guard let password = tapTestControl(app.secureTextFields.matching(identifier: "login-password"), in: app, form: form) else { return }
+        guard let form = waitForTestControl(app.collectionViews.matching(identifier: "account-form"), in: app,
+                                            purpose: .observation) else { return }
+        typeInEmptyTestField(form.textFields.matching(identifier: "login-username"), text: value, in: app, form: form)
+        guard let password = tapTestControl(form.secureTextFields.matching(identifier: "login-password"), in: app, form: form) else { return }
         password.typeText("fixture-password")
         configureSyncEndpoint(app, server: server ?? syncEndpoint())
-        tapTestControl(app.buttons.matching(identifier: "login-submit"), in: app, form: form)
+        tapTestControl(form.buttons.matching(identifier: "login-submit"), in: app, form: form)
     }
 
     func waitForSyncIdle(_ app: XCUIApplication) {

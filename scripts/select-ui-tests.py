@@ -5,6 +5,12 @@ import json
 from pathlib import Path
 
 suites = {
+    'native-preflight-account-repair': [
+        'testActualNotificationAuthorizationAndScheduleReplacement',
+        'testReminderNativeSchedulePersistsReplacesAndCancels',
+        'testAutomaticSyncCanBeDisabledPersistently',
+        'testAutomaticSyncDefersUntilRevealedReviewIsClosed',
+    ],
     'native-search-completion-m4-followup': [
         'testCommittedSearchHistoryReuseCancelAndRelaunch',
         'testDayAndNightThemeChoicesPersistAndStyleNativeAndCardSurfaces',

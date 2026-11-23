@@ -12,10 +12,10 @@ import subprocess
 ap = argparse.ArgumentParser()
 ap.add_argument('batch', type=int)
 ap.add_argument('simulator')
-ap.add_argument('--notification-timeout', type=float, default=120)
+ap.add_argument('--notification-timeout', type=float, default=180)
 args = ap.parse_args()
-if not 0.1 <= args.notification_timeout <= 120:
-    ap.error("Notification deadline must be between 0.1 and 120 seconds")
+if not 0.1 <= args.notification_timeout <= 240:
+    ap.error("Notification deadline must be between 0.1 and 240 seconds")
 plan = json.loads(Path('build/ui-batches.json').read_text())
 cases = plan['batches'][args.batch]
 assert cases and len(cases) == len(set(cases))
